@@ -86,8 +86,7 @@ virtual float&#160;</td><td class="memItemRight" valign="bottom"><b>GetScaleX</b
 <tr class="memitem:a2ecce778316e9d6c036a5d0cf6ed5c05" id="r_a2ecce778316e9d6c036a5d0cf6ed5c05"><td class="memItemLeft" align="right" valign="top"><a id="a2ecce778316e9d6c036a5d0cf6ed5c05" name="a2ecce778316e9d6c036a5d0cf6ed5c05"></a>
 virtual float&#160;</td><td class="memItemRight" valign="bottom"><b>GetScaleY</b> ()=0</td></tr>
 <tr class="separator:a2ecce778316e9d6c036a5d0cf6ed5c05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbfc79a939cf12595750fd08fa112df9" id="r_acbfc79a939cf12595750fd08fa112df9"><td class="memItemLeft" align="right" valign="top"><a id="acbfc79a939cf12595750fd08fa112df9" name="acbfc79a939cf12595750fd08fa112df9"></a>
-virtual float&#160;</td><td class="memItemRight" valign="bottom"><b>GetZ</b> ()=0</td></tr>
+<tr class="memitem:acbfc79a939cf12595750fd08fa112df9" id="r_acbfc79a939cf12595750fd08fa112df9"><td class="memItemLeft" align="right" valign="top">virtual float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acbfc79a939cf12595750fd08fa112df9">GetZ</a> ()=0</td></tr>
 <tr class="separator:acbfc79a939cf12595750fd08fa112df9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa44794d38ab76d2471940cf1576bc942" id="r_aa44794d38ab76d2471940cf1576bc942"><td class="memItemLeft" align="right" valign="top"><a id="aa44794d38ab76d2471940cf1576bc942" name="aa44794d38ab76d2471940cf1576bc942"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>SetPosition</b> (int posX, int poxY)=0</td></tr>
@@ -130,7 +129,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>SetZ</b> (flo
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>이미지의 스크린 X좌표 </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>스프라이트의 스크린 X좌표 </dd></dl>
 
 </div>
 </div>
@@ -156,7 +155,33 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>SetZ</b> (flo
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>이미지의 스크린 Y좌표 </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>스프라이트의 스크린 Y좌표 </dd></dl>
+
+</div>
+</div>
+<a id="acbfc79a939cf12595750fd08fa112df9" name="acbfc79a939cf12595750fd08fa112df9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acbfc79a939cf12595750fd08fa112df9">&#9670;&#160;</a></span>GetZ()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual float ISprite::GetZ </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>스프라이트의 Z값 </dd></dl>
 
 </div>
 </div>
@@ -200,6 +225,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>SetZ</b> (flo
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>업데이트 성공여부 </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>IGameEngine::CreateDynamicSprite(...)로 생성한 스프라이트가 아니면 업데이트 실패 </dd></dl>
 
 </div>
 </div>
