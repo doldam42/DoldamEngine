@@ -88,7 +88,7 @@
     <ClInclude Include="DescriptorPool.h">
       <Filter>DescriptorPool</Filter>
     </ClInclude>
-    <ClInclude Include="MeshObject.h">
+    <ClInclude Include="D3DMeshObject.h">
       <Filter>MeshObject</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsCommon.h">
@@ -138,7 +138,7 @@
     </ClInclude>
     <ClInclude Include="ConstantBuffers.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="RenderModule.h" />
+    <ClInclude Include="RendererInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -156,7 +156,7 @@
     <ClCompile Include="DescriptorPool.cpp">
       <Filter>DescriptorPool</Filter>
     </ClCompile>
-    <ClCompile Include="MeshObject.cpp">
+    <ClCompile Include="D3DMeshObject.cpp">
       <Filter>MeshObject</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsCommon.cpp">
@@ -202,7 +202,7 @@
       <Filter>Cubemap</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="RenderModule.cpp" />
+    <ClCompile Include="RendererInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

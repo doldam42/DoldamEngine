@@ -14,7 +14,7 @@
 #include "FontManager.h"
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
-#include "MeshObject.h"
+#include "D3DMeshObject.h"
 #include "RenderThread.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
@@ -203,7 +203,7 @@ lb_exit:
 
             m_ppDescriptorPool[i][j] = new DescriptorPool;
             m_ppDescriptorPool[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME *
-                                                                   MeshObject::MAX_DESCRIPTOR_COUNT_PER_DRAW_STATIC);
+                                                                   D3DMeshObject::MAX_DESCRIPTOR_COUNT_PER_DRAW_STATIC);
 
             m_ppConstantBufferManager[i][j] = new ConstantBufferManager;
             m_ppConstantBufferManager[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME);
@@ -410,12 +410,7 @@ void D3D12Renderer::Present()
 
 void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
 {
-    Fence();
-    // wait for all commands
-    for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
-    {
-        WaitForFenceValue(m_ui64FenceValue);
-    }
+    WaitForGPU();
 
     BOOL result = FALSE;
 
@@ -443,7 +438,7 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
 
 IRenderMesh *D3D12Renderer::CreateSkinnedObject()
 {
-    MeshObject *pMeshObj = new MeshObject;
+    D3DMeshObject *pMeshObj = new D3DMeshObject;
 
     pMeshObj->Initialize(this, RENDER_ITEM_TYPE_CHAR_OBJ);
     pMeshObj->AddRef();
@@ -452,7 +447,7 @@ IRenderMesh *D3D12Renderer::CreateSkinnedObject()
 
 IRenderMesh *D3D12Renderer::CreateMeshObject()
 {
-    MeshObject *pMeshObj = new MeshObject;
+    D3DMeshObject *pMeshObj = new D3DMeshObject;
 
     pMeshObj->Initialize(this, RENDER_ITEM_TYPE_MESH_OBJ);
     pMeshObj->AddRef();
@@ -485,7 +480,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 {
     // CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     // ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    MeshObject *pMeshObject = static_cast<MeshObject *>(pMeshObj);
+    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
 #ifdef USE_RAYTRACING
 
     UINT numGeometry = pMeshObject->GetGeometryCount();
@@ -630,7 +625,7 @@ BOOL D3D12Renderer::WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT des
 BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
                                     UINT numFaceGroup, const wchar_t *path)
 {
-    MeshObject *pMeshObj = dynamic_cast<MeshObject *>(pMeshObjHandle);
+    D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
     BOOL        result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup, path);
     return result;
 }
@@ -638,7 +633,7 @@ BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVe
 BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                                     const Material *pInMaterial)
 {
-    MeshObject *pMeshObj = dynamic_cast<MeshObject *>(pMeshObjHandle);
+    D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
     BOOL        result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
 
     return result;
@@ -648,7 +643,7 @@ void D3D12Renderer::EndCreateMesh(IRenderMesh *pMeshObjHandle)
 {
     CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
-    MeshObject                 *pMeshObj = dynamic_cast<MeshObject *>(pMeshObjHandle);
+    D3DMeshObject                 *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
     pMeshObj->EndCreateMesh(pCommandList);
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
@@ -785,11 +780,7 @@ ITextureHandle *D3D12Renderer::CreateMetallicRoughnessTexture(const WCHAR *metal
 
 void D3D12Renderer::DeleteTexture(ITextureHandle *pTexHandle)
 {
-    // wait for all commands
-    for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
-    {
-        WaitForFenceValue(m_pui64LastFenceValue[i]);
-    }
+    WaitForGPU();
 
     m_pTextureManager->DeleteTexture(static_cast<TEXTURE_HANDLE *>(pTexHandle));
 }
@@ -1001,6 +992,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex)
 
 void D3D12Renderer::WaitForGPU()
 {
+    Fence();
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
         WaitForFenceValue(m_pui64LastFenceValue[i]);
@@ -1276,9 +1268,7 @@ void D3D12Renderer::Cleanup()
     CleanupRenderThreadPool();
 #endif
 
-    Fence();
-
-    WaitForFenceValue(m_ui64FenceValue);
+    WaitForGPU();
 
     if (m_pDefaultTexHandle)
     {

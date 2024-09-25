@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="EngineModule.cpp" />
+    <ClCompile Include="EngineInterface.cpp" />
     <ClCompile Include="GameEngine.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="InputManager.cpp" />
@@ -40,10 +40,9 @@
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="EngineHeaders.h" />
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="EngineModule.h" />
+    <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="pch.h">

@@ -10,9 +10,22 @@
 
 #include <windows.h>
 
-#include "EngineHeaders.h"
-#include "MathHeaders.h"
-#include "GenericHeaders.h"
-#include "RenderModule.h"
+// C RunTime Header Files
+#include <malloc.h>
+#include <memory.h>
+#include <stdlib.h>
+#include <tchar.h>
+#include <math.h>
 
-#include "EngineModule.h"
+// CPP RunTime Header
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
+
+#include "GameUtils.h"
+
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
+#include "../RenderModule/RendererInterface.h"
+#include "EngineInterface.h"

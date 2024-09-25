@@ -2,7 +2,7 @@
 
 #include "GameEngine.h"
 #include "GameObject.h"
-#include "RenderModule.h"
+#include "RendererInterface.h"
 
 #include "Model.h"
 
@@ -25,7 +25,7 @@ void Model::Cleanup()
     }
 }
 
-void Model::Initialize(const Material *pInMaterial, int materialCount, BasicObject **ppInObjs, int objectCount)
+void Model::Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount)
 {
     m_header.MaterialCount = materialCount;
     m_header.ObjectCount = objectCount;
@@ -39,7 +39,7 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, BasicObje
     BasicObject **ppObjs = new BasicObject *[objectCount];
     for (UINT i = 0; i < objectCount; i++)
     {
-        ppObjs[i] = ppInObjs[i];
+        ppObjs[i] = reinterpret_cast<BasicObject*>(ppInObjs[i]);
     }
 
     m_pMaterials = pMaterials;
@@ -154,8 +154,10 @@ void Model::Render(IRenderer *pRenderer, GameObject *pGameObj)
         for (uint32_t objectCount = 0; objectCount < m_header.ObjectCount; objectCount++)
         {
             MeshObject *pObj = (MeshObject *)m_ppObjs[objectCount];
+            pObj->Render(pRenderer, worldMat);
+
             // Box         boundBox = pObj->GetCollisionBox();
-            Sphere      boundingSphere = pObj->GetCollisionSphere();
+            /*Sphere      boundingSphere = pObj->GetCollisionSphere();
             auto        checkResult = frustumFromMatrix.CheckBound(boundingSphere);
             if (checkResult == BoundCheckResult::Outside)
             {
@@ -164,7 +166,7 @@ void Model::Render(IRenderer *pRenderer, GameObject *pGameObj)
             else
             {
                 pObj->Render(pRenderer, worldMat);
-            }
+            }*/
         }
     }
 }

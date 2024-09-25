@@ -27,8 +27,8 @@ void MeshObject::InitCollisionBox()
         maxCorner = Vector3::Max(maxCorner, pBasicVertex[i].position);
     }
 
-    // center = (minCorner + maxCorner) * 0.5f;
-    // extents = maxCorner - center;
+    center = (minCorner + maxCorner) * 0.5f;
+    extents = maxCorner - center;
 
     m_boundingBox = Box(minCorner, maxCorner);
     m_pCollisionBoxMesh = CreateWireBoxMesh(center, extents + Vector3(1e-2));
@@ -381,8 +381,8 @@ bool MeshObject::IsInFrustum(const Matrix &worldMat, const BoundingFrustum &frus
 void MeshObject::Render(IRenderer *pRnd, const Matrix &worldMat)
 {
     // Debug
-    m_pRenderer->RenderMeshObject(m_pCollisionSphereMesh, &worldMat, true);
-    m_pRenderer->RenderMeshObject(m_pCollisionBoxMesh, &worldMat, true);
+    /*m_pRenderer->RenderMeshObject(m_pCollisionSphereMesh, &worldMat, true);
+    m_pRenderer->RenderMeshObject(m_pCollisionBoxMesh, &worldMat, true);*/
 
     m_pRenderer->RenderMeshObject(m_pMeshHandle, &worldMat);
 }

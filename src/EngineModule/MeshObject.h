@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BasicObject.h"
-#include "RenderModule.h"
+#include "RendererInterface.h"
 
 enum VERTEX_TYPE
 {
@@ -74,6 +74,7 @@ class MeshObject : public BasicObject
   public:
     virtual void InitMeshHandle(IRenderer *pRnd, const Material *pMaterials, const wchar_t *basePath) override;
 
+    void Initialize(VERTEX_TYPE type);
     void BeginCreateMesh(const void *pVertices, VERTEX_TYPE vertexType, uint32_t numVertices, uint32_t numFaceGroup);
     void InsertFaceGroup(const uint32_t *pIndices, uint32_t numIndices, int materialIdx);
 

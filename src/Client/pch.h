@@ -14,5 +14,5 @@
 
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
-#include "../RenderModule/RenderModule.h"
-#include "../EngineModule/EngineModule.h"
+#include "../RenderModule/RendererInterface.h"
+#include "../EngineModule/EngineInterface.h"

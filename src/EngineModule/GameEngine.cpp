@@ -291,7 +291,10 @@ IModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
 IModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
+    pModel->InitMeshHandles(m_pRenderer);
+
     LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
+    pModel->AddRef();
     return pModel;
 }
 

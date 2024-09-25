@@ -164,7 +164,7 @@
     </ClCompile>
     <ClCompile Include="CharacterObject.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="EngineModule.cpp" />
+    <ClCompile Include="EngineInterface.cpp" />
     <ClCompile Include="GameEngine.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameUtils.cpp" />
@@ -188,12 +188,11 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="CharacterObject.h" />
-    <ClInclude Include="EngineHeaders.h" />
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="EngineModule.h" />
+    <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Model.h" />

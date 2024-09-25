@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Camera.h"
-#include "EngineModule.h"
 #include "GameUtils.h"
 #include "InputManager.h"
-#include "RenderModule.h"
 #include "Timer.h"
+
+#include "../RenderModule/RendererInterface.h"
+#include "EngineInterface.h"
 
 class Model;
 class AnimationClip;

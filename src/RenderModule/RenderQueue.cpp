@@ -3,7 +3,7 @@
 #include "CommandListPool.h"
 #include "D3D12Renderer.h"
 #include "DXRSceneManager.h"
-#include "MeshObject.h"
+#include "D3DMeshObject.h"
 #include "SpriteObject.h"
 
 #include "RenderQueue.h"
@@ -84,13 +84,13 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
-            MeshObject *pMeshObj = (MeshObject *)pItem->pObjHandle;
+            D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
             pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, nullptr, 0,
                            pItem->meshObjParam.fillMode, 1);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
-            MeshObject *pMeshObj = (MeshObject *)pItem->pObjHandle;
+            D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
             pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM, pItem->charObjParam.pBones,
                            pItem->charObjParam.numBones, pItem->charObjParam.fillMode, 1);
         }

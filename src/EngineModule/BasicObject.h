@@ -2,7 +2,7 @@
 
 #include <cstdio>
 #include "../MathModule/MathHeaders.h"
-#include "../RenderModule/RenderModule.h"
+#include "../RenderModule/RendererInterface.h"
 
 enum OBJECT_TYPE
 {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "EngineModule.h"
-
 #include "BasicObject.h"
 #include "CharacterObject.h"
 #include "MeshObject.h"
@@ -10,6 +8,7 @@
 
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
+#include "EngineInterface.h"
 
 class IRenderer;
 class IRenderMesh;
@@ -38,10 +37,10 @@ class Model : public IModel
     void Cleanup();
 
   public:
-    void Initialize(const Material *pInMaterial, int materialCount, BasicObject **ppInObjs, int objectCount);
+    void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount) override; 
 
-    void WriteFile(FILE *fp);
-    void ReadFile(FILE *fp);
+    void WriteFile(FILE *fp) override;
+    void ReadFile(FILE *fp) override;
 
     void InitMeshHandles(IRenderer *pRenderer);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderModule.h"
+#include "RendererInterface.h"
 
 enum LIGHT_TYPE : UINT
 {

@@ -2,7 +2,7 @@
 
 #include "GameEngine.h"
 
-#include "EngineModule.h"
+#include "EngineInterface.h"
 
 ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine)
 {

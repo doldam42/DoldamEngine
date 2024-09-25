@@ -14,7 +14,26 @@ enum PRIMITIVE_MODEL_TYPE
     PRIMITIVE_MODEL_TYPE_BOX,
 };
 
-interface IModel : public IUnknown{};
+interface IModel : public IUnknown
+{
+    virtual void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount) = 0;
+    virtual void WriteFile(FILE * fp) = 0;
+    virtual void ReadFile(FILE * fp) = 0;
+};
+
+//interface IMeshObject
+//{
+//    virtual void BeginCreateMesh(const void *pVertices, uint32_t numVertices, uint32_t numFaceGroup) = 0;
+//    virtual void InsertFaceGroup(const uint32_t *pIndices, uint32_t numIndices, int materialIdx) = 0;
+//    virtual void EndCreateMesh() = 0;
+//};
+
+//interface ICharacterObject
+//{
+//    virtual void BeginCreateMesh(const void *pVertices, uint32_t numVertices, uint32_t numFaceGroup) = 0;
+//    virtual void InsertFaceGroup(const uint32_t *pIndices, uint32_t numIndices, int materialIdx) = 0;
+//    virtual void EndCreateMesh() = 0;
+//};
 
 interface IGameObject
 {

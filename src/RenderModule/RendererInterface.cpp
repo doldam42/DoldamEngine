@@ -2,7 +2,7 @@
 
 #include "D3D12Renderer.h"
 
-#include "RenderModule.h"
+#include "RendererInterface.h"
 
 BOOL CreateD3D12Renderer(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, IRenderer **ppRenderer)
 {

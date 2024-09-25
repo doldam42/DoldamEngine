@@ -67,7 +67,7 @@ class D3D12Renderer;
 class ShaderRecord;
 struct DESCRIPTOR_HANDLE;
 
-class MeshObject : public IRenderMesh
+class D3DMeshObject : public IRenderMesh
 {
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
@@ -173,8 +173,8 @@ class MeshObject : public IRenderMesh
         return m_passType;
     }
 
-    MeshObject() = default;
-    ~MeshObject();
+    D3DMeshObject() = default;
+    ~D3DMeshObject();
 
     // Inherited via IRenderMesh
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

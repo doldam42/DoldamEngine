@@ -14,11 +14,11 @@
 
 #include "ShaderTable.h"
 
-#include "MeshObject.h"
+#include "D3DMeshObject.h"
 
 // 레이트레이싱 SRV 디스크립터 구조
 // | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
-BOOL MeshObject::CreateDescriptorTable()
+BOOL D3DMeshObject::CreateDescriptorTable()
 {
     BOOL                  result = FALSE;
     ID3D12Device         *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
@@ -35,7 +35,7 @@ lb_return:
     return result;
 }
 
-BOOL MeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
+BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
     ID3D12Device *pDevice = pRenderer->INL_GetD3DDevice();
     m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -49,7 +49,7 @@ BOOL MeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
     return TRUE;
 }
 
-void MeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
                       const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
 {
     ID3D12Device5        *pDevice = m_pRenderer->INL_GetD3DDevice();
@@ -194,13 +194,13 @@ void MeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
     }
 }
 
-void MeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
+void D3DMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
 {
     DeformingVerticesUAV(pCommandList, pBoneMats, numBones);
     BuildBottomLevelAS(pCommandList, m_bottomLevelAS.pScratch, m_bottomLevelAS.pResult, true, m_bottomLevelAS.pResult);
 }
 
-Graphics::LOCAL_ROOT_ARG *MeshObject::GetRootArgs()
+Graphics::LOCAL_ROOT_ARG *D3DMeshObject::GetRootArgs()
 {
     ID3D12Device5        *pDevice = m_pRenderer->INL_GetD3DDevice();
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(0);
@@ -234,7 +234,7 @@ Graphics::LOCAL_ROOT_ARG *MeshObject::GetRootArgs()
     return m_pRootArgPerGeometries;
 }
 
-BOOL MeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path)
+BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
@@ -306,7 +306,7 @@ lb_return:
     return result;
 }
 
-BOOL MeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
+BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
 {
     wchar_t path[MAX_PATH];
 
@@ -425,9 +425,9 @@ lb_return:
     return result;
 }
 
-void MeshObject::EndCreateMesh() {}
+void D3DMeshObject::EndCreateMesh() {}
 
-void MeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
+void D3DMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 {
 #ifdef USE_RAYTRACING
     CreateSkinningBufferSRVs();
@@ -436,7 +436,7 @@ void MeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 #endif
 }
 
-void MeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
+void D3DMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                                  uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
                                  UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
                                  UINT64 transformOffsetInBytes, bool isOpaque)
@@ -457,7 +457,7 @@ void MeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuff
     descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
-void MeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
+void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
 {
     if (m_type != RENDER_ITEM_TYPE_CHAR_OBJ)
     {
@@ -520,7 +520,7 @@ void MeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, 
                                                                            D3D12_RESOURCE_STATE_COMMON));
 }
 
-BOOL MeshObject::CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList)
+BOOL D3DMeshObject::CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList)
 {
     BOOL result = FALSE;
 
@@ -581,7 +581,7 @@ lb_return:
     return result;
 }
 
-BOOL MeshObject::BuildBottomLevelAS(
+BOOL D3DMeshObject::BuildBottomLevelAS(
     ID3D12GraphicsCommandList4 *commandList,   /// Command list on which the build will be enqueued
     ID3D12Resource             *scratchBuffer, /// Scratch buffer used by the builder to
                                                /// store temporary data
@@ -638,7 +638,7 @@ BOOL MeshObject::BuildBottomLevelAS(
     return TRUE;
 }
 
-void MeshObject::CreateSkinningBufferSRVs()
+void D3DMeshObject::CreateSkinningBufferSRVs()
 {
     if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
         return;
@@ -672,7 +672,7 @@ void MeshObject::CreateSkinningBufferSRVs()
     pD3DDevice->CreateUnorderedAccessView(m_pDeformedVertexBuffer, nullptr, &uavDesc, cpuHandle);
 }
 
-void MeshObject::CreateRootArgsSRV()
+void D3DMeshObject::CreateRootArgsSRV()
 {
     ID3D12Device                 *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_rootArgDescriptorTable.cpuHandle);
@@ -714,7 +714,7 @@ void MeshObject::CreateRootArgsSRV()
     }
 }
 
-void MeshObject::CleanupMesh()
+void D3DMeshObject::CleanupMesh()
 {
     // Cleanup BLAS
     {
@@ -810,15 +810,15 @@ void MeshObject::CleanupMesh()
     }
 }
 
-void MeshObject::Cleanup() { CleanupMesh(); }
+void D3DMeshObject::Cleanup() { CleanupMesh(); }
 
-MeshObject::~MeshObject() { Cleanup(); }
+D3DMeshObject::~D3DMeshObject() { Cleanup(); }
 
-HRESULT __stdcall MeshObject::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+HRESULT __stdcall D3DMeshObject::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
-ULONG __stdcall MeshObject::AddRef(void) { return ++m_refCount; }
+ULONG __stdcall D3DMeshObject::AddRef(void) { return ++m_refCount; }
 
-ULONG __stdcall MeshObject::Release(void)
+ULONG __stdcall D3DMeshObject::Release(void)
 {
     ULONG newRefCount = --m_refCount;
     if (newRefCount == 0)

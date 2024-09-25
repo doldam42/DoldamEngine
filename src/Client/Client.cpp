@@ -1,7 +1,7 @@
 #include "pch.h"
 
-#include "../EngineModule/EngineModule.h"
-#include "../RenderModule/RenderModule.h"
+#include "../EngineModule/EngineInterface.h"
+#include "../RenderModule/RendererInterface.h"
 
 #include "Client.h"
 
@@ -60,9 +60,14 @@ void Client::LoadResources()
 {
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
-    IGameObject *pBox = m_pGame->CreateGameObject();
+    /*IGameObject *pBox = m_pGame->CreateGameObject();
     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
-    pBox->SetScale(2.0f);
+    pBox->SetScale(2.0f);*/
+
+    IModel *pSponzaModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
+    IGameObject *pSponza = m_pGame->CreateGameObject();
+    pSponza->SetModel(pSponzaModel);
+    pSponza->SetScale(30.f);
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -86,7 +91,7 @@ void Client::LoadResources()
     m_pTextSprite = m_pGame->CreateDynamicSprite(m_textImageWidth, m_textImageHeight);
     m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
     m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
-    m_pDynamicSprite->SetPosition(0, 0);
+    m_pDynamicSprite->SetPosition(0, 512);
     m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
     m_pStaticSprite->SetPosition(256, 256);
     m_pStaticSprite->SetZ(0.5f);

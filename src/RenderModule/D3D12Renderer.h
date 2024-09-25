@@ -1,8 +1,7 @@
 #pragma once
 
-#include "RenderModule.h"
 #include "ConstantBuffers.h"
-#include "RenderModule.h"
+#include "RendererInterface.h"
 #include "RenderQueue.h"
 #include "RendererTypedef.h"
 
