@@ -7,8 +7,9 @@
 #endif
 
 #include <combaseapi.h>
-#include "../RenderModule/RendererInterface.h"
 #include "EngineTypedef.h"
+
+class IRenderer;
 
 enum PRIMITIVE_MODEL_TYPE
 {
