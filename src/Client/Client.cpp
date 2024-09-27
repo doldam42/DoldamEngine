@@ -60,14 +60,14 @@ void Client::LoadResources()
 {
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
-    /*IGameObject *pBox = m_pGame->CreateGameObject();
+    IGameObject *pBox = m_pGame->CreateGameObject();
     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
-    pBox->SetScale(2.0f);*/
+    pBox->SetScale(2.0f);
 
-    IModel *pSponzaModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
+    /*IModel *pSponzaModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);
+    pSponza->SetScale(30.f);*/
 
     // Create texture from draw Text
     m_textImageWidth = 712;

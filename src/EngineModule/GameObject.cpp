@@ -33,8 +33,7 @@ void GameObject::Render()
 {
     if (m_pModel)
     {
-        IRenderer *pRnd = g_pGame->GetRenderer();
-        m_pModel->Render(pRnd, this);
+        m_pModel->Render(this);
     }
 }
 

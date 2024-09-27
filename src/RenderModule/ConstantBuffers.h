@@ -39,7 +39,7 @@ struct SkinnedConstants
 
 static_assert((sizeof(SkinnedConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
-struct Light
+struct Light : public ILightHandle
 {
     Vector3 radiance = Vector3(5.0f); // strength
     float   fallOffStart = 0.0f;

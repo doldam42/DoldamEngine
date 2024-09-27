@@ -157,12 +157,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
-    <ClCompile Include="BasicObject.cpp" />
+    <ClCompile Include="BaseObject.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="CharacterObject.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EngineInterface.cpp" />
     <ClCompile Include="GameEngine.cpp" />
@@ -184,10 +183,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
-    <ClInclude Include="BasicObject.h" />
+    <ClInclude Include="BaseObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
-    <ClInclude Include="CharacterObject.h" />
+    <ClInclude Include="EngineTypedef.h" />
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />

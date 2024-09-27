@@ -43,7 +43,7 @@ class GameEngine : public IGameEngine
     SORT_LINK *m_pSpriteLinkHead = nullptr;
     SORT_LINK *m_pSpriteLinkTail = nullptr;
 
-    void *m_pLight = nullptr;
+    ILightHandle *m_pLight = nullptr;
 
     UINT      m_commandListCount = 0;
     UINT      m_renderThreadCount = 0;

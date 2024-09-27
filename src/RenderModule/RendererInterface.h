@@ -6,16 +6,23 @@
 #define RENDERERMODULE_API __declspec(dllimport)
 #endif
 
-interface IRenderMesh : public IUnknown
+#include <combaseapi.h>
+
+interface IRenderableObject : public IUnknown{};
+
+interface IDIMeshObject : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path) = 0;
     virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) = 0;
     virtual void EndCreateMesh() = 0;
 };
-interface IRenderSprite : public IUnknown{};
+
+interface IRenderSprite : public IRenderableObject{};
+
 interface IFontHandle{};
 interface ITextureHandle{};
 interface IMaterialHandle{};
+interface ILightHandle{};
 
 interface IRenderer
 {
@@ -25,27 +32,26 @@ interface IRenderer
     virtual void Present() = 0;
 
     virtual void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow) = 0;
-    
+
     virtual void OnUpdateWindowSize(UINT width, UINT height) = 0;
 
-    virtual IRenderMesh *CreateSkinnedObject() = 0;
-    virtual IRenderMesh *CreateMeshObject() = 0;
+    virtual IDIMeshObject *CreateSkinnedObject() = 0;
+    virtual IDIMeshObject *CreateMeshObject() = 0;
 
-    virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
+    virtual BOOL BeginCreateMesh(IDIMeshObject * pMeshObjHandle, const void *pVertices, UINT numVertices,
                                  UINT numFaceGroup, const wchar_t *path) = 0;
-    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+    virtual BOOL InsertFaceGroup(IDIMeshObject * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                                  const Material *pInMaterial) = 0;
-    virtual void EndCreateMesh(IRenderMesh * pMeshObjHandle) = 0;
+    virtual void EndCreateMesh(IDIMeshObject * pMeshObjHandle) = 0;
 
     virtual IRenderSprite *CreateSpriteObject() = 0;
     virtual IRenderSprite *CreateSpriteObject(const WCHAR *texFileName, int PosX, int PosY, int Width, int Height) = 0;
 
-    virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
+    virtual void RenderMeshObject(IDIMeshObject * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                                   UINT numInstance = 1) = 0;
-    virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                       UINT numBones,
-                                       bool isWired = false) = 0;
-    
+    virtual void RenderCharacterObject(IDIMeshObject * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
+                                       UINT numBones, bool isWired = false) = 0;
+
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                               float Z) = 0;
     virtual void RenderSpriteWithTex(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
@@ -64,19 +70,20 @@ interface IRenderer
     virtual void            DeleteTexture(ITextureHandle * pTexHandle) = 0;
     virtual void            UpdateTextureWithImage(ITextureHandle * pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                                    UINT srcHeight) = 0;
-    
+
     virtual IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
     virtual void             DeleteMaterialHandle(IMaterialHandle * pInMaterial) = 0;
     virtual void             UpdateMaterialHandle(IMaterialHandle * pInMaterial, const Material *pMaterial) = 0;
 
     // return nullptr if lights are full
-    virtual void *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection) = 0;
-    virtual void *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
-                                   float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f) = 0;
-    virtual void *CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
-                                  float spotPower, float radius, float fallOffStart = 0.0f,
-                                  float fallOffEnd = 20.0f) = 0;
-    virtual void  DeleteLight(void *pLightHandle) = 0;
+    virtual ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection) = 0;
+    virtual ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                           const Vector3 *pPosition, float radius, float fallOffStart = 0.0f,
+                                           float fallOffEnd = 20.0f) = 0;
+    virtual ILightHandle *CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
+                                          float spotPower, float radius, float fallOffStart = 0.0f,
+                                          float fallOffEnd = 20.0f) = 0;
+    virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;

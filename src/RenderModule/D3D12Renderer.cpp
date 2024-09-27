@@ -436,7 +436,7 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
     CreateBuffers();
 }
 
-IRenderMesh *D3D12Renderer::CreateSkinnedObject()
+IDIMeshObject *D3D12Renderer::CreateSkinnedObject()
 {
     D3DMeshObject *pMeshObj = new D3DMeshObject;
 
@@ -445,7 +445,7 @@ IRenderMesh *D3D12Renderer::CreateSkinnedObject()
     return pMeshObj;
 }
 
-IRenderMesh *D3D12Renderer::CreateMeshObject()
+IDIMeshObject *D3D12Renderer::CreateMeshObject()
 {
     D3DMeshObject *pMeshObj = new D3DMeshObject;
 
@@ -476,7 +476,7 @@ IRenderSprite *D3D12Renderer::CreateSpriteObject(const WCHAR *texFileName, int P
     return pSprObj;
 }
 
-void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
+void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
 {
     // CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     // ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
@@ -491,7 +491,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 #else
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_MESH_OBJ;
-    item.pObjHandle = (void *)pMeshObj;
+    item.pObjHandle = pMeshObj;
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
 
@@ -511,7 +511,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 #endif //  USE_RAYTRACING
 }
 
-void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
+void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
                                           UINT numBones, bool isWired)
 {
     // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
@@ -552,7 +552,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_SPRITE;
-    item.pObjHandle = (void *)pSprObjHandle;
+    item.pObjHandle = pSprObjHandle;
     item.spriteParam.posX = iPosX;
     item.spriteParam.posY = iPosY;
     item.spriteParam.scaleX = fScaleX;
@@ -568,7 +568,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
         item.spriteParam.isUseRect = FALSE;
         item.spriteParam.rect = {};
     }
-    item.spriteParam.pTexHandle = pTexHandle;
+    item.spriteParam.pTexHandle = reinterpret_cast<ITextureHandle*>(pTexHandle);
     item.spriteParam.Z = Z;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
@@ -585,7 +585,7 @@ void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iP
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_SPRITE;
-    item.pObjHandle = (void *)pSprObjHandle;
+    item.pObjHandle = pSprObjHandle;
     item.spriteParam.posX = iPosX;
     item.spriteParam.posY = iPosY;
     item.spriteParam.scaleX = fScaleX;
@@ -622,7 +622,7 @@ BOOL D3D12Renderer::WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT des
     return result;
 }
 
-BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
+BOOL D3D12Renderer::BeginCreateMesh(IDIMeshObject *pMeshObjHandle, const void *pVertices, UINT numVertices,
                                     UINT numFaceGroup, const wchar_t *path)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
@@ -630,7 +630,7 @@ BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVe
     return result;
 }
 
-BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+BOOL D3D12Renderer::InsertFaceGroup(IDIMeshObject *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                                     const Material *pInMaterial)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
@@ -639,7 +639,7 @@ BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIn
     return result;
 }
 
-void D3D12Renderer::EndCreateMesh(IRenderMesh *pMeshObjHandle)
+void D3D12Renderer::EndCreateMesh(IDIMeshObject *pMeshObjHandle)
 {
     CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
@@ -785,7 +785,7 @@ void D3D12Renderer::DeleteTexture(ITextureHandle *pTexHandle)
     m_pTextureManager->DeleteTexture(static_cast<TEXTURE_HANDLE *>(pTexHandle));
 }
 
-void *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection)
+ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection)
 {
     Light light;
     light.direction = *pDirection;
@@ -804,7 +804,8 @@ void *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, const Vect
     return nullptr;
 }
 
-void *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
+ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                              const Vector3 *pPosition,
                                       float radius, float fallOffStart, float fallOffEnd)
 {
     Light light;
@@ -829,7 +830,8 @@ void *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Vector3 *p
     return nullptr;
 }
 
-void *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
+ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                             const Vector3 *pPosition,
                                      float spotPower, float radius, float fallOffStart, float fallOffEnd)
 {
     Light light;
@@ -855,14 +857,15 @@ void *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pD
     return nullptr;
 }
 
-void D3D12Renderer::DeleteLight(void *pLightHandle)
+void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
 {
     // Boundary Check
-    if (pLightHandle < m_pLights || pLightHandle >= ((uint8_t *)m_pLights + sizeof(Light) * MAX_LIGHTS))
+    void *lightAddr = reinterpret_cast<void *>(pLightHandle);
+    if (lightAddr < m_pLights || lightAddr >= ((uint8_t *)m_pLights + sizeof(Light) * MAX_LIGHTS))
     {
         __debugbreak();
     }
-    Light *pLight = (Light *)pLightHandle;
+    Light *pLight = static_cast<Light*>(pLightHandle);
     pLight->type = LIGHT_OFF;
 }
 

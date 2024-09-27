@@ -1,0 +1,8 @@
+#pragma once
+
+enum MESH_TYPE : UINT
+{
+    MESH_TYPE_DEFAULT = 0,
+    MESH_TYPE_SKINNED,
+    MESH_TYPE_UNKNOWN,
+};

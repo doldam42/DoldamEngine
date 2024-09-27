@@ -9,7 +9,7 @@ struct RENDER_MESH_OBJ_PARAM
 };
 
 struct RENDER_CHAR_OBJ_PARAM
-{ 
+{
     FILL_MODE     fillMode;
     Matrix        worldTM;
     UINT          numBones;
@@ -26,13 +26,14 @@ struct RENDER_SPRITE_PARAM
     RECT      rect;
     BOOL      isUseRect;
     float     Z;
-    void     *pTexHandle;
+
+    ITextureHandle *pTexHandle;
 };
 
 struct RENDER_ITEM
 {
-    RENDER_ITEM_TYPE type;
-    void            *pObjHandle;
+    RENDER_ITEM_TYPE   type;
+    IRenderableObject *pObjHandle;
     union {
         RENDER_CHAR_OBJ_PARAM charObjParam;
         RENDER_MESH_OBJ_PARAM meshObjParam;

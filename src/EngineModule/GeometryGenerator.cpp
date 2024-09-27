@@ -1,7 +1,5 @@
 #include "GeometryGenerator.h"
 #include "AnimationClip.h"
-#include "BasicObject.h"
-#include "CharacterObject.h"
 #include "GameUtils.h"
 #include "MeshObject.h"
 #include "Model.h"
@@ -28,24 +26,19 @@ Model *GeometryGenerator::MakeSquare(const float scale)
         v->texcoord = texcoords[i];
     }
 
-    Model        *model = new Model;
+    Model *model = new Model;
 
-    OBJECT_HEADER header;
-    header.ChildCount = 0;
-    header.ParentIndex = -1;
-    header.TM.SetPosition(Vector3(0.f, 0.f, 0.f));
-    header.TM.SetRotation(Quaternion::Identity);
-    header.TM.SetScale(Vector3(scale));
-    header.Type = OBJECT_TYPE_MESH;
-    MeshObject *pObj = new MeshObject(header);
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"Square");
 
-    pObj->BeginCreateMesh(pVertices, VERTEX_TYPE_BASIC, 4, 1);
-    pObj->InsertFaceGroup(indices, 6, 0);
+    pObj->BeginCreateMesh(pVertices, 4, 1);
+    pObj->InsertFaceGroup(indices, 2, 0);
+    pObj->EndCreateMesh();
 
-    BasicObject *ppObjs[] = {pObj};
-    Material     defaultMat = Material();
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
     model->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
-
     model->AddRef();
     return model;
 }
@@ -187,24 +180,19 @@ Model *GeometryGenerator::MakeBox(const float scale)
         16, 17, 18, 16, 18, 19, // ¿ÞÂÊ
         20, 21, 22, 20, 22, 23  // ¿À¸¥ÂÊ
     };
+    Model *pModel = new Model;
 
-    OBJECT_HEADER header;
-    header.ChildCount = 0;
-    header.ParentIndex = -1;
-    header.TM.SetPosition(Vector3(0.f, 0.f, 0.f));
-    header.TM.SetRotation(Quaternion::Identity);
-    header.TM.SetScale(Vector3(scale));
-    header.Type = OBJECT_TYPE_MESH;
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"Box");
 
-    Model      *pModel = new Model;
-    MeshObject *pObj = new MeshObject(header);
-    pObj->BeginCreateMesh(pVertices, VERTEX_TYPE_BASIC, 24, 1);
-    pObj->InsertFaceGroup(indices, 36, 0);
+    pObj->BeginCreateMesh(pVertices, 24, 1);
+    pObj->InsertFaceGroup(indices, 12, 0); // Æú¸®°ï °³¼ö
+    pObj->EndCreateMesh();
 
-    BasicObject *ppObjs[] = {pObj};
-    Material     defaultMat = Material();
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
     pModel->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
-
     pModel->AddRef();
     return pModel;
 }
@@ -243,7 +231,7 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
-    
+
     // µÞ¸é
     positions.push_back(center + Vector3(-1.0f, -1.0f, 1.0f) * extends);
     positions.push_back(center + Vector3(1.0f, -1.0f, 1.0f) * extends);
@@ -292,27 +280,22 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
         20, 21, 22, 20, 22, 23  // ¿À¸¥ÂÊ
     };
 
-    OBJECT_HEADER header;
-    header.ChildCount = 0;
-    header.ParentIndex = -1;
-    header.TM.SetPosition(Vector3(0.f, 0.f, 0.f));
-    header.TM.SetRotation(Quaternion::Identity);
-    header.TM.SetScale(Vector3(1.0f));
-    header.Type = OBJECT_TYPE_MESH;
+    Model *pModel = new Model;
 
-    Model      *pModel = new Model;
-    MeshObject *pObj = new MeshObject(header);
-    pObj->BeginCreateMesh(pVertices, VERTEX_TYPE_BASIC, 24, 1);
-    pObj->InsertFaceGroup(indices, 36, 0);
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"WireBox");
 
-    BasicObject *ppObjs[] = {pObj};
-    Material     defaultMat = Material();
+    pObj->BeginCreateMesh(pVertices, 24, 1);
+    pObj->InsertFaceGroup(indices, 12, 0);
+    pObj->EndCreateMesh();
+
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
     pModel->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
-
     pModel->AddRef();
     return pModel;
 }
-
 
 //
 // MeshData GeometryGenerator::MakeCylinder(const float bottomRadius,
@@ -630,7 +613,7 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
     fclose(fp);
 
     Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
-    
+
     return pModel;
 }
 
@@ -671,36 +654,33 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
     Vector3 vmax(-1000, -1000, -1000);
     for (uint32_t i = 0; i < pInOutModel->GetObjectCount(); i++)
     {
-
-        BasicObject *pObj = pInOutModel->GetObjectByIdx(i);
-        if (pObj->GetType() == OBJECT_TYPE_CHARACTER)
+        MeshObject *pObj = pInOutModel->GetObjectByIdx(i);
+        if (pObj->IsSkinned())
         {
-            CharacterObject *pChar = (CharacterObject *)pObj;
-            SkinnedVertex   *pVertice = pChar->GetSkinnedVertices();
-            for (uint32_t vertexId = 0; vertexId < pChar->GetVertexCount(); vertexId++)
+            const SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+            for (uint32_t vertexId = 0; vertexId < pObj->GetVertexCount(); vertexId++)
             {
-                SkinnedVertex *v = pVertice + vertexId;
-                vmin.x = XMMin(vmin.x, v->position.x);
-                vmin.y = XMMin(vmin.y, v->position.y);
-                vmin.z = XMMin(vmin.z, v->position.z);
-                vmax.x = XMMax(vmax.x, v->position.x);
-                vmax.y = XMMax(vmax.y, v->position.y);
-                vmax.z = XMMax(vmax.z, v->position.z);
+                SkinnedVertex v = pVertice[vertexId];
+                vmin.x = XMMin(vmin.x, v.position.x);
+                vmin.y = XMMin(vmin.y, v.position.y);
+                vmin.z = XMMin(vmin.z, v.position.z);
+                vmax.x = XMMax(vmax.x, v.position.x);
+                vmax.y = XMMax(vmax.y, v.position.y);
+                vmax.z = XMMax(vmax.z, v.position.z);
             }
         }
         else
         {
-            MeshObject  *pMesh = (MeshObject *)pObj;
-            BasicVertex *pVertice = pMesh->GetBasicVertices();
-            for (uint32_t vertexId = 0; vertexId < pMesh->GetVertexCount(); vertexId++)
+            const BasicVertex *pVertice = pObj->GetBasicVertices();
+            for (uint32_t vertexId = 0; vertexId < pObj->GetVertexCount(); vertexId++)
             {
-                BasicVertex *v = pVertice + vertexId;
-                vmin.x = XMMin(vmin.x, v->position.x);
-                vmin.y = XMMin(vmin.y, v->position.y);
-                vmin.z = XMMin(vmin.z, v->position.z);
-                vmax.x = XMMax(vmax.x, v->position.x);
-                vmax.y = XMMax(vmax.y, v->position.y);
-                vmax.z = XMMax(vmax.z, v->position.z);
+                BasicVertex v = pVertice[vertexId];
+                vmin.x = XMMin(vmin.x, v.position.x);
+                vmin.y = XMMin(vmin.y, v.position.y);
+                vmin.z = XMMin(vmin.z, v.position.z);
+                vmax.x = XMMax(vmax.x, v.position.x);
+                vmax.y = XMMax(vmax.y, v.position.y);
+                vmax.z = XMMax(vmax.z, v.position.z);
             }
         }
     }
@@ -711,17 +691,16 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
 
     for (uint32_t i = 0; i < pInOutModel->GetObjectCount(); i++)
     {
-        BasicObject *pObj = pInOutModel->GetObjectByIdx(i);
-        if (pObj->GetType() == OBJECT_TYPE_CHARACTER)
+        MeshObject *pObj = pInOutModel->GetObjectByIdx(i);
+        if (pObj->IsSkinned())
         {
-            CharacterObject *pChar = (CharacterObject *)pObj;
-            SkinnedVertex   *pVertice = pChar->GetSkinnedVertices();
-            for (uint32_t vertexId = 0; vertexId < pChar->GetVertexCount(); vertexId++)
+            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+            for (uint32_t vertexId = 0; vertexId < pObj->GetVertexCount(); vertexId++)
             {
                 SkinnedVertex *v = pVertice + vertexId;
                 v->position = (v->position + translation) * scale;
             }
-            pChar->SetDefaultTransform(Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale));
+            // pChar->SetDefaultTransform(Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale));
         }
         else
         {

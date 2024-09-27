@@ -20,22 +20,19 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="CharacterObject.cpp">
-      <Filter>Model</Filter>
+    <ClCompile Include="GameUtils.cpp">
+      <Filter>GameUtils</Filter>
     </ClCompile>
-    <ClCompile Include="BasicObject.cpp">
-      <Filter>Model</Filter>
-    </ClCompile>
+    <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="MeshObject.cpp">
+      <Filter>Model</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseObject.cpp">
       <Filter>Model</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
       <Filter>Model</Filter>
     </ClCompile>
-    <ClCompile Include="GameUtils.cpp">
-      <Filter>GameUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="Sprite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -54,22 +51,20 @@
     <ClInclude Include="GameObject.h">
       <Filter>GameObject</Filter>
     </ClInclude>
-    <ClInclude Include="CharacterObject.h">
-      <Filter>Model</Filter>
+    <ClInclude Include="GameUtils.h">
+      <Filter>GameUtils</Filter>
     </ClInclude>
-    <ClInclude Include="BasicObject.h">
-      <Filter>Model</Filter>
-    </ClInclude>
+    <ClInclude Include="Sprite.h" />
     <ClInclude Include="MeshObject.h">
+      <Filter>Model</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseObject.h">
       <Filter>Model</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>Model</Filter>
     </ClInclude>
-    <ClInclude Include="GameUtils.h">
-      <Filter>GameUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="Sprite.h" />
+    <ClInclude Include="EngineTypedef.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

@@ -7,6 +7,8 @@
 #endif
 
 #include <combaseapi.h>
+#include "../RenderModule/RendererInterface.h"
+#include "EngineTypedef.h"
 
 enum PRIMITIVE_MODEL_TYPE
 {
@@ -21,12 +23,13 @@ interface IModel : public IUnknown
     virtual void ReadFile(FILE * fp) = 0;
 };
 
-//interface IMeshObject
-//{
-//    virtual void BeginCreateMesh(const void *pVertices, uint32_t numVertices, uint32_t numFaceGroup) = 0;
-//    virtual void InsertFaceGroup(const uint32_t *pIndices, uint32_t numIndices, int materialIdx) = 0;
-//    virtual void EndCreateMesh() = 0;
-//};
+interface IMeshObject
+{
+    virtual BOOL Initialize(MESH_TYPE meshType) = 0;
+    virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
+    virtual void InsertFaceGroup(const UINT *pIndices, UINT numIndices, int materialIdx) = 0;
+    virtual void EndCreateMesh() = 0;
+};
 
 //interface ICharacterObject
 //{
