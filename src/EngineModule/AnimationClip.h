@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EngineInterface.h"
 #include "GameUtils.h"
 #include "MathHeaders.h"
 
@@ -27,43 +28,33 @@ struct Keyframe
         return pData;
     }
 
-    static inline void Dealloc(Keyframe *pKeyframe)
-    {
-        free(pKeyframe);
-    }
+    static inline void Dealloc(Keyframe *pKeyframe) { free(pKeyframe); }
 
-    inline size_t GetSize()
-    {
-        return sizeof(Keyframe) + sizeof(Matrix) * Header.NumKeys;
-    }
+    inline size_t GetSize() { return sizeof(Keyframe) + sizeof(Matrix) * Header.NumKeys; }
 };
 
-class AnimationClip
+class AnimationClip : public IAnimationClip
 {
     size_t  m_Hash;
     wchar_t m_name[MAX_NAME];
 
     static const size_t MAX_KEY_COUNT = 86400;
 
-    uint32_t   ref_count = 0;
     uint32_t   m_curKeyframeCount = 0;
-    Keyframe **m_ppKeyframes = nullptr; // keyframe*[jointCount]
     uint32_t   m_jointCount = 0;
+    // keyframe*[jointCount]
+    Keyframe **m_ppKeyframes = nullptr;
+
+  public:
+    ULONG ref_count = 0;
+    void *m_pSearchHandleInGame = nullptr;
 
   private:
     void Cleanup();
 
   public:
-    uint32_t AddRef();
-    void     Release();
-    uint32_t GetRefCount()
-    {
-        return ref_count;
-    }
-    size_t GetHash() const
-    {
-        return m_Hash;
-    }
+    uint32_t GetRefCount() const { return ref_count; }
+    size_t   GetHash() const { return m_Hash; }
 
     void WriteFile(FILE *fp);
     void ReadFile(FILE *fp);
@@ -73,14 +64,19 @@ class AnimationClip
     void EndCreateAnim();
 
     Keyframe *GetKeyframeByIdx(int jointIdx);
-    Keyframe *GetKeyframeByName(const wchar_t *name);
+    Keyframe *GetKeyframeByName(const wchar_t *jointName);
 
     AnimationClip() = default;
     AnimationClip(const wchar_t *name)
     {
-        memset(m_name, 0, sizeof(m_name));
+        memset(m_name, L'\0', sizeof(m_name));
         wcscpy_s(m_name, name);
         m_Hash = GameUtils::CreateHash(m_name, (uint32_t)wcslen(m_name));
     }
     ~AnimationClip();
+
+    // Inherited via IAnimationClip
+    HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
+    ULONG __stdcall AddRef(void) override;
+    ULONG __stdcall Release(void) override;
 };

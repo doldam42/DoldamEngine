@@ -61,7 +61,7 @@ void Model::ReadFile(FILE *fp)
     m_ppMeshObjects = new MeshObject *[m_objectCount];
     m_pMaterials = new Material[m_materialCount];
 
-    fread(m_pMaterials, sizeof(Material), m_materialCount, fp);
+    fread(m_pMaterials, sizeof(Material), (size_t)m_materialCount, fp);
     for (int i = 0; i < m_objectCount; i++)
     {
         MeshObject *pMesh = new MeshObject;
@@ -75,7 +75,7 @@ void Model::WriteFile(FILE *fp)
     fwrite(&m_objectCount, sizeof(UINT), 1, fp);
     fwrite(&m_materialCount, sizeof(UINT), 1, fp);
 
-    fwrite(m_pMaterials, sizeof(Material), m_materialCount, fp);
+    fwrite(m_pMaterials, sizeof(Material), (size_t)m_materialCount, fp);
     for (int i = 0; i < m_objectCount; i++)
     {
         MeshObject *pMesh = m_ppMeshObjects[i];
@@ -95,7 +95,7 @@ void Model::Render(GameObject *pGameObj)
 void Model::SetBasePath(const WCHAR *basePath)
 {
     memset(m_basePath, L'\0', sizeof(m_basePath));
-    wcscpy_s(m_basePath, wcslen(basePath) + 1, basePath);
+    wcscpy_s(m_basePath, basePath);
 }
 
 HRESULT __stdcall Model::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }

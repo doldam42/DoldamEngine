@@ -43,6 +43,9 @@ class GameEngine : public IGameEngine
     SORT_LINK *m_pSpriteLinkHead = nullptr;
     SORT_LINK *m_pSpriteLinkTail = nullptr;
 
+    // Animation
+    HashTable *m_pAnimationHashTable = nullptr;
+
     ILightHandle *m_pLight = nullptr;
 
     UINT      m_commandListCount = 0;
@@ -86,6 +89,10 @@ class GameEngine : public IGameEngine
     ISprite *CreateDynamicSprite(UINT width, UINT height) override;
     void     DeleteSprite(ISprite *pSprite) override;
     void     DeleteAllSprite() override;
+
+    IAnimationClip *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
+    void            DeleteAnimation(IAnimationClip *pInAnim) override;
+    void            DeleteAllAnimation() override;
 
     void LoadResources();
 

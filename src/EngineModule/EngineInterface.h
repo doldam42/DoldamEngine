@@ -9,13 +9,7 @@
 #include <combaseapi.h>
 #include "EngineTypedef.h"
 
-class IRenderer;
-
-enum PRIMITIVE_MODEL_TYPE
-{
-    PRIMITIVE_MODEL_TYPE_SQUARE = 0,
-    PRIMITIVE_MODEL_TYPE_BOX,
-};
+interface IRenderer;
 
 interface IModel : public IUnknown
 {
@@ -31,13 +25,6 @@ interface IMeshObject
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numIndices, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
 };
-
-//interface ICharacterObject
-//{
-//    virtual void BeginCreateMesh(const void *pVertices, uint32_t numVertices, uint32_t numFaceGroup) = 0;
-//    virtual void InsertFaceGroup(const uint32_t *pIndices, uint32_t numIndices, int materialIdx) = 0;
-//    virtual void EndCreateMesh() = 0;
-//};
 
 interface IGameObject
 {
@@ -80,6 +67,8 @@ interface ISprite
     virtual void SetZ(float z) = 0;
 };
 
+interface IAnimationClip : public IUnknown {};
+
 interface IGameEngine
 {
     virtual BOOL Initialize(HWND hWnd) = 0;
@@ -108,6 +97,10 @@ interface IGameEngine
     virtual ISprite *CreateDynamicSprite(UINT width, UINT height) = 0;
     virtual void     DeleteSprite(ISprite * pSprite) = 0;
     virtual void     DeleteAllSprite() = 0;
+
+    virtual IAnimationClip *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual void            DeleteAnimation(IAnimationClip * pAnim) = 0;
+    virtual void            DeleteAllAnimation() = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };

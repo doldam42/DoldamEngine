@@ -62,6 +62,8 @@ void GameEngine::Cleanup()
 
     DeleteAllModel();
 
+    DeleteAllAnimation();
+
     if (m_pRenderer)
     {
         DeleteD3D12Renderer(m_pRenderer);
@@ -117,6 +119,9 @@ BOOL GameEngine::Initialize(HWND hWnd)
     m_pMainCamera->m_useFirstPersonView = true;
 
     m_hWnd = hWnd;
+
+    m_pAnimationHashTable = new HashTable();
+    m_pAnimationHashTable->Initialize(13, MAX_NAME, 128); // TODO: 최적의 버킷 개수 정하기
 
     LoadPrimitiveMeshes();
     LoadResources();
@@ -182,8 +187,6 @@ void GameEngine::Update(ULONGLONG curTick)
         pCur = pCur->pNext;
     }
 
-    
-
     LateUpdate(dt);
 }
 
@@ -226,13 +229,13 @@ void GameEngine::Render()
     }
 
     //// render dynamic texture sprite
-    //m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);
-    //m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 0, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
-    //                                 m_pDynamicTextureHandle);
+    // m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);
+    // m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 0, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
+    //                                  m_pDynamicTextureHandle);
 
     //// render dynamic texture as text
-    //m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 512 + 5, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
-    //                                 m_pTextTexHandle);
+    // m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 512 + 5, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
+    //                                  m_pTextTexHandle);
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 }
@@ -326,7 +329,7 @@ ISprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *fi
     return pSprite;
 }
 
-ISprite *GameEngine::CreateDynamicSprite(UINT width, UINT height) 
+ISprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
 {
     DynamicSprite *pSprite = new DynamicSprite;
     pSprite->Initialize(m_pRenderer, width, height);
@@ -334,14 +337,14 @@ ISprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
     return pSprite;
 }
 
-void GameEngine::DeleteSprite(ISprite *pSprite) 
+void GameEngine::DeleteSprite(ISprite *pSprite)
 {
     Sprite *pS = (Sprite *)pSprite;
     UnLinkFromLinkedList(&m_pSpriteLinkHead, &m_pSpriteLinkTail, &pS->m_LinkInGame);
     delete pS;
 }
 
-void GameEngine::DeleteAllSprite() 
+void GameEngine::DeleteAllSprite()
 {
     while (m_pSpriteLinkHead)
     {
@@ -350,7 +353,51 @@ void GameEngine::DeleteAllSprite()
     }
 }
 
+IAnimationClip *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
+{
+    AnimationClip *pClip = nullptr;
+    UINT keySize = wcslen(filename) * sizeof(WCHAR);
+
+    if (m_pAnimationHashTable->Select((void**)&pClip, 1, filename, keySize))
+    {
+        pClip->AddRef();
+    }
+    else
+    {
+        AnimationClip *pClip = GeometryGenerator::ReadAnimationFromFile(basePath, filename);
+
+        pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
+    }
+
+    return pClip;
+}
+
+void GameEngine::DeleteAnimation(IAnimationClip *pInAnim)
+{
+    AnimationClip *pAnim = dynamic_cast<AnimationClip *>(pInAnim);
+    if (!pAnim->ref_count)
+        __debugbreak;
+
+    LONG refCount = --pAnim->ref_count;
+    if (!refCount)
+    {
+        m_pAnimationHashTable->Delete(pAnim->m_pSearchHandleInGame);
+        pAnim->m_pSearchHandleInGame = nullptr;
+
+        delete pAnim;
+    }
+}
+
+void GameEngine::DeleteAllAnimation() 
+{
+    if (m_pAnimationHashTable)
+    {
+        m_pAnimationHashTable->DeleteAll();
+        delete m_pAnimationHashTable;
+        m_pAnimationHashTable = nullptr;
+    }
+}
+
 void GameEngine::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
 GameEngine::~GameEngine() { Cleanup(); }
-
