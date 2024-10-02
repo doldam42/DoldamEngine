@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pch">
+      <UniqueIdentifier>{0eca555c-94de-4601-9d12-f621ed93c78b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModelExporter">
+      <UniqueIdentifier>{9d7046e9-f0bb-43c9-89fc-a8042f789c0a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelExporterInterface.h" />
+    <ClInclude Include="FBXLoader.h" />
+    <ClInclude Include="AssimpLoader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ModelExporterInterface.cpp" />
+    <ClCompile Include="FBXLoader.cpp" />
+    <ClCompile Include="AssimpLoader.cpp" />
+  </ItemGroup>
+</Project>
