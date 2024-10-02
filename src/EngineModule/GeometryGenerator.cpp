@@ -591,8 +591,8 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
 {
     wchar_t wcsPath[MAX_PATH];
     char    path[MAX_PATH];
-    memset(wcsPath, 0, sizeof(wcsPath));
-    memset(path, 0, sizeof(path));
+    memset(wcsPath, L'\0', sizeof(wcsPath));
+    memset(path, L'\0', sizeof(path));
 
     wcscpy_s(wcsPath, basePath);
     wcscat_s(wcsPath, filename);
@@ -619,11 +619,13 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
 
 AnimationClip *GeometryGenerator::ReadAnimationFromFile(const wchar_t *basePath, const wchar_t *filename)
 {
-    wchar_t wcsPath[MAX_PATH] = {0};
-    char    path[MAX_PATH] = {0};
+    wchar_t wcsPath[MAX_PATH];
+    char    path[MAX_PATH];
+    memset(wcsPath, L'\0', sizeof(wcsPath));
+    memset(path, L'\0', sizeof(path));
 
-    wcsncpy_s(wcsPath, basePath, wcslen(basePath));
-    wcsncat_s(wcsPath, filename, wcslen(filename));
+    wcscpy_s(wcsPath, basePath);
+    wcscat_s(wcsPath, filename);
 
     GameUtils::ws2s(wcsPath, path);
 
@@ -640,6 +642,7 @@ AnimationClip *GeometryGenerator::ReadAnimationFromFile(const wchar_t *basePath,
     pAnim->ReadFile(fp);
     fclose(fp);
 
+    pAnim->ref_count = 1;
     return pAnim;
 }
 

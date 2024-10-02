@@ -9,6 +9,7 @@
 #include <combaseapi.h>
 #include "EngineTypedef.h"
 
+interface IRenderer;
 class IRenderer;
 struct Material;
 
@@ -68,6 +69,8 @@ interface ISprite
     virtual void SetZ(float z) = 0;
 };
 
+interface IAnimationClip : public IUnknown {};
+
 interface IGameEngine
 {
     virtual BOOL Initialize(HWND hWnd) = 0;
@@ -96,6 +99,10 @@ interface IGameEngine
     virtual ISprite *CreateDynamicSprite(UINT width, UINT height) = 0;
     virtual void     DeleteSprite(ISprite * pSprite) = 0;
     virtual void     DeleteAllSprite() = 0;
+
+    virtual IAnimationClip *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual void            DeleteAnimation(IAnimationClip * pAnim) = 0;
+    virtual void            DeleteAllAnimation() = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };
