@@ -6,14 +6,17 @@
 #define MODELEXPORTER_API __declspec(dllimport)
 #endif
 
+class IGameModel;
+class IGameAnimation;
 interface IModelExporter 
 { 
 	virtual BOOL Initialize(IGameEngine* pGame) = 0;
 
 	virtual BOOL Load(const WCHAR *basePath, const WCHAR *filename) = 0;
-    // virtual BOOL LoadAnimation(const WCHAR *filename) = 0;
+    virtual BOOL LoadAnimation(const WCHAR *filename) = 0;
 
-	virtual IModel *GetModel() = 0;
+	virtual IGameModel *GetModel() = 0;
+    virtual IGameAnimation *GetAnimation() = 0;
 };
 
 extern "C" MODELEXPORTER_API BOOL CreateFbxExporter(IModelExporter **ppOutExporter);

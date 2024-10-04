@@ -46,7 +46,6 @@ void GameObject::SetModel(IGameModel *pModel)
     }
 
     m_pModel = static_cast<Model *>(pModel);
-    m_pModel->AddRef();
 }
 
 void GameObject::SetPosition(float x, float y, float z)

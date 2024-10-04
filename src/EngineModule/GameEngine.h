@@ -30,7 +30,7 @@ class GameEngine : public IGameEngine
     InputManager *m_pInputManager = nullptr;
     Timer        *m_pTimer = nullptr;
     Timer        *m_pPerformanceTimer = nullptr;
-
+    
     // GameObjects
     SORT_LINK* m_pGameObjLinkHead = nullptr;
     SORT_LINK *m_pGameObjLinkTail = nullptr;
@@ -82,6 +82,7 @@ class GameEngine : public IGameEngine
 
     IGameModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) override;
     IGameModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) override;
+    IGameModel *CreateEmptyModel() override;
     void    DeleteModel(IGameModel *pModel) override;
     void    DeleteAllModel() override;
 
@@ -91,6 +92,7 @@ class GameEngine : public IGameEngine
     void     DeleteAllSprite() override;
 
     IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
+    IGameAnimation *CreateEmptyAnimation() override;
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 

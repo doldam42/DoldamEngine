@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "GameEngine.h"
 #include "GameObject.h"
 
 #include "Model.h"
@@ -23,25 +24,42 @@ void Model::Cleanup()
     }
 }
 
-void Model::Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount)
+void Model::Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount,
+                       Joint *pInJoint, int jointCount)
 {
     m_materialCount = materialCount;
     m_objectCount = objectCount;
+    m_jointCount = jointCount;
 
-    Material *pMaterials = new Material[materialCount];
-    for (UINT i = 0; i < materialCount; i++)
+    if (pInMaterial)
     {
-        pMaterials[i] = pInMaterial[i];
+        Material *pMaterials = new Material[materialCount];
+        for (UINT i = 0; i < materialCount; i++)
+        {
+            pMaterials[i] = pInMaterial[i];
+        }
+        m_pMaterials = pMaterials;
     }
 
-    MeshObject **ppObjs = new MeshObject *[objectCount];
-    for (UINT i = 0; i < objectCount; i++)
+    if (ppInObjs)
     {
-        ppObjs[i] = reinterpret_cast<MeshObject *>(ppInObjs[i]);
+        MeshObject **ppObjs = new MeshObject *[objectCount];
+        for (UINT i = 0; i < objectCount; i++)
+        {
+            ppObjs[i] = reinterpret_cast<MeshObject *>(ppInObjs[i]);
+        }
+        m_ppMeshObjects = ppObjs;
     }
 
-    m_pMaterials = pMaterials;
-    m_ppMeshObjects = ppObjs;
+    if (pInJoint)
+    {
+        Joint *pJoints = new Joint[jointCount];
+        for (UINT i = 0; i < jointCount; i++)
+        {
+            pJoints[i] = pInJoint[i];
+        }
+        m_pJoints = pJoints;
+    }
 }
 
 void Model::InitMeshHandles(IRenderer *pRenderer)
@@ -57,9 +75,11 @@ void Model::ReadFile(FILE *fp)
 {
     fread(&m_objectCount, sizeof(UINT), 1, fp);
     fread(&m_materialCount, sizeof(UINT), 1, fp);
+    fread(&m_jointCount, sizeof(UINT), 1, fp);
 
     m_ppMeshObjects = new MeshObject *[m_objectCount];
     m_pMaterials = new Material[m_materialCount];
+    m_pJoints = new Joint[m_jointCount];
 
     fread(m_pMaterials, sizeof(Material), (size_t)m_materialCount, fp);
     for (int i = 0; i < m_objectCount; i++)
@@ -68,12 +88,14 @@ void Model::ReadFile(FILE *fp)
         pMesh->ReadFile(fp);
         m_ppMeshObjects[i] = pMesh;
     }
+    fread(m_pJoints, sizeof(Joint), (size_t)m_jointCount, fp);
 }
 
 void Model::WriteFile(FILE *fp)
 {
     fwrite(&m_objectCount, sizeof(UINT), 1, fp);
     fwrite(&m_materialCount, sizeof(UINT), 1, fp);
+    fwrite(&m_jointCount, sizeof(UINT), 1, fp);
 
     fwrite(m_pMaterials, sizeof(Material), (size_t)m_materialCount, fp);
     for (int i = 0; i < m_objectCount; i++)
@@ -81,10 +103,11 @@ void Model::WriteFile(FILE *fp)
         MeshObject *pMesh = m_ppMeshObjects[i];
         pMesh->WriteFile(fp);
     }
+    fwrite(m_pJoints, sizeof(Joint), (size_t)m_jointCount, fp);
 }
 
-void Model::Render(GameObject *pGameObj) 
-{ 
+void Model::Render(GameObject *pGameObj)
+{
     const Matrix worldMat = pGameObj->GetWorldMatrix();
     for (UINT i = 0; i < m_objectCount; i++)
     {
@@ -115,8 +138,7 @@ ULONG __stdcall Model::Release(void)
     ULONG newRefCount = --ref_count;
     if (newRefCount == 0)
     {
-        delete this;
-        return 0;
+        g_pGame->DeleteModel(this);
     }
     return newRefCount;
 }

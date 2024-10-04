@@ -54,8 +54,13 @@ class MeshObject : public BaseObject, public IGameMesh
     inline BasicVertex   *GetBasicVertices() const { return m_pBasicVertices; }
     // if Basic return nullptr
     inline SkinnedVertex *GetSkinnedVertices() const { return m_pSkinnedVertices; }
-
     inline UINT GetVertexCount() const { return m_vertexCount; }
+
+    // IBaseObject에서 상속받음
+    inline void SetName(const WCHAR *name) override { BaseObject::SetName(name); }
+    inline void SetTransform(const Transform *pLocalTransform) override { BaseObject::SetTransform(pLocalTransform); }
+    inline void SetParentIndex(int parentIndex) override { BaseObject::SetParentIndex(parentIndex); }
+    inline void AddChildCount() override { BaseObject::AddChildCount(); }
 
     MeshObject() = default;
     MeshObject(const BaseObject &obj) : BaseObject(obj){};

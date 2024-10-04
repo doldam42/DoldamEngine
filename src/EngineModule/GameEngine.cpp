@@ -36,18 +36,12 @@ void GameEngine::DeletePrimitiveMeshes()
 {
     if (BoxMesh)
     {
-        if (BoxMesh->Release() != 0)
-        {
-            __debugbreak();
-        }
+        delete BoxMesh;
         BoxMesh = nullptr;
     }
     if (SquareMesh)
     {
-        if (SquareMesh->Release() != 0)
-        {
-            __debugbreak();
-        }
+        delete SquareMesh;
         SquareMesh = nullptr;
     }
 }
@@ -282,8 +276,10 @@ IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
     switch (type)
     {
     case PRIMITIVE_MODEL_TYPE_SQUARE:
+        SquareMesh->AddRef();
         return SquareMesh;
     case PRIMITIVE_MODEL_TYPE_BOX:
+        BoxMesh->AddRef();
         return BoxMesh;
     default:
         break;
@@ -295,6 +291,15 @@ IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
     pModel->InitMeshHandles(m_pRenderer);
+
+    LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
+    pModel->AddRef();
+    return pModel;
+}
+
+IGameModel *GameEngine::CreateEmptyModel()
+{
+    Model *pModel = new Model;
 
     LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
     pModel->AddRef();
@@ -356,15 +361,35 @@ void GameEngine::DeleteAllSprite()
 IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     AnimationClip *pClip = nullptr;
-    UINT keySize = wcslen(filename) * sizeof(WCHAR);
+    UINT           keySize = wcslen(filename) * sizeof(WCHAR);
 
-    if (m_pAnimationHashTable->Select((void**)&pClip, 1, filename, keySize))
+    if (m_pAnimationHashTable->Select((void **)&pClip, 1, filename, keySize))
     {
         pClip->AddRef();
     }
     else
     {
         AnimationClip *pClip = GeometryGenerator::ReadAnimationFromFile(basePath, filename);
+
+        pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
+    }
+
+    return pClip;
+}
+
+IGameAnimation *GameEngine::CreateEmptyAnimation()
+{
+    const WCHAR   *filename = L"EmptyAnimation";
+    AnimationClip *pClip = nullptr;
+    UINT           keySize = wcslen(filename) * sizeof(WCHAR);
+
+    if (m_pAnimationHashTable->Select((void **)&pClip, 1, filename, keySize))
+    {
+        pClip->AddRef();
+    }
+    else
+    {
+        AnimationClip *pClip = new AnimationClip;
 
         pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
     }
@@ -388,7 +413,7 @@ void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
     }
 }
 
-void GameEngine::DeleteAllAnimation() 
+void GameEngine::DeleteAllAnimation()
 {
     if (m_pAnimationHashTable)
     {

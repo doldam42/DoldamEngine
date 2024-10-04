@@ -35,7 +35,6 @@ struct Keyframe
 
 class AnimationClip : public IGameAnimation
 {
-    size_t  m_Hash;
     wchar_t m_name[MAX_NAME];
 
     static const size_t MAX_KEY_COUNT = 86400;
@@ -54,7 +53,6 @@ class AnimationClip : public IGameAnimation
 
   public:
     uint32_t GetRefCount() const { return ref_count; }
-    size_t   GetHash() const { return m_Hash; }
 
     void WriteFile(FILE *fp);
     void ReadFile(FILE *fp);
@@ -66,12 +64,14 @@ class AnimationClip : public IGameAnimation
     Keyframe *GetKeyframeByIdx(int jointIdx);
     Keyframe *GetKeyframeByName(const wchar_t *jointName);
 
+    // Setter
+    void SetName(const WCHAR *name) override;
+
     AnimationClip() = default;
     AnimationClip(const wchar_t *name)
     {
         memset(m_name, L'\0', sizeof(m_name));
         wcscpy_s(m_name, name);
-        m_Hash = GameUtils::CreateHash(m_name, (uint32_t)wcslen(m_name));
     }
     ~AnimationClip();
 

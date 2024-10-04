@@ -1,10 +1,17 @@
-#include "GeometryGenerator.h"
+#include <filesystem>
+
+#include "GameEngine.h"
 #include "AnimationClip.h"
 #include "GameUtils.h"
 #include "MeshObject.h"
 #include "Model.h"
 
+#include "GeometryGenerator.h"
+
 using namespace std;
+
+IModelExporter* GeometryGenerator::m_pFbxExporter = nullptr;
+IModelExporter* GeometryGenerator::m_pGltfExporter = nullptr;
 
 Model *GeometryGenerator::MakeSquare(const float scale)
 {
@@ -589,6 +596,8 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
 
 Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *filename)
 {
+    namespace fs = std::filesystem;
+
     wchar_t wcsPath[MAX_PATH];
     char    path[MAX_PATH];
     memset(wcsPath, L'\0', sizeof(wcsPath));
@@ -599,19 +608,39 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
 
     GameUtils::ws2s(wcsPath, path);
 
-    FILE *fp = nullptr;
-    fopen_s(&fp, path, "rb");
-    if (!fp)
+    fs::path p(path);
+    
+    FILE  *fp = nullptr;
+    Model *pModel = nullptr;
+    if (!fs::exists(p))
     {
-        __debugbreak();
-        return nullptr;
+        fs::path fbxExt(".fbx");
+        fs::path gltfExt(".gltf");
+        p.replace_extension(fbxExt);
+        if (fs::exists(p))
+        {
+            if (!m_pFbxExporter)
+            {
+                CreateFbxExporter(&m_pFbxExporter);
+                m_pFbxExporter->Initialize(g_pGame);
+            }
+            m_pFbxExporter->Load(p.parent_path().c_str(), p.filename().c_str());
+            fs::path p(basePath, filename);
+            pModel = (Model*)m_pFbxExporter->GetModel();
+
+            fopen_s(&fp, p.c_str(), "wb");
+        }
     }
-    Model *pModel = new Model;
+    else
+    {
+        pModel = new Model;
+        fopen_s(&fp, path, "rb");
+
+        pModel->ReadFile(fp);
+        fclose(fp);
+    }
+    
     pModel->SetBasePath(basePath);
-
-    pModel->ReadFile(fp);
-    fclose(fp);
-
     Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
 
     return pModel;

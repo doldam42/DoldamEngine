@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "GameEngine.h"
+#include "MeshObject.h"
 
 #include "EngineInterface.h"
 
@@ -26,4 +27,17 @@ ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine)
 #ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());
 #endif
+}
+
+ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh **ppOutMesh)
+{
+    MeshObject *pMesh = new MeshObject;
+    *ppOutMesh = pMesh;
+    return TRUE;
+}
+
+ENGINEMODULE_API void DeleteGameMesh(IGameMesh *pInMesh) 
+{
+    MeshObject *pMesh = (MeshObject *)pInMesh;
+    delete pMesh;
 }

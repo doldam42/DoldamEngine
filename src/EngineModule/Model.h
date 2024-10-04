@@ -19,9 +19,11 @@ class Model : public IGameModel
     // File I/O
     UINT m_objectCount;
     UINT m_materialCount;
+    UINT m_jointCount;
 
     Material    *m_pMaterials = nullptr;
     MeshObject **m_ppMeshObjects = nullptr;
+    Joint       *m_pJoints = nullptr;
 
   public:
     SORT_LINK m_LinkInGame;
@@ -30,7 +32,7 @@ class Model : public IGameModel
     void Cleanup();
 
   public:
-    void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount) override;
+    void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount, Joint* pInJoint = nullptr, int jointCount = 0) override;
     void InitMeshHandles(IRenderer *pRenderer);
 
     void ReadFile(FILE *fp);

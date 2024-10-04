@@ -49,6 +49,8 @@ BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
     result = CreateGameEngine(hWnd, &m_pGame);
+
+
     m_pRenderer = m_pGame->GetRenderer();
 
     LoadResources();

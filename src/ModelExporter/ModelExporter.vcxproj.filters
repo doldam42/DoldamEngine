@@ -15,6 +15,7 @@
     <ClInclude Include="ModelExporterInterface.h" />
     <ClInclude Include="FBXLoader.h" />
     <ClInclude Include="AssimpLoader.h" />
+    <ClInclude Include="GameUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -24,5 +25,6 @@
     <ClCompile Include="ModelExporterInterface.cpp" />
     <ClCompile Include="FBXLoader.cpp" />
     <ClCompile Include="AssimpLoader.cpp" />
+    <ClCompile Include="GameUtils.cpp" />
   </ItemGroup>
 </Project>

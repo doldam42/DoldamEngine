@@ -24,7 +24,8 @@ class BaseObject
 
     // Setter
     void SetName(const WCHAR *name);
-
+    inline void SetTransform(const Transform *pLocalTransform) { m_localTransform = *pLocalTransform; }
+    inline void SetParentIndex(int parentIndex) { m_parentIndex = parentIndex; }
     inline void AddChildCount() { m_childCount++; }
 
     BaseObject() = default;

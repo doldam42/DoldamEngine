@@ -11,7 +11,8 @@
 interface IRenderer;
 class IRenderer;
 struct Material;
-
+struct Joint;
+struct Transform;
 enum PRIMITIVE_MODEL_TYPE : UINT
 {
     PRIMITIVE_MODEL_TYPE_SQUARE = 0,
@@ -25,14 +26,26 @@ enum MESH_TYPE : UINT
     MESH_TYPE_SKINNED,
 };
 
-interface IGameModel : public IUnknown
+interface ISerializable
 {
-    virtual void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount) = 0;
     virtual void WriteFile(FILE * fp) = 0;
     virtual void ReadFile(FILE * fp) = 0;
 };
 
-interface IGameMesh
+interface IGameModel : public IUnknown, public ISerializable
+{
+    virtual void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount, Joint* pInJoints = nullptr, int jointCount = 0) = 0;
+};
+
+interface IBaseObject
+{
+    virtual void SetName(const WCHAR *name) = 0;
+    virtual void SetTransform(const Transform *pLocalTransform) = 0;
+    virtual void SetParentIndex(int parentIndex) = 0;
+    virtual void AddChildCount() = 0;
+};
+
+interface IGameMesh : public IBaseObject
 {
     virtual BOOL Initialize(MESH_TYPE meshType) = 0;
     virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
@@ -81,7 +94,13 @@ interface IGameSprite
     virtual void SetZ(float z) = 0;
 };
 
-interface IGameAnimation : public IUnknown{};
+interface IGameAnimation : public IUnknown, public ISerializable
+{
+    virtual void SetName(const WCHAR *name) = 0;
+    virtual void BeginCreateAnim(int jointCount) = 0;
+    virtual void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
+    virtual void EndCreateAnim() = 0;
+};
 
 interface IInputManager
 {
@@ -116,6 +135,7 @@ interface IGameEngine
 
     virtual IGameModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) = 0;
     virtual IGameModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual IGameModel *CreateEmptyModel() = 0;
     virtual void        DeleteModel(IGameModel * pModel) = 0;
     virtual void        DeleteAllModel() = 0;
 
@@ -126,6 +146,7 @@ interface IGameEngine
     virtual void         DeleteAllSprite() = 0;
 
     virtual IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual IGameAnimation *CreateEmptyAnimation() = 0;
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
@@ -135,3 +156,6 @@ interface IGameEngine
 
 extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine);
 extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine);
+
+extern "C" ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh** ppOutMesh);
+extern "C" ENGINEMODULE_API void DeleteGameMesh(IGameMesh* pInMesh);

@@ -98,6 +98,12 @@ Keyframe *AnimationClip::GetKeyframeByName(const wchar_t *jointName)
     return nullptr;
 }
 
+void AnimationClip::SetName(const WCHAR *name) 
+{
+    memset(m_name, L'\0', sizeof(m_name));
+    wcscpy_s(m_name, name);
+}
+
 AnimationClip::~AnimationClip() { Cleanup(); }
 
 HRESULT __stdcall AnimationClip::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
