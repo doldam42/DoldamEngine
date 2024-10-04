@@ -1,7 +1,7 @@
 #pragma once
 
 class GameEngine;
-class Sprite : public ISprite
+class Sprite : public IGameSprite
 {
   protected:
     IRenderSprite *m_pSprite = nullptr;

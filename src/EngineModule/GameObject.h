@@ -38,7 +38,7 @@ class GameObject : public IGameObject
     inline float   GetRotationZ() override { return m_transform.GetRotation().ToEuler().z; }
 
     // Setter
-    void SetModel(IModel *pModel) override;
+    void SetModel(IGameModel *pModel) override;
     void SetPosition(float x, float y, float z) override;
     void SetScale(float x, float y, float z) override;
     void SetScale(float s) override;

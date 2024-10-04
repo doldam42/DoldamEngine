@@ -52,7 +52,7 @@ void Camera::UpdateKeyboard(const float dt)
 {
     if (m_useFirstPersonView)
     {
-        InputManager *pInputManager = g_pGame->GetInputManager();
+        IInputManager *pInputManager = g_pGame->GetInputManager();
 
         float x = pInputManager->GetXAxis();
         float y = pInputManager->GetYAxis();
@@ -76,7 +76,7 @@ void Camera::UpdateMouse(float mouseNdcX, float mouseNdcY)
         // 얼마나 회전할지 계산
         m_yaw = mouseNdcX * XM_2PI;      // 좌우 360도
         m_pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
-
+        
         UpdateViewDir();
     }
 }

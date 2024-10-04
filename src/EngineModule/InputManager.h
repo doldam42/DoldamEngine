@@ -1,6 +1,6 @@
 #pragma once
 
-class InputManager
+class InputManager : public IInputManager
 {
     float m_cursorNdcX = 0;
     float m_cursorNdcY = 0;

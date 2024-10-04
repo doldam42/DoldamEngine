@@ -277,7 +277,7 @@ void GameEngine::DeleteAllGameObject()
     }
 }
 
-IModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
+IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
 {
     switch (type)
     {
@@ -291,7 +291,7 @@ IModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
     return nullptr;
 }
 
-IModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
     pModel->InitMeshHandles(m_pRenderer);
@@ -301,7 +301,7 @@ IModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *file
     return pModel;
 }
 
-void GameEngine::DeleteModel(IModel *pModel)
+void GameEngine::DeleteModel(IGameModel *pModel)
 {
     Model *pM = (Model *)pModel;
     UnLinkFromLinkedList(&m_pModelLinkHead, &m_pModelLinkTail, &pM->m_LinkInGame);
@@ -317,7 +317,7 @@ void GameEngine::DeleteAllModel()
     }
 }
 
-ISprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
+IGameSprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
 {
     WCHAR path[MAX_PATH] = {L'\0'};
     wcscpy_s(path, basePath);
@@ -329,7 +329,7 @@ ISprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *fi
     return pSprite;
 }
 
-ISprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
+IGameSprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
 {
     DynamicSprite *pSprite = new DynamicSprite;
     pSprite->Initialize(m_pRenderer, width, height);
@@ -337,7 +337,7 @@ ISprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
     return pSprite;
 }
 
-void GameEngine::DeleteSprite(ISprite *pSprite)
+void GameEngine::DeleteSprite(IGameSprite *pSprite)
 {
     Sprite *pS = (Sprite *)pSprite;
     UnLinkFromLinkedList(&m_pSpriteLinkHead, &m_pSpriteLinkTail, &pS->m_LinkInGame);
@@ -353,7 +353,7 @@ void GameEngine::DeleteAllSprite()
     }
 }
 
-IAnimationClip *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     AnimationClip *pClip = nullptr;
     UINT keySize = wcslen(filename) * sizeof(WCHAR);
@@ -372,7 +372,7 @@ IAnimationClip *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const
     return pClip;
 }
 
-void GameEngine::DeleteAnimation(IAnimationClip *pInAnim)
+void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
 {
     AnimationClip *pAnim = dynamic_cast<AnimationClip *>(pInAnim);
     if (!pAnim->ref_count)

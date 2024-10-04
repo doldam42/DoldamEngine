@@ -7,20 +7,32 @@
 #endif
 
 #include <combaseapi.h>
-#include "EngineTypedef.h"
 
 interface IRenderer;
 class IRenderer;
 struct Material;
 
-interface IModel : public IUnknown
+enum PRIMITIVE_MODEL_TYPE : UINT
+{
+    PRIMITIVE_MODEL_TYPE_SQUARE = 0,
+    PRIMITIVE_MODEL_TYPE_BOX,
+};
+
+enum MESH_TYPE : UINT
+{
+    MESH_TYPE_UNKNOWN = 0,
+    MESH_TYPE_DEFAULT,
+    MESH_TYPE_SKINNED,
+};
+
+interface IGameModel : public IUnknown
 {
     virtual void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount) = 0;
     virtual void WriteFile(FILE * fp) = 0;
     virtual void ReadFile(FILE * fp) = 0;
 };
 
-interface IMeshObject
+interface IGameMesh
 {
     virtual BOOL Initialize(MESH_TYPE meshType) = 0;
     virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
@@ -36,7 +48,7 @@ interface IGameObject
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
 
-    virtual void SetModel(IModel * pModel) = 0;
+    virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;
     virtual void SetScale(float x, float y, float z) = 0;
     virtual void SetScale(float s) = 0;
@@ -45,7 +57,7 @@ interface IGameObject
     virtual void SetRotationZ(float rotZ) = 0;
 };
 
-interface ISprite
+interface IGameSprite
 {
     virtual BOOL UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) = 0;
 
@@ -69,7 +81,19 @@ interface ISprite
     virtual void SetZ(float z) = 0;
 };
 
-interface IAnimationClip : public IUnknown {};
+interface IGameAnimation : public IUnknown{};
+
+interface IInputManager
+{
+    virtual float GetXAxis() const = 0;
+    virtual float GetYAxis() const = 0;
+    virtual float GetZAxis() const = 0;
+
+    virtual float GetCursorNDCX() const = 0;
+    virtual float GetCursorNDCY() const = 0;
+
+    virtual BOOL IsKeyPressed(UINT nChar) const = 0;
+};
 
 interface IGameEngine
 {
@@ -90,21 +114,23 @@ interface IGameEngine
     virtual void         DeleteGameObject(IGameObject * pGameObj) = 0;
     virtual void         DeleteAllGameObject() = 0;
 
-    virtual IModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) = 0;
-    virtual IModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
-    virtual void    DeleteModel(IModel * pModel) = 0;
-    virtual void    DeleteAllModel() = 0;
+    virtual IGameModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) = 0;
+    virtual IGameModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual void        DeleteModel(IGameModel * pModel) = 0;
+    virtual void        DeleteAllModel() = 0;
 
-    virtual ISprite *CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height) = 0;
-    virtual ISprite *CreateDynamicSprite(UINT width, UINT height) = 0;
-    virtual void     DeleteSprite(ISprite * pSprite) = 0;
-    virtual void     DeleteAllSprite() = 0;
+    virtual IGameSprite *CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width,
+                                              UINT height) = 0;
+    virtual IGameSprite *CreateDynamicSprite(UINT width, UINT height) = 0;
+    virtual void         DeleteSprite(IGameSprite * pSprite) = 0;
+    virtual void         DeleteAllSprite() = 0;
 
-    virtual IAnimationClip *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
-    virtual void            DeleteAnimation(IAnimationClip * pAnim) = 0;
+    virtual IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
+    virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
-    virtual IRenderer *GetRenderer() const = 0;
+    virtual IRenderer     *GetRenderer() const = 0;
+    virtual IInputManager *GetInputManager() const = 0;
 };
 
 extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine);

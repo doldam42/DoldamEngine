@@ -37,7 +37,7 @@ void GameObject::Render()
     }
 }
 
-void GameObject::SetModel(IModel *pModel)
+void GameObject::SetModel(IGameModel *pModel)
 {
     if (m_pModel)
     {

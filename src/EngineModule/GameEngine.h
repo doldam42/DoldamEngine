@@ -80,18 +80,18 @@ class GameEngine : public IGameEngine
     void         DeleteGameObject(IGameObject *pGameObj) override;
     void         DeleteAllGameObject() override;
 
-    IModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) override;
-    IModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) override;
-    void    DeleteModel(IModel *pModel) override;
+    IGameModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) override;
+    IGameModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) override;
+    void    DeleteModel(IGameModel *pModel) override;
     void    DeleteAllModel() override;
 
-    ISprite *CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height) override;
-    ISprite *CreateDynamicSprite(UINT width, UINT height) override;
-    void     DeleteSprite(ISprite *pSprite) override;
+    IGameSprite *CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height) override;
+    IGameSprite *CreateDynamicSprite(UINT width, UINT height) override;
+    void     DeleteSprite(IGameSprite *pSprite) override;
     void     DeleteAllSprite() override;
 
-    IAnimationClip *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
-    void            DeleteAnimation(IAnimationClip *pInAnim) override;
+    IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
+    void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 
     void LoadResources();
@@ -107,7 +107,7 @@ class GameEngine : public IGameEngine
     void ToggleCamera();
 
     inline IRenderer *GetRenderer() const { return m_pRenderer; }
-    inline InputManager *GetInputManager() const { return m_pInputManager; }
+    inline IInputManager *GetInputManager() const { return m_pInputManager; }
     inline Camera *GetCamera() const { return m_pMainCamera; }
     inline const BoundingFrustum &GetFrustum() { return m_pMainCamera->GetWorldSpaceFrustum(); }
     inline Timer *GetPerformanceTimer() const { return m_pPerformanceTimer; }

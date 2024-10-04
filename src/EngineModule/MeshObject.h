@@ -14,7 +14,7 @@ struct FaceGroup
     int   materialIndex = -1;
 };
 
-class MeshObject : public BaseObject, public IMeshObject
+class MeshObject : public BaseObject, public IGameMesh
 {
   private:
     MESH_TYPE m_meshType = MESH_TYPE_UNKNOWN;

@@ -22,9 +22,9 @@ class Client
     BYTE *m_pTextImage = nullptr;
     BYTE *m_pImage = nullptr;
 
-    ISprite *m_pStaticSprite = nullptr;
-    ISprite *m_pDynamicSprite = nullptr;
-    ISprite *m_pTextSprite = nullptr;
+    IGameSprite *m_pStaticSprite = nullptr;
+    IGameSprite *m_pDynamicSprite = nullptr;
+    IGameSprite *m_pTextSprite = nullptr;
 
     WCHAR m_text[260] = {0};
 

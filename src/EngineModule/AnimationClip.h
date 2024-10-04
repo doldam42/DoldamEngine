@@ -33,7 +33,7 @@ struct Keyframe
     inline size_t GetSize() { return sizeof(Keyframe) + sizeof(Matrix) * Header.NumKeys; }
 };
 
-class AnimationClip : public IAnimationClip
+class AnimationClip : public IGameAnimation
 {
     size_t  m_Hash;
     wchar_t m_name[MAX_NAME];

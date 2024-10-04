@@ -6,7 +6,7 @@
 #include "MeshObject.h"
 
 class GameObject;
-class Model : public IModel
+class Model : public IGameModel
 {
     static const UINT MAX_INSTANCE_COUNT = 256;
 

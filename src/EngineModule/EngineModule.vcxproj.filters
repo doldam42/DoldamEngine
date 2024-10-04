@@ -64,7 +64,6 @@
     <ClInclude Include="Model.h">
       <Filter>Model</Filter>
     </ClInclude>
-    <ClInclude Include="EngineTypedef.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">
