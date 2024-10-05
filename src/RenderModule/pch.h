@@ -26,8 +26,8 @@
 #include <dxgidebug.h>
 #include <dxcapi.h>
 
-#include "MathHeaders.h"
-#include "GenericHeaders.h"
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
 
 #include "D3DUtil.h"
 #endif //PCH_H

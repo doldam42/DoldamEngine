@@ -37,6 +37,7 @@ class FBXLoader : public IModelExporter
 
   public:
     wchar_t         m_basePath[MAX_PATH] = {0};
+    wchar_t         m_filename[MAX_NAME] = {0};
     IGameModel     *m_pModel = nullptr;
     IGameAnimation *m_pAnim = nullptr;
 
@@ -90,6 +91,9 @@ class FBXLoader : public IModelExporter
 
     IGameModel *GetModel() override;
     IGameAnimation *GetAnimation() override;
+
+    void ExportModel() override;
+    void ExportAnimation() override;
 
     FBXLoader() = default;
     ~FBXLoader();

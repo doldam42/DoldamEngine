@@ -607,38 +607,14 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
     wcscat_s(wcsPath, filename);
 
     GameUtils::ws2s(wcsPath, path);
-
-    fs::path p(path);
     
     FILE  *fp = nullptr;
     Model *pModel = nullptr;
-    if (!fs::exists(p))
-    {
-        fs::path fbxExt(".fbx");
-        fs::path gltfExt(".gltf");
-        p.replace_extension(fbxExt);
-        if (fs::exists(p))
-        {
-            if (!m_pFbxExporter)
-            {
-                CreateFbxExporter(&m_pFbxExporter);
-                m_pFbxExporter->Initialize(g_pGame);
-            }
-            m_pFbxExporter->Load(p.parent_path().c_str(), p.filename().c_str());
-            fs::path p(basePath, filename);
-            pModel = (Model*)m_pFbxExporter->GetModel();
+    pModel = new Model;
+    fopen_s(&fp, path, "rb");
 
-            fopen_s(&fp, p.c_str(), "wb");
-        }
-    }
-    else
-    {
-        pModel = new Model;
-        fopen_s(&fp, path, "rb");
-
-        pModel->ReadFile(fp);
-        fclose(fp);
-    }
+    pModel->ReadFile(fp);
+    fclose(fp);
     
     pModel->SetBasePath(basePath);
     Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);

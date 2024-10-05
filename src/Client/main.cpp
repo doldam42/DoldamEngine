@@ -10,6 +10,7 @@
 #pragma comment(lib, "MathModule.lib")
 #pragma comment(lib, "RenderModule.lib")
 #pragma comment(lib, "EngineModule.lib")
+#pragma comment(lib, "ModelExporter.lib")
 
 // Global Variables:
 

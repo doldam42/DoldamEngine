@@ -5,6 +5,7 @@ class Client
     IGameEngine *m_pGame = nullptr;
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
     IRenderer   *m_pRenderer = nullptr;
+    IModelExporter *m_pExporter = nullptr;
 
     // Timer
     UINT m_FPS = 0;

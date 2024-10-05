@@ -15,7 +15,7 @@ MODELEXPORTER_API BOOL CreateGltfExporter(IModelExporter **ppOutExporter) { retu
 
 MODELEXPORTER_API void DeleteModelExporter(IModelExporter *pExporter) 
 {
-    delete pExporter;
+    delete (FBXLoader*)pExporter;
 
 #ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());

@@ -127,6 +127,10 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>..\..\lib\Debug\;..\..\bin\Debug\;</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\..\lib\$(Configuration)\libfbxsdk.dll" "$(TargetDir)" /Y;
+copy "..\..\lib\$(Configuration)\assimp-vc143-mt.dll" "$(TargetDir)" /Y;</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -149,6 +153,10 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>..\..\lib\Debug\;..\..\bin\Release\;</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\..\lib\$(Configuration)\libfbxsdk.dll" "$(TargetDir)" /Y;
+copy "..\..\lib\$(Configuration)\assimp-vc143-mt.dll" "$(TargetDir)" /Y;</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AssimpLoader.h" />

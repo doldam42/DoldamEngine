@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../MathModule/MathHeaders.h"
+
 class GameObject;
 
 class Camera

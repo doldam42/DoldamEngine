@@ -7,6 +7,7 @@
 #endif
 
 #include <combaseapi.h>
+#include "../MathModule/MathHeaders.h"
 
 interface IRenderer;
 class IRenderer;

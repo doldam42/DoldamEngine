@@ -17,6 +17,9 @@ interface IModelExporter
 
 	virtual IGameModel *GetModel() = 0;
     virtual IGameAnimation *GetAnimation() = 0;
+
+	virtual void ExportModel() = 0;
+    virtual void ExportAnimation() = 0;
 };
 
 extern "C" MODELEXPORTER_API BOOL CreateFbxExporter(IModelExporter **ppOutExporter);

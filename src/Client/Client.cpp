@@ -37,7 +37,11 @@ void Client::Cleanup()
         m_pGame->DeleteSprite(m_pTextSprite);
         m_pTextSprite = nullptr;
     }
-
+    if (m_pExporter)
+    {
+        DeleteModelExporter(m_pExporter);
+        m_pExporter = nullptr;
+    }
     if (m_pGame)
     {
         DeleteGameEngine(m_pGame);
@@ -50,8 +54,9 @@ BOOL Client::Initialize(HWND hWnd)
     BOOL result = FALSE;
     result = CreateGameEngine(hWnd, &m_pGame);
 
-
     m_pRenderer = m_pGame->GetRenderer();
+    result = CreateFbxExporter(&m_pExporter);
+    m_pExporter->Initialize(m_pGame);
 
     LoadResources();
 

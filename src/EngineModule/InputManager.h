@@ -1,4 +1,5 @@
 #pragma once
+#include "EngineInterface.h"
 
 class InputManager : public IInputManager
 {

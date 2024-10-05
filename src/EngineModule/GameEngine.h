@@ -5,7 +5,10 @@
 #include "InputManager.h"
 #include "Timer.h"
 
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
 #include "../RenderModule/RendererInterface.h"
+
 #include "EngineInterface.h"
 
 class Model;

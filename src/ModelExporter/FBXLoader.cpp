@@ -184,6 +184,8 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};
 
+    ZeroMemory(m_filename, sizeof(m_filename));
+    wcscpy_s(m_filename, wcslen(filename) + 1, filename);
     wcsncpy_s(this->m_basePath, basePath, wcslen(basePath));
     wcsncpy_s(wcsPath, basePath, wcslen(basePath));
     wcsncat_s(wcsPath, filename, wcslen(filename));
@@ -262,6 +264,9 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
     }
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};
+
+    ZeroMemory(m_filename, sizeof(m_filename));
+    wcscpy_s(m_filename, wcslen(filename) + 1, filename);
 
     wcsncpy_s(wcsPath, m_basePath, wcslen(m_basePath));
     wcsncat_s(wcsPath, filename, wcslen(filename));
@@ -1255,6 +1260,70 @@ IGameAnimation *FBXLoader::GetAnimation()
 {
     m_pAnim->AddRef();
     return m_pAnim;
+}
+
+void FBXLoader::ExportAnimation() 
+{
+    if (m_pAnim)
+    {
+        wchar_t fullPath[MAX_PATH];
+        char    outPath[MAX_PATH];
+        ZeroMemory(fullPath, sizeof(fullPath));
+        ZeroMemory(outPath, sizeof(outPath));
+        wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
+        wcscat_s(fullPath, wcslen(m_filename), m_filename);
+
+        wchar_t *ptr = wcsstr(fullPath, L"fbx");
+        if (!ptr)
+        {
+            __debugbreak();
+            return;
+        }
+        wcscpy_s(ptr, wcslen(L"dca"), L"dca");
+        GameUtils::ws2s(fullPath, outPath);
+
+        FILE *fp = nullptr;
+        fopen_s(&fp, outPath, "wb");
+        if (!fp)
+        {
+            __debugbreak();
+            return;
+        }
+        m_pAnim->WriteFile(fp);
+        fclose(fp);
+    }
+}
+
+void FBXLoader::ExportModel() 
+{ 
+    if (m_pModel)
+    {
+        wchar_t fullPath[MAX_PATH];
+        char    outPath[MAX_PATH];
+        ZeroMemory(fullPath, sizeof(fullPath));
+        ZeroMemory(outPath, sizeof(outPath));
+        wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
+        wcscat_s(fullPath, wcslen(m_filename), m_filename);
+        
+        wchar_t *ptr = wcsstr(fullPath, L"fbx");
+        if (!ptr)
+        {
+            __debugbreak();
+            return;
+        }
+        wcscpy_s(ptr, wcslen(L"dom"), L"dom");
+        GameUtils::ws2s(fullPath, outPath);
+
+        FILE *fp = nullptr;
+        fopen_s(&fp, outPath, "wb");
+        if (!fp)
+        {
+            __debugbreak();
+            return;
+        }
+        m_pModel->WriteFile(fp);
+        fclose(fp);
+    }
 }
 
 FBXLoader::~FBXLoader() { Cleanup(); }
