@@ -92,7 +92,7 @@ void Client::LoadResources()
         m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);
+    pSponza->SetScale(1.f);
 
     // Create texture from draw Text
     m_textImageWidth = 712;

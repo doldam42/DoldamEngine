@@ -40,9 +40,9 @@ class AssimpLoader : public IModelExporter
 
     void CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices, const uint32_t *pIndices, UINT numTriangles);
 
-    void ProcessNode(aiNode *node, const aiScene *scene, Transform tr);
+    void ProcessNode(aiNode *node, const aiScene *scene, const Transform & tr);
 
-    void ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene, const Matrix& m);
+    void ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene);
 
     void        ProcessMaterials(const aiScene *scene);
     void        ProcessMaterialProperties(const aiMaterial *pInMaterial, Material *pOutMaterial);

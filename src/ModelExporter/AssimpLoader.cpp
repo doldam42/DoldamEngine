@@ -94,7 +94,7 @@ void AssimpLoader::CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVerti
 }
 
 
-void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, Transform tr)
+void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, const Transform& tr)
 {
     Matrix m(&node->mTransformation.a1);
     Transform tm(m.Transpose());
@@ -114,9 +114,9 @@ void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, Transform tr)
         WCHAR wcsName[MAX_NAME] = {L'\0'};
         GameUtils::s2ws(node->mName.C_Str(), wcsName);
         pObj->SetName(wcsName);
-        //pObj->SetTransform(&tm);
+        pObj->SetTransform(&tm);
 
-        ProcessMesh(mesh, pObj, scene, tm.GetMatrix());
+        ProcessMesh(mesh, pObj, scene);
 
         m_objects.push_back(pObj);
     }
@@ -128,7 +128,7 @@ void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, Transform tr)
 }
 
 // Mesh 하나에 FaceGroup 하나씩
-void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene, const Matrix &m)
+void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene)
 {
     UINT             numVertice = mesh->mNumVertices;
     BasicVertex     *pVertice = new BasicVertex[numVertice];
@@ -142,8 +142,6 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene 
         vertex.position.x = mesh->mVertices[i].x;
         vertex.position.y = mesh->mVertices[i].y;
         vertex.position.z = mesh->mVertices[i].z;
-
-        vertex.position = Vector3::Transform(vertex.position, m);
 
         vertex.normal.x = mesh->mNormals[i].x;
         if (m_isGLTF)
@@ -379,7 +377,7 @@ BOOL AssimpLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 
         ProcessMaterials(pScene);
 
-        Matrix tr; // Initial transformation
+        Transform tr; // Initial transformation
         ProcessNode(pScene->mRootNode, pScene, tr);
 
         m_pModel->Initialize(m_materials.data(), m_materials.size(), m_objects.data(),

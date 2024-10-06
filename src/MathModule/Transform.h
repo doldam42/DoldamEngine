@@ -10,26 +10,28 @@ struct Transform
         : Position(InPosition), Rotation(InRotation), Scale(InScale)
     {
     }
+
+    // DirectX ÁÂÇ¥°è
     Transform(const Matrix &InMatrix)
     {
-        Position = Vector3(InMatrix._14, InMatrix._24, InMatrix._34);
-
-        float sx = Vector3(InMatrix._11, InMatrix._21, InMatrix._31).Length();
-        float sy = Vector3(InMatrix._12, InMatrix._22, InMatrix._32).Length();
-        float sz = Vector3(InMatrix._13, InMatrix._23, InMatrix._33).Length();
+        Position = Vector3(InMatrix._41, InMatrix._42, InMatrix._43);
+        
+        float sx = Vector3(InMatrix._11, InMatrix._12, InMatrix._13).Length();
+        float sy = Vector3(InMatrix._21, InMatrix._22, InMatrix._23).Length();
+        float sz = Vector3(InMatrix._31, InMatrix._32, InMatrix._33).Length();
 
         Scale = Vector3(sx, sy, sz);
 
         Matrix rot = InMatrix;
-        rot._14 = rot._24 = rot._34 = 0;
+        rot._41 = rot._42 = rot._43 = 0;
         rot._11 /= sx;
-        rot._21 /= sx;
-        rot._31 /= sx;
-        rot._12 /= sy;
+        rot._12 /= sx;
+        rot._13 /= sx;
+        rot._21 /= sy;
         rot._22 /= sy;
-        rot._32 /= sy;
-        rot._13 /= sz;
-        rot._23 /= sz;
+        rot._23 /= sy;
+        rot._31 /= sz;
+        rot._32 /= sz;
         rot._33 /= sz;
 
         Rotation = Quaternion::CreateFromRotationMatrix(rot);

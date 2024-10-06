@@ -39,11 +39,13 @@ Matrix Transform::GetMatrix() const
 Transform Transform::LocalToWorld(const Transform &inParentWorldTransform) const
 {
     Transform result;
-    GetScale() * GetScale();
-
+    
     result.SetScale(inParentWorldTransform.GetScale() * GetScale());
+    
     result.SetRotation(inParentWorldTransform.GetRotation() * GetRotation());
-    Vector3 deltaPos = inParentWorldTransform.GetRotation() * (inParentWorldTransform.GetScale() * GetPosition());
+
+    Vector3 deltaPos =
+        Vector3::Transform(inParentWorldTransform.GetScale() * GetPosition(), inParentWorldTransform.GetRotation());
     result.SetPosition(inParentWorldTransform.GetPosition() + deltaPos);
 
     return result;
