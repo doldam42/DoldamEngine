@@ -6,6 +6,8 @@
 #include "MeshObject.h"
 #include "Model.h"
 
+#include "EngineInterface.h"
+
 #include "GeometryGenerator.h"
 
 using namespace std;
@@ -45,7 +47,7 @@ Model *GeometryGenerator::MakeSquare(const float scale)
 
     MeshObject *ppObjs[] = {pObj};
     Material    defaultMat = Material();
-    model->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
+    model->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
     model->AddRef();
     return model;
 }
@@ -199,7 +201,7 @@ Model *GeometryGenerator::MakeBox(const float scale)
 
     MeshObject *ppObjs[] = {pObj};
     Material    defaultMat = Material();
-    pModel->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
+    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh**>(ppObjs), 1);
     pModel->AddRef();
     return pModel;
 }
@@ -299,7 +301,7 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
 
     MeshObject *ppObjs[] = {pObj};
     Material    defaultMat = Material();
-    pModel->Initialize(&defaultMat, 1, reinterpret_cast<void **>(ppObjs), 1);
+    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
     pModel->AddRef();
     return pModel;
 }

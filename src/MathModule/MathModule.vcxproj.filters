@@ -1,17 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="SimpleMath">
-      <UniqueIdentifier>{8705beeb-c9b2-434c-a0c7-03602247596a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="pch">
       <UniqueIdentifier>{f7503ace-5b08-4961-993c-cbbeb40557f4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SimpleMath.h">
-      <Filter>SimpleMath</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
@@ -27,16 +21,9 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SimpleMath.cpp">
-      <Filter>SimpleMath</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="SimpleMath.inl">
-      <Filter>SimpleMath</Filter>
-    </None>
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
 </Project>

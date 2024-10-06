@@ -5,6 +5,8 @@
 
 #include "FBXLoader.h"
 
+namespace fs = std::filesystem;
+
 DWORD AddVertex(BasicVertex *pVertexList, DWORD dwMaxVertexCount, DWORD *pdwInOutVertexCount,
                 const BasicVertex *pVertex)
 {
@@ -174,7 +176,7 @@ BOOL FBXLoader::Initialize(IGameEngine *pGame)
 
     m_pGeoConverter = new FbxGeometryConverter(m_pManager);
 
-    m_pModel = pGame->CreateEmptyModel();
+    m_pGame = pGame;
 
     return true;
 }
@@ -211,6 +213,13 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
         return FALSE;
     }
 
+    if (m_pModel)
+    {
+        m_pModel->Release();
+        m_pModel = nullptr;
+    }
+    m_pModel = m_pGame->CreateEmptyModel();
+
     FbxAxisSystem::DirectX.DeepConvertScene(m_pScene);
     m_pGeoConverter->Triangulate(m_pScene, true);
 
@@ -228,13 +237,12 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 
     if (m_isSkinned)
     {
-        m_pModel->Initialize(m_materials.data(), m_materials.size(), reinterpret_cast<void **>(m_objects.data()),
-                             m_objects.size(), m_joints.data(), m_joints.size());
+        m_pModel->Initialize(m_materials.data(), m_materials.size(), m_objects.data(), m_objects.size(),
+                             m_joints.data(), m_joints.size());
     }
     else
     {
-        m_pModel->Initialize(m_materials.data(), m_materials.size(), reinterpret_cast<void **>(m_objects.data()),
-                             m_objects.size());
+        m_pModel->Initialize(m_materials.data(), m_materials.size(), m_objects.data(), m_objects.size());
     }
 
     fbxImporter->Destroy();
@@ -262,9 +270,16 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
         __debugbreak();
         return FALSE;
     }
+
+    if (m_pAnim)
+    {
+        m_pAnim->Release();
+        m_pAnim = nullptr;
+    }
+    m_pAnim = m_pGame->CreateEmptyAnimation();
+
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};
-
     ZeroMemory(m_filename, sizeof(m_filename));
     wcscpy_s(m_filename, wcslen(filename) + 1, filename);
 
@@ -410,6 +425,15 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             {
                 __debugbreak();
             }
+            if (!inNode->GetMesh()->GetDeformerCount())
+            {
+                pObj->Initialize(MESH_TYPE_DEFAULT);
+            }
+            else
+            {
+                pObj->Initialize(MESH_TYPE_SKINNED);
+            }
+
             pObj->SetParentIndex(inParentIndex);
             Transform TM(ToVector3(inNode->LclTranslation.Get()),
                          Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())),
@@ -428,14 +452,6 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             ProcessCtrlPoints(inNode);
             ProcessJoints(inNode);
 
-            if (!inNode->GetMesh()->GetDeformerCount())
-            {
-                pObj->Initialize(MESH_TYPE_DEFAULT);
-            }
-            else
-            {
-                pObj->Initialize(MESH_TYPE_SKINNED);
-            }
             ProcessMesh(inNode, pObj);
             m_objects.push_back(pObj);
         }
@@ -860,7 +876,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         GameUtils::s2ws(inNode->GetMaterial(i)->GetName(), tmpName);
         int materialIndex = FindMaterialIndexUsingName(tmpName);
 
-        pOutMesh->InsertFaceGroup(pIndice, pIndiceCounter[i], materialIndex);
+        pOutMesh->InsertFaceGroup(pIndice, pIndiceCounter[i] / 3, materialIndex);
     }
 
     if (pWorkingIndicesList)
@@ -1262,7 +1278,7 @@ IGameAnimation *FBXLoader::GetAnimation()
     return m_pAnim;
 }
 
-void FBXLoader::ExportAnimation() 
+void FBXLoader::ExportAnimation()
 {
     if (m_pAnim)
     {
@@ -1273,14 +1289,9 @@ void FBXLoader::ExportAnimation()
         wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
         wcscat_s(fullPath, wcslen(m_filename), m_filename);
 
-        wchar_t *ptr = wcsstr(fullPath, L"fbx");
-        if (!ptr)
-        {
-            __debugbreak();
-            return;
-        }
-        wcscpy_s(ptr, wcslen(L"dca"), L"dca");
-        GameUtils::ws2s(fullPath, outPath);
+        fs::path p(fullPath);
+        p.replace_extension("dca");
+        GameUtils::ws2s(p.c_str(), outPath);
 
         FILE *fp = nullptr;
         fopen_s(&fp, outPath, "wb");
@@ -1294,8 +1305,8 @@ void FBXLoader::ExportAnimation()
     }
 }
 
-void FBXLoader::ExportModel() 
-{ 
+void FBXLoader::ExportModel()
+{
     if (m_pModel)
     {
         wchar_t fullPath[MAX_PATH];
@@ -1304,15 +1315,10 @@ void FBXLoader::ExportModel()
         ZeroMemory(outPath, sizeof(outPath));
         wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
         wcscat_s(fullPath, wcslen(m_filename), m_filename);
-        
-        wchar_t *ptr = wcsstr(fullPath, L"fbx");
-        if (!ptr)
-        {
-            __debugbreak();
-            return;
-        }
-        wcscpy_s(ptr, wcslen(L"dom"), L"dom");
-        GameUtils::ws2s(fullPath, outPath);
+
+        fs::path p(fullPath);
+        p.replace_extension("dom");
+        GameUtils::ws2s(p.c_str(), outPath);
 
         FILE *fp = nullptr;
         fopen_s(&fp, outPath, "wb");

@@ -24,7 +24,7 @@ void Model::Cleanup()
     }
 }
 
-void Model::Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount,
+void Model::Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                        Joint *pInJoint, int jointCount)
 {
     m_materialCount = materialCount;
@@ -46,7 +46,7 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, void **pp
         MeshObject **ppObjs = new MeshObject *[objectCount];
         for (UINT i = 0; i < objectCount; i++)
         {
-            ppObjs[i] = reinterpret_cast<MeshObject *>(ppInObjs[i]);
+            ppObjs[i] = dynamic_cast<MeshObject*>(ppInObjs[i]);
         }
         m_ppMeshObjects = ppObjs;
     }

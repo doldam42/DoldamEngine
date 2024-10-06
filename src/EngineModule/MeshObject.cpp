@@ -135,9 +135,11 @@ void MeshObject::ReadFile(FILE *fp)
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
-        fread(&pFace->pIndices, sizeof(UINT), pFace->numTriangles * 3, fp);
         fread(&pFace->numTriangles, sizeof(UINT), 1, fp);
         fread(&pFace->materialIndex, sizeof(int), 1, fp);
+
+        pFace->pIndices = new UINT[pFace->numTriangles * 3];
+        fread(pFace->pIndices, sizeof(UINT), pFace->numTriangles * 3, fp);
     }
 }
 
@@ -161,18 +163,21 @@ void MeshObject::WriteFile(FILE *fp)
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
-        fwrite(&pFace->pIndices, sizeof(UINT), pFace->numTriangles * 3, fp);
+
         fwrite(&pFace->numTriangles, sizeof(UINT), 1, fp);
         fwrite(&pFace->materialIndex, sizeof(int), 1, fp);
+
+        fwrite(pFace->pIndices, sizeof(UINT), pFace->numTriangles * 3, fp);
     }
 }
 
 void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat) 
 {
+    Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObject(m_pMeshHandle, pWorldMat);
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix);
         return;
     case MESH_TYPE_SKINNED:
     case MESH_TYPE_UNKNOWN:

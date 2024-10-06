@@ -31,14 +31,14 @@ inline BoundCheckResult Frustum::CheckBound(const Vector3 &inPoint) const
 {
     for (const auto &p : Planes)
     {
-        if (p.IsOutside(inPoint))
+       /* if (p.IsOutside(inPoint))
         {
             return BoundCheckResult::Outside;
         }
         else if (p.Distance(inPoint) <= 1e-8f)
         {
             return BoundCheckResult::Intersect;
-        }
+        }*/
     }
 
     return BoundCheckResult::Inside;
@@ -47,14 +47,14 @@ inline BoundCheckResult Frustum::CheckBound(const Sphere &inSphere) const
 {
     for (const auto &p : Planes)
     {
-        if (p.Distance(inSphere.Center) > inSphere.Radius)
+        /*if (p.Distance(inSphere.Center) > inSphere.Radius)
         {
             return BoundCheckResult::Outside;
         }
         else if (abs(p.Distance(inSphere.Center)) <= inSphere.Radius)
         {
             return BoundCheckResult::Intersect;
-        }
+        }*/
     }
 
     return BoundCheckResult::Inside;
@@ -80,14 +80,14 @@ inline BoundCheckResult Frustum::CheckBound(const Box &inBox) const
             nPoint.z = inBox.Min.z;
         }
 
-        if (p.Distance(nPoint) > 0.f)
+        /*if (p.Distance(nPoint) > 0.f)
         {
             return BoundCheckResult::Outside;
         }
         if (p.Distance(nPoint) <= 0.f && p.Distance(pPoint) >= 0.f)
         {
             return BoundCheckResult::Intersect;
-        }
+        }*/
     }
 
     return BoundCheckResult::Inside;

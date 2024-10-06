@@ -10,8 +10,7 @@
 #include <vector>
 
 #include <DirectXMath.h>
-
-#include "SimpleMath.h"
+#include <DirectXTK/SimpleMath.h>
 
 #include "framework.h"
 

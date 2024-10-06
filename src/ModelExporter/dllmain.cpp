@@ -1,6 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
+#pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "assimp-vc143-mt.lib")
 #pragma comment(lib, "libfbxsdk.lib")
 

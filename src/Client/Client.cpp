@@ -1,9 +1,13 @@
 #include "pch.h"
 
+#include <filesystem>
+
 #include "../EngineModule/EngineInterface.h"
 #include "../RenderModule/RendererInterface.h"
 
 #include "Client.h"
+
+namespace fs = std::filesystem;
 
 void Client::Cleanup()
 {
@@ -37,10 +41,15 @@ void Client::Cleanup()
         m_pGame->DeleteSprite(m_pTextSprite);
         m_pTextSprite = nullptr;
     }
-    if (m_pExporter)
+    if (m_pFbxExporter)
     {
-        DeleteModelExporter(m_pExporter);
-        m_pExporter = nullptr;
+        DeleteFbxExporter(m_pFbxExporter);
+        m_pFbxExporter = nullptr;
+    }
+    if (m_pAssimpExporter)
+    {
+        DeleteAssimpExporter(m_pAssimpExporter);
+        m_pAssimpExporter = nullptr;
     }
     if (m_pGame)
     {
@@ -55,8 +64,10 @@ BOOL Client::Initialize(HWND hWnd)
     result = CreateGameEngine(hWnd, &m_pGame);
 
     m_pRenderer = m_pGame->GetRenderer();
-    result = CreateFbxExporter(&m_pExporter);
-    m_pExporter->Initialize(m_pGame);
+    result = CreateFbxExporter(&m_pFbxExporter);
+    result = CreateAssimpExporter(&m_pAssimpExporter);
+    m_pFbxExporter->Initialize(m_pGame);
+    m_pAssimpExporter->Initialize(m_pGame);
 
     LoadResources();
 
@@ -71,10 +82,17 @@ void Client::LoadResources()
     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
     pBox->SetScale(2.0f);
 
-    /*IModel *pSponzaModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
+    fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
+    if (!fs::exists(p))
+    {
+        m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
+        m_pAssimpExporter->ExportModel();
+    }
+    IGameModel *pSponzaModel =
+        m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);*/
+    pSponza->SetScale(30.f);
 
     // Create texture from draw Text
     m_textImageWidth = 712;

@@ -6,8 +6,10 @@
 #define MODELEXPORTER_API __declspec(dllimport)
 #endif
 
-class IGameModel;
-class IGameAnimation;
+#include <combaseapi.h>
+
+interface IGameModel;
+interface IGameAnimation;
 interface IModelExporter 
 { 
 	virtual BOOL Initialize(IGameEngine* pGame) = 0;
@@ -24,6 +26,8 @@ interface IModelExporter
 
 extern "C" MODELEXPORTER_API BOOL CreateFbxExporter(IModelExporter **ppOutExporter);
 
-extern "C" MODELEXPORTER_API BOOL CreateGltfExporter(IModelExporter **ppOutExporter);
+extern "C" MODELEXPORTER_API BOOL CreateAssimpExporter(IModelExporter **ppOutExporter);
 
-extern "C" MODELEXPORTER_API void DeleteModelExporter(IModelExporter *pExporter);
+extern "C" MODELEXPORTER_API void DeleteFbxExporter(IModelExporter *pExporter);
+
+extern "C" MODELEXPORTER_API void DeleteAssimpExporter(IModelExporter *pExporter);

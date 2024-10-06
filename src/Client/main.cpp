@@ -6,6 +6,7 @@
 
 #define MAX_LOADSTRING 100
 
+#pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
 #pragma comment(lib, "RenderModule.lib")

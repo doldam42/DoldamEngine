@@ -32,7 +32,8 @@ class Model : public IGameModel
     void Cleanup();
 
   public:
-    void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount, Joint* pInJoint = nullptr, int jointCount = 0) override;
+    void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
+                    Joint *pInJoint = nullptr, int jointCount = 0) override;
     void InitMeshHandles(IRenderer *pRenderer);
 
     void ReadFile(FILE *fp);

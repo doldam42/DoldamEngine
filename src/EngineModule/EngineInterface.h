@@ -33,11 +33,6 @@ interface ISerializable
     virtual void ReadFile(FILE * fp) = 0;
 };
 
-interface IGameModel : public IUnknown, public ISerializable
-{
-    virtual void Initialize(const Material *pInMaterial, int materialCount, void **ppInObjs, int objectCount, Joint* pInJoints = nullptr, int jointCount = 0) = 0;
-};
-
 interface IBaseObject
 {
     virtual void SetName(const WCHAR *name) = 0;
@@ -50,8 +45,13 @@ interface IGameMesh : public IBaseObject
 {
     virtual BOOL Initialize(MESH_TYPE meshType) = 0;
     virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
-    virtual void InsertFaceGroup(const UINT *pIndices, UINT numIndices, int materialIdx) = 0;
+    virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
+};
+
+interface IGameModel : public IUnknown, public ISerializable
+{
+    virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount, Joint* pInJoints = nullptr, int jointCount = 0) = 0;
 };
 
 interface IGameObject

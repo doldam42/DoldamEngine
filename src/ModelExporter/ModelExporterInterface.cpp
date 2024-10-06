@@ -1,23 +1,27 @@
 #include "pch.h"
 
+#include "AssimpLoader.h"
 #include "FBXLoader.h"
 
 #include "ModelExporterInterface.h"
 
-MODELEXPORTER_API BOOL CreateFbxExporter(IModelExporter **ppOutExporter) 
-{ 
+MODELEXPORTER_API BOOL CreateFbxExporter(IModelExporter **ppOutExporter)
+{
     FBXLoader *pLoader = new FBXLoader;
     *ppOutExporter = pLoader;
     return TRUE;
 }
 
-MODELEXPORTER_API BOOL CreateGltfExporter(IModelExporter **ppOutExporter) { return FALSE; }
-
-MODELEXPORTER_API void DeleteModelExporter(IModelExporter *pExporter) 
+MODELEXPORTER_API BOOL CreateAssimpExporter(IModelExporter **ppOutExporter)
 {
-    delete (FBXLoader*)pExporter;
+    AssimpLoader *pLoader = new AssimpLoader;
+    *ppOutExporter = pLoader;
+    return TRUE;
+}
 
-#ifdef _DEBUG
-    _ASSERT(_CrtCheckMemory());
-#endif
+MODELEXPORTER_API void DeleteFbxExporter(IModelExporter *pExporter) { delete dynamic_cast<FBXLoader *>(pExporter); }
+
+MODELEXPORTER_API void DeleteAssimpExporter(IModelExporter *pExporter)
+{
+    delete dynamic_cast<AssimpLoader *>(pExporter);
 }
