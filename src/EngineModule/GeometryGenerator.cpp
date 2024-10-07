@@ -1,7 +1,7 @@
 #include <filesystem>
 
-#include "GameEngine.h"
 #include "AnimationClip.h"
+#include "GameEngine.h"
 #include "GameUtils.h"
 #include "MeshObject.h"
 #include "Model.h"
@@ -12,8 +12,8 @@
 
 using namespace std;
 
-IModelExporter* GeometryGenerator::m_pFbxExporter = nullptr;
-IModelExporter* GeometryGenerator::m_pGltfExporter = nullptr;
+IModelExporter *GeometryGenerator::m_pFbxExporter = nullptr;
+IModelExporter *GeometryGenerator::m_pGltfExporter = nullptr;
 
 Model *GeometryGenerator::MakeSquare(const float scale)
 {
@@ -201,7 +201,7 @@ Model *GeometryGenerator::MakeBox(const float scale)
 
     MeshObject *ppObjs[] = {pObj};
     Material    defaultMat = Material();
-    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh**>(ppObjs), 1);
+    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
     pModel->AddRef();
     return pModel;
 }
@@ -609,17 +609,23 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
     wcscat_s(wcsPath, filename);
 
     GameUtils::ws2s(wcsPath, path);
-    
-    FILE  *fp = nullptr;
-    Model *pModel = nullptr;
-    pModel = new Model;
-    fopen_s(&fp, path, "rb");
 
+    FILE *fp = nullptr;
+    fopen_s(&fp, path, "rb");
+    if (!fp)
+    {
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        return nullptr;
+    }
+
+    Model *pModel = new Model;
     pModel->ReadFile(fp);
     fclose(fp);
-    
+
     pModel->SetBasePath(basePath);
-    // Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
+    Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
 
     return pModel;
 }
@@ -702,6 +708,10 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
     for (uint32_t i = 0; i < pInOutModel->GetObjectCount(); i++)
     {
         MeshObject *pObj = pInOutModel->GetObjectByIdx(i);
+        Transform   tm = *pObj->GetLocalTransform();
+        tm.SetPosition((tm.GetPosition() + translation) * scale);
+        pObj->SetTransform(&tm);
+
         if (pObj->IsSkinned())
         {
             SkinnedVertex *pVertice = pObj->GetSkinnedVertices();

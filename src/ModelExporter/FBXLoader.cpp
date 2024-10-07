@@ -431,16 +431,19 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             }
             else
             {
+                ProcessCtrlPoints(inNode);
+                ProcessJoints(inNode);
+
                 pObj->Initialize(MESH_TYPE_SKINNED);
             }
 
             pObj->SetParentIndex(inParentIndex);
-            Transform TM(ToVector3(inNode->LclTranslation.Get()),
+            Transform tm(ToVector3(inNode->LclTranslation.Get()),
                          Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())),
                          ToVector3(inNode->LclScaling.Get()));
-            pObj->SetTransform(&TM);
+            pObj->SetTransform(&tm);
 
-            WCHAR wcsName[MAX_NAME];
+            WCHAR wcsName[MAX_NAME] = {L'\0'};
             GameUtils::s2ws(inNode->GetName(), wcsName);
             pObj->SetName(wcsName);
 
@@ -448,9 +451,6 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             {
                 m_objects[inParentIndex]->AddChildCount();
             }
-
-            ProcessCtrlPoints(inNode);
-            ProcessJoints(inNode);
 
             ProcessMesh(inNode, pObj);
             m_objects.push_back(pObj);
@@ -866,7 +866,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         pOutMesh->BeginCreateMesh(pVertice, basicVertexCount, numFaces);
     }
 
-    WCHAR tmpName[MAX_NAME];
+    WCHAR tmpName[MAX_NAME] = {L'\0'};
     for (UINT i = 0; i < numFaces; i++)
     {
         memset(tmpName, 0, sizeof(tmpName));
@@ -968,7 +968,7 @@ void FBXLoader::ProcessJoints(FbxNode *inNode)
 
 void FBXLoader::ProcessJointAnimation(FbxNode *inNode)
 {
-    WCHAR jointName[MAX_NAME] = {0};
+    WCHAR jointName[MAX_NAME] = {L'\0'};
     GameUtils::s2ws(inNode->GetName(), jointName);
     if (FindJointIndexUsingName(jointName) == -1)
     {
@@ -1282,10 +1282,8 @@ void FBXLoader::ExportAnimation()
 {
     if (m_pAnim)
     {
-        wchar_t fullPath[MAX_PATH];
-        char    outPath[MAX_PATH];
-        ZeroMemory(fullPath, sizeof(fullPath));
-        ZeroMemory(outPath, sizeof(outPath));
+        wchar_t fullPath[MAX_PATH] = {L'\0'};
+        char    outPath[MAX_PATH] = {L'\0'};
         wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
         wcscat_s(fullPath, wcslen(m_filename), m_filename);
 
@@ -1309,10 +1307,8 @@ void FBXLoader::ExportModel()
 {
     if (m_pModel)
     {
-        wchar_t fullPath[MAX_PATH];
-        char    outPath[MAX_PATH];
-        ZeroMemory(fullPath, sizeof(fullPath));
-        ZeroMemory(outPath, sizeof(outPath));
+        wchar_t fullPath[MAX_PATH] = {L'\0'};
+        char    outPath[MAX_PATH] = {L'\0'};
         wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
         wcscat_s(fullPath, wcslen(m_filename), m_filename);
 
