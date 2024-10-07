@@ -68,11 +68,7 @@ class AnimationClip : public IGameAnimation
     void SetName(const WCHAR *name) override;
 
     AnimationClip() = default;
-    AnimationClip(const wchar_t *name)
-    {
-        memset(m_name, L'\0', sizeof(m_name));
-        wcscpy_s(m_name, name);
-    }
+    AnimationClip(const WCHAR *name) { SetName(name); }
     ~AnimationClip();
 
     // Inherited via IAnimationClip

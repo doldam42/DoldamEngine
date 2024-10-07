@@ -12,6 +12,11 @@ void Model::Cleanup()
         delete[] m_pMaterials;
         m_pMaterials = nullptr;
     }
+    if (m_pJoints)
+    {
+        delete[] m_pJoints;
+        m_pJoints = nullptr;
+    }
     if (m_ppMeshObjects)
     {
         for (UINT i = 0; i < m_objectCount; i++)

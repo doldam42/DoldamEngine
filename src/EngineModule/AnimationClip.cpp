@@ -100,7 +100,7 @@ Keyframe *AnimationClip::GetKeyframeByName(const wchar_t *jointName)
 
 void AnimationClip::SetName(const WCHAR *name) 
 {
-    memset(m_name, L'\0', sizeof(m_name));
+    ZeroMemory(m_name, sizeof(m_name));
     wcscpy_s(m_name, name);
 }
 
