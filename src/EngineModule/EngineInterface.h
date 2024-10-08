@@ -6,8 +6,8 @@
 #define ENGINEMODULE_API __declspec(dllimport)
 #endif
 
-#include <combaseapi.h>
 #include "../MathModule/MathHeaders.h"
+#include <combaseapi.h>
 
 interface IRenderer;
 class IRenderer;
@@ -51,7 +51,8 @@ interface IGameMesh : public IBaseObject
 
 interface IGameModel : public IUnknown, public ISerializable
 {
-    virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount, Joint* pInJoints = nullptr, int jointCount = 0) = 0;
+    virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
+                            Joint *pInJoints = nullptr, int jointCount = 0) = 0;
 };
 
 interface IGameObject
@@ -69,6 +70,19 @@ interface IGameObject
     virtual void SetRotationX(float rotX) = 0;
     virtual void SetRotationY(float rotY) = 0;
     virtual void SetRotationZ(float rotZ) = 0;
+};
+
+interface IGameAnimation : public IUnknown, public ISerializable
+{
+    virtual void SetName(const WCHAR *name) = 0;
+    virtual void BeginCreateAnim(int jointCount) = 0;
+    virtual void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
+    virtual void EndCreateAnim() = 0;
+};
+
+interface IGameCharacter : public IGameObject
+{
+    virtual void InsertAnimation(IGameAnimation * pClip) = 0;
 };
 
 interface IGameSprite
@@ -93,14 +107,6 @@ interface IGameSprite
     virtual void SetScale(float scale) = 0;
     virtual void SetSize(UINT width, UINT height) = 0;
     virtual void SetZ(float z) = 0;
-};
-
-interface IGameAnimation : public IUnknown, public ISerializable
-{
-    virtual void SetName(const WCHAR *name) = 0;
-    virtual void BeginCreateAnim(int jointCount) = 0;
-    virtual void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
-    virtual void EndCreateAnim() = 0;
 };
 
 interface IInputManager
@@ -130,6 +136,7 @@ interface IGameEngine
     virtual void OnMouseMove(int mouseX, int mouseY) = 0;
     virtual BOOL OnUpdateWindowSize(UINT width, UINT height) = 0;
 
+    virtual IGameCharacter *CreateCharacter() = 0;
     virtual IGameObject *CreateGameObject() = 0;
     virtual void         DeleteGameObject(IGameObject * pGameObj) = 0;
     virtual void         DeleteAllGameObject() = 0;
@@ -148,6 +155,7 @@ interface IGameEngine
 
     virtual IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
     virtual IGameAnimation *CreateEmptyAnimation() = 0;
+    virtual IGameAnimation *GetAnimationByName(const WCHAR *name) = 0;
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
@@ -158,5 +166,5 @@ interface IGameEngine
 extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine);
 extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine);
 
-extern "C" ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh** ppOutMesh);
-extern "C" ENGINEMODULE_API void DeleteGameMesh(IGameMesh* pInMesh);
+extern "C" ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh **ppOutMesh);
+extern "C" ENGINEMODULE_API void DeleteGameMesh(IGameMesh *pInMesh);

@@ -51,7 +51,7 @@ class FBXLoader : public IModelExporter
     private:
     void Cleanup();
 
-    int  FindMaterialIndexUsingName(const WCHAR *name);
+    int  FindMaterialIndexByName(const WCHAR *name);
     int  FindJointIndexUsingName(const WCHAR *inJointName);
     void FindDeformingJoints(FbxNode *pNode);
     bool IsDeformingJoint(const char *inJointName);

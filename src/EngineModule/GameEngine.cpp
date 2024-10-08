@@ -246,6 +246,15 @@ BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
     return TRUE;
 }
 
+IGameCharacter *GameEngine::CreateCharacter() 
+{
+    Character *pGameObj = new Character;
+    pGameObj->Initialize(this, 5);
+    LinkToLinkedListFIFO(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pGameObj->m_LinkInGame);
+
+    return pGameObj;
+}
+
 IGameObject *GameEngine::CreateGameObject()
 {
     GameObject *pGameObj = new GameObject;
@@ -369,7 +378,7 @@ IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const
     }
     else
     {
-        AnimationClip *pClip = GeometryGenerator::ReadAnimationFromFile(basePath, filename);
+        pClip = GeometryGenerator::ReadAnimationFromFile(basePath, filename);
 
         pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
     }
@@ -389,9 +398,22 @@ IGameAnimation *GameEngine::CreateEmptyAnimation()
     }
     else
     {
-        AnimationClip *pClip = new AnimationClip;
+        pClip = new AnimationClip;
 
         pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
+    }
+
+    return pClip;
+}
+
+IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name) 
+{
+    AnimationClip *pClip = nullptr;
+    UINT           keySize = wcslen(name) * sizeof(WCHAR);
+
+    if (m_pAnimationHashTable->Select((void **)&pClip, 1, name, keySize))
+    {
+        pClip->AddRef();
     }
 
     return pClip;

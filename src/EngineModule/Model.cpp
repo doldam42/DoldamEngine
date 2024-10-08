@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "AnimationClip.h"
 #include "GameEngine.h"
 #include "GameObject.h"
 
@@ -7,6 +8,11 @@
 
 void Model::Cleanup()
 {
+    if (m_pBoneMatrices)
+    {
+        delete[] m_pBoneMatrices;
+        m_pBoneMatrices = nullptr;
+    }
     if (m_pMaterials)
     {
         delete[] m_pMaterials;
@@ -64,6 +70,7 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, IGameMesh
             pJoints[i] = pInJoint[i];
         }
         m_pJoints = pJoints;
+        m_pBoneMatrices = new Matrix[jointCount];
     }
 }
 
@@ -82,9 +89,18 @@ void Model::ReadFile(FILE *fp)
     fread(&m_materialCount, sizeof(UINT), 1, fp);
     fread(&m_jointCount, sizeof(UINT), 1, fp);
 
-    m_ppMeshObjects = new MeshObject *[m_objectCount];
-    m_pMaterials = new Material[m_materialCount];
-    m_pJoints = new Joint[m_jointCount];
+    if (m_jointCount != 0)
+    {
+        m_pJoints = new Joint[m_jointCount];
+    }
+    if (m_materialCount != 0)
+    {
+        m_pMaterials = new Material[m_materialCount];
+    }
+    if (m_objectCount!=0)
+    {
+        m_ppMeshObjects = new MeshObject *[m_objectCount];
+    }
 
     fread(m_pMaterials, sizeof(Material), (size_t)m_materialCount, fp);
     for (int i = 0; i < m_objectCount; i++)
@@ -94,6 +110,9 @@ void Model::ReadFile(FILE *fp)
         m_ppMeshObjects[i] = pMesh;
     }
     fread(m_pJoints, sizeof(Joint), (size_t)m_jointCount, fp);
+
+    // bone matrices는 File IO 하지 않음
+    m_pBoneMatrices = new Matrix[m_jointCount];
 }
 
 void Model::WriteFile(FILE *fp)
@@ -111,12 +130,35 @@ void Model::WriteFile(FILE *fp)
     fwrite(m_pJoints, sizeof(Joint), (size_t)m_jointCount, fp);
 }
 
+void Model::UpdateAnimation(AnimationClip *pClip, int frameCount)
+{
+    for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+    {
+        Joint    *pJoint = m_pJoints + boneId;
+        Keyframe *pKeyframe = pClip->GetKeyframeByIdx(boneId);
+
+        const int    parentIdx = pJoint->parentIndex;
+        const Matrix parentMatrix = parentIdx >= 0 ? m_pBoneMatrices[parentIdx] : Matrix::Identity;
+
+        int    numKeys = pKeyframe->Header.NumKeys;
+        Matrix TM = numKeys > 0 ? pKeyframe->pKeys[frameCount % numKeys] : Matrix::Identity;
+
+        m_pBoneMatrices[boneId] = TM * parentMatrix;
+    }
+    for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+    {
+        Matrix &globalBindPoseInverse = m_pJoints[boneId].globalBindposeInverse;
+        m_pBoneMatrices[boneId] =
+            m_defaultTransform.Invert() * globalBindPoseInverse * m_pBoneMatrices[boneId] * m_defaultTransform;
+    }
+}
+
 void Model::Render(GameObject *pGameObj)
 {
     const Matrix worldMat = pGameObj->GetWorldMatrix();
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat);
+        m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount);
     }
 }
 
@@ -146,6 +188,13 @@ ULONG __stdcall Model::Release(void)
         g_pGame->DeleteModel(this);
     }
     return newRefCount;
+}
+
+Model::Model()
+{
+    m_LinkInGame.pPrev = nullptr;
+    m_LinkInGame.pNext = nullptr;
+    m_LinkInGame.pItem = this;
 }
 
 Model::~Model() { Cleanup(); }

@@ -79,6 +79,7 @@ class GameEngine : public IGameEngine
     void OnMouseMove(int mouseX, int mouseY) override;
     BOOL OnUpdateWindowSize(UINT width, UINT height) override;
 
+    IGameCharacter *CreateCharacter() override;
     IGameObject *CreateGameObject() override;
     void         DeleteGameObject(IGameObject *pGameObj) override;
     void         DeleteAllGameObject() override;
@@ -96,6 +97,7 @@ class GameEngine : public IGameEngine
 
     IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
     IGameAnimation *CreateEmptyAnimation() override;
+    IGameAnimation *GetAnimationByName(const WCHAR *name) override;
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 

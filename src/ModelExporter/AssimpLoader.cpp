@@ -291,15 +291,14 @@ std::string AssimpLoader::ReadTextureFilename(const aiScene *scene, const aiMate
         memset(basePath, 0, sizeof(basePath));
         GameUtils::ws2s(m_basePath, basePath);
 
-        string filename = filesystem::path(filepath.C_Str()).filename().string();
+        string filename = fs::path(filepath.C_Str()).filename().string();
         string fullPath = string(basePath) + filename;
 
-        string ddsFilename = filename;
-        ddsFilename.replace(ddsFilename.find(".png"), strlen(".png"), ".DDS");
-        string ddsFilePath = basePath + ddsFilename;
 
-        if (filesystem::exists(ddsFilePath))
-            return ddsFilename;
+        fs::path ddsPath(fullPath);
+        ddsPath.replace_extension(".dds");
+        if (filesystem::exists(ddsPath))
+            return ddsPath.filename().string();
 
         // 1. 실제로 파일이 존재하는지 확인
         if (!filesystem::exists(fullPath))

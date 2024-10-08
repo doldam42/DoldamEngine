@@ -23,7 +23,7 @@ class GameObject : public IGameObject
 
   public:
     void Initialize(GameEngine *pGameEngine);
-    void Run();
+    virtual void Run();
     void Render();
 
     // Getter

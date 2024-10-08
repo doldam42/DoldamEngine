@@ -86,7 +86,6 @@ void MeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT n
         m_pSkinnedVertices = new SkinnedVertex[numVertices];
         memcpy(m_pSkinnedVertices, pVertices, sizeof(SkinnedVertex) * numVertices);
         break;
-    case MESH_TYPE_UNKNOWN:
     default:
         __debugbreak();
         break;
@@ -171,19 +170,22 @@ void MeshObject::WriteFile(FILE *fp)
     }
 }
 
-void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat) 
+void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices, const UINT numJoints)
 {
     Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
         pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix);
-        return;
+        break;
     case MESH_TYPE_SKINNED:
-    case MESH_TYPE_UNKNOWN:
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints);
+        break;
     default:
+#ifdef _DEBUG
         __debugbreak();
-        return;
+#endif // _DEBUG
+        break;
     }
 }
 

@@ -284,7 +284,7 @@ BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UIN
         goto lb_return;
     }
     }
-    // m_pVertexBuffer->SetName(L"MeshObjectVertexBuffer");
+    m_pVertexBuffer->SetName(L"MeshObjectVertexBuffer");
 
     m_vertexCount = numVertices;
     m_maxFaceGroupCount = numFaceGroup;

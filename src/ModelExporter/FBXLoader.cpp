@@ -186,9 +186,10 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};
 
+    ZeroMemory(m_basePath, sizeof(m_basePath));
     ZeroMemory(m_filename, sizeof(m_filename));
-    wcscpy_s(m_filename, wcslen(filename) + 1, filename);
-    wcsncpy_s(this->m_basePath, basePath, wcslen(basePath));
+    wcscpy_s(m_basePath, basePath);
+    wcscpy_s(m_filename, filename);
     wcsncpy_s(wcsPath, basePath, wcslen(basePath));
     wcsncat_s(wcsPath, filename, wcslen(filename));
 
@@ -277,6 +278,7 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
         m_pAnim = nullptr;
     }
     m_pAnim = m_pGame->CreateEmptyAnimation();
+    m_pAnim->SetName(filename);
 
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};
@@ -324,7 +326,7 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
     return TRUE;
 }
 
-int FBXLoader::FindMaterialIndexUsingName(const WCHAR *name)
+int FBXLoader::FindMaterialIndexByName(const WCHAR *name)
 {
     for (int i = 0; i < m_materials.size(); i++)
     {
@@ -431,9 +433,6 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             }
             else
             {
-                ProcessCtrlPoints(inNode);
-                ProcessJoints(inNode);
-
                 pObj->Initialize(MESH_TYPE_SKINNED);
             }
 
@@ -452,6 +451,8 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
                 m_objects[inParentIndex]->AddChildCount();
             }
 
+            ProcessCtrlPoints(inNode);
+            ProcessJoints(inNode);
             ProcessMesh(inNode, pObj);
             m_objects.push_back(pObj);
         }
@@ -831,9 +832,6 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
 
     if (m_isSkinned)
     {
-        SkinnedVertex *pVertice = new SkinnedVertex[basicVertexCount];
-        memcpy(pVertice, pSkinnedWorkingVertexList, sizeof(SkinnedVertex) * basicVertexCount);
-
         if (!hasTangent)
         {
             for (UINT i = 0; i < numFaces; i++)
@@ -841,17 +839,14 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 UINT      numIndices = pIndiceCounter[i];
                 uint32_t *pIndice = pWorkingIndicesList[i];
 
-                CalcVerticeTangent(pVertice, basicVertexCount, pIndice, numIndices / 3);
+                CalcVerticeTangent(pSkinnedWorkingVertexList, basicVertexCount, pIndice, numIndices / 3);
             }
         }
 
-        pOutMesh->BeginCreateMesh(pVertice, basicVertexCount, numFaces);
+        pOutMesh->BeginCreateMesh(pSkinnedWorkingVertexList, basicVertexCount, numFaces);
     }
     else
     {
-        BasicVertex *pVertice = new BasicVertex[basicVertexCount];
-        memcpy(pVertice, pWorkingVertexList, sizeof(BasicVertex) * basicVertexCount);
-
         if (!hasTangent)
         {
             for (UINT i = 0; i < numFaces; i++)
@@ -859,11 +854,11 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 UINT      numIndices = pIndiceCounter[i];
                 uint32_t *pIndice = pWorkingIndicesList[i];
 
-                CalcVerticeTangent(pVertice, basicVertexCount, pIndice, numIndices / 3);
+                CalcVerticeTangent(pWorkingVertexList, basicVertexCount, pIndice, numIndices / 3);
             }
         }
 
-        pOutMesh->BeginCreateMesh(pVertice, basicVertexCount, numFaces);
+        pOutMesh->BeginCreateMesh(pWorkingVertexList, basicVertexCount, numFaces);
     }
 
     WCHAR tmpName[MAX_NAME] = {L'\0'};
@@ -874,7 +869,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         memcpy(pIndice, pWorkingIndicesList[i], sizeof(uint32_t) * pIndiceCounter[i]);
 
         GameUtils::s2ws(inNode->GetMaterial(i)->GetName(), tmpName);
-        int materialIndex = FindMaterialIndexUsingName(tmpName);
+        int materialIndex = FindMaterialIndexByName(tmpName);
 
         pOutMesh->InsertFaceGroup(pIndice, pIndiceCounter[i] / 3, materialIndex);
     }
@@ -1158,10 +1153,11 @@ void FBXLoader::CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices
         tan2[i3] += tdir;
     }
 
-    for (long a = 0; a < numVertices; a++)
+    for (long a = 0; a < numTriangles * 3; a++)
     {
-        const Vector3 n = pInOutVertices[a].normal;
-        const Vector3 t = tan1[a];
+        long          index = pIndices[a];
+        const Vector3 n = pInOutVertices[index].normal;
+        const Vector3 t = tan1[index];
 
         Vector3 tangent = t - n * n.Dot(t);
         tangent.Normalize();
@@ -1219,10 +1215,11 @@ void FBXLoader::CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertic
         tan2[i3] += tdir;
     }
 
-    for (long a = 0; a < numVertices; a++)
+    for (long a = 0; a < numTriangles * 3; a++)
     {
-        const Vector3 n = pInOutVertices[a].normal;
-        const Vector3 t = tan1[a];
+        long          index = pIndices[a];
+        const Vector3 n = pInOutVertices[index].normal;
+        const Vector3 t = tan1[index];
 
         Vector3 tangent = t - n * n.Dot(t);
         tangent.Normalize();
@@ -1284,8 +1281,8 @@ void FBXLoader::ExportAnimation()
     {
         wchar_t fullPath[MAX_PATH] = {L'\0'};
         char    outPath[MAX_PATH] = {L'\0'};
-        wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
-        wcscat_s(fullPath, wcslen(m_filename), m_filename);
+        wcscpy_s(fullPath, m_basePath);
+        wcscat_s(fullPath, m_filename);
 
         fs::path p(fullPath);
         p.replace_extension("dca");
@@ -1309,8 +1306,8 @@ void FBXLoader::ExportModel()
     {
         wchar_t fullPath[MAX_PATH] = {L'\0'};
         char    outPath[MAX_PATH] = {L'\0'};
-        wcscpy_s(fullPath, wcslen(m_basePath), m_basePath);
-        wcscat_s(fullPath, wcslen(m_filename), m_filename);
+        wcscpy_s(fullPath, m_basePath);
+        wcscat_s(fullPath, m_filename);
 
         fs::path p(fullPath);
         p.replace_extension("dom");

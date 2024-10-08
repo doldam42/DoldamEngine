@@ -9,9 +9,10 @@ class GameObject;
 class Model : public IGameModel
 {
     static const UINT MAX_INSTANCE_COUNT = 256;
-
-    IGameEngine *m_pGame = nullptr;
     IRenderer   *m_pRenderer = nullptr;
+
+    Matrix  m_defaultTransform = Matrix::Identity;
+    Matrix *m_pBoneMatrices = nullptr;
 
     WCHAR m_basePath[MAX_PATH] = {L'\0'};
     ULONG ref_count = 0;
@@ -39,6 +40,7 @@ class Model : public IGameModel
     void ReadFile(FILE *fp);
     void WriteFile(FILE *fp);
 
+    void UpdateAnimation(AnimationClip *pClip, int frameCount);
     void Render(GameObject *pGameObj);
 
     // Getter 
@@ -53,6 +55,6 @@ class Model : public IGameModel
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 
-    Model() = default;
+    Model();
     ~Model();
 };

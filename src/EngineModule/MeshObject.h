@@ -45,7 +45,7 @@ class MeshObject : public IGameMesh, public BaseObject
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;
 
-    void Render(IRenderer *pRnd, const Matrix *pWorldMat);
+    void Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices, const UINT numJoints);
 
     inline BOOL IsSkinned() const { return m_meshType == MESH_TYPE_SKINNED; }
 

@@ -66,6 +66,7 @@ class AnimationClip : public IGameAnimation
 
     // Setter
     void SetName(const WCHAR *name) override;
+    const WCHAR* GetName() { return m_name; }
 
     AnimationClip() = default;
     AnimationClip(const WCHAR *name) { SetName(name); }

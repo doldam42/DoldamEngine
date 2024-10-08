@@ -82,17 +82,46 @@ void Client::LoadResources()
     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
     pBox->SetScale(2.0f);
 
-    fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
+    fs::path p(L"..\\..\\assets\\stages\\Stage38\\Stage38.dom");
+    //if (!fs::exists(p))
+    {
+        m_pAssimpExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
+        m_pAssimpExporter->ExportModel();
+    }
+    IGameModel *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
+    IGameObject *pStage = m_pGame->CreateGameObject();
+    pStage->SetModel(pStageModel);
+
+    /*fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
     if (!fs::exists(p))
     {
         m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
         m_pAssimpExporter->ExportModel();
     }
-    IGameModel *pSponzaModel =
+*/
+    /*IGameModel *pSponzaModel =
         m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);
+    pSponza->SetScale(30.f);*/
+
+    p = L"..\\..\\assets\\characters\\gura\\gura.dom";
+    //if (!fs::exists(p))
+    {
+        m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
+        m_pFbxExporter->ExportModel();
+    }
+    IGameModel *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
+    IGameCharacter *pGura = m_pGame->CreateCharacter();
+    pGura->SetModel(pGuraModel);
+    /*p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
+    if (!fs::exists(p))
+    {
+        m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
+        m_pFbxExporter->ExportAnimation();
+    }*/
+    IGameAnimation *pGuraAnim = m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dca");
+    pGura->InsertAnimation(pGuraAnim);
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -117,9 +146,9 @@ void Client::LoadResources()
     m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
     m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
     m_pDynamicSprite->SetPosition(0, 512);
-   /* m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
-    m_pStaticSprite->SetPosition(256, 256);
-    m_pStaticSprite->SetZ(0.5f);*/
+    /* m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
+     m_pStaticSprite->SetPosition(256, 256);
+     m_pStaticSprite->SetZ(0.5f);*/
 }
 
 void Client::Process()
