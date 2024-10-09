@@ -734,4 +734,12 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
             }
         }
     }
+
+    UINT jointCount = pInOutModel->GetJointCount();
+    Matrix tm = Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale);
+    for (UINT i = 0; i < jointCount; i++)
+    {
+        Joint* pJoint = pInOutModel->GetJointByIdx(i);
+        pJoint->globalBindposeInverse = tm.Invert() * pJoint->globalBindposeInverse;
+    }
 }

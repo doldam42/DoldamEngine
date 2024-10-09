@@ -268,8 +268,8 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
     ZeroMemory(m_filename, sizeof(m_filename));
     wcscpy_s(m_filename, wcslen(filename) + 1, filename);
 
-    wcsncpy_s(wcsPath, m_basePath, wcslen(m_basePath));
-    wcsncat_s(wcsPath, filename, wcslen(filename));
+    wcscpy_s(wcsPath, m_basePath);
+    wcscat_s(wcsPath, filename);
     GameUtils::ws2s(wcsPath, path);
 
     FbxImporter *fbxImporter = FbxImporter::Create(m_pManager, "myImporter");

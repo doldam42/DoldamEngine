@@ -11,6 +11,16 @@ namespace fs = std::filesystem;
 
 void Client::Cleanup()
 {
+    if (m_pFbxExporter)
+    {
+        DeleteFbxExporter(m_pFbxExporter);
+        m_pFbxExporter = nullptr;
+    }
+    if (m_pAssimpExporter)
+    {
+        DeleteAssimpExporter(m_pAssimpExporter);
+        m_pAssimpExporter = nullptr;
+    }
     if (m_pFontHandle)
     {
         m_pRenderer->DeleteFontObject(m_pFontHandle);
@@ -40,16 +50,6 @@ void Client::Cleanup()
     {
         m_pGame->DeleteSprite(m_pTextSprite);
         m_pTextSprite = nullptr;
-    }
-    if (m_pFbxExporter)
-    {
-        DeleteFbxExporter(m_pFbxExporter);
-        m_pFbxExporter = nullptr;
-    }
-    if (m_pAssimpExporter)
-    {
-        DeleteAssimpExporter(m_pAssimpExporter);
-        m_pAssimpExporter = nullptr;
     }
     if (m_pGame)
     {
@@ -82,16 +82,16 @@ void Client::LoadResources()
     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
     pBox->SetScale(2.0f);*/
 
-    //fs::path p(L"..\\..\\assets\\stages\\Stage38\\Stage38.dom");
-    ////if (!fs::exists(p))
-    //{
-    //    m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
-    //    m_pFbxExporter->ExportModel();
-    //}
-    //IGameModel *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
-    //IGameObject *pStage = m_pGame->CreateGameObject();
-    //pStage->SetModel(pStageModel);
-    //pStage->SetScale(10.f);
+    fs::path p(L"..\\..\\assets\\stages\\Stage38\\Stage38.dom");
+    if (!fs::exists(p))
+    {
+        m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
+        m_pFbxExporter->ExportModel();
+    }
+    IGameModel *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
+    IGameObject *pStage = m_pGame->CreateGameObject();
+    pStage->SetModel(pStageModel);
+    pStage->SetScale(10.f);
 
     /*fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
     if (!fs::exists(p))
@@ -106,23 +106,23 @@ void Client::LoadResources()
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(30.f);*/
 
-    fs::path p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    if (!fs::exists(p))
-    {
-        m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
-        m_pFbxExporter->ExportModel();
-    }
-    IGameModel *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
-    IGameCharacter *pGura = m_pGame->CreateCharacter();
-    pGura->SetModel(pGuraModel);
-    p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    if (!fs::exists(p))
-    {
-        m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
-        m_pFbxExporter->ExportAnimation();
-    }
-    IGameAnimation *pGuraAnim = m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
-    pGura->InsertAnimation(pGuraAnim);
+    //fs::path p = L"..\\..\\assets\\characters\\gura\\gura.dom";
+    //if (!fs::exists(p))
+    //{
+    //    m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
+    //    m_pFbxExporter->ExportModel();
+    //}
+    //IGameModel *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
+    //IGameCharacter *pGura = m_pGame->CreateCharacter();
+    //pGura->SetModel(pGuraModel);
+    //p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
+    //if (!fs::exists(p))
+    //{
+    //    m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
+    //    m_pFbxExporter->ExportAnimation();
+    //}
+    //IGameAnimation *pGuraAnim = m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
+    //pGura->InsertAnimation(pGuraAnim);
 
     // Create texture from draw Text
     m_textImageWidth = 712;
