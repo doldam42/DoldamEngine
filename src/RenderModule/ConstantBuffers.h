@@ -82,10 +82,9 @@ struct MaterialConstants
     float   roughnessFactor = 1.0f;
     float   metallicFactor = 1.0f;
     Vector3 emissive = Vector3(0.0f);
-    Vector3 tansparancy = Vector3(0.0f);
-    float   dummy1;
-    Vector3 reflection = Vector3(0.0f);
-    float   dummy2;
+
+    float opacityFactor = 1.0f;
+    float reflectionFactor = 0.0f;
 
     BOOL useAlbedoMap = 0;
     BOOL useNormalMap = 0;
@@ -93,8 +92,6 @@ struct MaterialConstants
     BOOL useMetallicMap = 0;
     BOOL useRoughnessMap = 0;
     BOOL useEmissiveMap = 0;
-
-    float dummy[2];
 };
 
 static_assert((sizeof(MaterialConstants) % 32) == 0, "Constant Buffer size must be 256-byte aligned");

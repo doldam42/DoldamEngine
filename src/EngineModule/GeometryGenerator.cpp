@@ -711,6 +711,7 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
         Transform   tm = *pObj->GetLocalTransform();
         tm.SetPosition((tm.GetPosition() + translation) * scale);
         tm.SetScale(Vector3::One);
+        tm.SetRotation(Quaternion::Identity);
         pObj->SetTransform(&tm);
 
         if (pObj->IsSkinned())

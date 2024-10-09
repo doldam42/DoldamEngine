@@ -162,6 +162,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingHlslCompat.h" />
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.h" />
     <ClInclude Include="CommandListPool.h" />
     <ClInclude Include="ConstantBufferManager.h" />
     <ClInclude Include="ConstantBufferPool.h" />
@@ -220,7 +222,72 @@
     <ClCompile Include="TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Common.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Common.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\HlslCompat.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Phong.hlsli">
+      <FileType>Document</FileType>
+    </CustomBuild>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\Client\Shaders\BasicPS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\ComputeShader.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Hit.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Miss.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RayGen.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\PresentPS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\PresentVS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkinningCS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkyboxPS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkyboxVS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SpritePS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SpriteVS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

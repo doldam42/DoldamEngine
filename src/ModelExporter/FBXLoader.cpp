@@ -108,6 +108,16 @@ Vector2 ToVector2(const FbxVector2 &inVector)
     return v;
 }
 
+Transform ToTransform(const FbxAMatrix &inMatrix)
+{
+    const FbxQuaternion &inQ = inMatrix.GetQ();
+
+    Quaternion q(inQ.mData[0], inQ.mData[1], inQ.mData[2], inQ.mData[3]);
+    Vector3    t(ToVector3(inMatrix.GetT()));
+    Vector3    s(ToVector3(inMatrix.GetS()));
+    return Transform(t, q, s);
+}
+
 void FBXLoader::Cleanup()
 {
     if (m_pGeoConverter)
@@ -423,8 +433,7 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
 
             pObj->SetParentIndex(inParentIndex);
             Transform tm(ToVector3(inNode->LclTranslation.Get()),
-                         Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())),
-                         Vector3::One);
+                         Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())), Vector3::One);
             pObj->SetTransform(&tm);
 
             WCHAR wcsName[MAX_NAME] = {L'\0'};
@@ -520,12 +529,12 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
 
     float metallic = 0.f;
     float roughness = 0.f;
+    float opacity = 1.0f;
+    float reflection = 0.0f;
 
     Vector3 Albedo;
     Vector3 diffuse;
     Vector3 emissive;
-    Vector3 reflection;
-    Vector3 transparency;
 
     GameUtils::s2ws(inMaterial->GetName(), pOutMaterial->name);
 
@@ -545,21 +554,6 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         emissive.y = static_cast<float>(double3.mData[1]);
         emissive.z = static_cast<float>(double3.mData[2]);
 
-        // 먼가 반사율과 투명도가 이상하다....
-        //// Reflection
-        //double3 = phong->Reflection;
-        //reflection.x = static_cast<float>(double3.mData[0]);
-        //reflection.y = static_cast<float>(double3.mData[1]);
-        //reflection.z = static_cast<float>(double3.mData[2]);
-
-        //// Transparency
-        //double3 = phong->TransparentColor;
-        //transparency.x = static_cast<float>(double3.mData[0]);
-        //transparency.y = static_cast<float>(double3.mData[1]);
-        //transparency.z = static_cast<float>(double3.mData[2]);
-        reflection = Vector3::Zero;
-        transparency = Vector3::One;
-
         // Specular
         double3 = phong->Specular;
         Vector3 specular;
@@ -573,6 +567,15 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         // Shininess
         double1 = phong->Shininess;
         float shininess = static_cast<float>(double1);
+
+        // 먼가 반사율과 투명도가 이상하다....
+        // Reflection
+        double1 = phong->ReflectionFactor;
+        reflection = static_cast<float>(double1);
+
+        // Transparency
+        double1 = phong->TransparencyFactor;
+        opacity = 1.0f - static_cast<float>(double1);
 
         roughness = CalcRoughness(specular, shininess);
         metallic = CalcMetallic(specular, diffuse);
@@ -594,18 +597,12 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         emissive.y = static_cast<float>(double3.mData[1]);
         emissive.z = static_cast<float>(double3.mData[2]);
 
-        // Transparency Factor
-        double3 = lambert->TransparentColor;
-        transparency.x = static_cast<float>(double3.mData[0]);
-        transparency.y = static_cast<float>(double3.mData[1]);
-        transparency.z = static_cast<float>(double3.mData[2]);
+        // Reflection
+        reflection = 0.0f;  // 임의 설정
 
+        // Transparency
         double1 = lambert->TransparencyFactor;
-        transparency *= static_cast<float>(double1);
-
-        // 이 이후로는 임의로 설정
-        // reflection
-        reflection = Vector3::Zero;
+        opacity = 1.0f - static_cast<float>(double1);
 
         // Specular
         Vector3 specular(0.5f, 0.5f, 0.5f);
@@ -618,8 +615,8 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
 
     pOutMaterial->albedo = Albedo;
     pOutMaterial->emissive = emissive;
-    pOutMaterial->reflection = reflection;
-    pOutMaterial->tansparancy = transparency;
+    pOutMaterial->opacityFactor = opacity;
+    pOutMaterial->reflectionFactor = reflection;
     pOutMaterial->roughnessFactor = roughness;
     pOutMaterial->metallicFactor = metallic;
 }

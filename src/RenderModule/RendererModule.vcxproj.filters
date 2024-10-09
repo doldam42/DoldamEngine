@@ -68,6 +68,12 @@
     <Filter Include="Cubemap">
       <UniqueIdentifier>{e0e248a7-bf3e-4bd9-828c-609baaee2e74}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{17647e37-92b2-4604-9fa2-ee167e09d284}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\DXR">
+      <UniqueIdentifier>{10f0878c-365a-4bf8-a031-079d9153e38f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -206,5 +212,76 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\Client\Shaders\BasicPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Common.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\ComputeShader.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Phong.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\PresentPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\PresentVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkinningCS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkyboxPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SkyboxVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SpritePS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\SpriteVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Common.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Hit.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\HlslCompat.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Miss.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RayGen.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingHlslCompat.h">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.h">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

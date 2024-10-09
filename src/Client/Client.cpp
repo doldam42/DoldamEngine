@@ -76,19 +76,21 @@ BOOL Client::Initialize(HWND hWnd)
 
 void Client::LoadResources()
 {
+    fs::path p;
+
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
-   /* IGameObject *pBox = m_pGame->CreateGameObject();
-    pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
-    pBox->SetScale(2.0f);*/
+    /* IGameObject *pBox = m_pGame->CreateGameObject();
+     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
+     pBox->SetScale(2.0f);*/
 
-    fs::path p(L"..\\..\\assets\\stages\\Stage38\\Stage38.dom");
+    p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
     if (!fs::exists(p))
     {
         m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
         m_pFbxExporter->ExportModel();
     }
-    IGameModel *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
+    IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
     IGameObject *pStage = m_pGame->CreateGameObject();
     pStage->SetModel(pStageModel);
     pStage->SetScale(10.f);
@@ -106,23 +108,24 @@ void Client::LoadResources()
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(30.f);*/
 
-    //fs::path p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    //if (!fs::exists(p))
-    //{
-    //    m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
-    //    m_pFbxExporter->ExportModel();
-    //}
-    //IGameModel *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
-    //IGameCharacter *pGura = m_pGame->CreateCharacter();
-    //pGura->SetModel(pGuraModel);
-    //p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    //if (!fs::exists(p))
-    //{
-    //    m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
-    //    m_pFbxExporter->ExportAnimation();
-    //}
-    //IGameAnimation *pGuraAnim = m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
-    //pGura->InsertAnimation(pGuraAnim);
+    p = L"..\\..\\assets\\characters\\gura\\gura.dom";
+    if (!fs::exists(p))
+    {
+        m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
+        m_pFbxExporter->ExportModel();
+    }
+    IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
+    IGameCharacter *pGura = m_pGame->CreateCharacter();
+    pGura->SetModel(pGuraModel);
+    p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
+    if (!fs::exists(p))
+    {
+        m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
+        m_pFbxExporter->ExportAnimation();
+    }
+    IGameAnimation *pGuraAnim =
+        m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
+    pGura->InsertAnimation(pGuraAnim);
 
     // Create texture from draw Text
     m_textImageWidth = 712;

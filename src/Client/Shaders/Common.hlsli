@@ -52,18 +52,16 @@ struct MaterialConstant
     float roughnessFactor;
     float metallicFactor;
     float3 emissive;
-    float3 transparancy;
-    float dummy1;
-    float3 reflection;
-    float dummy2;
-
+    
+    float opacityFactor;
+    float reflectionFactor;
+    
     uint useAlbedoMap;
     uint useNormalMap;
     uint useAOMap;
     uint useMetallicMap;
     uint useRoughnessMap;
     uint useEmissiveMap;
-    float dummy[2];
 };
 
 StructuredBuffer<MaterialConstant> g_materials : register(t5);

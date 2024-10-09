@@ -251,7 +251,8 @@ void AssimpLoader::ProcessMaterialProperties(const aiMaterial *pInMaterial, Mate
     pOutMaterial->emissive = ToVector3(colorEmissive);
     pOutMaterial->metallicFactor = metallic;
     pOutMaterial->roughnessFactor = roughness;
-    pOutMaterial->tansparancy = colorTransparent.IsBlack() ? Vector3(opacity) : Vector3::One;
+    pOutMaterial->opacityFactor = colorTransparent.IsBlack() ? opacity : 1.0f;
+    pOutMaterial->reflectionFactor = 0.0f;
 }
 
 void AssimpLoader::ProcessMaterialTextures(const aiMaterial *pInMaterial, Material *pOutMaterial, const aiScene *scene)

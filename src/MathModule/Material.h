@@ -11,9 +11,10 @@ struct Material
     WCHAR roughnessTextureName[MAX_NAME] = {0};
 
     Vector3 albedo = Vector3(1.0f);
-    float   roughnessFactor = 0.f;
-    float   metallicFactor = 0.f;
     Vector3 emissive = Vector3(0.0f);
-    Vector3 tansparancy = Vector3(1.0f);
-    Vector3 reflection = Vector3(0.0f);
+
+    float roughnessFactor = 0.f;
+    float metallicFactor = 0.f;
+    float opacityFactor = 0.0f;
+    float reflectionFactor = 0.0f;
 };

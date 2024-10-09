@@ -877,8 +877,8 @@ IMaterialHandle *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial
     mat.emissive = pInMaterial->emissive;
     mat.metallicFactor = pInMaterial->metallicFactor;
     mat.roughnessFactor = pInMaterial->roughnessFactor;
-    mat.tansparancy = pInMaterial->tansparancy;
-    mat.reflection = pInMaterial->reflection;
+    mat.opacityFactor = pInMaterial->opacityFactor;
+    mat.reflectionFactor = pInMaterial->reflectionFactor;
 
     mat.useAlbedoMap = wcslen(pInMaterial->albedoTextureName) == 0 ? FALSE : TRUE;
     mat.useAOMap = wcslen(pInMaterial->aoTextureName) == 0 ? FALSE : TRUE;

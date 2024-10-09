@@ -400,7 +400,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
         pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
     }
 
-    m_passType = (pInMaterial->tansparancy == Vector3::One) ? DRAW_PASS_TYPE_DEFAULT : DRAW_PASS_TYPE_NON_OPAQUE;
+    m_passType = (pInMaterial->opacityFactor < 0.99f) ? DRAW_PASS_TYPE_DEFAULT : DRAW_PASS_TYPE_NON_OPAQUE;
 
     pFaceGroup->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
     pFaceGroup->pAlbedoTexHandle = pAlbedoTexHandle;

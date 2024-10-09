@@ -132,7 +132,6 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
 float4 main(PixelShaderInput input) : SV_TARGET
 {
     MaterialConstant material = g_materials[materialId];
-    // float opacity = material.transparancy.r;
     
     float3 pixelToEye = normalize(eyeWorld - input.posWorld);
     float3 normalWorld = GetNormal(input, material.useNormalMap);
@@ -140,7 +139,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
     float4 texColor = material.useAlbedoMap ? albedoTex.Sample(linearWrapSampler, input.texcoord)
                                  : float4(material.albedo, 1.0);
     float3 albedo = texColor.xyz;
-    float opacity = texColor.w * material.transparancy.r;
+    float opacity = texColor.w * material.opacityFactor;
     
     if (opacity < 0.05)
     {
