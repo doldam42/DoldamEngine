@@ -710,7 +710,6 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
         MeshObject *pObj = pInOutModel->GetObjectByIdx(i);
         Transform   tm = *pObj->GetLocalTransform();
         tm.SetPosition((tm.GetPosition() + translation) * scale);
-        tm.SetRotation(Quaternion::Identity);
         tm.SetScale(Vector3::One);
         pObj->SetTransform(&tm);
 

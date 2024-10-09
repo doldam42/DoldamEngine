@@ -1,64 +1,47 @@
+#include "GameUtils.h"
 #include <fbxsdk.h>
 #include <filesystem>
 
-#include "GameUtils.h"
-
 #include "FBXLoader.h"
 
-namespace fs = std::filesystem;
-
-DWORD AddVertex(BasicVertex *pVertexList, DWORD dwMaxVertexCount, DWORD *pdwInOutVertexCount,
-                const BasicVertex *pVertex)
+UINT AddVertex(vector<BasicVertex> &vertexList, const BasicVertex *pVertex)
 {
-    DWORD dwFoundIndex = -1;
-    DWORD dwExistVertexCount = *pdwInOutVertexCount;
-    for (DWORD i = 0; i < dwExistVertexCount; i++)
+    UINT foundIndex = -1;
+    UINT existVertexCount = vertexList.size();
+    for (DWORD i = 0; i < existVertexCount; i++)
     {
-        const BasicVertex *pExistVertex = pVertexList + i;
+        const BasicVertex *pExistVertex = &vertexList[i];
         if (!memcmp(pExistVertex, pVertex, sizeof(BasicVertex)))
         {
-            dwFoundIndex = i;
+            foundIndex = i;
             goto lb_return;
         }
     }
-    if (dwExistVertexCount + 1 > dwMaxVertexCount)
-    {
-        __debugbreak();
-        goto lb_return;
-    }
     // 새로운 vertex추가
-    dwFoundIndex = dwExistVertexCount;
-    pVertexList[dwFoundIndex] = *pVertex;
-    *pdwInOutVertexCount = dwExistVertexCount + 1;
+    foundIndex = existVertexCount;
+    vertexList.push_back(*pVertex);
 lb_return:
-    return dwFoundIndex;
+    return foundIndex;
 }
 
-DWORD AddSkinnedVertex(SkinnedVertex *pVertexList, DWORD dwMaxVertexCount, DWORD *pdwInOutVertexCount,
-                       const SkinnedVertex *pVertex)
+UINT AddSkinnedVertex(vector<SkinnedVertex> &vertexList, const SkinnedVertex *pVertex)
 {
-    DWORD dwFoundIndex = -1;
-    DWORD dwExistVertexCount = *pdwInOutVertexCount;
-    for (DWORD i = 0; i < dwExistVertexCount; i++)
+    UINT foundIndex = -1;
+    UINT existVertexCount = vertexList.size();
+    for (DWORD i = 0; i < existVertexCount; i++)
     {
-        const SkinnedVertex *pExistVertex = pVertexList + i;
+        const SkinnedVertex *pExistVertex = &vertexList[i];
         if (!memcmp(pExistVertex, pVertex, sizeof(SkinnedVertex)))
         {
-            dwFoundIndex = i;
+            foundIndex = i;
             goto lb_return;
         }
     }
-    if (dwExistVertexCount + 1 > dwMaxVertexCount)
-    {
-        __debugbreak();
-        goto lb_return;
-    }
     // 새로운 vertex추가
-    dwFoundIndex = dwExistVertexCount;
-    pVertexList[dwFoundIndex] = *pVertex;
-    *pdwInOutVertexCount = dwExistVertexCount + 1;
+    foundIndex = existVertexCount;
+    vertexList.push_back(*pVertex);
 lb_return:
-    return dwFoundIndex;
+    return foundIndex;
 }
 
 FbxAMatrix GetGeometryTransformation(FbxNode *inNode)
@@ -183,17 +166,17 @@ BOOL FBXLoader::Initialize(IGameEngine *pGame)
 
 BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 {
-    WCHAR wcsPath[MAX_PATH] = {0};
-    char  path[MAX_PATH] = {0};
+    WCHAR wPath[MAX_PATH] = {L'\0'};
+    char  path[MAX_PATH] = {'\0'};
 
     ZeroMemory(m_basePath, sizeof(m_basePath));
     ZeroMemory(m_filename, sizeof(m_filename));
     wcscpy_s(m_basePath, basePath);
     wcscpy_s(m_filename, filename);
-    wcsncpy_s(wcsPath, basePath, wcslen(basePath));
-    wcsncat_s(wcsPath, filename, wcslen(filename));
+    wcscpy_s(wPath, basePath);
+    wcscat_s(wPath, filename);
 
-    GameUtils::ws2s(wcsPath, path);
+    GameUtils::ws2s(wPath, path);
 
     FbxImporter *fbxImporter = FbxImporter::Create(m_pManager, "myImporter");
     if (!fbxImporter)
@@ -222,7 +205,7 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     m_pModel = m_pGame->CreateEmptyModel();
 
     FbxAxisSystem::DirectX.DeepConvertScene(m_pScene);
-    m_pGeoConverter->Triangulate(m_pScene, true);
+    // m_pGeoConverter->Triangulate(m_pScene, true);
 
     ProcessDeformingJointNode(m_pScene->GetRootNode());
     ProcessSkeletonHierarchy(m_pScene->GetRootNode());
@@ -422,6 +405,8 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
         switch (inNode->GetNodeAttribute()->GetAttributeType())
         {
         case FbxNodeAttribute::eMesh: {
+            m_pGeoConverter->Triangulate(inNode->GetMesh(), true);
+
             IGameMesh *pObj = nullptr;
             if (!CreateGameMesh(&pObj))
             {
@@ -439,7 +424,7 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             pObj->SetParentIndex(inParentIndex);
             Transform tm(ToVector3(inNode->LclTranslation.Get()),
                          Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())),
-                         ToVector3(inNode->LclScaling.Get()));
+                         Vector3::One);
             pObj->SetTransform(&tm);
 
             WCHAR wcsName[MAX_NAME] = {L'\0'};
@@ -560,17 +545,20 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         emissive.y = static_cast<float>(double3.mData[1]);
         emissive.z = static_cast<float>(double3.mData[2]);
 
-        // Reflection
-        double3 = phong->Reflection;
-        reflection.x = static_cast<float>(double3.mData[0]);
-        reflection.y = static_cast<float>(double3.mData[1]);
-        reflection.z = static_cast<float>(double3.mData[2]);
+        // 먼가 반사율과 투명도가 이상하다....
+        //// Reflection
+        //double3 = phong->Reflection;
+        //reflection.x = static_cast<float>(double3.mData[0]);
+        //reflection.y = static_cast<float>(double3.mData[1]);
+        //reflection.z = static_cast<float>(double3.mData[2]);
 
-        // Transparency
-        double3 = phong->TransparentColor;
-        transparency.x = static_cast<float>(double3.mData[0]);
-        transparency.y = static_cast<float>(double3.mData[1]);
-        transparency.z = static_cast<float>(double3.mData[2]);
+        //// Transparency
+        //double3 = phong->TransparentColor;
+        //transparency.x = static_cast<float>(double3.mData[0]);
+        //transparency.y = static_cast<float>(double3.mData[1]);
+        //transparency.z = static_cast<float>(double3.mData[2]);
+        reflection = Vector3::Zero;
+        transparency = Vector3::One;
 
         // Specular
         double3 = phong->Specular;
@@ -710,57 +698,40 @@ void FBXLoader::ProcessMaterialTexture(FbxSurfaceMaterial *inMaterial, Material 
 
 void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
 {
-    BasicVertex   *pWorkingVertexList = nullptr;
-    SkinnedVertex *pSkinnedWorkingVertexList = nullptr;
-
     FbxMesh *currMesh = inNode->GetMesh();
 
-    FbxLayerElementArrayTemplate<int> *materialIndices;
-    FbxGeometryElement::EMappingMode   materialMappingMode = FbxGeometryElement::eNone;
-    if (!currMesh->GetElementMaterial())
-    {
-        __debugbreak();
-    }
-    materialIndices = &(currMesh->GetElementMaterial()->GetIndexArray());
-    materialMappingMode = currMesh->GetElementMaterial()->GetMappingMode();
-    if (!materialIndices)
-    {
-        __debugbreak();
-    }
+    FbxLayerElementArrayTemplate<int> &materialIndices = currMesh->GetElementMaterial()->GetIndexArray();
+    FbxGeometryElement::EMappingMode   materialMappingMode = currMesh->GetElementMaterial()->GetMappingMode();
 
-    int       ctrlPointCount = currMesh->GetControlPointsCount();
-    int       numFaces = inNode->GetMaterialCount();
-    uint32_t *pIndiceCounter = new uint32_t[numFaces];
-    memset(pIndiceCounter, 0, sizeof(uint32_t) * numFaces);
-    uint32_t **pWorkingIndicesList = new uint32_t *[numFaces];
+    int  ctrlPointCount = currMesh->GetControlPointsCount();
+    int  numFaces = inNode->GetMaterialCount();
+    UINT triangleCount = currMesh->GetPolygonCount();
+
+    vector<SkinnedVertex> skinnedVertices;
+    vector<BasicVertex>   basicVertices;
+
+    FaceGroup *pFaceGroups = new FaceGroup[numFaces];
     for (int i = 0; i < numFaces; i++)
     {
-        uint32_t *pIndices = new uint32_t[currMesh->GetPolygonCount() * 3 * 8];
-        memset(pIndices, 0, sizeof(uint32_t) * currMesh->GetPolygonCount() * 3 * 8);
-        pWorkingIndicesList[i] = pIndices;
+        const char *matName = inNode->GetMaterial(i)->GetName();
+        pFaceGroups[i].indices.reserve(static_cast<size_t>(triangleCount * 3));
+        pFaceGroups[i].materialName = string(matName);
     }
 
     if (m_isSkinned)
     {
-        pSkinnedWorkingVertexList = new SkinnedVertex[MAX_WORKING_VERTEX_COUNT];
-        memset(pSkinnedWorkingVertexList, 0, sizeof(SkinnedVertex) * MAX_WORKING_VERTEX_COUNT);
+        skinnedVertices.reserve(ctrlPointCount);
     }
     else
     {
-        pWorkingVertexList = new BasicVertex[MAX_WORKING_VERTEX_COUNT];
-        memset(pWorkingVertexList, 0, sizeof(BasicVertex) * MAX_WORKING_VERTEX_COUNT);
+        basicVertices.reserve(ctrlPointCount);
     }
 
-    DWORD basicVertexCount = 0;
-    DWORD indices[8] = {0};
-    UINT  triangleCount = currMesh->GetPolygonCount();
-
-    int vertexCounter = 0;
+    int  vertexCounter = 0;
+    UINT indices[3] = {0};
     for (UINT i = 0; i < triangleCount; i++)
     {
-        UINT verticeCount = currMesh->GetPolygonSize(i);
-
-        for (UINT j = 0; j < verticeCount; j++)
+        for (UINT j = 0; j < 3; j++) // 폴리곤 = 삼각형(점 3개)
         {
             DWORD      index;
             int        ctrlPointIndex = currMesh->GetPolygonVertex(i, j);
@@ -787,8 +758,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);
                 vertex.texcoord.y = 1.0f - static_cast<float>(uv.mData[1]);
                 vertex.tangent = tangent;
-                index =
-                    AddSkinnedVertex(pSkinnedWorkingVertexList, MAX_WORKING_VERTEX_COUNT, &basicVertexCount, &vertex);
+                index = AddSkinnedVertex(skinnedVertices, &vertex);
             }
             else
             {
@@ -799,7 +769,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);
                 vertex.texcoord.y = 1.0f - static_cast<float>(uv.mData[1]);
                 vertex.tangent = tangent;
-                index = AddVertex(pWorkingVertexList, MAX_WORKING_VERTEX_COUNT, &basicVertexCount, &vertex);
+                index = AddVertex(basicVertices, &vertex);
             }
             indices[j] = index;
         }
@@ -807,19 +777,17 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         switch (materialMappingMode)
         {
         case fbxsdk::FbxLayerElement::eByPolygon: {
-            int materialIndex = materialIndices->GetAt(i);
-            for (UINT j = 0; j < verticeCount; j++)
+            int materialIndex = materialIndices.GetAt(i);
+            for (UINT j = 0; j < 3; j++)
             {
-                pWorkingIndicesList[materialIndex][pIndiceCounter[materialIndex]] = indices[j];
-                pIndiceCounter[materialIndex]++;
+                pFaceGroups[materialIndex].indices.push_back(indices[j]);
             }
         }
         break;
         case fbxsdk::FbxLayerElement::eAllSame: {
-            for (UINT j = 0; j < verticeCount; j++)
+            for (UINT j = 0; j < 3; j++)
             {
-                pWorkingIndicesList[0][pIndiceCounter[0]] = indices[j];
-                pIndiceCounter[0]++;
+                pFaceGroups[0].indices.push_back(indices[j]);
             }
         }
         break;
@@ -836,14 +804,13 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         {
             for (UINT i = 0; i < numFaces; i++)
             {
-                UINT      numIndices = pIndiceCounter[i];
-                uint32_t *pIndice = pWorkingIndicesList[i];
-
-                CalcVerticeTangent(pSkinnedWorkingVertexList, basicVertexCount, pIndice, numIndices / 3);
+                FaceGroup &face = pFaceGroups[i];
+                CalcVerticeTangent(skinnedVertices.data(), skinnedVertices.size(), face.indices.data(),
+                                   face.indices.size() / 3);
             }
         }
 
-        pOutMesh->BeginCreateMesh(pSkinnedWorkingVertexList, basicVertexCount, numFaces);
+        pOutMesh->BeginCreateMesh(skinnedVertices.data(), skinnedVertices.size(), numFaces);
     }
     else
     {
@@ -851,53 +818,31 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
         {
             for (UINT i = 0; i < numFaces; i++)
             {
-                UINT      numIndices = pIndiceCounter[i];
-                uint32_t *pIndice = pWorkingIndicesList[i];
-
-                CalcVerticeTangent(pWorkingVertexList, basicVertexCount, pIndice, numIndices / 3);
+                FaceGroup &face = pFaceGroups[i];
+                CalcVerticeTangent(basicVertices.data(), basicVertices.size(), face.indices.data(),
+                                   face.indices.size() / 3);
             }
         }
 
-        pOutMesh->BeginCreateMesh(pWorkingVertexList, basicVertexCount, numFaces);
+        pOutMesh->BeginCreateMesh(basicVertices.data(), basicVertices.size(), numFaces);
     }
 
-    WCHAR tmpName[MAX_NAME] = {L'\0'};
+    WCHAR wName[MAX_NAME];
     for (UINT i = 0; i < numFaces; i++)
     {
-        memset(tmpName, 0, sizeof(tmpName));
-        uint32_t *pIndice = new uint32_t[pIndiceCounter[i]];
-        memcpy(pIndice, pWorkingIndicesList[i], sizeof(uint32_t) * pIndiceCounter[i]);
+        ZeroMemory(wName, sizeof(wName));
+        FaceGroup &face = pFaceGroups[i];
+        GameUtils::s2ws(face.materialName.c_str(), wName);
 
-        GameUtils::s2ws(inNode->GetMaterial(i)->GetName(), tmpName);
-        int materialIndex = FindMaterialIndexByName(tmpName);
+        int materialIndex = FindMaterialIndexByName(wName);
 
-        pOutMesh->InsertFaceGroup(pIndice, pIndiceCounter[i] / 3, materialIndex);
+        pOutMesh->InsertFaceGroup(face.indices.data(), face.indices.size() / 3, materialIndex);
     }
 
-    if (pWorkingIndicesList)
+    if (pFaceGroups)
     {
-        delete[] pWorkingVertexList;
-        pWorkingVertexList = nullptr;
-    }
-    if (pSkinnedWorkingVertexList)
-    {
-        delete[] pSkinnedWorkingVertexList;
-        pSkinnedWorkingVertexList = nullptr;
-    }
-    if (pIndiceCounter)
-    {
-        delete[] pIndiceCounter;
-        pIndiceCounter = nullptr;
-    }
-    if (pWorkingIndicesList)
-    {
-        for (int i = 0; i < numFaces; i++)
-        {
-            delete[] pWorkingIndicesList[i];
-            pWorkingIndicesList[i] = nullptr;
-        }
-        delete[] pWorkingIndicesList;
-        pWorkingIndicesList = nullptr;
+        delete[] pFaceGroups;
+        pFaceGroups = nullptr;
     }
 }
 
@@ -909,7 +854,7 @@ void FBXLoader::ProcessCtrlPoints(FbxNode *inNode)
     for (int i = 0; i < ctrlPointCount; i++)
     {
         FbxVector4 pos = currMesh->GetControlPointAt(i);
-        (m_pCtrlPointList + i)->position = ToVector3(pos);
+        m_pCtrlPointList[i].position = ToVector3(pos);
     }
 }
 
@@ -1225,7 +1170,7 @@ void FBXLoader::CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertic
         tangent.Normalize();
 
         // Gram-Schmidt orthogonalize
-        pInOutVertices[a].tangent = tangent;
+        pInOutVertices[index].tangent = tangent;
     }
 
     delete[] tan1;

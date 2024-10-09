@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fbxsdk.h>
+#include <string>
 #include <vector>
 
 #include "../MathModule/MathHeaders.h"
@@ -8,6 +9,9 @@
 #include "../EngineModule/EngineInterface.h"
 
 #include "ModelExporterInterface.h"
+
+namespace fs = std::filesystem;
+using namespace std;
 
 class FBXLoader : public IModelExporter
 {
@@ -24,6 +28,13 @@ class FBXLoader : public IModelExporter
             boneWeights.reserve(4);
         }
     };
+
+    struct FaceGroup
+    {
+        string      materialName;
+        vector<UINT> indices;  
+    };
+
     CtrlPoint *m_pCtrlPointList = nullptr;
 
     const size_t MAX_WORKING_VERTEX_COUNT = 262144; // 65536
