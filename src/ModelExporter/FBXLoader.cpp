@@ -176,8 +176,10 @@ BOOL FBXLoader::Initialize(IGameEngine *pGame)
 
 BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 {
-    m_pScene->Clear();
-
+    if (!m_pScene)
+    {
+        m_pScene = FbxScene::Create(m_pManager, "myScene");
+    }
     WCHAR wPath[MAX_PATH] = {L'\0'};
     char  path[MAX_PATH] = {'\0'};
 
@@ -244,6 +246,8 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     fbxImporter->Destroy();
     fbxImporter = nullptr;
 
+    m_pScene->Destroy();
+    m_pScene = nullptr;
     return TRUE;
 }
 
@@ -727,6 +731,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
     UINT indices[3] = {0};
     for (UINT i = 0; i < triangleCount; i++)
     {
+        int materialIndex = materialIndices.GetAt(i);
         for (UINT j = 0; j < 3; j++) // Æú¸®°ï = »ï°¢Çü(Á¡ 3°³)
         {
             DWORD      index;
@@ -742,7 +747,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
             currMesh->GetPolygonVertexNormal(i, j, normal);
             currMesh->GetUVSetNames(strList);
             currMesh->GetPolygonVertexUV(i, j, strList.GetStringAt(0), uv, isUnmapped);
-
+            
             ReadTangent(currMesh, ctrlPointIndex, vertexCounter, &tangent);
 
             if (m_isSkinned)
@@ -767,30 +772,9 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 vertex.tangent = tangent;
                 index = AddVertex(basicVertices, &vertex);
             }
-            indices[j] = index;
+            pFaceGroups[materialIndex].indices.push_back(index);
         }
 
-        switch (materialMappingMode)
-        {
-        case fbxsdk::FbxLayerElement::eByPolygon: {
-            int materialIndex = materialIndices.GetAt(i);
-            for (UINT j = 0; j < 3; j++)
-            {
-                pFaceGroups[materialIndex].indices.push_back(indices[j]);
-            }
-        }
-        break;
-        case fbxsdk::FbxLayerElement::eAllSame: {
-            for (UINT j = 0; j < 3; j++)
-            {
-                pFaceGroups[0].indices.push_back(indices[j]);
-            }
-        }
-        break;
-        default:
-            __debugbreak();
-            break;
-        }
         vertexCounter++;
     }
 

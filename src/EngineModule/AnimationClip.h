@@ -35,7 +35,7 @@ struct Keyframe
 
 class AnimationClip : public IGameAnimation
 {
-    wchar_t m_name[MAX_NAME];
+    wchar_t m_name[MAX_NAME] = {L'\0'};
 
     static const size_t MAX_KEY_COUNT = 86400;
 

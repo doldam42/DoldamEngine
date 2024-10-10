@@ -84,16 +84,16 @@ void Client::LoadResources()
      pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
      pBox->SetScale(2.0f);*/
 
-    p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
-    //if (!fs::exists(p))
-    {
-        m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
-        m_pFbxExporter->ExportModel();
-    }
-    IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
-    IGameObject *pStage = m_pGame->CreateGameObject();
-    pStage->SetModel(pStageModel);
-    pStage->SetScale(10.f);
+    //p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
+    ////if (!fs::exists(p))
+    //{
+    //    m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
+    //    m_pFbxExporter->ExportModel();
+    //}
+    //IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
+    //IGameObject *pStage = m_pGame->CreateGameObject();
+    //pStage->SetModel(pStageModel);
+    //pStage->SetScale(10.f);
 
     /*fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
     if (!fs::exists(p))
@@ -109,7 +109,7 @@ void Client::LoadResources()
     pSponza->SetScale(30.f);*/
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    //if (!fs::exists(p))
+    if (!fs::exists(p))
     {
         m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
         m_pFbxExporter->ExportModel();
@@ -118,7 +118,7 @@ void Client::LoadResources()
     IGameCharacter *pGura = m_pGame->CreateCharacter();
     pGura->SetModel(pGuraModel);
     p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    //if (!fs::exists(p))
+    if (!fs::exists(p))
     {
         m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
         m_pFbxExporter->ExportAnimation();
