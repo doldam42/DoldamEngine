@@ -95,18 +95,18 @@ void Client::LoadResources()
     //pStage->SetModel(pStageModel);
     //pStage->SetScale(10.f);
 
-    /*fs::path p(L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom");
+    p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
     if (!fs::exists(p))
     {
         m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
         m_pAssimpExporter->ExportModel();
     }
-*/
-    /*IGameModel *pSponzaModel =
+
+    IGameModel *pSponzaModel =
         m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);*/
+    pSponza->SetScale(30.f);
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     if (!fs::exists(p))
@@ -153,6 +153,7 @@ void Client::LoadResources()
     /* m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
      m_pStaticSprite->SetPosition(256, 256);
      m_pStaticSprite->SetZ(0.5f);*/
+    
 }
 
 void Client::Process()

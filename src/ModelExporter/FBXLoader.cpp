@@ -1152,7 +1152,7 @@ void FBXLoader::CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertic
         // Gram-Schmidt orthogonalize
         pInOutVertices[index].tangent = tangent;
     }
-
+    
     delete[] tan1;
 }
 
@@ -1160,6 +1160,7 @@ void FBXLoader::CtrlPointToSkinnedVertex(const CtrlPoint *pInCtrlPoint, SkinnedV
 {
     int numIndices = pInCtrlPoint->boneWeights.size();
     int argSortedIndices[8] = {0};
+
     if (numIndices > 4)
     {
         for (int i = 0; i < 8; i++)
@@ -1185,6 +1186,16 @@ void FBXLoader::CtrlPointToSkinnedVertex(const CtrlPoint *pInCtrlPoint, SkinnedV
             pOutVertex->blendWeights[i] = pInCtrlPoint->boneWeights[i];
             pOutVertex->boneIndices[i] = pInCtrlPoint->boneIndices[i];
         }
+    }
+    // 합이 1이 되도록 정규화
+    float sum = 0.f;
+    for (int i = 0; i < 4; i++)
+    {
+        sum += pOutVertex->blendWeights[i];
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        pOutVertex->blendWeights[i] /= sum;
     }
 }
 

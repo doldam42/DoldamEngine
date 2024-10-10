@@ -3,7 +3,7 @@
 void Transform::AddYawRotation(float degree)
 {
     Vector3 r = Rotation.ToEuler();
-    r.y += degree;
+    r.x += degree;
     Rotation = Quaternion::CreateFromYawPitchRoll(r);
 }
 
@@ -17,7 +17,7 @@ void Transform::AddRollRotation(float degree)
 void Transform::AddPitchRotation(float degree)
 {
     Vector3 r = Rotation.ToEuler();
-    r.x += degree;
+    r.y += degree;
     Rotation = Quaternion::CreateFromYawPitchRoll(r);
 }
 
@@ -25,10 +25,7 @@ Vector3 Transform::GetForward() const
 {
     // RollÀº ¹«½Ã
     Vector3 yawPitchRoll = Rotation.ToEuler();
-    yawPitchRoll.y += DirectX::XM_PI;
-    // float yaw = Rotation.ToEuler().y;
-    // yaw += DirectX::XM_PI;
-    return Vector3::Transform(Vector3(0.0f, 0.0f, 1.0f), Matrix::CreateFromYawPitchRoll(yawPitchRoll));
+    return Vector3::Transform(Vector3::Forward, Matrix::CreateFromYawPitchRoll(yawPitchRoll));
 }
 
 Matrix Transform::GetMatrix() const
@@ -39,14 +36,15 @@ Matrix Transform::GetMatrix() const
 Transform Transform::LocalToWorld(const Transform &inParentWorldTransform) const
 {
     Transform result;
-    
-    result.SetScale(inParentWorldTransform.GetScale() * GetScale());
-    
-    result.SetRotation(inParentWorldTransform.GetRotation() * GetRotation());
+
+    /*result.SetScale(inParentWorldTransform.GetScale() * GetScale());
+
+    result.SetRotation(Quaternion::Concatenate(inParentWorldTransform.GetRotation(), GetRotation()));
 
     Vector3 deltaPos =
         Vector3::Transform(inParentWorldTransform.GetScale() * GetPosition(), inParentWorldTransform.GetRotation());
     result.SetPosition(inParentWorldTransform.GetPosition() + deltaPos);
 
-    return result;
+    return result;*/
+    return Transform(GetMatrix() * inParentWorldTransform.GetMatrix());
 }

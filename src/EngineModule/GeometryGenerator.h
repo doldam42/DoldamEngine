@@ -4,16 +4,11 @@
 #include <vector>
 
 #include "../MathModule/MathHeaders.h"
-#include "../ModelExporter/ModelExporterInterface.h"
 
 class Model;
 class AnimationClip;
 class GeometryGenerator
 {
-  private:
-    static IModelExporter *m_pFbxExporter;
-    static IModelExporter *m_pGltfExporter;
-
   public:
     static Model* ReadFromFile(const wchar_t *basePath, const wchar_t *filename);
 

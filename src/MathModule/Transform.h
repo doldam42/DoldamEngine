@@ -59,10 +59,10 @@ struct Transform
     inline Quaternion GetRotation() const { return Rotation; }
     inline Vector3    GetScale() const { return Scale; }
 
-    inline Vector3 GetXAxis() const { return Rotation.ToEuler() * Vector3::UnitX; }
-    inline Vector3 GetYAxis() const { return Rotation.ToEuler() * Vector3::UnitY; }
+    inline Vector3 GetXAxis() const { return Rotation.ToEuler() * Vector3::UnitY; }
+    inline Vector3 GetYAxis() const { return Rotation.ToEuler() * Vector3::UnitX; }
     inline Vector3 GetZAxis() const { return Rotation.ToEuler() * Vector3::UnitZ; }
-
+    
     Vector3 GetForward() const;
     Matrix  GetMatrix() const;
 

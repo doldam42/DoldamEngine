@@ -82,4 +82,10 @@ void Character::SetCurrentAnimationByName(const WCHAR *pAnimationName)
             return;
         }
     }
+    IGameAnimation *pClip = g_pGame->GetAnimationByName(pAnimationName);
+    if (pClip != nullptr)
+    {
+        m_ppAnimationClips[m_clipCount] = (AnimationClip *)pClip;
+        m_clipCount++;
+    }
 }

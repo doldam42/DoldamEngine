@@ -78,27 +78,27 @@ void AssimpLoader::CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVerti
         tan2[i3] += tdir;
     }
 
-    for (long a = 0; a < numVertices; a++)
+    for (long a = 0; a < numTriangles * 3; a++)
     {
-        const Vector3 n = pInOutVertices[a].normal;
-        const Vector3 t = tan1[a];
+        long          index = pIndices[a];
+        const Vector3 n = pInOutVertices[index].normal;
+        const Vector3 t = tan1[index];
 
         Vector3 tangent = t - n * n.Dot(t);
         tangent.Normalize();
 
         // Gram-Schmidt orthogonalize
-        pInOutVertices[a].tangent = tangent;
+        pInOutVertices[index].tangent = tangent;
     }
 
     delete[] tan1;
 }
 
 
-void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, const Transform& tr)
+void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, const Matrix &tr)
 {
     Matrix m(&node->mTransformation.a1);
-    Transform tm(m.Transpose());
-    tm = tm.LocalToWorld(tr);
+    m = m.Transpose() * tr;
 
     for (UINT i = 0; i < node->mNumMeshes; i++)
     {
@@ -114,21 +114,20 @@ void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, const Transfo
         WCHAR wcsName[MAX_NAME] = {L'\0'};
         GameUtils::s2ws(node->mName.C_Str(), wcsName);
         pObj->SetName(wcsName);
-        pObj->SetTransform(&tm);
 
-        ProcessMesh(mesh, pObj, scene);
+        ProcessMesh(mesh, pObj, scene, m);
 
         m_objects.push_back(pObj);
     }
 
     for (UINT i = 0; i < node->mNumChildren; i++)
     {
-        this->ProcessNode(node->mChildren[i], scene, tm);
+        this->ProcessNode(node->mChildren[i], scene, m);
     }
 }
 
 // Mesh 하나에 FaceGroup 하나씩
-void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene)
+void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene *scene, const Matrix &tr)
 {
     UINT             numVertice = mesh->mNumVertices;
     BasicVertex     *pVertice = new BasicVertex[numVertice];
@@ -181,8 +180,13 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, IGameMesh *pOutMesh, const aiScene 
         __debugbreak();
     }
 
+    for (UINT i = 0; i < numVertice; i++)
+    {
+        Vector3 pos = pVertice[i].position;
+        pVertice[i].position = Vector3::Transform(pos, tr);
+    }
     CalcVerticeTangent(pVertice, numVertice, indices.data(), static_cast<UINT>(indices.size() / 3));
-
+    
     pOutMesh->BeginCreateMesh(pVertice, numVertice, 1);
     pOutMesh->InsertFaceGroup(indices.data(), static_cast<UINT>(indices.size() / 3), mesh->mMaterialIndex);
     pOutMesh->EndCreateMesh();
@@ -377,8 +381,7 @@ BOOL AssimpLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 
         ProcessMaterials(pScene);
 
-        Transform tr; // Initial transformation
-        ProcessNode(pScene->mRootNode, pScene, tr);
+        ProcessNode(pScene->mRootNode, pScene, Matrix::Identity);
 
         m_pModel->Initialize(m_materials.data(), m_materials.size(), m_objects.data(),
                              m_objects.size());
