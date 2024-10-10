@@ -176,6 +176,8 @@ BOOL FBXLoader::Initialize(IGameEngine *pGame)
 
 BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 {
+    m_pScene->Clear();
+
     WCHAR wPath[MAX_PATH] = {L'\0'};
     char  path[MAX_PATH] = {'\0'};
 
@@ -241,8 +243,6 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
 
     fbxImporter->Destroy();
     fbxImporter = nullptr;
-    m_pScene->Destroy();
-    m_pScene = nullptr;
 
     return TRUE;
 }
@@ -568,7 +568,6 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         double1 = phong->Shininess;
         float shininess = static_cast<float>(double1);
 
-        // 먼가 반사율과 투명도가 이상하다....
         // Reflection
         double1 = phong->ReflectionFactor;
         reflection = static_cast<float>(double1);
@@ -598,7 +597,7 @@ void FBXLoader::ProcessMaterialAttribute(FbxSurfaceMaterial *inMaterial, Materia
         emissive.z = static_cast<float>(double3.mData[2]);
 
         // Reflection
-        reflection = 0.0f;  // 임의 설정
+        reflection = 0.0f; // 임의 설정
 
         // Transparency
         double1 = lambert->TransparencyFactor;
@@ -1105,7 +1104,7 @@ void FBXLoader::CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices
         tangent.Normalize();
 
         // Gram-Schmidt orthogonalize
-        pInOutVertices[a].tangent = tangent;
+        pInOutVertices[index].tangent = tangent;
     }
 
     delete[] tan1;

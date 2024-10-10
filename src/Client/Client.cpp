@@ -85,7 +85,7 @@ void Client::LoadResources()
      pBox->SetScale(2.0f);*/
 
     p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
-    if (!fs::exists(p))
+    //if (!fs::exists(p))
     {
         m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
         m_pFbxExporter->ExportModel();
@@ -109,7 +109,7 @@ void Client::LoadResources()
     pSponza->SetScale(30.f);*/
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    if (!fs::exists(p))
+    //if (!fs::exists(p))
     {
         m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
         m_pFbxExporter->ExportModel();
@@ -118,7 +118,7 @@ void Client::LoadResources()
     IGameCharacter *pGura = m_pGame->CreateCharacter();
     pGura->SetModel(pGuraModel);
     p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    if (!fs::exists(p))
+    //if (!fs::exists(p))
     {
         m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
         m_pFbxExporter->ExportAnimation();
