@@ -9,6 +9,7 @@ BOOL BaseObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     m_localTransform = *pLocalTransform;
     m_parentIndex = parentIndex;
     m_childCount = childCount;
+
     return TRUE;
 }
 

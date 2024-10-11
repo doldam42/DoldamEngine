@@ -126,6 +126,7 @@ void Client::LoadResources()
     IGameAnimation *pGuraAnim =
         m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
     pGura->InsertAnimation(pGuraAnim);
+    m_pCharacter = pGura;
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -186,8 +187,10 @@ void Client::Update(ULONGLONG curTick)
     {
         return;
     }
+   
+    float dt = m_prevUpdateTick == 0 ? 0.0f : static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
     m_prevUpdateTick = curTick;
-
+    
     // Update Texture
     static DWORD g_dwCount = 0;
     static DWORD g_dwTileColorR = 0;
@@ -271,6 +274,10 @@ void Client::Update(ULONGLONG curTick)
         // 텍스트가 변경되지 않은 경우 - 업데이트 할 필요 없다.
         int a = 0;
     }
+
+    float speed = 1.0f;
+    Vector3 pos = m_pCharacter->GetPosition();
+    m_pCharacter->SetPosition(pos.x, pos.y, pos.z + speed * dt);
 }
 
 void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }

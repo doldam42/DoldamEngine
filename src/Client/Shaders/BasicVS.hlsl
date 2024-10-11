@@ -58,7 +58,7 @@ PixelShaderInput main(VertexShaderInput input)
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
-        -eyeWorld.x, -eyeWorld.y, -eyeWorld.z, 1
+        eyeWorld.x, eyeWorld.y, eyeWorld.z, 1
     };
     
     pos = mul(pos, positionMat);

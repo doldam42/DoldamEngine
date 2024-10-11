@@ -44,7 +44,7 @@ void Camera::Update(const float dt)
 void Camera::UpdateViewDir()
 {
     // 이동할 때 기준이 되는 정면/오른쪽 방향 계산
-    m_viewDir = Vector3::Transform(Vector3(0.0f, 0.0f, 1.0f), Matrix::CreateRotationY(this->m_yaw));
+    m_viewDir = Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(this->m_yaw));
     m_rightDir = m_upDir.Cross(m_viewDir);
 }
 

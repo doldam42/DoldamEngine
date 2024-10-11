@@ -172,7 +172,7 @@ void GameEngine::Update(ULONGLONG curTick)
         m_pMainCamera->Update(dt);
     }
     // update objects
-
+    
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
