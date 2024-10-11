@@ -196,7 +196,7 @@ void Graphics::InitDepthStencilStates()
     using namespace DirectX;
 
     depthStencilStates[DRAW_PASS_TYPE_DEFAULT] = CommonStates::DepthDefault;
-    depthStencilStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::DepthDefault;
+    depthStencilStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::DepthRead;
 }
 
 void Graphics::InitSamplers()
