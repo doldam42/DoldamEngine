@@ -29,6 +29,12 @@ class DXRSceneManager;
 
 class D3D12Renderer : public IRenderer
 {
+    enum DSV_DESCRIPTOR_INDEX
+    {
+        DSV_DESCRIPTOR_INDEX_COMMON = 0,
+        DSV_DESCRIPTOR_INDEX_SHADOW,
+    };
+
     enum GLOBAL_DESCRIPTOR_INDEX
     {
         GLOBAL_DESCRIPTOR_INDEX_CB = 0,
@@ -87,6 +93,11 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource *m_pIntermediateRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pDepthStencil = nullptr;
 
+    // Shadow Map
+    UINT            m_shadowWidth = 1280;
+    UINT            m_shadowHeight = 1280;
+    ID3D12Resource *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
     ID3D12DescriptorHeap *m_pDSVHeap = nullptr;
@@ -102,6 +113,7 @@ class D3D12Renderer : public IRenderer
     // CubeMap
     Cubemap *m_pCubemap = nullptr;
 
+    UINT         m_dsvDescriptorSize = 0;
     UINT         m_srvDescriptorSize = 0;
     UINT         m_rtvDescriptorSize = 0;
     UINT         m_dwSwapChainFlags = 0;
@@ -128,6 +140,10 @@ class D3D12Renderer : public IRenderer
     // For multi-threads
     BOOL InitRenderThreadPool(UINT threadCount);
     void CleanupRenderThreadPool();
+
+    // For Shadow Map
+    BOOL CreateShadowMaps();
+    void CleanupShadowMaps();
 
   public:
     // Inherited via IRenderer

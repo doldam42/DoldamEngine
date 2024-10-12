@@ -52,9 +52,9 @@ class Camera
     GameObject *m_pTarget = nullptr;
 
     Vector3 m_position = Vector3(0.644748f, 0.151557f, 0.898394f);
-    Vector3 m_viewDir = Vector3(0.0f, 0.0f, 1.0f);
-    Vector3 m_upDir = Vector3(0.0f, 1.0f, 0.0f); // 이번 예제에서는 고정
-    Vector3 m_rightDir = Vector3(1.0f, 0.0f, 0.0f);
+    Vector3 m_viewDir = Vector3::UnitZ;
+    Vector3 m_upDir = Vector3::UnitY; // 이번 예제에서는 고정
+    Vector3 m_rightDir = Vector3::UnitX;
 
     Matrix m_viewMatrix;
     Matrix m_projMatrix;

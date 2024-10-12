@@ -10,8 +10,8 @@ void Camera::Update(const float dt)
 
     if (m_pTarget && !m_useFirstPersonView)
     {
-        const Transform& targetTM = m_pTarget->GetTransform();
-        float      offset = 1.f;
+        const Transform &targetTM = m_pTarget->GetTransform();
+        float            offset = 1.f;
 
         m_yaw = targetTM.GetYAxis().y + XM_PI;
         // 3인칭 시점에서 pitch, roll은 무시
@@ -44,7 +44,7 @@ void Camera::Update(const float dt)
 void Camera::UpdateViewDir()
 {
     // 이동할 때 기준이 되는 정면/오른쪽 방향 계산
-    m_viewDir = Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(this->m_yaw));
+    m_viewDir = Vector3::Transform(Vector3::UnitZ, Matrix::CreateRotationY(this->m_yaw));
     m_rightDir = m_upDir.Cross(m_viewDir);
 }
 
@@ -74,9 +74,9 @@ void Camera::UpdateMouse(float mouseNdcX, float mouseNdcY)
     if (m_useFirstPersonView)
     {
         // 얼마나 회전할지 계산
-        m_yaw = mouseNdcX * XM_2PI;      // 좌우 360도
-        m_pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
-        
+        m_yaw = mouseNdcX * XM_2PI;       // 좌우 360도
+        m_pitch = -mouseNdcY * XM_PIDIV2; // 위 아래 90도
+
         UpdateViewDir();
     }
 }
@@ -90,14 +90,14 @@ void Camera::UpdateProjMatrix()
 void Camera::UpdateViewMatrix()
 {
     // SetViewMatrix(Matrix::CreateLookAt(m_position, m_viewDir, m_upDir));
-    SetViewMatrix(Matrix::CreateRotationY(-this->m_yaw) * Matrix::CreateRotationX(this->m_pitch));
-    SetViewProjMatrix(m_viewMatrix * m_projMatrix);
+    SetViewMatrix(Matrix::CreateRotationY(-m_yaw) * Matrix::CreateRotationX(-m_pitch));
+    SetViewProjMatrix(GetViewRow() * m_projMatrix);
 }
 
 void Camera::UpdateFrustum()
 {
     m_frustumVS = BoundingFrustum(GetProjRow());
- 
+
     m_frustumWS = m_frustumVS;
     m_frustumWS.Origin = m_position;
     m_frustumWS.Orientation = Quaternion::CreateFromYawPitchRoll(m_yaw, m_pitch, 0);

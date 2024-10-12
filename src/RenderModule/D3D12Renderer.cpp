@@ -2,19 +2,18 @@
 
 #include "../GenericModule/ProcessInfo.h"
 #include "../GenericModule/StringUtil.h"
-#include "ConstantBuffers.h"
 #include "CommandListPool.h"
-#include "ConstantBuffers.h"
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
+#include "ConstantBuffers.h"
 #include "Cubemap.h"
 #include "D3D12ResourceManager.h"
+#include "D3DMeshObject.h"
 #include "DXRSceneManager.h"
 #include "DescriptorPool.h"
 #include "FontManager.h"
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
-#include "D3DMeshObject.h"
 #include "RenderThread.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
@@ -166,6 +165,8 @@ lb_exit:
     CreateDescriptorHeap();
 
     CreateBuffers();
+
+    CreateShadowMaps();
 
     CreateFence();
 
@@ -568,7 +569,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
         item.spriteParam.isUseRect = FALSE;
         item.spriteParam.rect = {};
     }
-    item.spriteParam.pTexHandle = reinterpret_cast<ITextureHandle*>(pTexHandle);
+    item.spriteParam.pTexHandle = reinterpret_cast<ITextureHandle *>(pTexHandle);
     item.spriteParam.Z = Z;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
@@ -626,7 +627,7 @@ BOOL D3D12Renderer::BeginCreateMesh(IDIMeshObject *pMeshObjHandle, const void *p
                                     UINT numFaceGroup, const wchar_t *path)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL        result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup, path);
+    BOOL           result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup, path);
     return result;
 }
 
@@ -634,7 +635,7 @@ BOOL D3D12Renderer::InsertFaceGroup(IDIMeshObject *pMeshObjHandle, const UINT *p
                                     const Material *pInMaterial)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL        result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
+    BOOL           result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
 
     return result;
 }
@@ -643,7 +644,7 @@ void D3D12Renderer::EndCreateMesh(IDIMeshObject *pMeshObjHandle)
 {
     CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
-    D3DMeshObject                 *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
+    D3DMeshObject              *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
     pMeshObj->EndCreateMesh(pCommandList);
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
@@ -805,8 +806,8 @@ ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, co
 }
 
 ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
-                                              const Vector3 *pPosition,
-                                      float radius, float fallOffStart, float fallOffEnd)
+                                              const Vector3 *pPosition, float radius, float fallOffStart,
+                                              float fallOffEnd)
 {
     Light light;
     light.direction = *pDirection;
@@ -831,8 +832,8 @@ ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Ve
 }
 
 ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection,
-                                             const Vector3 *pPosition,
-                                     float spotPower, float radius, float fallOffStart, float fallOffEnd)
+                                             const Vector3 *pPosition, float spotPower, float radius,
+                                             float fallOffStart, float fallOffEnd)
 {
     Light light;
     light.radiance = *pRadiance;
@@ -865,7 +866,7 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
     {
         __debugbreak();
     }
-    Light *pLight = static_cast<Light*>(pLightHandle);
+    Light *pLight = static_cast<Light *>(pLightHandle);
     pLight->type = LIGHT_OFF;
 }
 
@@ -897,9 +898,9 @@ void D3D12Renderer::DeleteMaterialHandle(IMaterialHandle *pInMaterial)
     m_pMaterialManager->DeleteMaterial(pHandle);
 }
 
-void D3D12Renderer::UpdateMaterialHandle(IMaterialHandle *pInMaterial, const Material *pMaterial) 
+void D3D12Renderer::UpdateMaterialHandle(IMaterialHandle *pInMaterial, const Material *pMaterial)
 {
-    m_pMaterialManager->UpdateMaterial(static_cast<MATERIAL_HANDLE*>(pInMaterial), pMaterial);
+    m_pMaterialManager->UpdateMaterial(static_cast<MATERIAL_HANDLE *>(pInMaterial), pMaterial);
 }
 
 void D3D12Renderer::InitCubemaps(const WCHAR *envFilename, const WCHAR *specularFilename,
@@ -1075,9 +1076,9 @@ BOOL D3D12Renderer::CreateDescriptorHeap()
         __debugbreak();
     }
 
-    // 깁이 버퍼용 디스크립터 힙
+    // 깊이 버퍼용 디스크립터 힙
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.NumDescriptors = 1 + MAX_LIGHTS; // SHADOW MAP용 Descriptor 포함
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap))))
@@ -1347,6 +1348,7 @@ void D3D12Renderer::Cleanup()
     CleanupFence();
     CleanupDescriptorHeap();
     CleanupBuffers();
+    CleanupShadowMaps();
 
     if (m_pMaterialManager)
     {
@@ -1438,5 +1440,53 @@ void D3D12Renderer::CleanupRenderThreadPool()
     {
         CloseHandle(m_hCompleteEvent);
         m_hCompleteEvent = nullptr;
+    }
+}
+
+BOOL D3D12Renderer::CreateShadowMaps()
+{
+    m_dsvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+    D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+    depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+    depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), m_dsvDescriptorSize,
+                                            DSV_DESCRIPTOR_INDEX_SHADOW);
+    for (UINT i = 0; i < MAX_LIGHTS; i++)
+    {
+        ID3D12Resource *pDepthStencil = nullptr;
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
+                                              D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
+        {
+            __debugbreak();
+        }
+
+        m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
+        dsvHandle.Offset(m_dsvDescriptorSize);
+
+        m_pShadowDepthStencils[i] = pDepthStencil;
+    }
+    return TRUE;
+}
+
+void D3D12Renderer::CleanupShadowMaps() 
+{ 
+    for (UINT i = 0; i < MAX_LIGHTS; i++)
+    {
+        if (m_pShadowDepthStencils[i])
+        {
+            m_pShadowDepthStencils[i]->Release();
+            m_pShadowDepthStencils[i] = nullptr;
+        }
     }
 }
