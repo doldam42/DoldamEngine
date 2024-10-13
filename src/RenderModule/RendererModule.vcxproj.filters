@@ -283,5 +283,11 @@
     <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
       <Filter>Shaders\DXR</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DepthOnlyPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DepthOnlyVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

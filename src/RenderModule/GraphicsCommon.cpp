@@ -17,6 +17,11 @@ ID3DBlob *vertexShaders[RENDER_ITEM_TYPE_COUNT] = {nullptr};
 // Pixel Shader
 ID3DBlob *pixelShaders[RENDER_ITEM_TYPE_COUNT] = {nullptr};
 
+// Depth Only Shader
+ID3DBlob *depthOnlyVS = nullptr;
+ID3DBlob *depthOnlyPS = nullptr;
+ID3DBlob *depthOnlySkinningVS = nullptr;
+
 // Compute Shader
 ID3DBlob *deformingVertexCS = nullptr;
 
@@ -99,9 +104,9 @@ void Graphics::InitCommonStates(ID3D12Device5 *pD3DDevice)
     InitRootSignature(pD3DDevice);
     InitPipelineStates(pD3DDevice);
 
-    #ifdef USE_RAYTRACING
+#ifdef USE_RAYTRACING
     InitRaytracingStates(pD3DDevice);
-    #endif
+#endif
 }
 
 void Graphics::InitInputLayouts()
@@ -124,6 +129,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
 #endif
     D3D_SHADER_MACRO skinnedVSMacros[2] = {{"SKINNED", "1"}, {NULL, NULL}};
 
+    // Mesh Object
     hr = D3DCompileFromFile(L"./Shaders/BasicVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
                             compileFlags, 0, &vertexShaders[RENDER_ITEM_TYPE_MESH_OBJ], nullptr);
     if (FAILED(hr))
@@ -139,6 +145,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
 
     pixelShaders[RENDER_ITEM_TYPE_CHAR_OBJ] = pixelShaders[RENDER_ITEM_TYPE_MESH_OBJ];
 
+    // SkyBox
     hr = D3DCompileFromFile(L"./Shaders/SkyboxVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
                             compileFlags, 0, &vertexShaders[RENDER_ITEM_TYPE_SKYBOX], nullptr);
     if (FAILED(hr))
@@ -146,6 +153,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     hr = D3DCompileFromFile(L"./Shaders/SkyboxPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
                             compileFlags, 0, &pixelShaders[RENDER_ITEM_TYPE_SKYBOX], nullptr);
 
+    // Sprite
     hr = D3DCompileFromFile(L"./Shaders/SpriteVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
                             compileFlags, 0, &vertexShaders[RENDER_ITEM_TYPE_SPRITE], nullptr);
     if (FAILED(hr))
@@ -155,11 +163,27 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    // Depth Only
+    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "vs_5_1", compileFlags, 0, &depthOnlyVS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", skinnedVSMacros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
+                            compileFlags, 0, &depthOnlySkinningVS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
+                            compileFlags, 0, &depthOnlyPS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+
+    // Skinning CS
     hr = D3DCompileFromFile(L"./Shaders/SkinningCS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_1",
                             compileFlags, 0, &deformingVertexCS, nullptr);
     if (FAILED(hr))
         __debugbreak();
 
+    // Present
     hr = D3DCompileFromFile(L"./Shaders/PresentVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
                             compileFlags, 0, &presentVS, nullptr);
     if (FAILED(hr))
@@ -175,7 +199,7 @@ void Graphics::InitBlendStates()
 {
     using namespace DirectX;
 
-    blendStates[DRAW_PASS_TYPE_DEFAULT] = CommonStates::Opaque;
+    blendStates[DRAW_PASS_TYPE_DEFAULT] = blendStates[DRAW_PASS_TYPE_SHADOW] = CommonStates::Opaque;
     blendStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::AlphaBlend;
 }
 
@@ -185,17 +209,19 @@ void Graphics::InitRasterizerStates()
 
     const CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
     rasterizerStates[DRAW_PASS_TYPE_DEFAULT][FILL_MODE_SOLID] =
-        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_SOLID] = desc;
+        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_SOLID] =
+            rasterizerStates[DRAW_PASS_TYPE_SHADOW][FILL_MODE_SOLID] = desc;
 
     rasterizerStates[DRAW_PASS_TYPE_DEFAULT][FILL_MODE_WIRED] =
-        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_WIRED] = CommonStates::Wireframe;
+        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_WIRED] =
+            rasterizerStates[DRAW_PASS_TYPE_SHADOW][FILL_MODE_WIRED] = CommonStates::Wireframe;
 }
 
 void Graphics::InitDepthStencilStates()
 {
     using namespace DirectX;
 
-    depthStencilStates[DRAW_PASS_TYPE_DEFAULT] = CommonStates::DepthDefault;
+    depthStencilStates[DRAW_PASS_TYPE_DEFAULT] = depthStencilStates[DRAW_PASS_TYPE_SHADOW] = CommonStates::DepthDefault;
     depthStencilStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::DepthRead;
 }
 
@@ -315,9 +341,9 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Ranges Per Global
     // | Global Consts(b0) | Materials (t5) | EnvIBL(t10) | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) |
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[3];
-    rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);     // b0 : globalConsts
-    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);     // t5 : materials
-    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10);    // t10~13 : IBL Textures
+    rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
+    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);  // t5 : materials
+    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10); // t10~13 : IBL Textures
     // Init Basic Root Signature
     {
         CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1];
@@ -531,8 +557,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         CD3DX12_ROOT_PARAMETER rootParameters[1] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(ranges), ranges, D3D12_SHADER_VISIBILITY_ALL);
 
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, 1,
-                                                      samplerStates,
+        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, 1, samplerStates,
                                                       D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
         SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &presentRS, L"present RS");
     }
@@ -575,7 +600,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                                              vertexShaders[itemType]->GetBufferSize());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShaders[itemType]->GetBufferPointer(),
                                              pixelShaders[itemType]->GetBufferSize());
-        for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)
+        for (UINT passType = 0; passType < DRAW_PASS_TYPE_SHADOW; passType++)
         {
             psoDesc.BlendState = blendStates[passType];
             psoDesc.DepthStencilState = depthStencilStates[passType];
@@ -589,6 +614,39 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                     __debugbreak();
                 }
             }
+        }
+    }
+
+    // shadowMap
+    psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_MESH_OBJ];
+    psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ];
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlyVS->GetBufferPointer(), depthOnlyVS->GetBufferSize());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(depthOnlyPS->GetBufferPointer(), depthOnlyPS->GetBufferSize());
+    
+    psoDesc.BlendState = blendStates[DRAW_PASS_TYPE_SHADOW];
+    psoDesc.DepthStencilState = depthStencilStates[DRAW_PASS_TYPE_SHADOW];
+
+    for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
+    {
+        psoDesc.RasterizerState = rasterizerStates[DRAW_PASS_TYPE_SHADOW][fillMode];
+        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(
+                &psoDesc, IID_PPV_ARGS(&PSO[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_SHADOW][fillMode]))))
+        {
+            __debugbreak();
+        }
+    }
+
+    psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_CHAR_OBJ];
+    psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ];
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlySkinningVS->GetBufferPointer(), depthOnlySkinningVS->GetBufferSize());
+
+    for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
+    {
+        psoDesc.RasterizerState = rasterizerStates[DRAW_PASS_TYPE_SHADOW][fillMode];
+        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(
+                &psoDesc, IID_PPV_ARGS(&PSO[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_SHADOW][fillMode]))))
+        {
+            __debugbreak();
         }
     }
 
@@ -619,7 +677,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         psoDesc.DepthStencilState.DepthEnable = FALSE;
         psoDesc.DepthStencilState.StencilEnable = FALSE;
-        
+
         if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&presentPSO))))
         {
             __debugbreak();
@@ -771,10 +829,7 @@ void Graphics::InitRaytracingStateObjects(CD3DX12_STATE_OBJECT_DESC *raytracingP
     pipelineConfig->Config(maxRecursionDepth);
 }
 
-ID3D12RootSignature *Graphics::GetRS(RENDER_ITEM_TYPE itemType)
-{
-    return rootSignatures[itemType];
-}
+ID3D12RootSignature *Graphics::GetRS(RENDER_ITEM_TYPE itemType) { return rootSignatures[itemType]; }
 
 ID3D12PipelineState *Graphics::GetPSO(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE passType, FILL_MODE fillMode)
 {
@@ -805,12 +860,26 @@ void Graphics::DeleteShaders()
         }
     }
 
+    if (depthOnlyVS)
+    {
+        depthOnlyVS->Release();
+        depthOnlyVS = nullptr;
+    }
+    if (depthOnlySkinningVS)
+    {
+        depthOnlySkinningVS->Release();
+        depthOnlySkinningVS = nullptr;
+    }
+    if (depthOnlyPS)
+    {
+        depthOnlyPS->Release();
+        depthOnlyPS = nullptr;
+    }
     if (deformingVertexCS)
     {
         deformingVertexCS->Release();
         deformingVertexCS = nullptr;
     }
-
     if (presentVS)
     {
         presentVS->Release();
@@ -823,9 +892,7 @@ void Graphics::DeleteShaders()
     }
 }
 
-void Graphics::DeleteSamplers()
-{
-}
+void Graphics::DeleteSamplers() {}
 
 void Graphics::DeleteRootSignatures()
 {

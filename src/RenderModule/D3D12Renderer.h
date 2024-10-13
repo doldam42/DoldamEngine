@@ -96,7 +96,10 @@ class D3D12Renderer : public IRenderer
     // Shadow Map
     UINT            m_shadowWidth = 1280;
     UINT            m_shadowHeight = 1280;
+    D3D12_VIEWPORT    m_shadowViewport = {};
+    D3D12_RECT        m_shadowScissorRect = {};
     ID3D12Resource *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+    DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
@@ -144,6 +147,7 @@ class D3D12Renderer : public IRenderer
     // For Shadow Map
     BOOL CreateShadowMaps();
     void CleanupShadowMaps();
+    void RenderShadowMaps(CommandListPool* pCommandListPool);
 
   public:
     // Inherited via IRenderer

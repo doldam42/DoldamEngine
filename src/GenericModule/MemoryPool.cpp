@@ -25,6 +25,17 @@ void MemoryPool::Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum)
     }
 }
 
+BOOL MemoryPool::Has(void *pInAddr) 
+{ 
+    if (!pInAddr)
+        return FALSE;
+    int offset = (uint8_t *)pInAddr - m_pBaseAddress;
+    if (offset < 0 || offset > m_maxItemNum * m_sizeInBytes)
+        return FALSE;
+
+    return TRUE;
+}
+
 void *MemoryPool::Alloc()
 {
     uint8_t *pOutAddr = m_pBaseAddress;

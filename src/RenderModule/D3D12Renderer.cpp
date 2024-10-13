@@ -162,19 +162,6 @@ lb_exit:
         m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
     }
 
-    CreateDescriptorHeap();
-
-    CreateBuffers();
-
-    CreateShadowMaps();
-
-    CreateFence();
-
-    m_pFontManager = new FontManager;
-    m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
-
-    Graphics::InitCommonStates(m_pD3DDevice);
-
     m_pResourceManager = new D3D12ResourceManager;
     m_pResourceManager->Initialize(m_pD3DDevice, MAX_DESCRIPTOR_COUNT);
 
@@ -183,6 +170,19 @@ lb_exit:
 
     m_pMaterialManager = new MaterialManager;
     m_pMaterialManager->Initialize(this, sizeof(MaterialConstants), 1024);
+
+    m_pFontManager = new FontManager;
+    m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
+
+    CreateDescriptorHeap();
+
+    CreateBuffers();
+
+    CreateShadowMaps();
+
+    CreateFence();
+
+    Graphics::InitCommonStates(m_pD3DDevice);
 
     DWORD physicalCoreCount = 0;
     DWORD logicalCoreCount = 0;
@@ -1446,6 +1446,25 @@ void D3D12Renderer::CleanupRenderThreadPool()
 BOOL D3D12Renderer::CreateShadowMaps()
 {
     m_dsvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    m_pResourceManager->AllocDescriptorTable(&m_shadowSRVHandle, MAX_LIGHTS);
+
+    m_shadowViewport.TopLeftX = 0;
+    m_shadowViewport.TopLeftY = 0;
+    m_shadowViewport.Width = float(m_shadowWidth);
+    m_shadowViewport.Height = float(m_shadowHeight);
+    m_shadowViewport.MinDepth = 0.0f;
+    m_shadowViewport.MaxDepth = 1.0f;
+
+    m_shadowScissorRect.left = 0;
+    m_shadowScissorRect.top = 0;
+    m_shadowScissorRect.right = m_shadowWidth;
+    m_shadowScissorRect.bottom = m_shadowHeight;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
     depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -1457,6 +1476,7 @@ BOOL D3D12Renderer::CreateShadowMaps()
     depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
     depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_shadowSRVHandle.cpuHandle);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), m_dsvDescriptorSize,
                                             DSV_DESCRIPTOR_INDEX_SHADOW);
     for (UINT i = 0; i < MAX_LIGHTS; i++)
@@ -1471,16 +1491,20 @@ BOOL D3D12Renderer::CreateShadowMaps()
             __debugbreak();
         }
 
+        m_pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, srvHandle);
         m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
         dsvHandle.Offset(m_dsvDescriptorSize);
+        srvHandle.Offset(m_srvDescriptorSize);
 
         m_pShadowDepthStencils[i] = pDepthStencil;
     }
+    
     return TRUE;
 }
 
 void D3D12Renderer::CleanupShadowMaps() 
 { 
+    m_pResourceManager->DeallocDescriptorTable(&m_shadowSRVHandle);
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         if (m_pShadowDepthStencils[i])
@@ -1489,4 +1513,18 @@ void D3D12Renderer::CleanupShadowMaps()
             m_pShadowDepthStencils[i] = nullptr;
         }
     }
+}
+
+void D3D12Renderer::RenderShadowMaps(CommandListPool *pCommandListPool) 
+{
+    ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(),
+                                            DSV_DESCRIPTOR_INDEX_SHADOW, m_dsvDescriptorSize);
+    pCommandList->RSSetViewports(1, &m_shadowViewport);
+    pCommandList->RSSetScissorRects(1, &m_shadowScissorRect);
+    pCommandList->OMSetRenderTargets(1, &dsvHandle, FALSE, &dsvHandle);
+    
+
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }

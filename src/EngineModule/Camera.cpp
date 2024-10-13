@@ -7,7 +7,6 @@
 
 void Camera::Update(const float dt)
 {
-
     if (m_pTarget && !m_useFirstPersonView)
     {
         const Transform &targetTM = m_pTarget->GetTransform();
@@ -103,17 +102,9 @@ void Camera::UpdateFrustum()
     m_frustumWS.Orientation = Quaternion::CreateFromYawPitchRoll(m_yaw, m_pitch, 0);
 }
 
-void Camera::MoveForward(float dt)
-{
-    // 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이;
-    m_position += m_viewDir * m_speed * dt;
-}
+void Camera::MoveForward(float dt) { m_position += m_viewDir * m_speed * dt; }
 
-void Camera::MoveUp(float dt)
-{
-    // 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이;
-    m_position += m_upDir * m_speed * dt;
-}
+void Camera::MoveUp(float dt) { m_position += m_upDir * m_speed * dt; }
 
 void Camera::MoveRight(float dt) { m_position += m_rightDir * m_speed * dt; }
 
