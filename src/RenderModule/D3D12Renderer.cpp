@@ -220,6 +220,9 @@ lb_exit:
     m_pNonOpaqueRenderQueue = new RenderQueue;
     m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
 
+    m_pShadowMapRenderQueue = new RenderQueue;
+    m_pShadowMapRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
+
 // #DXR
 #ifdef USE_RAYTRACING
     m_pDXRSceneManager = new DXRSceneManager;
@@ -286,6 +289,8 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
+    RenderShadowMaps();
+
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
 
@@ -507,9 +512,13 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
             __debugbreak();
     }
 
+    if (!m_pShadowMapRenderQueue->Add(&item))
+        __debugbreak();
+
     m_curThreadIndex++;
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-#endif //  USE_RAYTRACING
+#endif
+    // Shadow Map
 }
 
 void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
@@ -539,6 +548,9 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
     item.charObjParam.numBones = numBones;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+
+    if (!m_pShadowMapRenderQueue->Add(&item))
         __debugbreak();
 
     m_curThreadIndex++;
@@ -975,6 +987,55 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
     CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
                                          type * SWAP_CHAIN_FRAME_COUNT, m_rtvDescriptorSize);
     return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
+}
+
+ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex)
+{
+    UINT             threadIndex = 0;
+    CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
+    ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
+
+    TEXTURE_HANDLE *pTexHandle = m_pShadowTexHandles[lightIndex];
+    ID3D12Resource *pSrcTexture = m_pShadowDepthStencils[lightIndex];
+
+    D3D12_RESOURCE_DESC srcDesc = pSrcTexture->GetDesc();
+    D3D12_RESOURCE_DESC destDesc = pTexHandle->pTexture->GetDesc();
+
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT destFootprint;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcFootprint;
+
+    UINT   row = 0;
+    UINT64 rowSize, totalByes;
+    m_pD3DDevice->GetCopyableFootprints(&srcDesc, 0, 1, 0, &srcFootprint, &row, &rowSize, &totalByes);
+    m_pD3DDevice->GetCopyableFootprints(&destDesc, 0, 1, 0, &destFootprint, &row, &rowSize, &totalByes);
+    
+    D3D12_BOX box;
+    box.front = 0;
+    box.back = 1;
+    box.left = 0;
+    box.right = m_shadowWidth;
+    box.top = 0;
+    box.bottom = m_shadowHeight;
+
+    D3D12_TEXTURE_COPY_LOCATION srcLocation;
+    srcLocation.PlacedFootprint = srcFootprint;
+    srcLocation.pResource = pSrcTexture;
+    srcLocation.SubresourceIndex = 0;
+    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+
+    D3D12_TEXTURE_COPY_LOCATION destLocation;
+    destLocation.PlacedFootprint = destFootprint;
+    destLocation.pResource = pTexHandle->pTexture;
+    destLocation.SubresourceIndex = 0;
+    destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+
+    pCommandList->CopyTextureRegion(&destLocation, box.left, box.top, 0, &srcLocation, &box);
+
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+
+    pTexHandle->IsUpdated = TRUE;
+
+    return pTexHandle;
 }
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex)
@@ -1482,6 +1543,7 @@ BOOL D3D12Renderer::CreateShadowMaps()
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         ID3D12Resource *pDepthStencil = nullptr;
+
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
@@ -1497,13 +1559,15 @@ BOOL D3D12Renderer::CreateShadowMaps()
         srvHandle.Offset(m_srvDescriptorSize);
 
         m_pShadowDepthStencils[i] = pDepthStencil;
+
+        m_pShadowTexHandles[i] = m_pTextureManager->CreateDynamicTexture(m_shadowWidth, m_shadowHeight);
     }
-    
+
     return TRUE;
 }
 
-void D3D12Renderer::CleanupShadowMaps() 
-{ 
+void D3D12Renderer::CleanupShadowMaps()
+{
     m_pResourceManager->DeallocDescriptorTable(&m_shadowSRVHandle);
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
@@ -1515,8 +1579,10 @@ void D3D12Renderer::CleanupShadowMaps()
     }
 }
 
-void D3D12Renderer::RenderShadowMaps(CommandListPool *pCommandListPool) 
+void D3D12Renderer::RenderShadowMaps()
 {
+    UINT                       threadIndex = 0;
+    CommandListPool           *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -1524,7 +1590,7 @@ void D3D12Renderer::RenderShadowMaps(CommandListPool *pCommandListPool)
     pCommandList->RSSetViewports(1, &m_shadowViewport);
     pCommandList->RSSetScissorRects(1, &m_shadowScissorRect);
     pCommandList->OMSetRenderTargets(1, &dsvHandle, FALSE, &dsvHandle);
-    
 
-    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+    m_pShadowMapRenderQueue->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, dsvHandle, dsvHandle,
+                                     &m_shadowViewport, &m_shadowScissorRect);
 }

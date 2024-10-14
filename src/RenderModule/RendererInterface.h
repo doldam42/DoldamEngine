@@ -85,6 +85,9 @@ interface IRenderer
                                           float fallOffEnd = 20.0f) = 0;
     virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
+    // For Debugging
+    virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;
+
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;
     virtual UINT  GetCommandListCount() = 0;

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ConstantBuffers.h"
-#include "RendererInterface.h"
 #include "RenderQueue.h"
+#include "RendererInterface.h"
 #include "RendererTypedef.h"
 
 const UINT SWAP_CHAIN_FRAME_COUNT = 3;
@@ -68,6 +68,7 @@ class D3D12Renderer : public IRenderer
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_pNonOpaqueRenderQueue = nullptr;
+    RenderQueue           *m_pShadowMapRenderQueue = nullptr;
 
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;
@@ -94,11 +95,12 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource *m_pDepthStencil = nullptr;
 
     // Shadow Map
-    UINT            m_shadowWidth = 1280;
-    UINT            m_shadowHeight = 1280;
+    UINT              m_shadowWidth = 1280;
+    UINT              m_shadowHeight = 1280;
     D3D12_VIEWPORT    m_shadowViewport = {};
     D3D12_RECT        m_shadowScissorRect = {};
-    ID3D12Resource *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+    ID3D12Resource   *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+    TEXTURE_HANDLE   *m_pShadowTexHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
@@ -147,7 +149,7 @@ class D3D12Renderer : public IRenderer
     // For Shadow Map
     BOOL CreateShadowMaps();
     void CleanupShadowMaps();
-    void RenderShadowMaps(CommandListPool* pCommandListPool);
+    void RenderShadowMaps();
 
   public:
     // Inherited via IRenderer
@@ -195,10 +197,10 @@ class D3D12Renderer : public IRenderer
     void            DeleteTexture(ITextureHandle *pTexHandle);
 
     ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection);
-    ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition, float radius,
-                           float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
+    ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
+                                   float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
     ILightHandle *CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
-                          float spotPower, float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
+                                  float spotPower, float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
     void          DeleteLight(ILightHandle *pLightHandle);
 
     IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial) override;
@@ -219,6 +221,7 @@ class D3D12Renderer : public IRenderer
     float GetAspectRatio() const { return float(m_Viewport.Width) / m_Viewport.Height; }
 
     // 함수 호출시 TEXTURE_HANDLE의 REF_COUNT를 1 올림
+
     TEXTURE_HANDLE *GetDefaultTex();
 
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
@@ -239,6 +242,8 @@ class D3D12Renderer : public IRenderer
     DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
+    
+    ITextureHandle *GetShadowMapTexture(UINT lightIndex) override;
 
     // for RenderThread
     UINT GetRenderThreadCount() { return m_renderThreadCount; }
