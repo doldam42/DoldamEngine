@@ -722,6 +722,14 @@ void D3D12Renderer::UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYT
     pTextureHandle->IsUpdated = TRUE;
 }
 
+void D3D12Renderer::UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) 
+{
+    TEXTURE_HANDLE *pDest = (TEXTURE_HANDLE *)pDestTex;
+    TEXTURE_HANDLE *pSrc = (TEXTURE_HANDLE *)pSrcTex;
+    m_pResourceManager->UpdateTextureForWrite(pDest->pTexture, pSrc->pTexture);
+    pDest->IsUpdated = TRUE;
+}
+
 ITextureHandle *D3D12Renderer::CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b)
 {
     DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -989,53 +997,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
     return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
 }
 
-ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex)
+void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) 
 {
-    UINT             threadIndex = 0;
-    CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
-    ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
-
-    TEXTURE_HANDLE *pTexHandle = m_pShadowTexHandles[lightIndex];
+    TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHandle;
     ID3D12Resource *pSrcTexture = m_pShadowDepthStencils[lightIndex];
 
-    D3D12_RESOURCE_DESC srcDesc = pSrcTexture->GetDesc();
-    D3D12_RESOURCE_DESC destDesc = pTexHandle->pTexture->GetDesc();
+    m_pResourceManager->UpdateTextureForWrite(pTex->pTexture, pSrcTexture);
 
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT destFootprint;
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcFootprint;
-
-    UINT   row = 0;
-    UINT64 rowSize, totalByes;
-    m_pD3DDevice->GetCopyableFootprints(&srcDesc, 0, 1, 0, &srcFootprint, &row, &rowSize, &totalByes);
-    m_pD3DDevice->GetCopyableFootprints(&destDesc, 0, 1, 0, &destFootprint, &row, &rowSize, &totalByes);
-    
-    D3D12_BOX box;
-    box.front = 0;
-    box.back = 1;
-    box.left = 0;
-    box.right = m_shadowWidth;
-    box.top = 0;
-    box.bottom = m_shadowHeight;
-
-    D3D12_TEXTURE_COPY_LOCATION srcLocation;
-    srcLocation.PlacedFootprint = srcFootprint;
-    srcLocation.pResource = pSrcTexture;
-    srcLocation.SubresourceIndex = 0;
-    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-
-    D3D12_TEXTURE_COPY_LOCATION destLocation;
-    destLocation.PlacedFootprint = destFootprint;
-    destLocation.pResource = pTexHandle->pTexture;
-    destLocation.SubresourceIndex = 0;
-    destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-
-    pCommandList->CopyTextureRegion(&destLocation, box.left, box.top, 0, &srcLocation, &box);
-
-    pCommandListPool->CloseAndExecute(m_pCommandQueue);
-
-    pTexHandle->IsUpdated = TRUE;
-
-    return pTexHandle;
+    pTex->IsUpdated = TRUE;
 }
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex)
@@ -1559,8 +1528,6 @@ BOOL D3D12Renderer::CreateShadowMaps()
         srvHandle.Offset(m_srvDescriptorSize);
 
         m_pShadowDepthStencils[i] = pDepthStencil;
-
-        m_pShadowTexHandles[i] = m_pTextureManager->CreateDynamicTexture(m_shadowWidth, m_shadowHeight);
     }
 
     return TRUE;

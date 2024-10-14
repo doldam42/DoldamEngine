@@ -100,7 +100,6 @@ class D3D12Renderer : public IRenderer
     D3D12_VIEWPORT    m_shadowViewport = {};
     D3D12_RECT        m_shadowScissorRect = {};
     ID3D12Resource   *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
-    TEXTURE_HANDLE   *m_pShadowTexHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
@@ -188,6 +187,7 @@ class D3D12Renderer : public IRenderer
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
     void UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                 UINT srcHeight) override;
+    void UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) override;
 
     ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b);
     ITextureHandle *CreateDynamicTexture(UINT texWidth, UINT texHeight);
@@ -242,8 +242,8 @@ class D3D12Renderer : public IRenderer
     DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
-    
-    ITextureHandle *GetShadowMapTexture(UINT lightIndex) override;
+
+    void UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) override;
 
     // for RenderThread
     UINT GetRenderThreadCount() { return m_renderThreadCount; }

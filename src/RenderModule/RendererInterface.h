@@ -70,6 +70,7 @@ interface IRenderer
     virtual void            DeleteTexture(ITextureHandle * pTexHandle) = 0;
     virtual void            UpdateTextureWithImage(ITextureHandle * pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                                    UINT srcHeight) = 0;
+    virtual void UpdateTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth, UINT srcHeight) = 0;
 
     virtual IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
     virtual void             DeleteMaterialHandle(IMaterialHandle * pInMaterial) = 0;
@@ -86,7 +87,7 @@ interface IRenderer
     virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
     // For Debugging
-    virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;
+    virtual void UpdateTextureWithShadowMap(ITextureHandle * pTexHandle, UINT lightIndex) = 0;
 
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;
