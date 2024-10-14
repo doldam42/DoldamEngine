@@ -51,6 +51,7 @@ extern ID3D12RootSignature *presentRS;
 // Pipeline State Objects
 extern ID3D12PipelineState *deformingVertexPSO;
 extern ID3D12PipelineState *presentPSO;
+extern ID3D12PipelineState *D32ToRgbaPSO;
 // extern ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE_COUNT];
 
 // #DXR

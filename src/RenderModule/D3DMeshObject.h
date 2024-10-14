@@ -148,7 +148,7 @@ class D3DMeshObject : public IDIMeshObject
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1);
+              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1, DRAW_PASS_TYPE passType = DRAW_PASS_TYPE_DEFAULT);
 
     void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
     Graphics::LOCAL_ROOT_ARG *GetRootArgs();

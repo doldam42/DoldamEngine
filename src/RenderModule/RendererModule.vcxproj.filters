@@ -289,5 +289,8 @@
     <CustomBuild Include="..\Client\Shaders\DepthOnlyVS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\D32ToRgbaPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

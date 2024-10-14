@@ -64,6 +64,9 @@ class GameEngine : public IGameEngine
     bool m_isInitialized = false;
     bool m_activateCamera = true;
 
+    // For Debugging
+    IRenderSprite *m_pShadowMapSprite = nullptr;
+
   private:
     void LoadPrimitiveMeshes();
     void DeletePrimitiveMeshes();

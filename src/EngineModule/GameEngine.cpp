@@ -48,6 +48,12 @@ void GameEngine::DeletePrimitiveMeshes()
 
 void GameEngine::Cleanup()
 {
+    if (m_pShadowMapSprite)
+    {
+        m_pShadowMapSprite->Release();
+        m_pShadowMapSprite = nullptr;
+    }
+
     DeleteAllSprite();
 
     DeleteAllGameObject();
@@ -129,6 +135,9 @@ lb_return:
 
 void GameEngine::LoadResources()
 {
+    // Create Shadow Map Sprite
+    m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
+    
     // Create Cubemap
     m_pRenderer->InitCubemaps(
         L"..\\..\\assets\\sponza\\env\\cubemapEnvHDR.dds", L"..\\..\\assets\\sponza\\env\\cubemapSpecularHDR.dds",
@@ -171,8 +180,8 @@ void GameEngine::Update(ULONGLONG curTick)
     {
         m_pMainCamera->Update(dt);
     }
+
     // update objects
-    
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
@@ -180,7 +189,7 @@ void GameEngine::Update(ULONGLONG curTick)
         pGameObj->Run();
         pCur = pCur->pNext;
     }
-
+    
     LateUpdate(dt);
 }
 
@@ -221,6 +230,8 @@ void GameEngine::Render()
         pCur = pCur->pNext;
         spriteCount++;
     }
+    m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
+                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));
 
     //// render dynamic texture sprite
     // m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);

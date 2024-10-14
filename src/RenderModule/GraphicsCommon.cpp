@@ -29,6 +29,9 @@ ID3DBlob *deformingVertexCS = nullptr;
 ID3DBlob *presentVS = nullptr;
 ID3DBlob *presentPS = nullptr;
 
+//// D32 to R8G8B8A8_UNORM Shader
+//ID3DBlob *D32ToRgbaPS = nullptr;
+
 // Blend States
 D3D12_BLEND_DESC blendStates[DRAW_PASS_TYPE_COUNT] = {};
 
@@ -51,6 +54,7 @@ ID3D12RootSignature *rootSignatures[RENDER_ITEM_TYPE_COUNT] = {nullptr};
 // Pipeline State Objects
 ID3D12PipelineState *deformingVertexPSO = nullptr;
 ID3D12PipelineState *presentPSO = nullptr;
+ID3D12PipelineState *D32ToRgbaPSO = nullptr;
 
 ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE_COUNT] = {nullptr};
 
@@ -193,6 +197,10 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
                             compileFlags, 0, &presentPS, nullptr);
     if (FAILED(hr))
         __debugbreak();
+    /*hr = D3DCompileFromFile(L"./Shaders/D32ToRgbaPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
+                            compileFlags, 0, &D32ToRgbaPS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();*/
 }
 
 void Graphics::InitBlendStates()
@@ -682,6 +690,12 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         {
             __debugbreak();
         }
+        //// D32 to RGBA PSO
+        //psoDesc.PS = CD3DX12_SHADER_BYTECODE(D32ToRgbaPS->GetBufferPointer(), D32ToRgbaPS->GetBufferSize());
+        //if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&D32ToRgbaPSO))))
+        //{
+        //    __debugbreak();
+        //}
     }
 }
 

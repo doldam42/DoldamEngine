@@ -87,7 +87,8 @@ interface IRenderer
     virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
     // For Debugging
-    virtual void UpdateTextureWithShadowMap(ITextureHandle * pTexHandle, UINT lightIndex) = 0;
+    // virtual void UpdateTextureWithShadowMap(ITextureHandle * pTexHandle, UINT lightIndex) = 0;
+    virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;
 
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;

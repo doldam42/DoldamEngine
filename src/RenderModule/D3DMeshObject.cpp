@@ -50,7 +50,8 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 }
 
 void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                      const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+                         const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance,
+                         DRAW_PASS_TYPE passType)
 {
     ID3D12Device5        *pDevice = m_pRenderer->INL_GetD3DDevice();
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
@@ -163,7 +164,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
 
     // set RootSignature
     ID3D12RootSignature *pSignature = Graphics::GetRS(m_type);
-    ID3D12PipelineState *pPipelineState = Graphics::GetPSO(m_type, m_passType, fillMode);
+    ID3D12PipelineState *pPipelineState = Graphics::GetPSO(m_type, passType, fillMode);
     pCommandList->SetGraphicsRootSignature(pSignature);
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);

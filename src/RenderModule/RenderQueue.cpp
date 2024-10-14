@@ -62,7 +62,7 @@ lb_return:
 UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, ID3D12CommandQueue *pCommandQueue,
                           DWORD processCountPerCommandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv,
                           D3D12_CPU_DESCRIPTOR_HANDLE dsv, const D3D12_VIEWPORT *pViewport,
-                          const D3D12_RECT *pScissorRect)
+                          const D3D12_RECT *pScissorRect, UINT rtvCount, DRAW_PASS_TYPE passType)
 {
     ID3D12Device5 *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     DXRSceneManager *pDXRSceneManager = m_pRenderer->INL_GetDXRSceneManager();
@@ -79,20 +79,20 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         pCommandList = pCommandListPool->GetCurrentCommandList();
         pCommandList->RSSetViewports(1, pViewport);
         pCommandList->RSSetScissorRects(1, pScissorRect);
-        pCommandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        pCommandList->OMSetRenderTargets(rtvCount, &rtv, FALSE, &dsv);
 
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
             pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, nullptr, 0,
-                           pItem->meshObjParam.fillMode, 1);
+                           pItem->meshObjParam.fillMode, 1, passType);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
             pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM, pItem->charObjParam.pBones,
-                           pItem->charObjParam.numBones, pItem->charObjParam.fillMode, 1);
+                           pItem->charObjParam.numBones, pItem->charObjParam.fillMode, 1, passType);
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {

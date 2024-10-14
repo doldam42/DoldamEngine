@@ -99,7 +99,8 @@ class D3D12Renderer : public IRenderer
     UINT              m_shadowHeight = 1280;
     D3D12_VIEWPORT    m_shadowViewport = {};
     D3D12_RECT        m_shadowScissorRect = {};
-    ID3D12Resource   *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+    ID3D12Resource   *m_pShadowDepthStencils[SWAP_CHAIN_FRAME_COUNT][MAX_LIGHTS] = {nullptr};
+    TEXTURE_HANDLE    m_pShadowMapTextures[SWAP_CHAIN_FRAME_COUNT][MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
@@ -242,8 +243,11 @@ class D3D12Renderer : public IRenderer
     DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapSRVHandle(UINT lightIndex) const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapDSVHandle(UINT lightIndex) const;
 
-    void UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) override;
+    // void UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) override;
+    ITextureHandle *GetShadowMapTexture(UINT lightIndex) override;
 
     // for RenderThread
     UINT GetRenderThreadCount() { return m_renderThreadCount; }

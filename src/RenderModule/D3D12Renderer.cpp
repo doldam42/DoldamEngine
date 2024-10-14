@@ -308,7 +308,7 @@ void D3D12Renderer::EndRender()
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 
     m_pNonOpaqueRenderQueue->Process(0, pCommadListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle, &m_Viewport,
-                                     &m_ScissorRect);
+                                     &m_ScissorRect, 1, DRAW_PASS_TYPE_NON_OPAQUE);
 
 #elif defined(USE_RAYTRACING)
     m_pDXRSceneManager->CreateTopLevelAS(pCommandList);
@@ -366,7 +366,7 @@ void D3D12Renderer::EndRender()
         m_ppRenderQueue[i]->Reset();
     }
     m_pNonOpaqueRenderQueue->Reset();
-
+    m_pShadowMapRenderQueue->Reset();
 #ifdef USE_RAYTRACING
     m_pDXRSceneManager->Reset();
 #endif
@@ -583,7 +583,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
     }
     item.spriteParam.pTexHandle = reinterpret_cast<ITextureHandle *>(pTexHandle);
     item.spriteParam.Z = Z;
-
+    
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
@@ -997,15 +997,30 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
     return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
 }
 
-void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) 
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapSRVHandle(UINT lightIndex) const
 {
-    TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHandle;
-    ID3D12Resource *pSrcTexture = m_pShadowDepthStencils[lightIndex];
-
-    m_pResourceManager->UpdateTextureForWrite(pTex->pTexture, pSrcTexture);
-
-    pTex->IsUpdated = TRUE;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_shadowSRVHandle.cpuHandle, lightIndex * SWAP_CHAIN_FRAME_COUNT, m_srvDescriptorSize);
+    return handle.Offset(m_uiFrameIndex, m_srvDescriptorSize);
 }
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapDSVHandle(UINT lightIndex) const
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), DSV_DESCRIPTOR_INDEX_SHADOW, m_dsvDescriptorSize);
+    handle.Offset(lightIndex * SWAP_CHAIN_FRAME_COUNT, m_dsvDescriptorSize);
+    return handle.Offset(m_uiFrameIndex, m_dsvDescriptorSize);
+}
+
+ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return &m_pShadowMapTextures[m_uiFrameIndex][lightIndex]; }
+//
+//void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) 
+//{
+//    TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHandle;
+//    ID3D12Resource *pSrcTexture = m_pShadowDepthStencils[lightIndex];
+//
+//    m_pResourceManager->UpdateTextureForWrite(pTex->pTexture, pSrcTexture);
+//
+//    pTex->IsUpdated = TRUE;
+//}
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex)
 {
@@ -1015,7 +1030,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex)
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                          &m_Viewport, &m_ScissorRect);
+                                          &m_Viewport, &m_ScissorRect, 1, DRAW_PASS_TYPE_DEFAULT);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
     if (curCount == 0)
@@ -1108,7 +1123,7 @@ BOOL D3D12Renderer::CreateDescriptorHeap()
 
     // 깊이 버퍼용 디스크립터 힙
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1 + MAX_LIGHTS; // SHADOW MAP용 Descriptor 포함
+    dsvHeapDesc.NumDescriptors = 1 + MAX_LIGHTS * SWAP_CHAIN_FRAME_COUNT; // SHADOW MAP용 Descriptor 포함
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap))))
@@ -1476,7 +1491,7 @@ void D3D12Renderer::CleanupRenderThreadPool()
 BOOL D3D12Renderer::CreateShadowMaps()
 {
     m_dsvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    m_pResourceManager->AllocDescriptorTable(&m_shadowSRVHandle, MAX_LIGHTS);
+    m_pResourceManager->AllocDescriptorTable(&m_shadowSRVHandle, MAX_LIGHTS * SWAP_CHAIN_FRAME_COUNT);
 
     m_shadowViewport.TopLeftX = 0;
     m_shadowViewport.TopLeftY = 0;
@@ -1511,23 +1526,31 @@ BOOL D3D12Renderer::CreateShadowMaps()
                                             DSV_DESCRIPTOR_INDEX_SHADOW);
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
-        ID3D12Resource *pDepthStencil = nullptr;
-
-        if (FAILED(m_pD3DDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
-                                              D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
+        for (UINT j = 0; j < SWAP_CHAIN_FRAME_COUNT; j++)
         {
-            __debugbreak();
+            ID3D12Resource *pDepthStencil = nullptr;
+
+            if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                    &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
+                                                  D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+                    D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
+            {
+                __debugbreak();
+            }
+
+            m_pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, srvHandle);
+            m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
+
+            m_pShadowMapTextures[j][i].srv.cpuHandle = srvHandle;
+            m_pShadowMapTextures[j][i].srv.descriptorCount = 1;
+            m_pShadowMapTextures[j][i].pTexture = pDepthStencil;
+
+            m_pShadowDepthStencils[j][i] = pDepthStencil;
+
+            dsvHandle.Offset(m_dsvDescriptorSize);
+            srvHandle.Offset(m_srvDescriptorSize);
         }
-
-        m_pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, srvHandle);
-        m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
-        dsvHandle.Offset(m_dsvDescriptorSize);
-        srvHandle.Offset(m_srvDescriptorSize);
-
-        m_pShadowDepthStencils[i] = pDepthStencil;
     }
 
     return TRUE;
@@ -1538,10 +1561,13 @@ void D3D12Renderer::CleanupShadowMaps()
     m_pResourceManager->DeallocDescriptorTable(&m_shadowSRVHandle);
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
-        if (m_pShadowDepthStencils[i])
+        for (UINT j = 0; j < SWAP_CHAIN_FRAME_COUNT; j++)
         {
-            m_pShadowDepthStencils[i]->Release();
-            m_pShadowDepthStencils[i] = nullptr;
+            if (m_pShadowDepthStencils[j][i])
+            {
+                m_pShadowDepthStencils[j][i]->Release();
+                m_pShadowDepthStencils[j][i] = nullptr;
+            }
         }
     }
 }
@@ -1552,12 +1578,22 @@ void D3D12Renderer::RenderShadowMaps()
     CommandListPool           *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(),
-                                            DSV_DESCRIPTOR_INDEX_SHADOW, m_dsvDescriptorSize);
-    pCommandList->RSSetViewports(1, &m_shadowViewport);
-    pCommandList->RSSetScissorRects(1, &m_shadowScissorRect);
-    pCommandList->OMSetRenderTargets(1, &dsvHandle, FALSE, &dsvHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), DSV_DESCRIPTOR_INDEX_SHADOW,
+                                         m_dsvDescriptorSize);
+    dsvHandle.Offset(m_dwCurContextIndex, m_dsvDescriptorSize);
+
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                         m_pShadowDepthStencils[m_dwCurContextIndex][0], D3D12_RESOURCE_STATE_COMMON,
+                                                 D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+    pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     m_pShadowMapRenderQueue->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, dsvHandle, dsvHandle,
-                                     &m_shadowViewport, &m_shadowScissorRect);
+                                     &m_shadowViewport, &m_shadowScissorRect, 0, DRAW_PASS_TYPE_SHADOW);
+
+    pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList->ResourceBarrier(
+        1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[m_dwCurContextIndex][0],
+                                                 D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON));
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
