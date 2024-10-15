@@ -1010,7 +1010,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapDSVHandle(UINT lightIndex
     return handle.Offset(m_uiFrameIndex, m_dsvDescriptorSize);
 }
 
-ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return &m_pShadowMapTextures[m_uiFrameIndex][lightIndex]; }
+ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return &m_pShadowMapTextures[m_dwCurContextIndex][lightIndex]; }
 //
 //void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) 
 //{
@@ -1532,7 +1532,7 @@ BOOL D3D12Renderer::CreateShadowMaps()
 
             if (FAILED(m_pD3DDevice->CreateCommittedResource(
                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                    &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
+                    &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
                                                   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
                     D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
             {
