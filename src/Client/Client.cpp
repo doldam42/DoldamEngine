@@ -275,9 +275,9 @@ void Client::Update(ULONGLONG curTick)
         int a = 0;
     }
 
-    float speed = 1.0f;
+    /*float speed = 1.0f;
     Vector3 pos = m_pCharacter->GetPosition();
-    m_pCharacter->SetPosition(pos.x, pos.y, pos.z + speed * dt);
+    m_pCharacter->SetPosition(pos.x, pos.y, pos.z + speed * dt);*/
 }
 
 void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }

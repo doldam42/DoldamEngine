@@ -626,6 +626,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     }
 
     // shadowMap
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_MESH_OBJ];
     psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ];
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlyVS->GetBufferPointer(), depthOnlyVS->GetBufferSize());
