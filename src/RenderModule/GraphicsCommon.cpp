@@ -29,8 +29,8 @@ ID3DBlob *deformingVertexCS = nullptr;
 ID3DBlob *presentVS = nullptr;
 ID3DBlob *presentPS = nullptr;
 
-//// D32 to R8G8B8A8_UNORM Shader
-//ID3DBlob *D32ToRgbaPS = nullptr;
+// D32 to R8G8B8A8_UNORM Shader
+ID3DBlob *D32ToRgbaPS = nullptr;
 
 // Blend States
 D3D12_BLEND_DESC blendStates[DRAW_PASS_TYPE_COUNT] = {};
@@ -168,12 +168,12 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         __debugbreak();
 
     // Depth Only
-    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
-                            "vs_5_1", compileFlags, 0, &depthOnlyVS, nullptr);
+    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
+                            compileFlags, 0, &depthOnlyVS, nullptr);
     if (FAILED(hr))
         __debugbreak();
-    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", skinnedVSMacros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_1",
-                            compileFlags, 0, &depthOnlySkinningVS, nullptr);
+    hr = D3DCompileFromFile(L"./Shaders/DepthOnlyVS.hlsl", skinnedVSMacros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "vs_5_1", compileFlags, 0, &depthOnlySkinningVS, nullptr);
     if (FAILED(hr))
         __debugbreak();
     hr = D3DCompileFromFile(L"./Shaders/DepthOnlyPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
@@ -197,10 +197,10 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
                             compileFlags, 0, &presentPS, nullptr);
     if (FAILED(hr))
         __debugbreak();
-    /*hr = D3DCompileFromFile(L"./Shaders/D32ToRgbaPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
+    hr = D3DCompileFromFile(L"./Shaders/D32ToRgbaPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
                             compileFlags, 0, &D32ToRgbaPS, nullptr);
     if (FAILED(hr))
-        __debugbreak();*/
+        __debugbreak();
 }
 
 void Graphics::InitBlendStates()
@@ -630,7 +630,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ];
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlyVS->GetBufferPointer(), depthOnlyVS->GetBufferSize());
     psoDesc.PS = CD3DX12_SHADER_BYTECODE(depthOnlyPS->GetBufferPointer(), depthOnlyPS->GetBufferSize());
-    
+
     psoDesc.BlendState = blendStates[DRAW_PASS_TYPE_SHADOW];
     psoDesc.DepthStencilState = depthStencilStates[DRAW_PASS_TYPE_SHADOW];
 
@@ -690,12 +690,13 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         {
             __debugbreak();
         }
-        //// D32 to RGBA PSO
-        //psoDesc.PS = CD3DX12_SHADER_BYTECODE(D32ToRgbaPS->GetBufferPointer(), D32ToRgbaPS->GetBufferSize());
-        //if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&D32ToRgbaPSO))))
-        //{
-        //    __debugbreak();
-        //}
+        // D32 to RGBA PSO
+
+        psoDesc.PS = CD3DX12_SHADER_BYTECODE(D32ToRgbaPS->GetBufferPointer(), D32ToRgbaPS->GetBufferSize());
+        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&D32ToRgbaPSO))))
+        {
+            __debugbreak();
+        }
     }
 }
 
@@ -904,6 +905,11 @@ void Graphics::DeleteShaders()
         presentPS->Release();
         presentPS = nullptr;
     }
+    if (D32ToRgbaPS)
+    {
+        D32ToRgbaPS->Release();
+        D32ToRgbaPS = nullptr;
+    }
 }
 
 void Graphics::DeleteSamplers() {}
@@ -949,7 +955,11 @@ void Graphics::DeletePipelineStates()
         presentPSO->Release();
         presentPSO = nullptr;
     }
-
+    if (D32ToRgbaPSO)
+    {
+        D32ToRgbaPSO->Release();
+        D32ToRgbaPSO = nullptr;
+    }
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
         for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)

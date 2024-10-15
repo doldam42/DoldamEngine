@@ -33,17 +33,20 @@ BOOL D3D12ResourceManager::Initialize(ID3D12Device5 *pDevice, UINT maxDescriptor
 
     // Descriptor Pool Initialize
     m_pDescriptorAllocators[0] = new DescriptorAllocator;
-    m_pDescriptorAllocators[0]->Initialize(pDevice, m_maxDescriptorCount, 1);
+    m_pDescriptorAllocators[0]->Initialize(pDevice, m_maxDescriptorCount, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pDescriptorAllocators[1] = new DescriptorAllocator;
-    m_pDescriptorAllocators[1]->Initialize(pDevice, m_maxDescriptorCount, 4);
+    m_pDescriptorAllocators[1]->Initialize(pDevice, m_maxDescriptorCount, 4, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pDescriptorAllocators[2] = new DescriptorAllocator;
-    m_pDescriptorAllocators[2]->Initialize(pDevice, m_maxDescriptorCount, 8);
+    m_pDescriptorAllocators[2]->Initialize(pDevice, m_maxDescriptorCount, 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pDescriptorAllocators[3] = new DescriptorAllocator;
-    m_pDescriptorAllocators[3]->Initialize(pDevice, m_maxDescriptorCount, 16);
+    m_pDescriptorAllocators[3]->Initialize(pDevice, m_maxDescriptorCount, 16, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pDescriptorAllocators[4] = new DescriptorAllocator;
-    m_pDescriptorAllocators[4]->Initialize(pDevice, m_maxDescriptorCount, 32);
+    m_pDescriptorAllocators[4]->Initialize(pDevice, m_maxDescriptorCount, 32, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pDescriptorAllocators[5] = new DescriptorAllocator;
-    m_pDescriptorAllocators[5]->Initialize(pDevice, m_maxDescriptorCount, 64);
+    m_pDescriptorAllocators[5]->Initialize(pDevice, m_maxDescriptorCount, 64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    m_pRTVDescriptorAllocator = new DescriptorAllocator;
+    m_pRTVDescriptorAllocator->Initialize(pDevice, m_maxDescriptorCount, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     result = TRUE;
 lb_return:
@@ -65,6 +68,11 @@ BOOL D3D12ResourceManager::AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescripto
     if (numDescriptors <= 64)
         return m_pDescriptorAllocators[5]->Alloc(pOutDescriptor);
     return FALSE;
+}
+
+BOOL D3D12ResourceManager::AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor) 
+{ 
+    return m_pRTVDescriptorAllocator->Alloc(pOutDescriptor);
 }
 
 void D3D12ResourceManager::DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor)
@@ -92,6 +100,10 @@ void D3D12ResourceManager::DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor
         __debugbreak();
         break;
     }
+}
+void D3D12ResourceManager::DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
+{
+    m_pRTVDescriptorAllocator->DeAlloc(pOutDescriptor);
 }
 HRESULT D3D12ResourceManager::CreateVertexBuffer(ID3D12Resource          **ppOutBuffer,
                                                  D3D12_VERTEX_BUFFER_VIEW *pOutVertexBufferView, UINT64 sizePerVertex,
@@ -708,6 +720,33 @@ BOOL D3D12ResourceManager::CreateTexturePair(ID3D12Resource **ppOutResource, ID3
     return TRUE;
 }
 
+BOOL D3D12ResourceManager::CreateRenderableTexture(ID3D12Resource **ppOutResource, UINT width, UINT height,
+                                                   DXGI_FORMAT format)
+{
+    ID3D12Resource *pTexResource = nullptr;
+
+    D3D12_RESOURCE_DESC textureDesc = {};
+    textureDesc.MipLevels = 1;
+    textureDesc.Format = format;
+    textureDesc.Width = width;
+    textureDesc.Height = height;
+    textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    textureDesc.DepthOrArraySize = 1;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+    if (FAILED(m_pD3DDevice->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &textureDesc,
+            D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pTexResource))))
+    {
+        __debugbreak();
+    }
+
+    *ppOutResource = pTexResource;
+    return TRUE;
+}
+
 D3D12ResourceManager::~D3D12ResourceManager()
 {
     Cleanup();
@@ -812,7 +851,15 @@ void D3D12ResourceManager::Cleanup()
     // Pool
     for (UINT i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
     {
-        delete m_pDescriptorAllocators[i];
-        m_pDescriptorAllocators[i] = nullptr;
+        if (m_pDescriptorAllocators[i])
+        {
+            delete m_pDescriptorAllocators[i];
+            m_pDescriptorAllocators[i] = nullptr;
+        }
+    }
+    if (m_pRTVDescriptorAllocator)
+    {
+        delete m_pRTVDescriptorAllocator;
+        m_pRTVDescriptorAllocator = nullptr;
     }
 }

@@ -17,6 +17,7 @@ class D3D12ResourceManager {
   UINT64       m_ui64FenceValue = 0;
 
   DescriptorAllocator *m_pDescriptorAllocators[DESCRIPTOR_POOL_SIZE];
+  DescriptorAllocator *m_pRTVDescriptorAllocator = nullptr;
 
   UINT m_maxDescriptorCount = 0;
   UINT m_descriptorSize = 0;
@@ -37,7 +38,11 @@ public:
   // descriptor 개수에 맞는 리소스 반환
   BOOL AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor,
                             UINT               numDescriptors);
+
+  BOOL AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
+
   void DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor);
+  void DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
 
   // Resource Manage
   HRESULT CreateVertexBuffer(ID3D12Resource          **ppOutBuffer,
@@ -69,6 +74,8 @@ public:
 
   BOOL CreateTexturePair(ID3D12Resource **ppOutResource, ID3D12Resource **ppOutUploadBuffer, UINT Width, UINT Height,
                          DXGI_FORMAT format);
+
+  BOOL CreateRenderableTexture(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format);
 
   UINT GetDescriptorSize() const { return m_descriptorSize; }
 

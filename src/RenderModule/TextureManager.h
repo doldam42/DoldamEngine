@@ -22,7 +22,8 @@ class TextureManager
     TEXTURE_HANDLE *CreateDynamicTexture(UINT texWidth, UINT texHeight);
     TEXTURE_HANDLE *CreateImmutableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format, const BYTE *pInitImage);
     TEXTURE_HANDLE *CreateMetallicRoughnessTexture(const WCHAR *metallicFilename, const WCHAR *roughneessFilename);
-    
+    TEXTURE_HANDLE *CreateRenderableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format);
+
     void            DeleteTexture(TEXTURE_HANDLE *pTexHandle);
     TextureManager() = default;
     ~TextureManager();

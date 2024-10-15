@@ -99,8 +99,9 @@ class D3D12Renderer : public IRenderer
     UINT              m_shadowHeight = 1280;
     D3D12_VIEWPORT    m_shadowViewport = {};
     D3D12_RECT        m_shadowScissorRect = {};
-    ID3D12Resource   *m_pShadowDepthStencils[SWAP_CHAIN_FRAME_COUNT][MAX_LIGHTS] = {nullptr};
-    TEXTURE_HANDLE    m_pShadowMapTextures[SWAP_CHAIN_FRAME_COUNT][MAX_LIGHTS] = {};
+    ID3D12Resource   *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
+    TEXTURE_HANDLE   *m_pShadowMapTextures[MAX_LIGHTS] = {};
+    DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;

@@ -3,7 +3,7 @@
 #include "DescriptorAllocator.h"
 
 BOOL DescriptorAllocator::Initialize(ID3D12Device5 *pD3DDevice,
-                                UINT MaxDescriptorCount, UINT BlockSize) {
+                                UINT MaxDescriptorCount, UINT BlockSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType) {
   BOOL result = FALSE;
   m_pD3DDevice = pD3DDevice;
 
@@ -16,7 +16,7 @@ BOOL DescriptorAllocator::Initialize(ID3D12Device5 *pD3DDevice,
   // create descriptor heap
   D3D12_DESCRIPTOR_HEAP_DESC commonHeapDesc = {};
   commonHeapDesc.NumDescriptors = m_maxDescriptorCount;
-  commonHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+  commonHeapDesc.Type = heapType;
   commonHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
   if (FAILED(m_pD3DDevice->CreateDescriptorHeap(
           &commonHeapDesc, IID_PPV_ARGS(&m_pDescritorHeap)))) {

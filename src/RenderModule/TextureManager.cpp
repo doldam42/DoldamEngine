@@ -341,6 +341,41 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
     return pTexHandle;
 }
 
+TEXTURE_HANDLE *TextureManager::CreateRenderableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format)
+{
+    ID3D12Device   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    TEXTURE_HANDLE *pTexHandle = nullptr;
+
+    ID3D12Resource   *pTexResource = nullptr;
+    DESCRIPTOR_HANDLE srv = {};
+
+    if (m_pResourceManager->CreateRenderableTexture(&pTexResource, texWidth, texHeight, format))
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+        SRVDesc.Format = format;
+        SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        SRVDesc.Texture2D.MipLevels = 1;
+
+        if (m_pResourceManager->AllocDescriptorTable(&srv, 1))
+        {
+            pD3DDevice->CreateShaderResourceView(pTexResource, &SRVDesc, srv.cpuHandle);
+
+            pTexHandle = AllocTextureHandle();
+            pTexHandle->pTexture = pTexResource;
+            pTexHandle->pUploadBuffer = nullptr;
+            pTexHandle->srv = srv;
+        }
+        else
+        {
+            pTexResource->Release();
+            pTexResource = nullptr;
+        }
+    }
+
+    return pTexHandle;
+}
+
 void TextureManager::DeleteTexture(TEXTURE_HANDLE *pTexHandle)
 {
     DeallocTextureHandle(pTexHandle);

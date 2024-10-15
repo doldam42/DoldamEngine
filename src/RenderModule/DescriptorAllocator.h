@@ -17,8 +17,8 @@ class DescriptorAllocator {
   void Cleanup();
 
 public:
-  BOOL Initialize(ID3D12Device5 *pD3DDevice, UINT MaxDescriptorCount,
-                  UINT BlockSize);
+  BOOL Initialize(ID3D12Device5 *pD3DDevice, UINT MaxDescriptorCount, UINT BlockSize,
+                  D3D12_DESCRIPTOR_HEAP_TYPE heapType);
 
   BOOL Alloc(DESCRIPTOR_HANDLE *pOutDescriptor);
   void DeAlloc(DESCRIPTOR_HANDLE* pDescriptor);

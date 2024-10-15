@@ -9,7 +9,12 @@ struct PSInput
 
 float4 main(PSInput input) : SV_TARGET
 {
-    float depthValue = g_texture.Sample(g_sampler, input.texcoord).r;
+    float farZ = 100.0;
+    //float nearZ = 0.1;
+    
+    float4 texColor = g_texture.Sample(g_sampler, input.texcoord);
+    float r = texColor.r / texColor.w;
+    float depthValue = (1 - r);
     
     return float4(depthValue, depthValue, depthValue, 1);
 }
