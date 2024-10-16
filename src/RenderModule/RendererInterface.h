@@ -77,13 +77,14 @@ interface IRenderer
     virtual void             UpdateMaterialHandle(IMaterialHandle * pInMaterial, const Material *pMaterial) = 0;
 
     // return nullptr if lights are full
-    virtual ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection) = 0;
+    virtual ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                                 BOOL hasShadow = true) = 0;
     virtual ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
                                            const Vector3 *pPosition, float radius, float fallOffStart = 0.0f,
-                                           float fallOffEnd = 20.0f) = 0;
+                                           float fallOffEnd = 20.0f, BOOL hasShadow = true) = 0;
     virtual ILightHandle *CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
                                           float spotPower, float radius, float fallOffStart = 0.0f,
-                                          float fallOffEnd = 20.0f) = 0;
+                                          float fallOffEnd = 20.0f, BOOL hasShadow = true) = 0;
     virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
     // For Debugging

@@ -74,6 +74,9 @@
     <Filter Include="Shaders\DXR">
       <UniqueIdentifier>{10f0878c-365a-4bf8-a031-079d9153e38f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LightObject">
+      <UniqueIdentifier>{0437eff0-29c1-4e1b-bce5-43f7f8e100d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">

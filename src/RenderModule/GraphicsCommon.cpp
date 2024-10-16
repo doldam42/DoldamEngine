@@ -49,6 +49,9 @@ ID3D12RootSignature *emptyRS = nullptr;
 ID3D12RootSignature *deformingVertexRS = nullptr;
 ID3D12RootSignature *presentRS = nullptr;
 
+ID3D12RootSignature *depthOnlyBasicRS = nullptr;
+ID3D12RootSignature *depthOnlySkinnedRS = nullptr;
+
 ID3D12RootSignature *rootSignatures[RENDER_ITEM_TYPE_COUNT] = {nullptr};
 
 // Pipeline State Objects
@@ -317,8 +320,8 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     ID3DBlob *pSignature = nullptr;
     ID3DBlob *pError = nullptr;
 
+    // Create an empty root signature.
     {
-        // Create an empty root signature.
         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
         rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -570,6 +573,47 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &presentRS, L"present RS");
     }
 
+    // Init DepthOnly Basic Root Signature
+    {
+        // Root Paramaters
+        // | Global Consts |
+        // |   TR Matrix   |
+        CD3DX12_DESCRIPTOR_RANGE rangePerGlobal[1] = {};
+        rangePerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
+
+        CD3DX12_DESCRIPTOR_RANGE rangePerMesh[1] = {};
+        rangePerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1); // b1
+
+        CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), rangePerGlobal, D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
+                                                      samplerStates,
+                                                      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlyBasicRS, L"DepthOnly Basic RS");
+    }
+    // Init DepthOnly Skinned Root Signature
+    {
+        // Root Paramaters
+        // | Global Consts |
+        // |   TR Matrix   | Bone Matrix |
+        CD3DX12_DESCRIPTOR_RANGE rangePerGlobal[1] = {};
+        rangePerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
+
+        CD3DX12_DESCRIPTOR_RANGE rangePerMesh[1] = {};
+        rangePerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2, 1); // b1~b2
+
+        CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), rangePerGlobal, D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
+
+         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
+                                                      samplerStates,
+                                                      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlySkinnedRS, L"depthOnly Skinned RS");
+    }
+
     rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ] = basicRS;
     rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ] = skinnedRS;
     rootSignatures[RENDER_ITEM_TYPE_SPRITE] = spriteRS;
@@ -628,7 +672,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     // shadowMap
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_MESH_OBJ];
-    psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ];
+    psoDesc.pRootSignature = depthOnlyBasicRS;
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlyVS->GetBufferPointer(), depthOnlyVS->GetBufferSize());
     psoDesc.PS = CD3DX12_SHADER_BYTECODE(depthOnlyPS->GetBufferPointer(), depthOnlyPS->GetBufferSize());
 
@@ -646,7 +690,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     }
 
     psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_CHAR_OBJ];
-    psoDesc.pRootSignature = rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ];
+    psoDesc.pRootSignature = depthOnlySkinnedRS;
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(depthOnlySkinningVS->GetBufferPointer(), depthOnlySkinningVS->GetBufferSize());
 
     for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
@@ -931,6 +975,16 @@ void Graphics::DeleteRootSignatures()
     {
         presentRS->Release();
         presentRS = nullptr;
+    }
+    if (depthOnlyBasicRS)
+    {
+        depthOnlyBasicRS->Release();
+        depthOnlyBasicRS = nullptr;
+    }
+    if (depthOnlySkinnedRS)
+    {
+        depthOnlySkinnedRS->Release();
+        depthOnlySkinnedRS = nullptr;
     }
 
     for (UINT i = 0; i < RENDER_ITEM_TYPE_COUNT; i++)

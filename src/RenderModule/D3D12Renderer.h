@@ -112,6 +112,9 @@ class D3D12Renderer : public IRenderer
     // Global
     CB_CONTAINER   *m_pGlobalCB = nullptr;
     GlobalConstants m_globalConsts = {};
+    CB_CONTAINER   *m_pShadowGlobalCB[MAX_LIGHTS] = {nullptr};
+    GlobalConstants m_shadowGlobalConsts[MAX_LIGHTS] = {};
+
     Light           m_pLights[MAX_LIGHTS];
 
     TEXTURE_HANDLE *m_pDefaultTexHandle = nullptr;
@@ -151,6 +154,7 @@ class D3D12Renderer : public IRenderer
     BOOL CreateShadowMaps();
     void CleanupShadowMaps();
     void RenderShadowMaps();
+    void UpdateShadowGlobalConsts();
 
   public:
     // Inherited via IRenderer
@@ -198,11 +202,14 @@ class D3D12Renderer : public IRenderer
     ITextureHandle *CreateMetallicRoughnessTexture(const WCHAR *metallicFilename, const WCHAR *roughneessFilename);
     void            DeleteTexture(ITextureHandle *pTexHandle);
 
-    ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection);
+    ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                         BOOL hasShadow = true) override;
     ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
-                                   float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
+                                   float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f,
+                                   BOOL hasShadow = true) override;
     ILightHandle *CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
-                                  float spotPower, float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f);
+                                  float spotPower, float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f,
+                                  BOOL hasShadow = true) override;
     void          DeleteLight(ILightHandle *pLightHandle);
 
     IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial) override;
@@ -229,6 +236,7 @@ class D3D12Renderer : public IRenderer
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetShadowGlobalDescriptorHandle(UINT threadIndex);
 
     DescriptorPool *INL_GetDescriptorPool(UINT threadIndex)
     {

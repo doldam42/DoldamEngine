@@ -88,6 +88,7 @@ class D3DMeshObject : public IDIMeshObject
     wchar_t m_basePath[MAX_PATH] = {0};
 
     D3D12Renderer *m_pRenderer = nullptr;
+    ID3D12Device  *m_pD3DDevice = nullptr;
 
     ID3D12Resource          *m_pVertexBuffer = nullptr;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = {};
@@ -141,6 +142,16 @@ class D3DMeshObject : public IDIMeshObject
     BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
+    void Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1);
+    void RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                       const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
+                       UINT numInstance = 1);
+
+    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex, const Matrix *pWorldMat,
+                                     UINT numInstance, const Matrix *pBoneMats, UINT numBones);
+    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex);
+
     void CleanupMesh();
     void Cleanup();
 
@@ -148,30 +159,19 @@ class D3DMeshObject : public IDIMeshObject
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1, DRAW_PASS_TYPE passType = DRAW_PASS_TYPE_DEFAULT);
+              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1,
+              DRAW_PASS_TYPE passType = DRAW_PASS_TYPE_DEFAULT);
 
     void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
     Graphics::LOCAL_ROOT_ARG *GetRootArgs();
 
     void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
 
-    ID3D12Resource *GetBottomLevelAS() const
-    {
-        return m_bottomLevelAS.pResult;
-    }
-    UINT GetGeometryCount() const
-    {
-        return m_faceGroupCount;
-    }
+    ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
+    UINT            GetGeometryCount() const { return m_faceGroupCount; }
 
-    RENDER_ITEM_TYPE GetType() const
-    {
-        return m_type;
-    }
-    DRAW_PASS_TYPE GetPassType() const
-    {
-        return m_passType;
-    }
+    RENDER_ITEM_TYPE GetType() const { return m_type; }
+    DRAW_PASS_TYPE   GetPassType() const { return m_passType; }
 
     D3DMeshObject() = default;
     ~D3DMeshObject();

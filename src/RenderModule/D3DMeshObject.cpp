@@ -41,6 +41,7 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
     m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_pRenderer = pRenderer;
+    m_pD3DDevice = pDevice;
     m_type = type;
 
 #ifdef USE_RAYTRACING
@@ -53,22 +54,122 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                          const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance,
                          DRAW_PASS_TYPE passType)
 {
-    ID3D12Device5        *pDevice = m_pRenderer->INL_GetD3DDevice();
+    switch (passType)
+    {
+    case DRAW_PASS_TYPE_DEFAULT:
+    case DRAW_PASS_TYPE_NON_OPAQUE:
+        Render(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
+        break;
+    case DRAW_PASS_TYPE_SHADOW:
+        RenderShadowMap(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
+        break;
+    default:
+        break;
+    }
+}
+
+void D3DMeshObject::Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                         const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+{
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-    ConstantBufferPool   *pMeshConstantBufferPool =
-        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_MESH, threadIndex);
-    ConstantBufferPool *pGeometryConstantBufferPool =
-        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
-    ConstantBufferPool *pSkinnedConstantBufferPool =
-        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
-    UINT descriptorSize = m_pRenderer->INL_GetResourceManager()->GetDescriptorSize();
 
-    // CB Data Binding
-    CB_CONTAINER *pSkinnedCB;
-    CB_CONTAINER *pMeshCB;
-    CB_CONTAINER *pGeomCBs;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
 
+    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
+    UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex);
+
+    // set RootSignature
+    ID3D12RootSignature *pSignature = Graphics::GetRS(m_type);
+    ID3D12PipelineState *pPipelineState = Graphics::GetPSO(m_type, m_passType, fillMode);
+    pCommandList->SetGraphicsRootSignature(pSignature);
+    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
+    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    pCommandList->SetPipelineState(pPipelineState);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
+    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
+    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+    {
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
+    }
+    else
+    {
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
+    }
+
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+
+        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
+        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
+    }
+}
+
+void D3DMeshObject::RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                                  const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+{
+    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
+
+    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
+    
+    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
+    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+    {
+        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlyBasicRS);
+    }
+    else
+    {
+        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlySkinnedRS);
+    }
+    pCommandList->SetPipelineState(Graphics::GetPSO(m_type, DRAW_PASS_TYPE_SHADOW, fillMode));
+    
+    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
+    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetShadowGlobalDescriptorHandle(threadIndex));
+    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
+    
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
+        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
+    }
+}
+
+/*
+ *  Descriptor Table Per Obj - Offset : 0
+ *  Basic Mesh :   | World TM |
+ *  Skinned Mesh:  | World TM | Bone Matrices |
+ */
+void D3DMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                                const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats,
+                                                UINT numBones)
+{
+    CB_CONTAINER       *pSkinnedCB;
+    CB_CONTAINER       *pMeshCB;
+    ConstantBufferPool *pMeshConstantBufferPool;
+    ConstantBufferPool *pSkinnedConstantBufferPool;
+
+    pMeshConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_MESH, threadIndex);
+
+    // Update World Transform Constant Buffer
     pMeshCB = pMeshConstantBufferPool->Alloc(numInstance);
 
     MeshConstants *pMeshConsts = (MeshConstants *)pMeshCB->pSystemMemAddr;
@@ -79,22 +180,14 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
         pMeshConst->worldIT = pWorldMat[i].Invert().Transpose();
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dest = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorTable);
+    m_pD3DDevice->CopyDescriptorsSimple(DESCRIPTOR_COUNT_PER_STATIC_OBJ, dest, pMeshCB->CBVHandle,
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    // | Global Constants |
-    // | World TM |
-    // | Material | TEX |
-    // per Obj
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dest = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle);
-    pDevice->CopyDescriptorsSimple(DESCRIPTOR_COUNT_PER_STATIC_OBJ, dest, pMeshCB->CBVHandle,
-                                   D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    dest.Offset(descriptorSize);
-    // Descriptor Count per Obj
-    // | World TM | Bone Matrices |
     if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
     {
+        dest.Offset(m_descriptorSize);
+        pSkinnedConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
         pSkinnedCB = pSkinnedConstantBufferPool->Alloc();
         Matrix *pBoneTMs = (Matrix *)pSkinnedCB->pSystemMemAddr;
         for (UINT i = 0; i < numBones; i++)
@@ -102,12 +195,26 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
             Matrix *pBoneTM = pBoneTMs + i;
             memcpy(pBoneTM, &pBoneMats[i].Transpose(), sizeof(Matrix));
         }
-        pDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(descriptorSize);
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
+}
 
-    // per face-group
-    // | Material | Textures |
+/*
+ *  Descriptor Table Per FaceGroup - Offset : 0
+ *  | Material | Textures |
+ */
+void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex)
+{
+    CB_CONTAINER       *pGeomCBs;
+    ConstantBufferPool *pGeometryConstantBufferPool =
+        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
+    
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dest(descriptorTable);
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
+    else       
+        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
+
     pGeomCBs = pGeometryConstantBufferPool->Alloc(m_faceGroupCount);
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
@@ -133,65 +240,33 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                                                            DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_METALLIC_ROUGHNESS);
         CD3DX12_CPU_DESCRIPTOR_HANDLE emissiveSRV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_EMISSIVE);
 
-        pDevice->CopyDescriptorsSimple(1, materialCBV, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_pD3DDevice->CopyDescriptorsSimple(1, materialCBV, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         if (pAlbedoTexHandle)
         {
-            pDevice->CopyDescriptorsSimple(1, albedoSRV, pAlbedoTexHandle->srv.cpuHandle,
+            m_pD3DDevice->CopyDescriptorsSimple(1, albedoSRV, pAlbedoTexHandle->srv.cpuHandle,
                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pNormalTexHandle)
         {
-            pDevice->CopyDescriptorsSimple(1, normalSRV, pNormalTexHandle->srv.cpuHandle,
+            m_pD3DDevice->CopyDescriptorsSimple(1, normalSRV, pNormalTexHandle->srv.cpuHandle,
                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pAOTexHandle)
         {
-            pDevice->CopyDescriptorsSimple(1, aoSRV, pAOTexHandle->srv.cpuHandle,
+            m_pD3DDevice->CopyDescriptorsSimple(1, aoSRV, pAOTexHandle->srv.cpuHandle,
                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pMetallicRoughnessTexHandle)
         {
-            pDevice->CopyDescriptorsSimple(1, metallicRoughnessSRV, pMetallicRoughnessTexHandle->srv.cpuHandle,
+            m_pD3DDevice->CopyDescriptorsSimple(1, metallicRoughnessSRV, pMetallicRoughnessTexHandle->srv.cpuHandle,
                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pEmissiveTexHandle)
         {
-            pDevice->CopyDescriptorsSimple(1, emissiveSRV, pEmissiveTexHandle->srv.cpuHandle,
+            m_pD3DDevice->CopyDescriptorsSimple(1, emissiveSRV, pEmissiveTexHandle->srv.cpuHandle,
                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
-    }
-
-    // set RootSignature
-    ID3D12RootSignature *pSignature = Graphics::GetRS(m_type);
-    ID3D12PipelineState *pPipelineState = Graphics::GetPSO(m_type, passType, fillMode);
-    pCommandList->SetGraphicsRootSignature(pSignature);
-    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
-    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->SetPipelineState(pPipelineState);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
-    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-    {
-        _gpuHandle.Offset(descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
-    }
-    else
-    {
-        _gpuHandle.Offset(descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
-    }
-
-    for (UINT i = 0; i < m_faceGroupCount; i++)
-    {
-        pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
-        _gpuHandle.Offset(descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
-
-        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
     }
 }
 
@@ -438,9 +513,9 @@ void D3DMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 }
 
 void D3DMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
-                                 uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
-                                 UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
-                                 UINT64 transformOffsetInBytes, bool isOpaque)
+                                    uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
+                                    UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
+                                    UINT64 transformOffsetInBytes, bool isOpaque)
 {
     // Create the DX12 descriptor representing the input data, assumed to be
     // opaque triangles, with 3xf32 vertex coordinates and 32-bit indices
@@ -458,7 +533,8 @@ void D3DMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexB
     descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
-void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
+void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
+                                         UINT numBones)
 {
     if (m_type != RENDER_ITEM_TYPE_CHAR_OBJ)
     {

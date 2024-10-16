@@ -663,7 +663,8 @@ void D3D12Renderer::EndCreateMesh(IDIMeshObject *pMeshObjHandle)
 
 void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow)
 {
-    m_pGlobalCB = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0)->Alloc();
+    ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
+    m_pGlobalCB = pCBPool->Alloc();
 
     GlobalConstants globalConsts = m_globalConsts;
     globalConsts.eyeWorld = eyeWorld;
@@ -676,6 +677,12 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
     memcpy(&globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
 
     memcpy(m_pGlobalCB->pSystemMemAddr, &globalConsts, sizeof(GlobalConstants));
+
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        m_pShadowGlobalCB[i] = pCBPool->Alloc();
+        memcpy(m_pShadowGlobalCB[i]->pSystemMemAddr, &m_shadowGlobalConsts[i], sizeof(GlobalConstants));
+    }
 }
 
 void D3D12Renderer::UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
@@ -806,19 +813,21 @@ void D3D12Renderer::DeleteTexture(ITextureHandle *pTexHandle)
     m_pTextureManager->DeleteTexture(static_cast<TEXTURE_HANDLE *>(pTexHandle));
 }
 
-ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection)
+ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection, BOOL hasShadow)
 {
     Light light;
     light.direction = *pDirection;
     light.radiance = *pRadiance;
-    light.type = LIGHT_DIRECTIONAL;
+    light.type = LIGHT_TYPE_DIRECTIONAL;
+    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_OFF)
+        if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
+            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -827,7 +836,7 @@ ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, co
 
 ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
                                               const Vector3 *pPosition, float radius, float fallOffStart,
-                                              float fallOffEnd)
+                                              float fallOffEnd, BOOL hasShadow)
 {
     Light light;
     light.direction = *pDirection;
@@ -837,14 +846,16 @@ ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Ve
     light.fallOffStart = fallOffStart;
     light.fallOffEnd = fallOffEnd;
 
-    light.type = LIGHT_POINT;
+    light.type = LIGHT_TYPE_POINT;
+    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_OFF)
+        if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
+            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -853,7 +864,7 @@ ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Ve
 
 ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vector3 *pDirection,
                                              const Vector3 *pPosition, float spotPower, float radius,
-                                             float fallOffStart, float fallOffEnd)
+                                             float fallOffStart, float fallOffEnd, BOOL hasShadow)
 {
     Light light;
     light.radiance = *pRadiance;
@@ -864,14 +875,16 @@ ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vec
     light.fallOffStart = fallOffStart;
     light.fallOffEnd = fallOffEnd;
 
-    light.type = LIGHT_SPOT;
+    light.type = LIGHT_TYPE_SPOT;
+    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_OFF)
+        if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
+            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -887,7 +900,7 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
         __debugbreak();
     }
     Light *pLight = static_cast<Light *>(pLightHandle);
-    pLight->type = LIGHT_OFF;
+    pLight->type = LIGHT_TYPE_OFF;
 }
 
 IMaterialHandle *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
@@ -968,6 +981,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
     CD3DX12_CPU_DESCRIPTOR_HANDLE brdfHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_BRDF, m_srvDescriptorSize);
 
     m_pD3DDevice->CopyDescriptorsSimple(1, cbHandle, m_pGlobalCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     m_pD3DDevice->CopyDescriptorsSimple(1, matHandle, m_pMaterialManager->GetSRV(),
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pD3DDevice->CopyDescriptorsSimple(1, envHandle, m_pCubemap->GetEnvSRV(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -976,6 +990,21 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
     m_pD3DDevice->CopyDescriptorsSimple(1, irradianceHandle, m_pCubemap->GetIrradianceSRV(),
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_pD3DDevice->CopyDescriptorsSimple(1, brdfHandle, m_pCubemap->GetBrdfSRV(),
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    return gpuHandle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowGlobalDescriptorHandle(UINT threadIndex)
+{
+    // | Global Constants(b0) |
+    DescriptorPool *pDescriptorPool = INL_GetDescriptorPool(threadIndex);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
+
+    m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, m_pShadowGlobalCB[0]->CBVHandle,
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     return gpuHandle;
@@ -1648,4 +1677,32 @@ void D3D12Renderer::RenderShadowMaps()
     //                                                                        D3D12_RESOURCE_STATE_RENDER_TARGET,
     //                                                                        D3D12_RESOURCE_STATE_COMMON));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
+}
+
+void D3D12Renderer::UpdateShadowGlobalConsts()
+{
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        Light &light = m_pLights[i];
+
+        if (light.type != LIGHT_TYPE_OFF && light.type & LIGHT_TYPE_SHADOW)
+        {
+            Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
+            if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
+                up = Vector3(1.0f, 0.0f, 0.0f);
+
+            Matrix lightViewRow = XMMatrixLookAtLH(light.position, light.position + light.direction, up);
+
+            Matrix lightProjRow = XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);
+
+            m_shadowGlobalConsts[i].eyeWorld = light.position;
+            m_shadowGlobalConsts[i].view = lightViewRow.Transpose();
+            m_shadowGlobalConsts[i].proj = lightProjRow.Transpose();
+            m_shadowGlobalConsts[i].invProj = lightProjRow.Invert().Transpose();
+            m_shadowGlobalConsts[i].viewProj = (lightViewRow * lightProjRow).Transpose();
+
+            m_globalConsts.lights[i].viewProj = m_shadowGlobalConsts[i].viewProj;
+            m_globalConsts.lights[i].invProj = m_shadowGlobalConsts[i].invProj;
+        }
+    }
 }

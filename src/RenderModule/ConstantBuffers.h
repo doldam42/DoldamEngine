@@ -48,7 +48,7 @@ struct Light : public ILightHandle
     Vector3 position = Vector3(0.0f, 0.0f, -2.0f);
     float   spotPower = 6.0f;
 
-    uint32_t type = LIGHT_OFF;
+    uint32_t type = LIGHT_TYPE_OFF;
     float    radius = 0.035f; // ¹ÝÁö¸§
 
     float haloRadius = 0.0f;

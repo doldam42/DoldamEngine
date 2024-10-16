@@ -46,6 +46,9 @@ struct LOCAL_ROOT_ARG
 extern ID3D12RootSignature *emptyRS;
 extern ID3D12RootSignature *deformingVertexRS;
 extern ID3D12RootSignature *presentRS;
+extern ID3D12RootSignature *depthOnlyBasicRS;
+extern ID3D12RootSignature *depthOnlySkinnedRS;
+
 // extern ID3D12RootSignature *rootSignatures[RENDER_ITEM_TYPE_COUNT];
 
 // Pipeline State Objects
