@@ -145,7 +145,10 @@ void GameEngine::LoadResources()
 
     // Create Lights
     Vector3 radiance = Vector3(1.0f);
-    Vector3 direction = Vector3(0.0f, 0.0f, 1.0f);
+    Vector3 direction = Vector3(0.0f, -1.414, 1.414);
+    // Vector3 position = Vector3(0.0f, 0.0f, -2.0f);
+
+    // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
     m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
 }
 

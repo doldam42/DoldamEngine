@@ -12,13 +12,16 @@ SamplerState linearWrapSampler : register(s0);
 SamplerState linearClampSampler : register(s1);
 SamplerState pointWrapSampler : register(s2);
 SamplerState pointClampSampler : register(s3);
-SamplerState anisotropicWrapSampler : register(s4);
-SamplerState anisotropicClampSampler : register(s5);
+SamplerState shadowPointSampler : register(s4);
+SamplerState anisotropicWrapSampler : register(s5);
+SamplerState anisotropicClampSampler : register(s6);
 
 TextureCube envIBLTex : register(t10);
 TextureCube specularIBLTex : register(t11);
 TextureCube irradianceIBLTex : register(t12);
 Texture2D brdfTex : register(t13);
+
+Texture2D shadowMaps[MAX_LIGHTS] : register(t15);
 
 struct Light
 {

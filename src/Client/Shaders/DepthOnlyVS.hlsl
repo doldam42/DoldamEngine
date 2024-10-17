@@ -50,15 +50,6 @@ float4 main(VertexShaderInput input) : SV_POSITION
     float4 pos = float4(input.posModel, 1.0f);
     pos = mul(pos, meshCB[input.instanceId].world);
    
-    float4x4 invT =
-    {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        -eyeWorld.x, -eyeWorld.y, -eyeWorld.z, 1
-    };
-    
-    pos = mul(pos, invT);
     pos = mul(pos, viewProj);
     
     return pos;

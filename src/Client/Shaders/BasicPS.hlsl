@@ -82,12 +82,13 @@ float3 AmbientLightingByIBL(float3 albedo, float3 normalW, float3 pixelToEye, fl
 
 // GGX/Towbridge-Reitz normal distribution function.
 // Uses Disney's reparametrization of alpha = roughness^2.
-float NdfGGX(float NdotH, float roughness, float alphaPrime)
+float NdfGGX(float NdotH, float roughness)
 {
     float alpha = roughness * roughness;
     float alphaSq = alpha * alpha;
     float denom = (NdotH * NdotH) * (alphaSq - 1.0) + 1.0;
-    return alphaPrime * alphaPrime / (3.141592 * denom * denom);
+
+    return alphaSq / (3.141592 * denom * denom);
 }
 
 // Single term for separable Schlick-GGX below.
@@ -102,6 +103,54 @@ float SchlickGGX(float NdotI, float NdotO, float roughness)
     float r = roughness + 1.0;
     float k = (r * r) / 8.0;
     return SchlickG1(NdotI, k) * SchlickG1(NdotO, k);
+}
+
+
+float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld, Texture2D shadowMap)
+{
+    // Directional light
+    float3 lightVec = light.type & LIGHT_DIRECTIONAL
+                      ? -light.direction
+                      : representativePoint - posWorld; //: light.position - posWorld;
+
+    float lightDist = length(lightVec);
+    lightVec /= lightDist;
+
+    // Spot light
+    float spotFator = light.type & LIGHT_SPOT
+                      ? pow(max(-dot(lightVec, light.direction), 0.0f), light.spotPower)
+                      : 1.0f;
+        
+    // Distance attenuation
+    float att = saturate((light.fallOffEnd - lightDist)
+                         / (light.fallOffEnd - light.fallOffStart));
+    
+    // Shadow Map
+    float shadowFactor = 1.0;
+    
+    if (light.type & LIGHT_SHADOW)
+    {
+        const float nearZ = 0.01;
+        
+        // 1. Project posWorld to light screen
+        float4 lightScreen = mul(float4(posWorld, 1.0), light.viewProj);
+        lightScreen.xyz /= lightScreen.w;
+        
+        // 2. 카메라에서 볼 때의 텍스쳐 좌표 계산
+        float2 lightTexcoord = float2(lightScreen.x, -lightScreen.y);
+        lightTexcoord += 1.0;
+        lightTexcoord *= 0.5;
+        
+        // 3. 셰도우 맵에서 값 가져오기
+        float depth = shadowMap.Sample(shadowPointSampler, lightTexcoord).r;
+        
+        if (depth + 1e-3 < lightScreen.z)
+            shadowFactor = 0.0; // <- 0.0의 의미는?
+    }
+    
+    float3 radiance = light.radiance * spotFator * att * shadowFactor;
+
+    return radiance;
 }
 
 // TODO: Shadow Map
@@ -155,7 +204,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
     float3 emission = material.useEmissiveMap ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb 
                                      : material.emissive;
 
-    float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.5;
+    float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.1;
     
     float3 directLighting = float3(0, 0, 0);
     [unroll]
@@ -184,21 +233,19 @@ float4 main(PixelShaderInput input) : SV_TARGET
             float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, pixelToEye)));
             float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
             float3 diffuseBRDF = kd * albedo;
-
-            // Sphere Normalization
-            float alpha = roughness * roughness;
-            float alphaPrime = saturate(alpha + lights[i].radius / (2.0 * lightDist));
-
-            float D = NdfGGX(NdotH, roughness, alphaPrime);
+            
+            float D = NdfGGX(NdotH, roughness);
             float3 G = SchlickGGX(NdotI, NdotO, roughness);
             float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO);
 
-            float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
+            float3 radiance = LightRadiance(lights[i], input.posWorld, input.posWorld, normalWorld, shadowMaps[i]);
             
             directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
         }
     }
     
-    float4 output = clamp(float4(ambientLighting + directLighting + emission, opacity), 0.0, 1000.0);
+    float4 output;
+    output = float4(ambientLighting + directLighting + emission, opacity);
+    output = clamp(output, 0.0, 1000.0);
     return output;
 }

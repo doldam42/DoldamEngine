@@ -64,6 +64,7 @@ void Camera::UpdateKeyboard(const float dt)
             Vector3 v(x, y, z);
             Matrix  m(m_rightDir, m_upDir, m_viewDir);
             m_position += Vector3::Transform(v, m) * m_speed * dt;
+            UpdateViewMatrix();
         }
     }
 }
@@ -88,8 +89,8 @@ void Camera::UpdateProjMatrix()
 
 void Camera::UpdateViewMatrix()
 {
-    // SetViewMatrix(Matrix::CreateLookAt(m_position, m_viewDir, m_upDir));
-    SetViewMatrix(Matrix::CreateRotationY(-m_yaw) * Matrix::CreateRotationX(-m_pitch));
+    SetViewMatrix(Matrix::CreateTranslation(-m_position) * Matrix::CreateRotationY(-m_yaw) *
+                  Matrix::CreateRotationX(-m_pitch));
     SetViewProjMatrix(GetViewRow() * m_projMatrix);
 }
 

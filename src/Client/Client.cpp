@@ -107,6 +107,13 @@ void Client::LoadResources()
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(30.f);
+    /*
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameObject *pGround = m_pGame->CreateGameObject();
+    pGround->SetModel(pGroundModel);
+    pGround->SetRotationX(XM_PIDIV2);
+    pGround->SetPosition(0.0f, -0.2f, 0.f);
+    pGround->SetScale(2.0f);*/
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     if (!fs::exists(p))

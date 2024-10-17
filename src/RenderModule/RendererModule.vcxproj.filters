@@ -220,9 +220,6 @@
     <CustomBuild Include="..\Client\Shaders\BasicPS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
       <Filter>Shaders</Filter>
     </CustomBuild>
@@ -293,6 +290,9 @@
       <Filter>Shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\D32ToRgbaPS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>

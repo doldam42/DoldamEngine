@@ -12,6 +12,30 @@
 
 using namespace std;
 
+static void CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices, const uint32_t *pIndices,
+                                   UINT numTriangles)
+{
+    for (int i = 0; i < numVertices; i++)
+    {
+        BasicVertex& v = pInOutVertices[i];
+
+        Vector3 tangent;
+        Vector3 c1 = v.normal.Cross(Vector3::UnitZ);
+        Vector3 c2 = v.normal.Cross(Vector3::UnitY);
+
+        if (c1.Length() > c2.Length())
+        {
+            tangent = c1;
+        }
+        else
+        {
+            tangent = c2;
+        }
+
+        v.tangent = tangent;
+    }
+}
+
 Model *GeometryGenerator::MakeSquare(const float scale)
 {
 
@@ -31,6 +55,8 @@ Model *GeometryGenerator::MakeSquare(const float scale)
         v->normal = normals[i];
         v->texcoord = texcoords[i];
     }
+
+    CalcVerticeTangent(pVertices, 4, indices, 2);
 
     Model *model = new Model;
 
@@ -186,6 +212,7 @@ Model *GeometryGenerator::MakeBox(const float scale)
         16, 17, 18, 16, 18, 19, // 哭率
         20, 21, 22, 20, 22, 23  // 坷弗率
     };
+    CalcVerticeTangent(pVertices, 4, indices, 2);
     Model *pModel = new Model;
 
     MeshObject *pObj = new MeshObject;
@@ -285,7 +312,7 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
         16, 17, 18, 16, 18, 19, // 哭率
         20, 21, 22, 20, 22, 23  // 坷弗率
     };
-
+    CalcVerticeTangent(pVertices, 4, indices, 2);
     Model *pModel = new Model;
 
     MeshObject *pObj = new MeshObject;

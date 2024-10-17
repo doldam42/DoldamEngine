@@ -13,8 +13,8 @@ struct Material
     Vector3 albedo = Vector3(1.0f);
     Vector3 emissive = Vector3(0.0f);
 
-    float roughnessFactor = 0.f;
-    float metallicFactor = 0.f;
-    float opacityFactor = 0.0f;
+    float roughnessFactor = 1.f;
+    float metallicFactor = 1.f;
+    float opacityFactor = 1.0f;
     float reflectionFactor = 0.0f;
 };

@@ -970,7 +970,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
 
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, GLOBAL_DESCRIPTOR_INDEX_COUNT);
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAPS + MAX_LIGHTS);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cbHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_CB, m_srvDescriptorSize);
     CD3DX12_CPU_DESCRIPTOR_HANDLE matHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_MATERIALS, m_srvDescriptorSize);
@@ -979,6 +979,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
     CD3DX12_CPU_DESCRIPTOR_HANDLE irradianceHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_IRRADIANCE,
                                                    m_srvDescriptorSize);
     CD3DX12_CPU_DESCRIPTOR_HANDLE brdfHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_BRDF, m_srvDescriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE shadowMapHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAPS, m_srvDescriptorSize);
 
     m_pD3DDevice->CopyDescriptorsSimple(1, cbHandle, m_pGlobalCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -992,6 +993,8 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
     m_pD3DDevice->CopyDescriptorsSimple(1, brdfHandle, m_pCubemap->GetBrdfSRV(),
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+    m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_shadowSRVHandle.cpuHandle,
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     return gpuHandle;
 }
 
@@ -1566,10 +1569,11 @@ BOOL D3D12Renderer::CreateShadowMaps()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
         {
             __debugbreak();
         }
+        pDepthStencil->SetName(L"Shadow Map DepthStencil");
 
         m_pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, srvHandle);
         m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
@@ -1621,13 +1625,12 @@ void D3D12Renderer::RenderShadowMaps()
                                             DSV_DESCRIPTOR_INDEX_SHADOW, m_dsvDescriptorSize);
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_shadowSRVHandle.cpuHandle);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
-                                                                           D3D12_RESOURCE_STATE_COMMON,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
                                                                            D3D12_RESOURCE_STATE_COMMON,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_shadowRTVHandles[0].cpuHandle);
     pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -1636,46 +1639,13 @@ void D3D12Renderer::RenderShadowMaps()
                                      &m_shadowViewport, &m_shadowScissorRect, 1, DRAW_PASS_TYPE_SHADOW);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
-                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                                           D3D12_RESOURCE_STATE_COMMON));
+    
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_COMMON));
-
-    // D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-    // D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-    // pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
-    // m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    // pCommandList = pCommandListPool->GetCurrentCommandList();
-    // pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
-    //                                                                        D3D12_RESOURCE_STATE_DEPTH_WRITE,
-    //                                                                        D3D12_RESOURCE_STATE_COMMON));
-
-    // pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
-    //                                                                        D3D12_RESOURCE_STATE_COMMON,
-    //                                                                        D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-    // CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_shadowRTVHandles[0].cpuHandle);
-    // pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-    // pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-    // pCommandList->RSSetViewports(1, &m_shadowViewport);
-    // pCommandList->RSSetScissorRects(1, &m_shadowScissorRect);
-    // pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
-    // pCommandList->SetDescriptorHeaps(1, &m_pSRVHeap);
-    // pCommandList->SetPipelineState(Graphics::D32ToRgbaPSO);
-    // ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
-    // pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    // pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-    // pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    // pCommandList->IASetVertexBuffers(0, 1, &SpriteObject::GetVertexBufferView());
-    // pCommandList->IASetIndexBuffer(&SpriteObject::GetIndexBufferView());
-    // pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
-    // pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
-    //                                                                        D3D12_RESOURCE_STATE_RENDER_TARGET,
-    //                                                                        D3D12_RESOURCE_STATE_COMMON));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
+                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
 

@@ -16,6 +16,8 @@ PixelShaderInput main(VertexShaderInput input)
 {
     PixelShaderInput output;
 
+    MeshConstant meshConst = meshCB[input.instanceId];
+    
 #ifdef SKINNED
     
     float weights[4];
@@ -48,31 +50,19 @@ PixelShaderInput main(VertexShaderInput input)
     input.tangentModel = tangentModel;
 #endif
     
-    float4 pos = float4(input.posModel, 1.0f);
-    pos = mul(pos, meshCB[input.instanceId].world);
+    float4 posWorld = mul(float4(input.posModel, 1.0f), meshConst.world);
     
-    output.posWorld = pos.xyz;
+    output.posWorld = posWorld.xyz;
+    
+    float4 posProj = mul(float4(output.posWorld, 1.0), viewProj);
    
-    float4x4 invT =
-    {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        -eyeWorld.x, -eyeWorld.y, -eyeWorld.z, 1
-    };
-    
-    pos = mul(pos, invT);
-    pos = mul(pos, viewProj);
-    
-    output.posProj = pos;
+    output.posProj = posProj;
     output.texcoord = input.texcoord;
    
-    float4 normal = float4(input.normalModel, 0.0f);
-    output.normalWorld = mul(normal, meshCB[input.instanceId].worldIT).xyz;
+    output.normalWorld = mul(float4(input.normalModel, 0.0f), meshConst.worldIT).xyz;
     output.normalWorld = normalize(output.normalWorld);
     
-    float4 tangent = float4(input.tangentModel, 0.0f);
-    output.tangentWorld = mul(tangent, meshCB[input.instanceId].worldIT).xyz;
+    output.tangentWorld = mul(float4(input.tangentModel, 0.0f), meshConst.world).xyz;
     output.tangentWorld = normalize(output.tangentWorld);
     
 	return output;

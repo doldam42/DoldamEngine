@@ -280,6 +280,14 @@ void Graphics::InitSamplers()
     desc.ShaderRegister = SAMPLER_TYPE_POINT_CLAMP;
     samplerStates[SAMPLER_TYPE_POINT_CLAMP] = desc;
 
+    // shadowPoint
+    desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    desc.ShaderRegister = SAMPLER_TYPE_SHADOW_POINT;
+    desc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+    samplerStates[SAMPLER_TYPE_SHADOW_POINT] = desc;
+
     // AnisotropicWrap
     desc.Filter = D3D12_FILTER_ANISOTROPIC;
     desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -295,6 +303,7 @@ void Graphics::InitSamplers()
     desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     desc.ShaderRegister = SAMPLER_TYPE_ANISOTROPIC_CLAMP;
     samplerStates[SAMPLER_TYPE_ANISOTROPIC_CLAMP] = desc;
+
 }
 
 void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
@@ -351,10 +360,11 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
 
     // Ranges Per Global
     // | Global Consts(b0) | Materials (t5) | EnvIBL(t10) | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) |
-    CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[3];
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[4];
     rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
     rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);  // t5 : materials
     rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10); // t10~13 : IBL Textures
+    rangesPerGlobal[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_LIGHTS, 15); // t10~t10+MAX_LIGHT : shadow maps
     // Init Basic Root Signature
     {
         CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1];
@@ -363,7 +373,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 
         // Root Paramaters
-        // | Global Consts |  Materials  |
+        // | Global Consts |  Materials  | IBL Textures(t10) | ShadowMaps(t15) |
         // |   TR Matrix   |
         // |   Geometry    |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4) |
         rangesPerObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
