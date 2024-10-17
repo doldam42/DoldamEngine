@@ -47,10 +47,9 @@ float4 main(VertexShaderInput input) : SV_POSITION
     input.tangentModel = tangentModel;
 #endif
     
-    float4 pos = float4(input.posModel, 1.0f);
-    pos = mul(pos, meshCB[input.instanceId].world);
+    float4 pos = mul(float4(input.posModel, 1.0f), meshCB[input.instanceId].world);
    
-    pos = mul(pos, viewProj);
+    pos = mul(float4(pos.xyz, 1.0), viewProj);
     
     return pos;
 }

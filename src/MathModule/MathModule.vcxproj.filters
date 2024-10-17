@@ -19,11 +19,13 @@
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="Camera.cpp" />
   </ItemGroup>
 </Project>

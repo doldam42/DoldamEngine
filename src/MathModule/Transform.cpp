@@ -24,8 +24,7 @@ void Transform::AddPitchRotation(float degree)
 Vector3 Transform::GetForward() const
 {
     // RollÀº ¹«½Ã
-    Vector3 yawPitchRoll = Rotation.ToEuler();
-    return Vector3::Transform(Vector3::Forward, Matrix::CreateFromYawPitchRoll(yawPitchRoll));
+    return Vector3::Transform(Vector3::Forward, Rotation);
 }
 
 Matrix Transform::GetMatrix() const

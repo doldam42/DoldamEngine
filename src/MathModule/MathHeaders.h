@@ -41,9 +41,11 @@ using DirectX::ContainmentType;
 
 #include "Box.h"
 #include "Sphere.h"
+
+#include "Camera.h"
 #include "Frustum.h"
+#include "Joint.h"
+#include "Material.h"
 
 #include "Transform.h"
 #include "Vertex.h"
-#include "Material.h"
-#include "Joint.h"

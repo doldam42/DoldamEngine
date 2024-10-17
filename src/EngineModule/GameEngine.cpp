@@ -114,8 +114,8 @@ BOOL GameEngine::Initialize(HWND hWnd)
 
     m_renderThreadCount = m_pRenderer->GetRenderThreadCount();
 
-    m_pMainCamera = new Camera;
-    m_pMainCamera->SetAspectRatio(m_pRenderer->GetAspectRatio());
+    m_pMainCamera = new CameraController;
+    m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 100.0f);
     m_pMainCamera->m_useFirstPersonView = true;
 
     m_hWnd = hWnd;
@@ -145,7 +145,7 @@ void GameEngine::LoadResources()
 
     // Create Lights
     Vector3 radiance = Vector3(1.0f);
-    Vector3 direction = Vector3(0.0f, -1.414, 1.414);
+    Vector3 direction = -Vector3::UnitY;
     // Vector3 position = Vector3(0.0f, 0.0f, -2.0f);
 
     // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
@@ -207,7 +207,7 @@ void GameEngine::LateUpdate(ULONGLONG curTick)
 
 void GameEngine::Render()
 {
-    m_pRenderer->UpdateCamera(m_pMainCamera->At(), m_pMainCamera->GetViewRow(), m_pMainCamera->GetProjRow());
+    m_pRenderer->UpdateCamera(m_pMainCamera->Eye(), m_pMainCamera->GetViewRow(), m_pMainCamera->GetProjRow());
 
     // begin
     m_pRenderer->BeginRender();

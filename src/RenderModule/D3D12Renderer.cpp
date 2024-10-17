@@ -1657,9 +1657,9 @@ void D3D12Renderer::UpdateShadowGlobalConsts()
 
         if (light.type != LIGHT_TYPE_OFF && light.type & LIGHT_TYPE_SHADOW)
         {
-            Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
-            if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
-                up = Vector3(1.0f, 0.0f, 0.0f);
+            Vector3 up = Vector3::Up;
+            /*if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
+                up = Vector3(1.0f, 0.0f, 0.0f);*/
 
             Matrix lightViewRow = XMMatrixLookAtLH(light.position, light.position + light.direction, up);
 

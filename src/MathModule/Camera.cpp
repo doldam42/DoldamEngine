@@ -2,27 +2,52 @@
 
 #include "Camera.h"
 
-void Camera::UpdateProjMatrix() { SetProjMatrix(XMMatrixPerspectiveFovLH(m_verticalFOV, m_aspect, m_nearZ, m_farZ)); }
+void Camera::UpdateProjMatrix()
+
+{
+    m_projMatrix = m_usePerspectiveProjection
+                      ? XMMatrixPerspectiveFovLH(m_verticalFOV, m_aspect, m_nearZ, m_farZ)
+                      : XMMatrixOrthographicOffCenterLH(-m_aspect, m_aspect, -1.0f, 1.0f, m_nearZ, m_farZ);
+}
+
+void Camera::UpdateViewMatrix() 
+{ 
+    Vector4 pos(m_position);
+    pos.w = 1.0f;
+    m_viewMatrix = Matrix(Vector4(m_rightDir), Vector4(m_upDir), Vector4(m_forwardDir), pos).Invert();
+    // m_viewMatrix = XMMatrixLookAtLH(m_position, m_position + m_forwardDir, m_upDir); 
+}
 
 void Camera::Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
 {
-    SetPerspectiveMatrix(XM_PIDIV4, 9.0f / 16.0f, 1.0f, 1000.0f);
+    SetPerspective(verticalFovRadians, aspectRatio, nearZ, farZ);
+
+    m_isUpdated = TRUE;
 }
 
-void Camera::Update() 
-{ 
-    m_prevViewProjMatrix = m_viewProjMatrix;
-    m_viewMatrix = m_cameraToWorld.GetMatrix().Invert();
-    m_viewProjMatrix = m_projMatrix * m_viewMatrix;
-
-    m_frustumVS = BoundingFrustum(m_projMatrix);
-    m_frustumVS.Transform(m_frustumWS, m_cameraToWorld.GetMatrix());
-}
-
-void Camera::SetEyeAtUp(Vector3 eye, Vector3 at, Vector3 up)
+void Camera::Update()
 {
-    SetLookDirection(at - eye, up);
+    if (m_isUpdated)
+    {
+        Matrix R = Matrix::CreateFromYawPitchRoll(m_yaw, m_pitch, 0.0f);
+        m_forwardDir = Vector3::TransformNormal(Vector3::UnitZ, R);
+        m_rightDir = Vector3::TransformNormal(Vector3::Right, R);
+        m_upDir = Vector3::TransformNormal(Vector3::Up, R);
+
+        UpdateViewMatrix();
+
+        m_prevViewProjMatrix = m_viewProjMatrix;
+        m_viewProjMatrix = m_viewMatrix * m_projMatrix;
+    }
+    m_isUpdated = FALSE;
+}
+
+void Camera::SetEyeAtUp(Vector3 eye, Vector3 lookAt, Vector3 up)
+{
+    SetLookDirection(lookAt - eye, up);
     SetPosition(eye);
+
+    m_isUpdated = TRUE;
 }
 
 void Camera::SetLookDirection(Vector3 forward, Vector3 up)
@@ -31,27 +56,35 @@ void Camera::SetLookDirection(Vector3 forward, Vector3 up)
     up.Normalize();
 
     Vector3 right = forward.Cross(up);
+
+    m_forwardDir = forward;
+    m_upDir = up;
+    m_rightDir = right;
+
+    m_isUpdated = TRUE;
 }
 
-void Camera::SetRotation(Quaternion basisRotation)
+void Camera::SetPosition(Vector3 worldPos)
 {
-    basisRotation.Normalize();
-    m_cameraToWorld.SetRotation(basisRotation);
-    Matrix m = Matrix::CreateFromQuaternion(basisRotation);
-    m_rightDir = Vector3::Transform(Vector3::UnitX, m);
-    m_upDir = Vector3::Transform(Vector3::UnitY, m);
-    m_ForwardDir = Vector3::Transform(-Vector3::UnitZ, m);
+    m_position = worldPos;
+    m_isUpdated = TRUE;
 }
 
-void Camera::SetPosition(Vector3 worldPos) { m_cameraToWorld.SetPosition(worldPos); }
-
-void Camera::SetTransform(const Transform &tm)
+void Camera::SetPitch(float pitch)
 {
-    SetLookDirection(-tm.GetZAxis(), tm.GetYAxis());
-    SetPosition(tm.GetPosition());
+    m_pitch = pitch;
+
+    m_isUpdated = TRUE;
 }
 
-void Camera::SetPerspectiveMatrix(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
+void Camera::SetYaw(float yaw) 
+{ 
+    m_yaw = yaw;
+
+    m_isUpdated = TRUE;
+}
+
+void Camera::SetPerspective(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
 {
     m_verticalFOV = verticalFovRadians;
     m_aspect = aspectRatio;
@@ -61,14 +94,49 @@ void Camera::SetPerspectiveMatrix(float verticalFovRadians, float aspectRatio, f
     UpdateProjMatrix();
 
     m_prevViewProjMatrix = m_viewProjMatrix;
+
+    m_isUpdated = TRUE;
 }
 
-void Camera::SetFOV(float verticalFovRadians) { m_verticalFOV = verticalFovRadians; }
+void Camera::SetFOV(float verticalFovRadians)
+{
+    m_verticalFOV = verticalFovRadians;
+    UpdateProjMatrix();
+    
+    m_isUpdated = TRUE;
+}
 
-void Camera::SetAspectRatio(float aspectRatio) { m_aspect = aspectRatio; }
+void Camera::SetAspectRatio(float aspectRatio)
+{
+    m_aspect = aspectRatio;
+    UpdateProjMatrix();
+
+    m_isUpdated = TRUE;
+}
 
 void Camera::SetZRange(float nearZ, float farZ)
 {
     m_nearZ = nearZ;
     m_farZ = farZ;
+
+    UpdateProjMatrix();
+
+    m_isUpdated = TRUE;
 }
+
+void Camera::EnablePerspectiveProjection() 
+{
+    m_usePerspectiveProjection = TRUE;
+    UpdateProjMatrix();
+
+    m_isUpdated = TRUE;
+}
+
+void Camera::DisablePerspectiveProjection() 
+{
+    m_usePerspectiveProjection = FALSE;
+    UpdateProjMatrix();
+
+    m_isUpdated = TRUE;
+}
+
