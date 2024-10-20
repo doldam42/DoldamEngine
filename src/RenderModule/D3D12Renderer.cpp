@@ -673,7 +673,8 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
     globalConsts.invView = viewRow.Invert().Transpose();
     globalConsts.invProj = projRow.Invert().Transpose();
     globalConsts.viewProj = (viewRow * projRow).Transpose();
-    globalConsts.invViewProj = (viewRow * projRow).Invert().Transpose();
+    globalConsts.invViewProj = globalConsts.viewProj.Invert();
+    globalConsts.strengthIBL = STRENGTH_IBL;
     memcpy(&globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
 
     memcpy(m_pGlobalCB->pSystemMemAddr, &globalConsts, sizeof(GlobalConstants));
@@ -1639,7 +1640,7 @@ void D3D12Renderer::RenderShadowMaps()
                                      &m_shadowViewport, &m_shadowScissorRect, 1, DRAW_PASS_TYPE_SHADOW);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
-    
+
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_COMMON));
@@ -1658,13 +1659,14 @@ void D3D12Renderer::UpdateShadowGlobalConsts()
         if (light.type != LIGHT_TYPE_OFF && light.type & LIGHT_TYPE_SHADOW)
         {
             Vector3 up = Vector3::Up;
-            /*if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
-                up = Vector3(1.0f, 0.0f, 0.0f);*/
+            if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
+                up = Vector3(1.0f, 0.0f, 0.0f);
 
-            Matrix lightViewRow = XMMatrixLookAtLH(light.position, light.position + light.direction, up);
-
+            Matrix lightViewRow = XMMatrixLookToLH(light.position, light.direction, up);
             Matrix lightProjRow = XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);
-
+            /*Matrix lightProjRow = (light.type & LIGHT_TYPE_DIRECTIONAL)
+                                      ? XMMatrixOrthographicLH(m_shadowWidth, m_shadowHeight, 0.1f, 10.f)
+                                      : XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);*/
             m_shadowGlobalConsts[i].eyeWorld = light.position;
             m_shadowGlobalConsts[i].view = lightViewRow.Transpose();
             m_shadowGlobalConsts[i].proj = lightProjRow.Transpose();

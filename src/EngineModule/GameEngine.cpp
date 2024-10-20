@@ -137,16 +137,16 @@ void GameEngine::LoadResources()
 {
     // Create Shadow Map Sprite
     m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
-    
+
     // Create Cubemap
     m_pRenderer->InitCubemaps(
-        L"..\\..\\assets\\sponza\\env\\cubemapEnvHDR.dds", L"..\\..\\assets\\sponza\\env\\cubemapSpecularHDR.dds",
-        L"..\\..\\assets\\sponza\\env\\cubemapDiffuseHDR.dds", L"..\\..\\assets\\sponza\\env\\cubemapBrdf.dds");
+        L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesEnvHDR.dds", L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesSpecularHDR.dds",
+        L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesDiffuseHDR.dds", L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesBrdf.dds");
 
     // Create Lights
     Vector3 radiance = Vector3(1.0f);
-    Vector3 direction = -Vector3::UnitY;
-    // Vector3 position = Vector3(0.0f, 0.0f, -2.0f);
+    Vector3 direction = Vector3(0.0f, -1.0f, 1.0f);
+    direction.Normalize();
 
     // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
     m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
@@ -192,7 +192,7 @@ void GameEngine::Update(ULONGLONG curTick)
         pGameObj->Run();
         pCur = pCur->pNext;
     }
-    
+
     LateUpdate(dt);
 }
 
@@ -260,7 +260,7 @@ BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
     return TRUE;
 }
 
-IGameCharacter *GameEngine::CreateCharacter() 
+IGameCharacter *GameEngine::CreateCharacter()
 {
     Character *pGameObj = new Character;
     pGameObj->Initialize(this, 5);
@@ -420,7 +420,7 @@ IGameAnimation *GameEngine::CreateEmptyAnimation()
     return pClip;
 }
 
-IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name) 
+IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name)
 {
     AnimationClip *pClip = nullptr;
     UINT           keySize = wcslen(name) * sizeof(WCHAR);

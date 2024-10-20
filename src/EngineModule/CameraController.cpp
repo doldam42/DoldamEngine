@@ -54,11 +54,10 @@ void CameraController::UpdateKeyboard(const float dt)
 
             Vector3 forward = m_pCamera->GetForwardDir();
             Vector3 right = m_pCamera->GetRightDir();
-            Vector3 up = m_pCamera->GetUpDir();
 
             Vector3 pos = m_pCamera->GetPosition();
 
-            Matrix m(right, up, forward);
+            Matrix m(right, Vector3::Up, forward);
             pos += Vector3::Transform(v, m) * m_speed * dt;
 
             m_pCamera->SetPosition(pos);

@@ -116,6 +116,9 @@ class GameEngine : public IGameEngine
 
     void ToggleCamera();
 
+    Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
+    Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
+
     inline IRenderer        *GetRenderer() const { return m_pRenderer; }
     inline IInputManager    *GetInputManager() const { return m_pInputManager; }
     inline CameraController *GetCamera() const { return m_pMainCamera; }

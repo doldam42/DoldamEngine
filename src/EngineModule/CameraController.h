@@ -30,6 +30,7 @@ class CameraController
     void Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ);
 
     const Vector3 &Eye() const { return m_pCamera->GetPosition(); }
+    const Vector3 &LookAt() const { return m_pCamera->GetForwardDir(); }
 
     const Matrix &GetViewRow() const { return m_pCamera->GetViewMatrix(); }
     const Matrix &GetProjRow() const { return m_pCamera->GetProjMatrix(); }

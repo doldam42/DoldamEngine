@@ -159,6 +159,9 @@ interface IGameEngine
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
+    virtual Vector3 GetCameraPos() = 0;
+    virtual Vector3 GetCameraLookAt() = 0;
+
     virtual IRenderer     *GetRenderer() const = 0;
     virtual IInputManager *GetInputManager() const = 0;
 };

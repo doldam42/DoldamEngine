@@ -506,6 +506,10 @@ BOOL D3D12ResourceManager::CreateTextureFromDDS(ID3D12Resource **ppOutResource, 
     std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
     if (FAILED(LoadDDSTextureFromFile(m_pD3DDevice, filename, &pTexResource, ddsData, subresourceData)))
     {
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+
         goto lb_return;
     }
     textureDesc = pTexResource->GetDesc();

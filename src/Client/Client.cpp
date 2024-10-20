@@ -84,16 +84,16 @@ void Client::LoadResources()
      pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
      pBox->SetScale(2.0f);*/
 
-    //p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
+    // p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
     ////if (!fs::exists(p))
     //{
     //    m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
     //    m_pFbxExporter->ExportModel();
     //}
-    //IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
-    //IGameObject *pStage = m_pGame->CreateGameObject();
-    //pStage->SetModel(pStageModel);
-    //pStage->SetScale(10.f);
+    // IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
+    // IGameObject *pStage = m_pGame->CreateGameObject();
+    // pStage->SetModel(pStageModel);
+    // pStage->SetScale(10.f);
 
     p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
     if (!fs::exists(p))
@@ -161,7 +161,6 @@ void Client::LoadResources()
     /* m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
      m_pStaticSprite->SetPosition(256, 256);
      m_pStaticSprite->SetZ(0.5f);*/
-    
 }
 
 void Client::Process()
@@ -194,10 +193,10 @@ void Client::Update(ULONGLONG curTick)
     {
         return;
     }
-   
+
     float dt = m_prevUpdateTick == 0 ? 0.0f : static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
     m_prevUpdateTick = curTick;
-    
+
     // Update Texture
     static DWORD g_dwCount = 0;
     static DWORD g_dwTileColorR = 0;
@@ -262,11 +261,16 @@ void Client::Update(ULONGLONG curTick)
     m_pDynamicSprite->UpdateTextureWidthImage(m_pImage, 512, 256);
 
     // draw text
+    Vector3 camPos = m_pGame->GetCameraPos();
+    Vector3 camLookAt = m_pGame->GetCameraLookAt();
+
     int   iTextWidth = 0;
     int   iTextHeight = 0;
     WCHAR wchTxt[260];
     memset(wchTxt, 0, sizeof(wchTxt));
-    DWORD dwTxtLen = swprintf_s(wchTxt, L"Current FrameRate: %u", m_FPS);
+    DWORD dwTxtLen =
+        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nLook At: (%.3f, %.3f, %.3f)",
+                   m_FPS, camPos.x, camPos.y, camPos.z, camLookAt.x, camLookAt.y, camLookAt.z);
 
     if (wcscmp(m_text, wchTxt))
     {

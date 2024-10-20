@@ -133,7 +133,9 @@
       <AdditionalLibraryDirectories>..\..\lib\$(Configuration)\;..\..\bin\$(Configuration)\;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Client\Shaders" "$(TargetDir)Shaders" /Y;</Command>
+      <Command>xcopy "$(SolutionDir)Client\Shaders\*.*" "$(TargetDir)Shaders\" /E /Y
+copy "$(SolutionDir)..\lib\$(Configuration)\dxcompiler.dll" "$(TargetDir)" /Y
+copy "$(SolutionDir)..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -158,7 +160,9 @@
       <AdditionalLibraryDirectories>..\..\lib\$(Configuration)\;..\..\bin\$(Configuration)\;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Client\Shaders" "$(TargetDir)Shaders" /Y;</Command>
+      <Command>xcopy "$(SolutionDir)Client\Shaders\*.*" "$(TargetDir)Shaders" /S /Y;
+copy "..\..\lib\$(Configuration)\dxcompiler.dll" "$(TargetDir)" /Y;
+copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
