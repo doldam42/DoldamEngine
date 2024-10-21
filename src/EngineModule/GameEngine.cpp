@@ -150,8 +150,8 @@ void GameEngine::LoadResources()
 
     direction.Normalize();
     // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);
-    m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
-    // m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
+    // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
+    m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
 }
 
 void GameEngine::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }

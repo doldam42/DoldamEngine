@@ -1661,15 +1661,15 @@ void D3D12Renderer::UpdateShadowGlobalConsts()
 
         if (light.type != LIGHT_TYPE_OFF && light.type & LIGHT_TYPE_SHADOW)
         {
+            float   aspect = GetAspectRatio();
             Vector3 up = Vector3::Up;
             if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
                 up = Vector3(1.0f, 0.0f, 0.0f);
 
             Matrix lightViewRow = XMMatrixLookToLH(light.position, light.direction, up);
-            Matrix lightProjRow = XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);
-            /*Matrix lightProjRow = (light.type & LIGHT_TYPE_DIRECTIONAL)
-                                      ? XMMatrixOrthographicLH(m_shadowWidth, m_shadowHeight, 0.1f, 10.f)
-                                      : XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);*/
+            Matrix lightProjRow = (light.type & LIGHT_TYPE_DIRECTIONAL)
+                                      ? XMMatrixOrthographicOffCenterLH(-aspect, aspect, -1.0f, 1.0f, 0.1f, 10.0f)
+                                      : XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);
             m_shadowGlobalConsts[i].eyeWorld = light.position;
             m_shadowGlobalConsts[i].view = lightViewRow.Transpose();
             m_shadowGlobalConsts[i].proj = lightProjRow.Transpose();

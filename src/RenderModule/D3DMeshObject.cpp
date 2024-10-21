@@ -59,7 +59,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     case DRAW_PASS_TYPE_DEFAULT:
     case DRAW_PASS_TYPE_NON_OPAQUE:
         Render(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
-        // RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
+        RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
         break;
     case DRAW_PASS_TYPE_SHADOW:
         RenderShadowMap(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
