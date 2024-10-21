@@ -666,7 +666,7 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
     ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
     m_pGlobalCB = pCBPool->Alloc();
 
-    GlobalConstants globalConsts = m_globalConsts;
+    GlobalConstants globalConsts;
     globalConsts.eyeWorld = eyeWorld;
     globalConsts.view = viewRow.Transpose();
     globalConsts.proj = projRow.Transpose();
@@ -675,6 +675,7 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
     globalConsts.viewProj = (viewRow * projRow).Transpose();
     globalConsts.invViewProj = globalConsts.viewProj.Invert();
     globalConsts.strengthIBL = STRENGTH_IBL;
+
     memcpy(&globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
 
     memcpy(m_pGlobalCB->pSystemMemAddr, &globalConsts, sizeof(GlobalConstants));
@@ -996,6 +997,8 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
 
     m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_shadowSRVHandle.cpuHandle,
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    /*m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_pShadowMapTextures[0]->srv.cpuHandle,
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
     return gpuHandle;
 }
 
@@ -1673,8 +1676,8 @@ void D3D12Renderer::UpdateShadowGlobalConsts()
             m_shadowGlobalConsts[i].invProj = lightProjRow.Invert().Transpose();
             m_shadowGlobalConsts[i].viewProj = (lightViewRow * lightProjRow).Transpose();
 
-            m_globalConsts.lights[i].viewProj = m_shadowGlobalConsts[i].viewProj;
-            m_globalConsts.lights[i].invProj = m_shadowGlobalConsts[i].invProj;
+            light.viewProj = m_shadowGlobalConsts[i].viewProj;
+            light.invProj = m_shadowGlobalConsts[i].invProj;
         }
     }
 }

@@ -59,6 +59,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     case DRAW_PASS_TYPE_DEFAULT:
     case DRAW_PASS_TYPE_NON_OPAQUE:
         Render(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
+        // RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
         break;
     case DRAW_PASS_TYPE_SHADOW:
         RenderShadowMap(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
@@ -151,6 +152,41 @@ void D3DMeshObject::RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList 
         pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
         pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
     }
+}
+
+void D3DMeshObject::RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+{
+    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
+
+    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
+
+    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
+    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+    {
+        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlyBasicRS);
+        pCommandList->SetPipelineState(Graphics::drawNormalPSO);
+    }
+    else
+    {
+        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlySkinnedRS);
+        pCommandList->SetPipelineState(Graphics::drawSkinnedNormalPSO);
+    }
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
+    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
+    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
+
+    pCommandList->DrawInstanced(m_vertexCount, numInstance, 0, 0);
 }
 
 /*

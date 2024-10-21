@@ -45,7 +45,7 @@ struct Light : public ILightHandle
     float   fallOffStart = 0.0f;
     Vector3 direction = Vector3(0.0f, 0.0f, 1.0f);
     float   fallOffEnd = 20.0f;
-    Vector3 position = Vector3(0.0f, 2.0f, 0.0f);
+    Vector3 position = Vector3(0.0f, 2.0f, -2.0f);
     float   spotPower = 6.0f;
 
     uint32_t type = LIGHT_TYPE_OFF;

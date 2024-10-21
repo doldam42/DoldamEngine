@@ -358,10 +358,10 @@ BOOL AssimpLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     wcscat_s(wcsFullPath, filename);
     GameUtils::ws2s(wcsFullPath, fullPath);
 
-    if (wcsstr(filename, L"gltf") != NULL)
+    /*if (wcsstr(filename, L"gltf") != NULL)
     {
         m_isGLTF = true;
-    }
+    }*/
 
     const aiScene *pScene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
 

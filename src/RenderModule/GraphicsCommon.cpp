@@ -22,6 +22,13 @@ ID3DBlob *depthOnlyVS = nullptr;
 ID3DBlob *depthOnlyPS = nullptr;
 ID3DBlob *depthOnlySkinningVS = nullptr;
 
+// Draw Normal Shader
+ID3DBlob *drawSkinnedNormalVS = nullptr;
+
+ID3DBlob *drawNormalVS = nullptr;
+ID3DBlob *drawNormalGS = nullptr;
+ID3DBlob *drawNormalPS = nullptr;
+
 // Compute Shader
 ID3DBlob *deformingVertexCS = nullptr;
 
@@ -58,6 +65,8 @@ ID3D12RootSignature *rootSignatures[RENDER_ITEM_TYPE_COUNT] = {nullptr};
 ID3D12PipelineState *deformingVertexPSO = nullptr;
 ID3D12PipelineState *presentPSO = nullptr;
 ID3D12PipelineState *D32ToRgbaPSO = nullptr;
+ID3D12PipelineState *drawNormalPSO = nullptr;
+ID3D12PipelineState *drawSkinnedNormalPSO = nullptr;
 
 ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE_COUNT] = {nullptr};
 
@@ -184,6 +193,25 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    // Draw Normal
+    hr = D3DCompileFromFile(L"./Shaders/DrawNormal.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain",
+                            "vs_5_1", compileFlags, 0, &drawNormalVS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+    hr = D3DCompileFromFile(L"./Shaders/DrawNormal.hlsl", skinnedVSMacros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain",
+                            "vs_5_1", compileFlags, 0, &drawSkinnedNormalVS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+
+    hr = D3DCompileFromFile(L"./Shaders/DrawNormal.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GSMain",
+                            "gs_5_1", compileFlags, 0, &drawNormalGS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+    hr = D3DCompileFromFile(L"./Shaders/DrawNormal.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain",
+                            "ps_5_1", compileFlags, 0, &drawNormalPS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+
     // Skinning CS
     hr = D3DCompileFromFile(L"./Shaders/SkinningCS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_1",
                             compileFlags, 0, &deformingVertexCS, nullptr);
@@ -303,7 +331,6 @@ void Graphics::InitSamplers()
     desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     desc.ShaderRegister = SAMPLER_TYPE_ANISOTROPIC_CLAMP;
     samplerStates[SAMPLER_TYPE_ANISOTROPIC_CLAMP] = desc;
-
 }
 
 void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
@@ -361,9 +388,9 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Ranges Per Global
     // | Global Consts(b0) | Materials (t5) | EnvIBL(t10) | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) |
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[4];
-    rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
-    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);  // t5 : materials
-    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10); // t10~13 : IBL Textures
+    rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);           // b0 : globalConsts
+    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);           // t5 : materials
+    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10);          // t10~13 : IBL Textures
     rangesPerGlobal[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_LIGHTS, 15); // t10~t10+MAX_LIGHT : shadow maps
     // Init Basic Root Signature
     {
@@ -618,7 +645,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), rangePerGlobal, D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
 
-         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
+        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
                                                       samplerStates,
                                                       D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
         SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlySkinnedRS, L"depthOnly Skinned RS");
@@ -711,6 +738,27 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         {
             __debugbreak();
         }
+    }
+
+    // Draw Normal PSO
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+    psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_MESH_OBJ];
+    psoDesc.pRootSignature = depthOnlyBasicRS;
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(drawNormalVS->GetBufferPointer(), drawNormalVS->GetBufferSize());
+    psoDesc.GS = CD3DX12_SHADER_BYTECODE(drawNormalGS->GetBufferPointer(), drawNormalGS->GetBufferSize());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(drawNormalPS->GetBufferPointer(), drawNormalPS->GetBufferSize());
+    if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&drawNormalPSO))))
+    {
+        __debugbreak();
+    }
+
+    psoDesc.InputLayout = inputLayouts[RENDER_ITEM_TYPE_CHAR_OBJ];
+    psoDesc.pRootSignature = depthOnlySkinnedRS;
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(drawSkinnedNormalVS->GetBufferPointer(), drawSkinnedNormalVS->GetBufferSize());
+    if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&drawSkinnedNormalPSO))))
+    {
+        __debugbreak();
     }
 
     // deforming Vertex PSO
@@ -965,6 +1013,22 @@ void Graphics::DeleteShaders()
         D32ToRgbaPS->Release();
         D32ToRgbaPS = nullptr;
     }
+    if (drawNormalVS)
+    {
+        drawNormalVS->Release();
+        drawNormalVS = nullptr;
+    }
+    if (drawNormalGS)
+    {
+        drawNormalGS->Release();
+        drawNormalGS = nullptr;
+    }
+    if (drawNormalPS)
+    {
+        drawNormalPS->Release();
+        drawNormalPS = nullptr;
+    }
+
 }
 
 void Graphics::DeleteSamplers() {}
@@ -1024,6 +1088,16 @@ void Graphics::DeletePipelineStates()
     {
         D32ToRgbaPSO->Release();
         D32ToRgbaPSO = nullptr;
+    }
+    if (drawNormalPSO)
+    {
+        drawNormalPSO->Release();
+        drawNormalPSO = nullptr;
+    }
+    if (drawSkinnedNormalPSO)
+    {
+        drawSkinnedNormalPSO->Release();
+        drawSkinnedNormalPSO = nullptr;
     }
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {

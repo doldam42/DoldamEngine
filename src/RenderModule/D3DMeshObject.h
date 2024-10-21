@@ -148,6 +148,10 @@ class D3DMeshObject : public IDIMeshObject
                        const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
                        UINT numInstance = 1);
 
+    void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                      const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
+                      UINT numInstance = 1);
+
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex, const Matrix *pWorldMat,
                                      UINT numInstance, const Matrix *pBoneMats, UINT numBones);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex);

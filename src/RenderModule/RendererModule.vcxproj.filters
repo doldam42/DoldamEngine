@@ -295,5 +295,8 @@
     <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DrawNormal.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

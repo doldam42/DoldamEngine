@@ -107,8 +107,8 @@ void Client::LoadResources()
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(30.f);
-    /*
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    
+    /*IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     pGround->SetRotationX(XM_PIDIV2);
@@ -123,7 +123,9 @@ void Client::LoadResources()
     }
     IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
     IGameCharacter *pGura = m_pGame->CreateCharacter();
+
     pGura->SetModel(pGuraModel);
+    pGura->SetRotationX(-XM_PIDIV2);
     p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
     if (!fs::exists(p))
     {

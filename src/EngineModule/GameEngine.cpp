@@ -146,10 +146,12 @@ void GameEngine::LoadResources()
     // Create Lights
     Vector3 radiance = Vector3(1.0f);
     Vector3 direction = Vector3(0.0f, -1.0f, 1.0f);
-    direction.Normalize();
+    Vector3 position = Vector3(0.0f, 2.0f, -2.0f);
 
-    // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
-    m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
+    direction.Normalize();
+    // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);
+    m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
+    // m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
 }
 
 void GameEngine::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
@@ -192,8 +194,6 @@ void GameEngine::Update(ULONGLONG curTick)
         pGameObj->Run();
         pCur = pCur->pNext;
     }
-
-    LateUpdate(dt);
 }
 
 void GameEngine::LateUpdate(ULONGLONG curTick)

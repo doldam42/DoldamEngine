@@ -219,7 +219,6 @@ BOOL FBXLoader::Load(const WCHAR *basePath, const WCHAR *filename)
     m_pModel = m_pGame->CreateEmptyModel();
 
     FbxAxisSystem::DirectX.DeepConvertScene(m_pScene);
-    // m_pGeoConverter->Triangulate(m_pScene, true);
 
     ProcessDeformingJointNode(m_pScene->GetRootNode());
     ProcessSkeletonHierarchy(m_pScene->GetRootNode());
@@ -436,9 +435,9 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
             }
 
             pObj->SetParentIndex(inParentIndex);
-            Transform tm(ToVector3(inNode->LclTranslation.Get()),
-                         Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())), Vector3::One);
-            pObj->SetTransform(&tm);
+            /*Transform tm(ToVector3(inNode->LclTranslation.Get()),
+                         Quaternion::CreateFromYawPitchRoll(ToVector3(inNode->LclRotation.Get())), Vector3::One);*/
+            // pObj->SetTransform();
 
             WCHAR wcsName[MAX_NAME] = {L'\0'};
             GameUtils::s2ws(inNode->GetName(), wcsName);
@@ -755,6 +754,9 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 SkinnedVertex vertex;
                 CtrlPointToSkinnedVertex(pCtrlPoint, &vertex);
                 vertex.normal = ToVector3(normal);
+
+                vertex.normal *= -1.0f;
+
                 vertex.position = pCtrlPoint->position;
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);
                 vertex.texcoord.y = 1.0f - static_cast<float>(uv.mData[1]);
@@ -766,6 +768,9 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 BasicVertex vertex;
 
                 vertex.normal = ToVector3(normal);
+
+                vertex.normal *= -1.0f;
+
                 vertex.position = pCtrlPoint->position;
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);
                 vertex.texcoord.y = 1.0f - static_cast<float>(uv.mData[1]);
