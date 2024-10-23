@@ -16,6 +16,46 @@
 
 #include "D3DMeshObject.h"
 
+BoundingBox D3DMeshObject::GetBoundingBox(const BasicVertex *pVertice, UINT numVertice) 
+{
+    if (numVertice == 0)
+        return BoundingBox();
+
+    Vector3 minCorner = pVertice[0].position;
+    Vector3 maxCorner = pVertice[0].position;
+
+    for (size_t i = 1; i < numVertice; i++)
+    {
+        minCorner = Vector3::Min(minCorner, pVertice[i].position);
+        maxCorner = Vector3::Max(maxCorner, pVertice[i].position);
+    }
+
+    Vector3 center = (minCorner + maxCorner) * 0.5f;
+    Vector3 extents = maxCorner - center;
+
+    return BoundingBox(center, extents);
+}
+
+BoundingBox D3DMeshObject::GetBoundingBox(const SkinnedVertex *pVertice, UINT numVertice)
+{
+    if (numVertice == 0)
+        return BoundingBox();
+
+    Vector3 minCorner = pVertice[0].position;
+    Vector3 maxCorner = pVertice[0].position;
+
+    for (size_t i = 1; i < numVertice; i++)
+    {
+        minCorner = Vector3::Min(minCorner, pVertice[i].position);
+        maxCorner = Vector3::Max(maxCorner, pVertice[i].position);
+    }
+
+    Vector3 center = (minCorner + maxCorner) * 0.5f;
+    Vector3 extents = maxCorner - center;
+
+    return BoundingBox(center, extents);
+}
+
 // 레이트레이싱 SRV 디스크립터 구조
 // | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
 BOOL D3DMeshObject::CreateDescriptorTable()
@@ -59,7 +99,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     case DRAW_PASS_TYPE_DEFAULT:
     case DRAW_PASS_TYPE_NON_OPAQUE:
         Render(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
-        RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
+        //RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
         break;
     case DRAW_PASS_TYPE_SHADOW:
         RenderShadowMap(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
@@ -370,6 +410,7 @@ BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UIN
             __debugbreak();
             goto lb_return;
         }
+        m_boundingBox = GetBoundingBox((BasicVertex *)pVertices, numVertices);
     }
     break;
     case RENDER_ITEM_TYPE_CHAR_OBJ: {
@@ -389,6 +430,7 @@ BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UIN
             goto lb_return;
         }
         m_pDeformedVertexBuffer->SetName(L"DeformedVertexBuffer");
+        m_boundingBox = GetBoundingBox((SkinnedVertex *)pVertices, numVertices);
     }
     break;
     default: {

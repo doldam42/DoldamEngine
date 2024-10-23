@@ -107,7 +107,7 @@ void Client::LoadResources()
     IGameObject *pSponza = m_pGame->CreateGameObject();
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(30.f);
-    
+
     /*IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);

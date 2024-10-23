@@ -77,6 +77,9 @@
     <Filter Include="LightObject">
       <UniqueIdentifier>{0437eff0-29c1-4e1b-bce5-43f7f8e100d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NewFilter1">
+      <UniqueIdentifier>{e4a6b6c3-e107-469f-a776-23bb5462349b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -148,6 +151,7 @@
     <ClInclude Include="ConstantBuffers.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="RendererInterface.h" />
+    <ClInclude Include="CascadedShadowsManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -212,6 +216,7 @@
     </ClCompile>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="RendererInterface.cpp" />
+    <ClCompile Include="CascadedShadowsManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -106,6 +106,9 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
+    Vector3 sceneAABBMin = Vector3(FLT_MAX);
+    Vector3 sceneAABBMax = Vector3(FLT_MIN);
+
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
     ID3D12DescriptorHeap *m_pDSVHeap = nullptr;
@@ -252,6 +255,7 @@ class D3D12Renderer : public IRenderer
     ID3D12Device5        *INL_GetD3DDevice() const { return m_pD3DDevice; }
     D3D12ResourceManager *INL_GetResourceManager() const { return m_pResourceManager; }
     DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
+    TextureManager       *INL_GetTextureManager() const { return m_pTextureManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapSRVHandle(UINT lightIndex) const;

@@ -108,6 +108,9 @@ class D3DMeshObject : public IDIMeshObject
     RENDER_ITEM_TYPE m_type;
     DRAW_PASS_TYPE   m_passType;
 
+    // Bounding Box
+    BoundingBox m_boundingBox;
+
     // #DXR
     ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
     DESCRIPTOR_HANDLE m_skinningDescriptors = {}; // Vertex Buffer (SRV) | Vertex Buffer (UAV)
@@ -124,6 +127,9 @@ class D3DMeshObject : public IDIMeshObject
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
 
   private:
+    BoundingBox GetBoundingBox(const BasicVertex *pVertice, UINT numVertice);
+    BoundingBox GetBoundingBox(const SkinnedVertex *pVertice, UINT numVertice);
+
     BOOL CreateDescriptorTable();
 
     void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,

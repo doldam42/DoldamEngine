@@ -168,6 +168,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
   <ItemGroup>
     <CustomBuild Include="..\Client\Shaders\DXR\RaytracingHlslCompat.h" />
     <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.h" />
+    <ClInclude Include="CascadedShadowsManager.h" />
     <ClInclude Include="CommandListPool.h" />
     <ClInclude Include="ConstantBufferManager.h" />
     <ClInclude Include="ConstantBufferPool.h" />
@@ -194,6 +195,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CascadedShadowsManager.cpp" />
     <ClCompile Include="CommandListPool.cpp" />
     <ClCompile Include="ConstantBufferManager.cpp" />
     <ClCompile Include="ConstantBufferPool.cpp" />
