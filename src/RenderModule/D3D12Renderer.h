@@ -106,8 +106,9 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
-    Vector3 sceneAABBMin = Vector3(FLT_MAX);
-    Vector3 sceneAABBMax = Vector3(FLT_MIN);
+    BoundingBox m_sceneBoundingBox;
+    Vector3     m_sceneMinCorner = Vector3(FLT_MAX);
+    Vector3     m_sceneMaxCorner = Vector3(FLT_MIN);
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;

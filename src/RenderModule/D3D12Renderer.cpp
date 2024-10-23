@@ -501,6 +501,9 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
 
+    const BoundingBox &box = pMeshObject->GetBoundingBox();
+    // m_sceneMinCorner = (box)
+
     if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
     {
         if (!m_pNonOpaqueRenderQueue->Add(&item))

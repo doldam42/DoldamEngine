@@ -180,6 +180,8 @@ class D3DMeshObject : public IDIMeshObject
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
     UINT            GetGeometryCount() const { return m_faceGroupCount; }
 
+    const BoundingBox &GetBoundingBox() const { return m_boundingBox; }
+
     RENDER_ITEM_TYPE GetType() const { return m_type; }
     DRAW_PASS_TYPE   GetPassType() const { return m_passType; }
 
