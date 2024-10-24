@@ -6,6 +6,7 @@
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
 #include "ConstantBuffers.h"
+#include "CascadedShadowsManager.h"
 #include "Cubemap.h"
 #include "D3D12ResourceManager.h"
 #include "D3DMeshObject.h"
@@ -174,6 +175,9 @@ lb_exit:
     m_pFontManager = new FontManager;
     m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
 
+    // m_pCascadedShadowManager = new CascadedShadowsManager;
+    // m_pCascadedShadowManager->Initialize(this, )
+
     CreateDescriptorHeap();
 
     CreateBuffers();
@@ -298,6 +302,10 @@ void D3D12Renderer::EndRender()
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
                                            m_uiFrameIndex, m_rtvDescriptorSize);
+
+    Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
+    Vector3 extend = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
+    m_sceneAABB = BoundingBox(center, extend);
 
 #if defined(USE_MULTI_THREAD)
     m_activeThreadCount = m_renderThreadCount;
@@ -501,8 +509,19 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
 
+    Vector3 minCorner(FLT_MAX);
+    Vector3 maxCorner(FLT_MIN);
+
     const BoundingBox &box = pMeshObject->GetBoundingBox();
-    // m_sceneMinCorner = (box)
+    for (UINT i = 0; i < numInstance; i++)
+    {
+        Vector3 center = Vector3::Transform(box.Center, pWorldMat[i]);
+        minCorner = Vector3::Min(minCorner, center - box.Extents);
+        maxCorner = Vector3::Max(maxCorner, center + box.Extents);
+    }
+
+    m_sceneMinCorner = Vector3::Min(m_sceneMinCorner, minCorner);
+    m_sceneMaxCorner = Vector3::Max(m_sceneMaxCorner, maxCorner);
 
     if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
     {
@@ -541,6 +560,17 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
 
     m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
 #else
+    D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
+    
+    const BoundingBox &box = pMeshObject->GetBoundingBox();
+
+    Vector3 center = Vector3::Transform(box.Center, *pWorldMat);
+    Vector3 minCorner = center - box.Extents;
+    Vector3 maxCorner = center + box.Extents;
+
+    m_sceneMinCorner = Vector3::Min(m_sceneMinCorner, minCorner);
+    m_sceneMaxCorner = Vector3::Max(m_sceneMaxCorner, maxCorner);
+
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;

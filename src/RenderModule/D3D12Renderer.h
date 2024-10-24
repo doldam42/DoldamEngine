@@ -12,6 +12,7 @@ const float STRENGTH_IBL = 0.2f;
 struct CB_CONTAINER;
 struct RENDER_THREAD_DESC;
 
+class CascadedShadowsManager;
 class DescriptorPool;
 class ConstantBufferPool;
 class ConstantBufferManager;
@@ -97,6 +98,8 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource *m_pDepthStencil = nullptr;
 
     // Shadow Map
+    CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
+
     UINT              m_shadowWidth = 1280;
     UINT              m_shadowHeight = 1280;
     D3D12_VIEWPORT    m_shadowViewport = {};
@@ -106,7 +109,7 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
 
-    BoundingBox m_sceneBoundingBox;
+    BoundingBox m_sceneAABB;
     Vector3     m_sceneMinCorner = Vector3(FLT_MAX);
     Vector3     m_sceneMaxCorner = Vector3(FLT_MIN);
 

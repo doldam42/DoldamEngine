@@ -48,6 +48,9 @@ class Camera
     void EnablePerspectiveProjection();
     void DisablePerspectiveProjection();
 
+    const float GetNearClip() const { return m_nearZ; }
+    const float GetFarClip() const { return m_farZ; }
+
     const Vector3 &GetRightDir() const { return m_rightDir; }
     const Vector3 &GetUpDir() const { return m_upDir; }
     const Vector3 &GetForwardDir() const { return m_forwardDir; }
