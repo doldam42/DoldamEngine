@@ -3,9 +3,10 @@
 // reference: DirectX SDK Sample - CascadedShadowMaps11
 
 #include "D3D12Renderer.h"
-#include "pch.h"
+#include "D3DMeshObject.h"
 
 const UINT MAX_CASADEDS = 8;
+const UINT MESH_OBJECT_COUNT_FOR_SHADOW = 2048;
 
 enum FIT_PROJETION_TO
 {
@@ -46,9 +47,6 @@ class CascadedShadowsManager
   private:
     D3D12Renderer *m_pRenderer = nullptr;
 
-    Camera *m_pViewerCamera = nullptr;
-    Camera *m_pLightCamera = nullptr;
-
     UINT           m_cascadedLevels;
     UINT           m_shadowWidth;
     D3D12_VIEWPORT m_shadowViewports[MAX_CASADEDS] = {};
@@ -63,24 +61,28 @@ class CascadedShadowsManager
     DESCRIPTOR_HANDLE m_CascadedShadowMapSRV;
     DESCRIPTOR_HANDLE m_CascadedShadowMapDSV;
 
+    // MeshObjects for draw shadow
+    RenderQueue *m_pRenderQueue = nullptr;
+    
     // Debuggin¿ë Texture
     TEXTURE_HANDLE *m_pCascadedShadowMapTexture = nullptr;
 
+  public:
     // Config
-    BOOL              m_IsMoveLightTexelSize;
-    FIT_PROJETION_TO  m_selectedCascadesFit;
-    FIT_NEARFAR       m_selectedNearFarFit;
-    CAMERA_SELECTION  m_selectedCamera;
-    CASCADE_SELECTION m_selectedCascadedSelection;
+    BOOL              m_IsMoveLightTexelSize = FALSE;
+    FIT_PROJETION_TO  m_selectedCascadesFit = FIT_PROJETION_TO_SCENE;
+    FIT_NEARFAR       m_selectedNearFarFit = FIT_NEARFAR_SCENE_AABB;
+    CASCADE_SELECTION m_selectedCascadedSelection = CASCADE_SELECTION_MAP;
 
-    int   m_cascadePartitionsMax;
+    int   m_cascadePartitionsMax = 100;
     float m_cascadePartitionsFrustum[MAX_CASADEDS];
-    int   m_cascadePartitionsZeroToOne[MAX_CASADEDS]; // Values are  between near and far
-    int   m_PCFBlurSize;
-    float m_PCFOffset;
-    int   m_derivativeBasedOffset;
-    int   m_blurBetweenCascades;
-    float m_blurBetweenCascadesAmount;
+    int   m_cascadePartitionsZeroToOne[MAX_CASADEDS] = {5,   15,  60,  100,
+                                                        100, 100, 100, 100}; // Values are  between near and far
+    int   m_PCFBlurSize = 3;
+    float m_PCFOffset = 0.002;
+    int   m_derivativeBasedOffset = 0;
+    int   m_blurBetweenCascades = 0;
+    float m_blurBetweenCascadesAmount = 0.005;
 
   private:
     void Cleanup();
@@ -92,10 +94,18 @@ class CascadedShadowsManager
 
   public:
     // shadowHeight == shadowWidth
-    BOOL Initialize(D3D12Renderer *pRnd, Camera *pViewerCamera, Camera *pLightCamera, UINT shadowWidth,
-                    UINT cascadedLevel);
+    BOOL Initialize(D3D12Renderer *pRnd, UINT shadowWidth, UINT cascadedLevel);
 
-    BOOL Update(const BoundingBox *pSceneBox);
+    BOOL Add(const RENDER_ITEM *pItem);
+
+    BOOL Update(const BoundingBox *pSceneBox, const Matrix &viewerCameraView, const Matrix &viewerCameraProjection,
+                const Matrix &lightCameraView, const Matrix &lightCameraProjection, float nearZ, float farZ);
+
+    TEXTURE_HANDLE *GetShadowMapTexture() const { return m_pCascadedShadowMapTexture; }
+
+    void RenderShadowForAllCascades(UINT threadIndex, CommandListPool* pCommandListPool, ID3D12CommandQueue *pCommandQueue);
+
+    void Reset();
 
     CascadedShadowsManager() = default;
     ~CascadedShadowsManager();

@@ -73,6 +73,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelExporter", "ModelExpor
 		{AE40AE55-B9AB-4D88-AC04-6E406D084E50} = {AE40AE55-B9AB-4D88-AC04-6E406D084E50}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{A6DB8032-11DE-4D39-B626-135D7583599E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -129,6 +131,14 @@ Global
 		{DAC6B79B-0DD5-46DD-AAC3-6CBC36FDD8DB}.Release|x64.Build.0 = Release|x64
 		{DAC6B79B-0DD5-46DD-AAC3-6CBC36FDD8DB}.Release|x86.ActiveCfg = Release|Win32
 		{DAC6B79B-0DD5-46DD-AAC3-6CBC36FDD8DB}.Release|x86.Build.0 = Release|Win32
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Debug|x64.ActiveCfg = Debug|x64
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Debug|x64.Build.0 = Debug|x64
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Debug|x86.ActiveCfg = Debug|Win32
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Debug|x86.Build.0 = Debug|Win32
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Release|x64.ActiveCfg = Release|x64
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Release|x64.Build.0 = Release|x64
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Release|x86.ActiveCfg = Release|Win32
+		{A6DB8032-11DE-4D39-B626-135D7583599E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

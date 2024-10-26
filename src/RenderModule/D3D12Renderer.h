@@ -53,6 +53,8 @@ class D3D12Renderer : public IRenderer
     static const UINT MAX_DESCRIPTOR_COUNT = 4096;
     static const UINT MAX_RENDER_THREAD_COUNT = 8;
 
+    Camera *m_pMainCamera = nullptr;
+
     HWND                  m_hWnd = nullptr;
     ID3D12Device5        *m_pD3DDevice = nullptr;
     ID3D12CommandQueue   *m_pCommandQueue = nullptr;

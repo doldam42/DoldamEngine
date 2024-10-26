@@ -173,6 +173,8 @@ void RenderQueue::Reset()
     m_readBufferPos = 0;
 }
 
+void RenderQueue::Revert() { m_readBufferPos = 0; }
+
 RenderQueue::~RenderQueue()
 {
     Cleanup();

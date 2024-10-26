@@ -2,11 +2,11 @@
 
 #include "../GenericModule/ProcessInfo.h"
 #include "../GenericModule/StringUtil.h"
+#include "CascadedShadowsManager.h"
 #include "CommandListPool.h"
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
 #include "ConstantBuffers.h"
-#include "CascadedShadowsManager.h"
 #include "Cubemap.h"
 #include "D3D12ResourceManager.h"
 #include "D3DMeshObject.h"
@@ -175,8 +175,8 @@ lb_exit:
     m_pFontManager = new FontManager;
     m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
 
-    // m_pCascadedShadowManager = new CascadedShadowsManager;
-    // m_pCascadedShadowManager->Initialize(this, )
+    m_pCascadedShadowManager = new CascadedShadowsManager;
+    m_pCascadedShadowManager->Initialize(this, m_shadowWidth, 3);
 
     CreateDescriptorHeap();
 
@@ -293,7 +293,19 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    RenderShadowMaps();
+    Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
+    Vector3 extend = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
+    m_sceneAABB = BoundingBox(center, extend);
+    m_sceneMaxCorner = Vector3(FLT_MIN);
+    m_sceneMinCorner = Vector3(FLT_MAX);
+
+    Matrix viewerViewRow = m_globalConsts.view.Transpose();
+    Matrix viewerProjRow = m_globalConsts.proj.Transpose();
+    Matrix lightViewRow = m_shadowGlobalConsts[0].view.Transpose();
+    Matrix lightProjRow = m_shadowGlobalConsts[0].proj.Transpose();
+    m_pCascadedShadowManager->Update(&m_sceneAABB, viewerViewRow, viewerProjRow, lightViewRow, lightProjRow, 0.01f,
+                                     100.0f);
+    // RenderShadowMaps();
 
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
@@ -303,9 +315,7 @@ void D3D12Renderer::EndRender()
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
                                            m_uiFrameIndex, m_rtvDescriptorSize);
 
-    Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
-    Vector3 extend = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
-    m_sceneAABB = BoundingBox(center, extend);
+    // m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
 
 #if defined(USE_MULTI_THREAD)
     m_activeThreadCount = m_renderThreadCount;
@@ -419,6 +429,9 @@ void D3D12Renderer::Present()
         m_ppDescriptorPool[dwNextContextIndex][i]->Reset();
         m_ppCommandListPool[dwNextContextIndex][i]->Reset();
     }
+
+    m_pCascadedShadowManager->Reset();
+
     m_dwCurContextIndex = dwNextContextIndex;
 }
 
@@ -534,8 +547,13 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
             __debugbreak();
     }
 
-    if (!m_pShadowMapRenderQueue->Add(&item))
+    /*if (!m_pShadowMapRenderQueue->Add(&item))
+        __debugbreak();*/
+
+    if (!m_pCascadedShadowManager->Add(&item))
+    {
         __debugbreak();
+    }
 
     m_curThreadIndex++;
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
@@ -561,7 +579,7 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
     m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
 #else
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
-    
+
     const BoundingBox &box = pMeshObject->GetBoundingBox();
 
     Vector3 center = Vector3::Transform(box.Center, *pWorldMat);
@@ -583,8 +601,13 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
-    if (!m_pShadowMapRenderQueue->Add(&item))
+    /*if (!m_pShadowMapRenderQueue->Add(&item))
+        __debugbreak();*/
+
+    if (!m_pCascadedShadowManager->Add(&item))
+    {
         __debugbreak();
+    }
 
     m_curThreadIndex++;
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
@@ -699,19 +722,18 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
     ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
     m_pGlobalCB = pCBPool->Alloc();
 
-    GlobalConstants globalConsts;
-    globalConsts.eyeWorld = eyeWorld;
-    globalConsts.view = viewRow.Transpose();
-    globalConsts.proj = projRow.Transpose();
-    globalConsts.invView = viewRow.Invert().Transpose();
-    globalConsts.invProj = projRow.Invert().Transpose();
-    globalConsts.viewProj = (viewRow * projRow).Transpose();
-    globalConsts.invViewProj = globalConsts.viewProj.Invert();
-    globalConsts.strengthIBL = STRENGTH_IBL;
+    m_globalConsts.eyeWorld = eyeWorld;
+    m_globalConsts.view = viewRow.Transpose();
+    m_globalConsts.proj = projRow.Transpose();
+    m_globalConsts.invView = viewRow.Invert().Transpose();
+    m_globalConsts.invProj = projRow.Invert().Transpose();
+    m_globalConsts.viewProj = (viewRow * projRow).Transpose();
+    m_globalConsts.invViewProj = m_globalConsts.viewProj.Invert();
+    m_globalConsts.strengthIBL = STRENGTH_IBL;
 
-    memcpy(&globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
+    memcpy(&m_globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
 
-    memcpy(m_pGlobalCB->pSystemMemAddr, &globalConsts, sizeof(GlobalConstants));
+    memcpy(m_pGlobalCB->pSystemMemAddr, &m_globalConsts, sizeof(GlobalConstants));
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
@@ -1080,7 +1102,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapDSVHandle(UINT lightIndex
     return handle.Offset(lightIndex, m_dsvDescriptorSize);
 }
 
-ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
+// ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
+ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex)
+{
+    return m_pCascadedShadowManager->GetShadowMapTexture();
+}
 //
 // void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex)
 //{
@@ -1468,6 +1494,12 @@ void D3D12Renderer::Cleanup()
     CleanupDescriptorHeap();
     CleanupBuffers();
     CleanupShadowMaps();
+
+    if (m_pCascadedShadowManager)
+    {
+        delete m_pCascadedShadowManager;
+        m_pCascadedShadowManager = nullptr;
+    }
 
     if (m_pMaterialManager)
     {

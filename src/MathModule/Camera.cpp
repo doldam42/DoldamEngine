@@ -12,10 +12,10 @@ void Camera::UpdateProjMatrix()
 
 void Camera::UpdateViewMatrix() 
 { 
-    Vector4 pos(m_position);
-    pos.w = 1.0f;
-    m_viewMatrix = Matrix(Vector4(m_rightDir), Vector4(m_upDir), Vector4(m_forwardDir), pos).Invert();
-    // m_viewMatrix = XMMatrixLookAtLH(m_position, m_position + m_forwardDir, m_upDir); 
+    m_viewMatrix = XMMatrixLookAtLH(m_position, m_position + m_forwardDir, m_upDir);
+    // Vector4 pos(m_position);
+    // pos.w = 1.0f;
+    // m_viewMatrix = Matrix(Vector4(m_rightDir), Vector4(m_upDir), Vector4(m_forwardDir), pos).Invert();
 }
 
 void Camera::Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)

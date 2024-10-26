@@ -1,6 +1,8 @@
 #include "pch.h"
 
+#include "CommandListPool.h"
 #include "D3D12ResourceManager.h"
+#include "DescriptorPool.h"
 #include "TextureManager.h"
 
 #include "CascadedShadowsManager.h"
@@ -8,10 +10,29 @@
 void CascadedShadowsManager::Cleanup()
 {
     D3D12ResourceManager *pResourceManager = m_pRenderer->INL_GetResourceManager();
+    TextureManager       *pTexManager = m_pRenderer->INL_GetTextureManager();
 
     pResourceManager->DeallocDescriptorTable(&m_CascadedShadowMapSRV);
     pResourceManager->DeallocRTVDescriptorTable(&m_CascadedShadowMapRTV);
     pResourceManager->DeallocDSVDescriptorTable(&m_CascadedShadowMapDSV);
+
+    if (m_pCascadedShadowMapTexture)
+    {
+        pTexManager->DeleteTexture(m_pCascadedShadowMapTexture);
+        m_pCascadedShadowMapTexture = nullptr;
+    }
+
+    if (m_pCascadedShadowDepthStencils)
+    {
+        m_pCascadedShadowDepthStencils->Release();
+        m_pCascadedShadowDepthStencils = nullptr;
+    }
+
+    if (m_pRenderQueue)
+    {
+        delete m_pRenderQueue;
+        m_pRenderQueue = nullptr;
+    }
 }
 
 void CascadedShadowsManager::CreateAABBPoints(Vector3 *pAABBPoints, const Vector3 &center, const Vector3 &extends)
@@ -26,8 +47,7 @@ void CascadedShadowsManager::CreateAABBPoints(Vector3 *pAABBPoints, const Vector
     }
 }
 
-BOOL CascadedShadowsManager::Initialize(D3D12Renderer *pRnd, Camera *pViewerCamera, Camera *pLightCamera,
-                                        UINT shadowWidth, UINT cascadedLevel)
+BOOL CascadedShadowsManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth, UINT cascadedLevel)
 {
     BOOL result = FALSE;
 
@@ -95,8 +115,9 @@ BOOL CascadedShadowsManager::Initialize(D3D12Renderer *pRnd, Camera *pViewerCame
                                        m_CascadedShadowMapRTV.cpuHandle);
 
     m_pCascadedShadowDepthStencils = pDepthStencil;
-    m_pLightCamera = pLightCamera;
-    m_pViewerCamera = pViewerCamera;
+
+    m_pRenderQueue = new RenderQueue;
+    m_pRenderQueue->Initialize(pRnd, MESH_OBJECT_COUNT_FOR_SHADOW);
 
     result = TRUE;
 lb_return:
@@ -106,17 +127,15 @@ lb_return:
     return result;
 }
 
-CascadedShadowsManager::~CascadedShadowsManager() {}
+BOOL CascadedShadowsManager::Add(const RENDER_ITEM *pItem) { return m_pRenderQueue->Add(pItem); }
 
-BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox)
+CascadedShadowsManager::~CascadedShadowsManager() { Cleanup(); }
+
+BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox, const Matrix &viewerCameraView,
+                                    const Matrix &viewerCameraProjection, const Matrix &lightCameraView,
+                                    const Matrix &lightCameraProjection, float nearZ, float farZ)
 {
-    const Matrix &viewerCameraProjection = m_pViewerCamera->GetProjMatrix();
-    const Matrix &viewerCameraView = m_pViewerCamera->GetViewMatrix();
-
     Matrix viewerCameraViewInverse = viewerCameraView.Invert();
-
-    const Matrix &lightCameraProjection = m_pLightCamera->GetProjMatrix();
-    const Matrix &lightCameraView = m_pLightCamera->GetViewMatrix();
 
     Vector3 sceneAABBPointsLightSpace[MAX_CASADEDS];
     // This function simply converts the center and extents of an AABB into 8 points
@@ -130,7 +149,7 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox)
     float   frustumIntervalBegin, frustumIntervalEnd;
     Vector3 lightCameraOrthographicMin; // light space frustrum aabb
     Vector3 lightCameraOrthographicMax;
-    float   cameraNearFarRange = m_pViewerCamera->GetFarClip() - m_pViewerCamera->GetNearClip();
+    float   cameraNearFarRange = farZ - nearZ;
 
     Vector3 WorldUnitsPerTexel = Vector3::Zero;
 
@@ -168,12 +187,12 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox)
         CreateFrustumPointsFromCascadeInterval(frustumIntervalBegin, frustumIntervalEnd, viewerCameraProjection,
                                                frustumPoints);
 
-        lightCameraOrthographicMax = Vector3(FLT_MAX);
-        lightCameraOrthographicMin = Vector3(FLT_MIN);
+        lightCameraOrthographicMax = Vector3(FLT_MIN);
+        lightCameraOrthographicMin = Vector3(FLT_MAX);
 
         Vector3 tempTranslatedCornerPoint;
         // This next section of code calculates the min and max values for the orthographic projection.
-        for (int icpIndex = 0; icpIndex < MAX_CASADEDS; ++icpIndex)
+        for (int icpIndex = 0; icpIndex < 8; ++icpIndex)
         {
             // Transform the frustum from camera view space to world space.
             frustumPoints[icpIndex] = Vector3::Transform(frustumPoints[icpIndex], viewerCameraViewInverse);
@@ -222,8 +241,7 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox)
             float   scaleDuetoBlureAMTValue = ((float)(m_PCFBlurSize * 2 + 1) / (float)m_shadowWidth);
             Vector3 scaleDuetoBlureAMT(scaleDuetoBlureAMTValue, scaleDuetoBlureAMTValue, 0.0f);
 
-            float   normalizeByBufferSizeValue = (1.0f / (float)m_shadowWidth);
-            Vector3 normalizeByBufferSize(normalizeByBufferSizeValue, normalizeByBufferSizeValue, 0.0f);
+            float normalizeByBufferSize = (1.0f / (float)m_shadowWidth);
 
             // We calculate the offsets as a percentage of the bound.
             Vector3 boarderOffset = lightCameraOrthographicMax - lightCameraOrthographicMin;
@@ -298,44 +316,68 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox)
         // Craete the orthographic projection for this cascade.
         m_shadowProj[cascadeIndex] = XMMatrixOrthographicOffCenterLH(
             lightCameraOrthographicMin.x, lightCameraOrthographicMax.x, lightCameraOrthographicMin.y,
-            lightCameraOrthographicMax.y, nearPlane, farPlane); 
-        
+            lightCameraOrthographicMax.y, nearPlane, farPlane);
+
         m_cascadePartitionsFrustum[cascadeIndex] = frustumIntervalEnd;
     }
-    m_shadowView = m_pLightCamera->GetViewMatrix();
+    m_shadowView = lightCameraView;
 
     return FALSE;
 }
+
+void CascadedShadowsManager::RenderShadowForAllCascades(UINT threadIndex, CommandListPool *pCommandListPool,
+                                                        ID3D12CommandQueue *pCommandQueue)
+{
+    DescriptorPool            *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
+    ID3D12DescriptorHeap      *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_CascadedShadowMapDSV.cpuHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_CascadedShadowMapSRV.cpuHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_CascadedShadowMapRTV.cpuHandle);
+
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pCascadedShadowDepthStencils,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pCascadedShadowMapTexture->pTexture,
+                                                                           D3D12_RESOURCE_STATE_COMMON,
+                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+    float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+    for (UINT curCascadeIndex = 0; curCascadeIndex < m_cascadedLevels; curCascadeIndex++)
+    {
+        m_pRenderQueue->Process(threadIndex, pCommandListPool, pCommandQueue, 400, rtvHandle, dsvHandle,
+                                &m_shadowViewports[curCascadeIndex], &m_shadowScissorRects, 1, DRAW_PASS_TYPE_SHADOW);
+        m_pRenderQueue->Revert();
+    }
+
+    pCommandList = pCommandListPool->GetCurrentCommandList();
+
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pCascadedShadowMapTexture->pTexture,
+                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                                           D3D12_RESOURCE_STATE_COMMON));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pCascadedShadowDepthStencils,
+                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+    pCommandListPool->CloseAndExecute(pCommandQueue);
+}
+
+void CascadedShadowsManager::Reset() { m_pRenderQueue->Reset(); }
 
 void CascadedShadowsManager::CreateFrustumPointsFromCascadeInterval(float cascadeIntervalBegin,
                                                                     float cascadeIntervalEnd, const Matrix &projection,
                                                                     Vector3 *pCornerPointsWorld)
 {
-    BoundingFrustum viewFrustum(projection, false);
+    BoundingFrustum viewFrustum(projection);
     viewFrustum.Near = cascadeIntervalBegin;
     viewFrustum.Far = cascadeIntervalEnd;
 
-    static const DirectX::XMVECTORU32 vGrabY = {0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000};
-    static const DirectX::XMVECTORU32 vGrabX = {0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000};
-
-    Vector3 rightTop(viewFrustum.RightSlope, viewFrustum.TopSlope, 1.0f);
-    Vector3 leftBottom(viewFrustum.LeftSlope, viewFrustum.BottomSlope, 1.0f);
-    Vector3 rightTopNear = rightTop * viewFrustum.Near;
-    Vector3 rightTopFar = rightTop * viewFrustum.Far;
-    Vector3 leftBottomNear = leftBottom * viewFrustum.Near;
-    Vector3 leftBottomFar = leftBottom * viewFrustum.Far;
-
-    pCornerPointsWorld[0] = rightTopNear;
-    pCornerPointsWorld[1] = XMVectorSelect(rightTopNear, leftBottomNear, vGrabX);
-    pCornerPointsWorld[2] = leftBottomNear;
-    pCornerPointsWorld[3] = XMVectorSelect(rightTopNear, leftBottomNear, vGrabY);
-
-    pCornerPointsWorld[4] = rightTopFar;
-    pCornerPointsWorld[5] = XMVectorSelect(rightTopFar, leftBottomFar, vGrabX);
-    pCornerPointsWorld[6] = leftBottomFar;
-    pCornerPointsWorld[7] = XMVectorSelect(rightTopFar, leftBottomFar, vGrabY);
+    viewFrustum.GetCorners(pCornerPointsWorld);
 }
-
 
 //--------------------------------------------------------------------------------------
 // Used to compute an intersection of the orthographic projection and the Scene AABB
