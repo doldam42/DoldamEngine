@@ -47,6 +47,7 @@ class Client
     void OnKeyDown(UINT nChar, UINT uiScanCode);
     void OnKeyUp(UINT nChar, UINT uiScanCode);
     void OnMouseMove(int mouseX, int mouseY);
+    void OnMouseWheel(float deltaWheel);
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     Client() = default;

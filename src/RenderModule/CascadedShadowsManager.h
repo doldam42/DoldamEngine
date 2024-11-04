@@ -107,6 +107,9 @@ class CascadedShadowsManager
 
     void Reset();
 
+    const Matrix &GetShadowViewMatrix() const { return m_shadowView; }
+    const Matrix &GetShadowProjMatrix() const { return m_shadowProj[0]; }
+
     CascadedShadowsManager() = default;
     ~CascadedShadowsManager();
 };

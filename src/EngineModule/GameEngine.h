@@ -54,6 +54,8 @@ class GameEngine : public IGameEngine
     UINT      m_commandListCount = 0;
     UINT      m_renderThreadCount = 0;
     ULONGLONG m_prevUpdateTick = 0;
+    
+    float m_deltaTime = 0.0f;
 
     Character *m_pMainCharacter = nullptr;
 
@@ -81,6 +83,7 @@ class GameEngine : public IGameEngine
     void OnKeyUp(UINT nChar, UINT uiScanCode) override;
     void OnMouseMove(int mouseX, int mouseY) override;
     BOOL OnUpdateWindowSize(UINT width, UINT height) override;
+    void OnMouseWheel(float deltaWheel) override;
 
     IGameCharacter *CreateCharacter() override;
     IGameObject    *CreateGameObject() override;
@@ -111,6 +114,8 @@ class GameEngine : public IGameEngine
     void PreUpdate(ULONGLONG curTick) override;
     void Update(ULONGLONG curTick) override;
     void LateUpdate(ULONGLONG curTick) override;
+
+    float GetDeltaTime() const { return m_deltaTime; }
 
     void Render() override;
 

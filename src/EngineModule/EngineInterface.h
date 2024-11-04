@@ -135,6 +135,7 @@ interface IGameEngine
     virtual void OnKeyUp(UINT nChar, UINT uiScanCode) = 0;
     virtual void OnMouseMove(int mouseX, int mouseY) = 0;
     virtual BOOL OnUpdateWindowSize(UINT width, UINT height) = 0;
+    virtual void OnMouseWheel(float deltaWheel) = 0;
 
     virtual IGameCharacter *CreateCharacter() = 0;
     virtual IGameObject *CreateGameObject() = 0;

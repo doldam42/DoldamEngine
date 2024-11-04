@@ -22,6 +22,9 @@
     <Filter Include="pch">
       <UniqueIdentifier>{06b40888-0db4-4fb7-b660-7deb7469737e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThreadPool">
+      <UniqueIdentifier>{b45b9f94-ef01-4a41-b605-5b7ad7653b32}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtil.h">
@@ -49,6 +52,10 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="GenericHeaders.h" />
+    <ClInclude Include="ThreadPool.h">
+      <Filter>ThreadPool</Filter>
+    </ClInclude>
+    <ClInclude Include="EventListener.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -75,5 +82,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
+    <ClCompile Include="EventListener.cpp" />
   </ItemGroup>
 </Project>

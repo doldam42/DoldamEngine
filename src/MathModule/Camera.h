@@ -21,6 +21,7 @@ class Camera
     Matrix m_viewProjMatrix;
     Matrix m_prevViewProjMatrix;
 
+  public:
     BOOL m_usePerspectiveProjection = TRUE;
     BOOL m_isUpdated = FALSE;
 

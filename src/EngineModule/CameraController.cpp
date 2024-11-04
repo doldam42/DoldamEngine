@@ -34,7 +34,7 @@ void CameraController::Update(const float dt)
             m_prevcursorNDCY = cursorNDCY;
         }
     }
-    
+
     m_pCamera->Update();
 }
 
@@ -115,6 +115,18 @@ void CameraController::SetAspectRatio(float aspect) { m_pCamera->SetAspectRatio(
 
 void CameraController::SetFollowTarget(GameObject *pTarget) { m_pTarget = pTarget; }
 
+void CameraController::ToggleProjectionSetting()
+{
+    if (m_pCamera->m_usePerspectiveProjection)
+    {
+        m_pCamera->DisablePerspectiveProjection();
+    }
+    else
+    {
+        m_pCamera->EnablePerspectiveProjection();
+    }
+}
+
 CameraController::CameraController() { m_pCamera = new Camera; }
 
 CameraController::~CameraController() { Cleanup(); }
@@ -122,4 +134,10 @@ CameraController::~CameraController() { Cleanup(); }
 void CameraController::Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
 {
     m_pCamera->Initialize(verticalFovRadians, aspectRatio, nearZ, farZ);
+
+    InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
+    pInputManager->AddKeyListener(
+        'P', [](void *) { g_pGame->GetCamera()->ToggleProjectionSetting(); }, nullptr);
+    pInputManager->AddKeyListener(
+        'F', [](void *) { g_pGame->ToggleCamera(); }, nullptr);
 }

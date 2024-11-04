@@ -5,8 +5,8 @@
 #include "RendererInterface.h"
 #include "RendererTypedef.h"
 
-const UINT SWAP_CHAIN_FRAME_COUNT = 3;
-const UINT MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
+const UINT  SWAP_CHAIN_FRAME_COUNT = 3;
+const UINT  MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
 const float STRENGTH_IBL = 0.2f;
 
 struct CB_CONTAINER;
@@ -45,7 +45,9 @@ class D3D12Renderer : public IRenderer
         GLOBAL_DESCRIPTOR_INDEX_IBL_SPECULAR,
         GLOBAL_DESCRIPTOR_INDEX_IBL_IRRADIANCE,
         GLOBAL_DESCRIPTOR_INDEX_IBL_BRDF,
-        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAPS,
+        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP1,
+        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP2,
+        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP3,
         GLOBAL_DESCRIPTOR_INDEX_COUNT
     };
 
@@ -121,12 +123,17 @@ class D3D12Renderer : public IRenderer
     ID3D12DescriptorHeap *m_pRaytracingOutputHeap = nullptr;
 
     // Global
-    CB_CONTAINER   *m_pGlobalCB = nullptr;
-    GlobalConstants m_globalConsts = {};
-    CB_CONTAINER   *m_pShadowGlobalCB[MAX_LIGHTS] = {nullptr};
-    GlobalConstants m_shadowGlobalConsts[MAX_LIGHTS] = {};
+    Matrix  m_camViewRow;
+    Matrix  m_camProjRow;
+    Vector3 m_camPosition;
 
-    Light           m_pLights[MAX_LIGHTS];
+    CB_CONTAINER               *m_pGlobalCB = nullptr;
+    GlobalConstants             m_globalConsts = {};
+    CB_CONTAINER               *m_pShadowGlobalCB[MAX_LIGHTS] = {nullptr};
+    GlobalConstants             m_shadowGlobalConsts[MAX_LIGHTS] = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_globalGpuDescriptorHandle[MAX_RENDER_THREAD_COUNT];
+
+    Light m_pLights[MAX_LIGHTS];
 
     TEXTURE_HANDLE *m_pDefaultTexHandle = nullptr;
 
@@ -157,7 +164,7 @@ class D3D12Renderer : public IRenderer
     void CleanupBuffers();
     void Cleanup();
 
-    // For multi-threads
+    // For multi-hThreads
     BOOL InitRenderThreadPool(UINT threadCount);
     void CleanupRenderThreadPool();
 
@@ -206,6 +213,10 @@ class D3D12Renderer : public IRenderer
                                 UINT srcHeight) override;
     void UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) override;
 
+    void UpdateGlobal();
+    void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
+    void UpdateShadowGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
+
     ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b);
     ITextureHandle *CreateDynamicTexture(UINT texWidth, UINT texHeight);
     ITextureHandle *CreateTextureFromFile(const WCHAR *fileName);
@@ -213,7 +224,7 @@ class D3D12Renderer : public IRenderer
     ITextureHandle *CreateMetallicRoughnessTexture(const WCHAR *metallicFilename, const WCHAR *roughneessFilename);
     void            DeleteTexture(ITextureHandle *pTexHandle);
 
-    ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+    ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
                                          BOOL hasShadow = true) override;
     ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3 *pPosition,
                                    float radius, float fallOffStart = 0.0f, float fallOffEnd = 20.0f,

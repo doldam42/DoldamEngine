@@ -320,7 +320,8 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox, const Matrix &
 
         m_cascadePartitionsFrustum[cascadeIndex] = frustumIntervalEnd;
     }
-    m_shadowView = lightCameraView;
+    
+    m_shadowView = lightCameraView.Transpose();
 
     return FALSE;
 }

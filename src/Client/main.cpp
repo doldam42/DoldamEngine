@@ -247,6 +247,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
 
+    case WM_MOUSEWHEEL: {
+        if (g_pClient)
+        {
+            float deltaWheel = (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+            g_pClient->OnMouseWheel(deltaWheel);
+        }
+        break;
+    }
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

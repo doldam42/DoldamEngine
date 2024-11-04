@@ -148,6 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="EventListener.h" />
     <ClInclude Include="GenericHeaders.h" />
     <ClInclude Include="HashTable.h" />
     <ClInclude Include="LinkedList.h" />
@@ -156,8 +157,10 @@
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="SpinLock.h" />
     <ClInclude Include="StringUtil.h" />
+    <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="HashTable.cpp" />
     <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="MemoryPool.cpp" />

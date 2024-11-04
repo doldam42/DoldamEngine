@@ -77,7 +77,7 @@ BOOL Client::Initialize(HWND hWnd)
 void Client::LoadResources()
 {
     fs::path p;
-
+ 
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
     /* IGameObject *pBox = m_pGame->CreateGameObject();
@@ -298,6 +298,8 @@ void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, 
 void Client::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyUp(nChar, uiScanCode); }
 
 void Client::OnMouseMove(int mouseX, int mouseY) { m_pGame->OnMouseMove(mouseX, mouseY); }
+
+void Client::OnMouseWheel(float deltaWheel) { m_pGame->OnMouseWheel(deltaWheel); }
 
 BOOL Client::OnUpdateWindowSize(UINT width, UINT height) { return m_pGame->OnUpdateWindowSize(width, height); }
 

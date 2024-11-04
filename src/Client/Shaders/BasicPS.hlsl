@@ -238,7 +238,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
             float3 G = SchlickGGX(NdotI, NdotO, roughness);
             float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO);
 
-            float3 radiance = LightRadiance(lights[i], input.posWorld, input.posWorld, normalWorld, shadowMaps[i]);
+            float3 radiance = LightRadiance(lights[i], input.posWorld, input.posWorld, normalWorld);
             
             directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
         }

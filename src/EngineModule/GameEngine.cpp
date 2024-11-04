@@ -100,8 +100,10 @@ BOOL GameEngine::Initialize(HWND hWnd)
     DWORD width = rect.right - rect.left;
     DWORD height = rect.bottom - rect.top;
 
+    g_pGame = this;
+
     m_pInputManager = new InputManager();
-    m_pInputManager->SetWindowSize(width, height);
+    m_pInputManager->Initialize(width, height);
 
     m_pTimer = new Timer;
     m_pPerformanceTimer = new Timer;
@@ -139,19 +141,20 @@ void GameEngine::LoadResources()
     m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
     // Create Cubemap
-    m_pRenderer->InitCubemaps(
-        L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesEnvHDR.dds", L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesSpecularHDR.dds",
-        L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesDiffuseHDR.dds", L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesBrdf.dds");
+    m_pRenderer->InitCubemaps(L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesEnvHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesSpecularHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesDiffuseHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesBrdf.dds");
 
     // Create Lights
-    Vector3 radiance = Vector3(1.0f);
-    Vector3 direction = Vector3(0.0f, -1.0f, 1.0f);
-    Vector3 position = Vector3(0.0f, 2.0f, -2.0f);
+    Vector3 radiance = Vector3(5.0f);
+    Vector3 direction = Vector3(0.0f, -0.554f, 0.832f);
+    Vector3 position = Vector3(0.0f, 16.0f, -16.0f);
 
     direction.Normalize();
     // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);
-    m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
-   // m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction);
+    // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
+    m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction, &position);
 }
 
 void GameEngine::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
@@ -179,6 +182,8 @@ void GameEngine::Update(ULONGLONG curTick)
     }
     float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
     m_prevUpdateTick = curTick;
+
+    m_deltaTime = dt;
 
     // camera
     if (m_activateCamera)
@@ -233,8 +238,8 @@ void GameEngine::Render()
         pCur = pCur->pNext;
         spriteCount++;
     }
-    m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
-                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));
+    /*m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
+                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));*/
 
     //// render dynamic texture sprite
     // m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);
@@ -259,6 +264,8 @@ BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
     }
     return TRUE;
 }
+
+void GameEngine::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
 IGameCharacter *GameEngine::CreateCharacter()
 {
