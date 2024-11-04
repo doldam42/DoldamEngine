@@ -152,6 +152,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="RendererInterface.h" />
     <ClInclude Include="CascadedShadowsManager.h" />
+    <ClInclude Include="ShadowManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -217,6 +218,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="RendererInterface.cpp" />
     <ClCompile Include="CascadedShadowsManager.cpp" />
+    <ClCompile Include="ShadowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
