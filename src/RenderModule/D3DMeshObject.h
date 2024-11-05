@@ -148,18 +148,12 @@ class D3DMeshObject : public IDIMeshObject
     BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
-    void Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1);
-    void RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                       const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
-                       UINT numInstance = 1);
-
     void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
                       const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
                       UINT numInstance = 1);
 
-    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex, const Matrix *pWorldMat,
-                                     UINT numInstance, const Matrix *pBoneMats, UINT numBones);
+    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex);
 
     void CleanupMesh();
@@ -169,8 +163,8 @@ class D3DMeshObject : public IDIMeshObject
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID, UINT numInstance = 1,
-              DRAW_PASS_TYPE passType = DRAW_PASS_TYPE_DEFAULT);
+              ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV,
+              const Matrix *pBoneMats, UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance = 1);
 
     void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
     Graphics::LOCAL_ROOT_ARG *GetRootArgs();

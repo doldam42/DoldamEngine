@@ -12,7 +12,8 @@ const float STRENGTH_IBL = 0.2f;
 struct CB_CONTAINER;
 struct RENDER_THREAD_DESC;
 
-class CascadedShadowsManager;
+// class CascadedShadowsManager;
+class ShadowManager;
 class DescriptorPool;
 class ConstantBufferPool;
 class ConstantBufferManager;
@@ -102,7 +103,8 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource *m_pDepthStencil = nullptr;
 
     // Shadow Map
-    CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
+    // CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
+    ShadowManager *m_pShadowManager = nullptr;
 
     UINT              m_shadowWidth = 1280;
     UINT              m_shadowHeight = 1280;
@@ -112,10 +114,6 @@ class D3D12Renderer : public IRenderer
     TEXTURE_HANDLE   *m_pShadowMapTextures[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
     DESCRIPTOR_HANDLE m_shadowSRVHandle;
-
-    BoundingBox m_sceneAABB;
-    Vector3     m_sceneMinCorner = Vector3(FLT_MAX);
-    Vector3     m_sceneMaxCorner = Vector3(FLT_MIN);
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
@@ -260,9 +258,14 @@ class D3D12Renderer : public IRenderer
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
     D3D12_GPU_DESCRIPTOR_HANDLE GetShadowGlobalDescriptorHandle(UINT threadIndex);
 
-    DescriptorPool *INL_GetDescriptorPool(UINT threadIndex)
+    DescriptorPool *INL_GetDescriptorPool(UINT threadIndex) const
     {
         return m_ppDescriptorPool[m_dwCurContextIndex][threadIndex];
+    }
+
+    CommandListPool *INL_GetCommandListPool(UINT threadIndex) const 
+    {
+        return m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
     }
 
     ConstantBufferPool *GetConstantBufferPool(CONSTANT_BUFFER_TYPE type, UINT threadIndex);

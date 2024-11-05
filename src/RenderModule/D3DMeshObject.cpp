@@ -91,26 +91,8 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 }
 
 void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                         const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance,
-                         DRAW_PASS_TYPE passType)
-{
-    switch (passType)
-    {
-    case DRAW_PASS_TYPE_DEFAULT:
-    case DRAW_PASS_TYPE_NON_OPAQUE:
-        Render(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
-        //RenderNormal(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
-        break;
-    case DRAW_PASS_TYPE_SHADOW:
-        RenderShadowMap(threadIndex, pCommandList, pWorldMat, pBoneMats, numBones, fillMode, numInstance);
-        break;
-    default:
-        break;
-    }
-}
-
-void D3DMeshObject::Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                         const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+                         ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV,
+                         const Matrix *pBoneMats, UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -120,11 +102,15 @@ void D3DMeshObject::Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommand
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
 
     UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
-    UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex);
 
+    if (passType != DRAW_PASS_TYPE_SHADOW)
+    {
+        UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex);
+    }
+    
     // set RootSignature
-    ID3D12RootSignature *pSignature = Graphics::GetRS(m_type);
-    ID3D12PipelineState *pPipelineState = Graphics::GetPSO(m_type, m_passType, fillMode);
+    ID3D12RootSignature *pSignature = pRS;
+    ID3D12PipelineState *pPipelineState = pPSO;
     pCommandList->SetGraphicsRootSignature(pSignature);
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -133,7 +119,7 @@ void D3DMeshObject::Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommand
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
+    pCommandList->SetGraphicsRootDescriptorTable(0, globalCBV);
     pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
     if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
     {
@@ -146,48 +132,12 @@ void D3DMeshObject::Render(UINT threadIndex, ID3D12GraphicsCommandList *pCommand
 
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
-        pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+        if (passType != DRAW_PASS_TYPE_SHADOW)
+        {
+            pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
+            _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+        }
 
-        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
-    }
-}
-
-void D3DMeshObject::RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                                  const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
-{
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
-    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-    
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
-
-    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
-    
-    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
-    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-    {
-        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlyBasicRS);
-    }
-    else
-    {
-        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlySkinnedRS);
-    }
-    pCommandList->SetPipelineState(Graphics::GetPSO(m_type, DRAW_PASS_TYPE_SHADOW, fillMode));
-    
-    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetShadowGlobalDescriptorHandle(threadIndex));
-    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
-    
-    for (UINT i = 0; i < m_faceGroupCount; i++)
-    {
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
         pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
         pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
@@ -195,7 +145,8 @@ void D3DMeshObject::RenderShadowMap(UINT threadIndex, ID3D12GraphicsCommandList 
 }
 
 void D3DMeshObject::RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
+                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode,
+                                 UINT numInstance)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();

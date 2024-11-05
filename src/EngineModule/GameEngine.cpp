@@ -238,8 +238,8 @@ void GameEngine::Render()
         pCur = pCur->pNext;
         spriteCount++;
     }
-    /*m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
-                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));*/
+    m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
+                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));
 
     //// render dynamic texture sprite
     // m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);

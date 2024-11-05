@@ -352,6 +352,7 @@ void CascadedShadowsManager::RenderShadowForAllCascades(UINT threadIndex, Comman
     for (UINT curCascadeIndex = 0; curCascadeIndex < m_cascadedLevels; curCascadeIndex++)
     {
         m_pRenderQueue->Process(threadIndex, pCommandListPool, pCommandQueue, 400, rtvHandle, dsvHandle,
+                                m_pRenderer->GetShadowGlobalDescriptorHandle(threadIndex), 
                                 &m_shadowViewports[curCascadeIndex], &m_shadowScissorRects, 1, DRAW_PASS_TYPE_SHADOW);
         m_pRenderQueue->Revert();
     }

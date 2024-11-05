@@ -2,7 +2,6 @@
 
 #include "../GenericModule/ProcessInfo.h"
 #include "../GenericModule/StringUtil.h"
-#include "CascadedShadowsManager.h"
 #include "CommandListPool.h"
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
@@ -16,6 +15,7 @@
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
 #include "RenderThread.h"
+#include "ShadowManager.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
 
@@ -175,8 +175,11 @@ lb_exit:
     m_pFontManager = new FontManager;
     m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
 
-    m_pCascadedShadowManager = new CascadedShadowsManager;
-    m_pCascadedShadowManager->Initialize(this, m_shadowWidth, 3);
+    // m_pCascadedShadowManager = new CascadedShadowsManager;
+    // m_pCascadedShadowManager->Initialize(this, m_shadowWidth, 3);
+
+    m_pShadowManager = new ShadowManager;
+    m_pShadowManager->Initialize(this, m_shadowWidth);
 
     CreateDescriptorHeap();
 
@@ -304,7 +307,8 @@ void D3D12Renderer::EndRender()
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
                                            m_uiFrameIndex, m_rtvDescriptorSize);
 
-    m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
+    m_pShadowManager->Render(m_pCommandQueue);
+    // m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
 
 #if defined(USE_MULTI_THREAD)
     m_activeThreadCount = m_renderThreadCount;
@@ -314,8 +318,9 @@ void D3D12Renderer::EndRender()
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 
-    m_pNonOpaqueRenderQueue->Process(0, pCommadListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle, &m_Viewport,
-                                     &m_ScissorRect, 1, DRAW_PASS_TYPE_NON_OPAQUE);
+    m_pNonOpaqueRenderQueue->Process(0, pCommadListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
+                                     GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
+                                     DRAW_PASS_TYPE_NON_OPAQUE);
 
 #elif defined(USE_RAYTRACING)
     m_pDXRSceneManager->CreateTopLevelAS(pCommandList);
@@ -419,7 +424,8 @@ void D3D12Renderer::Present()
         m_ppCommandListPool[dwNextContextIndex][i]->Reset();
     }
 
-    m_pCascadedShadowManager->Reset();
+    m_pShadowManager->Reset();
+    //    m_pCascadedShadowManager->Reset();
 
     m_dwCurContextIndex = dwNextContextIndex;
 }
@@ -511,20 +517,6 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
 
-    Vector3 minCorner(FLT_MAX);
-    Vector3 maxCorner(FLT_MIN);
-
-    const BoundingBox &box = pMeshObject->GetBoundingBox();
-    for (UINT i = 0; i < numInstance; i++)
-    {
-        Vector3 center = Vector3::Transform(box.Center, pWorldMat[i]);
-        minCorner = Vector3::Min(minCorner, center - box.Extents);
-        maxCorner = Vector3::Max(maxCorner, center + box.Extents);
-    }
-
-    m_sceneMinCorner = Vector3::Min(m_sceneMinCorner, minCorner);
-    m_sceneMaxCorner = Vector3::Max(m_sceneMaxCorner, maxCorner);
-
     if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
     {
         if (!m_pNonOpaqueRenderQueue->Add(&item))
@@ -539,7 +531,7 @@ void D3D12Renderer::RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWor
     /*if (!m_pShadowMapRenderQueue->Add(&item))
         __debugbreak();*/
 
-    if (!m_pCascadedShadowManager->Add(&item))
+    if (!m_pShadowManager->Add(&item))
     {
         __debugbreak();
     }
@@ -569,15 +561,6 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
 #else
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
 
-    const BoundingBox &box = pMeshObject->GetBoundingBox();
-
-    Vector3 center = Vector3::Transform(box.Center, *pWorldMat);
-    Vector3 minCorner = center - box.Extents;
-    Vector3 maxCorner = center + box.Extents;
-
-    m_sceneMinCorner = Vector3::Min(m_sceneMinCorner, minCorner);
-    m_sceneMaxCorner = Vector3::Max(m_sceneMaxCorner, maxCorner);
-
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;
@@ -593,7 +576,7 @@ void D3D12Renderer::RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix 
     /*if (!m_pShadowMapRenderQueue->Add(&item))
         __debugbreak();*/
 
-    if (!m_pCascadedShadowManager->Add(&item))
+    if (!m_pShadowManager->Add(&item))
     {
         __debugbreak();
     }
@@ -767,21 +750,14 @@ void D3D12Renderer::UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrc
 
 void D3D12Renderer::UpdateGlobal()
 {
-    Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
-    Vector3 extend = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
-    m_sceneAABB = BoundingBox(center, extend);
-    m_sceneMaxCorner = Vector3(FLT_MIN);
-    m_sceneMinCorner = Vector3(FLT_MAX);
-
     Vector3 lightPosition = m_pLights[0].position;
 
     Matrix lightViewRow = m_shadowGlobalConsts[0].view.Transpose();
     Matrix lightProjRow = m_shadowGlobalConsts[0].proj.Transpose();
-    m_pCascadedShadowManager->Update(&m_sceneAABB, m_camViewRow, m_camProjRow, lightViewRow, lightProjRow, 0.01f,
-                                     100.0f);
+    m_pShadowManager->Update(lightViewRow, m_camViewRow, m_camProjRow, 0.01f, 100.0f);
 
-    const Matrix &viewRow = m_pCascadedShadowManager->GetShadowViewMatrix();
-    const Matrix &projRow = m_pCascadedShadowManager->GetShadowProjMatrix();
+    const Matrix &viewRow = m_pShadowManager->GetShadowViewMatrix();
+    const Matrix &projRow = m_pShadowManager->GetShadowProjMatrix();
 
     UpdateShadowGlobalConstants(lightPosition, viewRow, projRow);
     UpdateGlobalConstants(m_camPosition, m_camViewRow, m_camProjRow);
@@ -821,7 +797,7 @@ void D3D12Renderer::UpdateGlobal()
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle,
-                                            m_pCascadedShadowManager->GetShadowMapTexture()->srv.cpuHandle,
+                                            m_pShadowManager->GetShadowMapTexture()->srv.cpuHandle,
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         /*m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_pShadowMapTextures[0]->srv.cpuHandle,
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
@@ -1148,7 +1124,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapDSVHandle(UINT lightIndex
 // ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
 ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex)
 {
-    return m_pCascadedShadowManager->GetShadowMapTexture();
+    return m_pShadowManager->GetShadowMapTexture();
 }
 //
 // void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex)
@@ -1169,7 +1145,8 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex)
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                          &m_Viewport, &m_ScissorRect, 1, DRAW_PASS_TYPE_DEFAULT);
+                                          GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect, 1,
+                                          DRAW_PASS_TYPE_DEFAULT);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
     if (curCount == 0)
@@ -1538,10 +1515,10 @@ void D3D12Renderer::Cleanup()
     CleanupBuffers();
     CleanupShadowMaps();
 
-    if (m_pCascadedShadowManager)
+    if (m_pShadowManager)
     {
-        delete m_pCascadedShadowManager;
-        m_pCascadedShadowManager = nullptr;
+        delete m_pShadowManager;
+        m_pShadowManager = nullptr;
     }
 
     if (m_pMaterialManager)
@@ -1748,7 +1725,8 @@ void D3D12Renderer::RenderShadowMaps()
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     m_pShadowMapRenderQueue->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                     &m_shadowViewport, &m_shadowScissorRect, 1, DRAW_PASS_TYPE_SHADOW);
+                                     GetShadowGlobalDescriptorHandle(threadIndex), &m_shadowViewport,
+                                     &m_shadowScissorRect, 1, DRAW_PASS_TYPE_SHADOW);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
 

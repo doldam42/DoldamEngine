@@ -207,7 +207,7 @@ void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCom
     pConstantBufferSprite->alpha = 1.0f;
 
     // set RootSignature
-    pCommandList->SetGraphicsRootSignature(Graphics::GetRS(RENDER_ITEM_TYPE_SPRITE));
+    pCommandList->SetGraphicsRootSignature(Graphics::GetRS(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFAULT));
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
 
     // Descriptor Table ����

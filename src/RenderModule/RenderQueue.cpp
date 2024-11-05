@@ -2,8 +2,8 @@
 
 #include "CommandListPool.h"
 #include "D3D12Renderer.h"
-#include "DXRSceneManager.h"
 #include "D3DMeshObject.h"
+#include "DXRSceneManager.h"
 #include "SpriteObject.h"
 
 #include "RenderQueue.h"
@@ -35,6 +35,7 @@ BOOL RenderQueue::Initialize(D3D12Renderer *pRenderer, UINT maxItemNum)
     m_pRenderer = pRenderer;
     m_maxBufferSize = sizeof(RENDER_ITEM) * maxItemNum;
     m_pBuffer = (char *)malloc(m_maxBufferSize);
+
     memset(m_pBuffer, 0, m_maxBufferSize);
 
     return TRUE;
@@ -61,10 +62,11 @@ lb_return:
 
 UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, ID3D12CommandQueue *pCommandQueue,
                           DWORD processCountPerCommandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv,
-                          D3D12_CPU_DESCRIPTOR_HANDLE dsv, const D3D12_VIEWPORT *pViewport,
-                          const D3D12_RECT *pScissorRect, UINT rtvCount, DRAW_PASS_TYPE passType)
+                          D3D12_CPU_DESCRIPTOR_HANDLE dsv, D3D12_GPU_DESCRIPTOR_HANDLE global,
+                          const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
+                          DRAW_PASS_TYPE passType)
 {
-    ID3D12Device5 *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device5   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     DXRSceneManager *pDXRSceneManager = m_pRenderer->INL_GetDXRSceneManager();
 
     ID3D12GraphicsCommandList *ppCommandList[64] = {};
@@ -85,14 +87,17 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, nullptr, 0,
-                           pItem->meshObjParam.fillMode, 1, passType);
+            pMeshObj->Draw(
+                threadIndex, pCommandList, &pItem->meshObjParam.worldTM, Graphics::GetRS(pItem->type, passType),
+                Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0, passType, 1);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM, pItem->charObjParam.pBones,
-                           pItem->charObjParam.numBones, pItem->charObjParam.fillMode, 1, passType);
+            pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
+                           Graphics::GetRS(pItem->type, passType),
+                           Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global,
+                           pItem->charObjParam.pBones, pItem->charObjParam.numBones, passType, 1);
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {
@@ -175,7 +180,4 @@ void RenderQueue::Reset()
 
 void RenderQueue::Revert() { m_readBufferPos = 0; }
 
-RenderQueue::~RenderQueue()
-{
-    Cleanup();
-}
+RenderQueue::~RenderQueue() { Cleanup(); }

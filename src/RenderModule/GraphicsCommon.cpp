@@ -947,7 +947,30 @@ void Graphics::InitRaytracingStateObjects(CD3DX12_STATE_OBJECT_DESC *raytracingP
     pipelineConfig->Config(maxRecursionDepth);
 }
 
-ID3D12RootSignature *Graphics::GetRS(RENDER_ITEM_TYPE itemType) { return rootSignatures[itemType]; }
+ID3D12RootSignature *Graphics::GetRS(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE passType)
+{
+    switch (passType)
+    {
+    case DRAW_PASS_TYPE_DEFAULT:
+    case DRAW_PASS_TYPE_NON_OPAQUE:
+        return rootSignatures[itemType];
+    case DRAW_PASS_TYPE_SHADOW: {
+        if (itemType == RENDER_ITEM_TYPE_MESH_OBJ)
+            return depthOnlyBasicRS;
+        if (itemType == RENDER_ITEM_TYPE_CHAR_OBJ)
+            return depthOnlySkinnedRS;
+#ifdef _DEBUG
+        __debugbreak();
+#endif //  _DEBUG
+        break;
+    }
+    default:
+#ifdef _DEBUG
+        __debugbreak();
+#endif //  _DEBUG
+        break;
+    }
+}
 
 ID3D12PipelineState *Graphics::GetPSO(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE passType, FILL_MODE fillMode)
 {
@@ -1028,7 +1051,6 @@ void Graphics::DeleteShaders()
         drawNormalPS->Release();
         drawNormalPS = nullptr;
     }
-
 }
 
 void Graphics::DeleteSamplers() {}

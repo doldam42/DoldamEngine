@@ -88,7 +88,7 @@ void    InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeline);
 void    InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice);
 void    InitRaytracingStateObjects(CD3DX12_STATE_OBJECT_DESC *raytracingPipeline);
 
-ID3D12RootSignature *GetRS(RENDER_ITEM_TYPE itemType);
+ID3D12RootSignature *GetRS(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE passType);
 ID3D12PipelineState *GetPSO(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE passType, FILL_MODE fillMode);
 
 void DeleteCommonStates();
