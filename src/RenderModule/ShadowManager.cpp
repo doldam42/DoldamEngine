@@ -55,7 +55,7 @@ void ShadowManager::UpdateGlobalConstants()
     ConstantBufferPool *pCBPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
 
     m_pShadowGlobalCB = pCBPool->Alloc();
-    
+
     m_shadowGlobalConsts.view = m_shadowView.Transpose();
     m_shadowGlobalConsts.proj = m_shadowProj.Transpose();
     m_shadowGlobalConsts.viewProj = (m_shadowView * m_shadowProj).Transpose();
@@ -66,7 +66,8 @@ void ShadowManager::UpdateGlobalConstants()
 void ShadowManager::CreateAABBPoints(Vector3 *pOutAABBPoints, const Vector3 &center, const Vector3 &extends)
 {
     // This map enables us to use a for loop and do vector math.
-    static const XMVECTORF32 vExtentsMap[] = {
+
+    static const XMVECTOR vExtentsMap[] = {
         {1.0f, 1.0f, -1.0f, 1.0f}, {-1.0f, 1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
         {1.0f, 1.0f, 1.0f, 1.0f},  {-1.0f, 1.0f, 1.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 1.0f},  {-1.0f, -1.0f, 1.0f, 1.0f}};
 
@@ -459,9 +460,6 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
     Vector3 extends = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
 
-    m_sceneMaxCorner = Vector3(FLT_MIN);
-    m_sceneMinCorner = Vector3(FLT_MAX);
-
     Matrix viewerCameraViewInverse = viewerCameraView.Invert();
 
     FLOAT   fFrustumIntervalBegin, fFrustumIntervalEnd;
@@ -501,10 +499,13 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     FLOAT nearPlane = 0.0f;
     FLOAT farPlane = 10000.0f;
 
-    ComputeNearAndFar(nearPlane, farPlane, lightCameraOrthographicMax, lightCameraOrthographicMax,
+    ComputeNearAndFar(nearPlane, farPlane, lightCameraOrthographicMin, lightCameraOrthographicMax,
                       sceneAABBPointsLightSpace);
 
     // Craete the orthographic projection for this cascade.
+  /*  m_shadowProj = XMMatrixOrthographicOffCenterLH(lightCameraOrthographicMin.x, lightCameraOrthographicMax.x,
+                                                   lightCameraOrthographicMin.y, lightCameraOrthographicMax.y,
+                                                   nearPlane, farPlane);*/
     m_shadowProj = XMMatrixOrthographicOffCenterLH(lightCameraOrthographicMin.x, lightCameraOrthographicMax.x,
                                                    lightCameraOrthographicMin.y, lightCameraOrthographicMax.y,
                                                    nearPlane, farPlane);
@@ -512,12 +513,16 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     m_shadowView = lightCameraView;
 
     UpdateGlobalConstants();
+
+    m_sceneMaxCorner = Vector3(FLT_MIN);
+    m_sceneMinCorner = Vector3(FLT_MAX);
+
     return TRUE;
 }
 
 void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
 {
-    const UINT                 threadIndex = 0;
+    const UINT threadIndex = 0;
 
     ID3D12Device              *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     CommandListPool           *pCommandListPool = m_pRenderer->INL_GetCommandListPool(threadIndex);
@@ -532,7 +537,8 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
-    pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, m_pShadowGlobalCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, m_pShadowGlobalCB->CBVHandle,
+                                      D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils,
                                                                            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
@@ -547,8 +553,7 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     m_pRenderQueue->Process(threadIndex, pCommandListPool, pCommandQueue, 400, rtvHandle, dsvHandle, gpuHandle,
-                            &m_shadowViewports,
-                            &m_shadowScissorRects, 1, DRAW_PASS_TYPE_SHADOW);
+                            &m_shadowViewports, &m_shadowScissorRects, 1, DRAW_PASS_TYPE_SHADOW);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
 

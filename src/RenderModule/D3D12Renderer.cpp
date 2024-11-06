@@ -753,7 +753,6 @@ void D3D12Renderer::UpdateGlobal()
     Vector3 lightPosition = m_pLights[0].position;
 
     Matrix lightViewRow = m_shadowGlobalConsts[0].view.Transpose();
-    Matrix lightProjRow = m_shadowGlobalConsts[0].proj.Transpose();
     m_pShadowManager->Update(lightViewRow, m_camViewRow, m_camProjRow, 0.01f, 100.0f);
 
     const Matrix &viewRow = m_pShadowManager->GetShadowViewMatrix();
