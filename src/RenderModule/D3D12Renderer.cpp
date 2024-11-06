@@ -185,8 +185,6 @@ lb_exit:
 
     CreateBuffers();
 
-    CreateShadowMaps();
-
     CreateFence();
 
     Graphics::InitCommonStates(m_pD3DDevice);
@@ -267,6 +265,7 @@ void D3D12Renderer::BeginRender()
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     m_pMaterialManager->Update(pCommandList);
+
     UpdateGlobal();
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
@@ -751,14 +750,16 @@ void D3D12Renderer::UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrc
 void D3D12Renderer::UpdateGlobal()
 {
     Vector3 lightPosition = m_pLights[0].position;
+    Vector3 lightDirection = m_pLights[0].direction;
 
-    Matrix lightViewRow = m_shadowGlobalConsts[0].view.Transpose();
+    Matrix lightViewRow = XMMatrixLookToLH(lightPosition, lightDirection, Vector3::UnitY);
     m_pShadowManager->Update(lightViewRow, m_camViewRow, m_camProjRow, 0.01f, 100.0f);
 
     const Matrix &viewRow = m_pShadowManager->GetShadowViewMatrix();
     const Matrix &projRow = m_pShadowManager->GetShadowProjMatrix();
 
-    UpdateShadowGlobalConstants(lightPosition, viewRow, projRow);
+    m_pLights[0].invProj = projRow.Invert().Transpose();
+    m_pLights[0].viewProj = (viewRow * projRow).Invert().Transpose();
     UpdateGlobalConstants(m_camPosition, m_camViewRow, m_camProjRow);
 
     // | Global Constants(b0) | Materials(t5) | IBL Textures(t10~14) |
@@ -796,7 +797,7 @@ void D3D12Renderer::UpdateGlobal()
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle,
-                                            m_pShadowManager->GetShadowMapTexture()->srv.cpuHandle,
+                                            m_pShadowManager->GetShadowMapDescriptorHandle(),
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         /*m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_pShadowMapTextures[0]->srv.cpuHandle,
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
@@ -821,25 +822,6 @@ void D3D12Renderer::UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix 
 
     memcpy(&m_globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
     memcpy(m_pGlobalCB->pSystemMemAddr, &m_globalConsts, sizeof(GlobalConstants));
-}
-
-void D3D12Renderer::UpdateShadowGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow)
-{
-    ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
-    m_pShadowGlobalCB[0] = pCBPool->Alloc();
-
-    m_shadowGlobalConsts[0].eyeWorld = eyeWorld;
-    m_shadowGlobalConsts[0].view = viewRow.Transpose();
-    m_shadowGlobalConsts[0].proj = projRow.Transpose();
-    m_shadowGlobalConsts[0].invView = viewRow.Invert().Transpose();
-    m_shadowGlobalConsts[0].invProj = projRow.Invert().Transpose();
-    m_shadowGlobalConsts[0].viewProj = (viewRow * projRow).Transpose();
-    m_shadowGlobalConsts[0].invViewProj = (viewRow * projRow).Invert().Transpose();
-
-    memcpy(m_pShadowGlobalCB[0]->pSystemMemAddr, &m_shadowGlobalConsts[0], sizeof(GlobalConstants));
-
-    m_pLights[0].invProj = m_shadowGlobalConsts[0].invProj;
-    m_pLights[0].viewProj = m_shadowGlobalConsts[0].viewProj;
 }
 
 ITextureHandle *D3D12Renderer::CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b)
@@ -934,7 +916,6 @@ ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, co
         if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
-            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -962,7 +943,6 @@ ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Ve
         if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
-            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -991,7 +971,6 @@ ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vec
         if (pLight->type == LIGHT_TYPE_OFF)
         {
             *pLight = light;
-            UpdateShadowGlobalConsts();
             return pLight;
         }
     }
@@ -1075,21 +1054,6 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
     return m_globalGpuDescriptorHandle[threadIndex];
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowGlobalDescriptorHandle(UINT threadIndex)
-{
-    // | Global Constants(b0) |
-    DescriptorPool *pDescriptorPool = INL_GetDescriptorPool(threadIndex);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
-
-    m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, m_pShadowGlobalCB[0]->CBVHandle,
-                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    return gpuHandle;
-}
-
 ConstantBufferPool *D3D12Renderer::GetConstantBufferPool(CONSTANT_BUFFER_TYPE type, UINT threadIndex)
 {
     return m_ppConstantBufferManager[m_dwCurContextIndex][threadIndex]->GetConstantBufferPool(type);
@@ -1104,20 +1068,6 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
     CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
                                          type * SWAP_CHAIN_FRAME_COUNT, m_rtvDescriptorSize);
     return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapSRVHandle(UINT lightIndex) const
-{
-    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_shadowSRVHandle.cpuHandle, lightIndex * SWAP_CHAIN_FRAME_COUNT,
-                                         m_srvDescriptorSize);
-    return handle.Offset(m_uiFrameIndex, m_srvDescriptorSize);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetShadowMapDSVHandle(UINT lightIndex) const
-{
-    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), DSV_DESCRIPTOR_INDEX_SHADOW,
-                                         m_dsvDescriptorSize);
-    return handle.Offset(lightIndex, m_dsvDescriptorSize);
 }
 
 // ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
@@ -1512,7 +1462,6 @@ void D3D12Renderer::Cleanup()
     CleanupFence();
     CleanupDescriptorHeap();
     CleanupBuffers();
-    CleanupShadowMaps();
 
     if (m_pShadowManager)
     {
@@ -1610,159 +1559,5 @@ void D3D12Renderer::CleanupRenderThreadPool()
     {
         CloseHandle(m_hCompleteEvent);
         m_hCompleteEvent = nullptr;
-    }
-}
-
-BOOL D3D12Renderer::CreateShadowMaps()
-{
-    m_dsvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    m_pResourceManager->AllocDescriptorTable(&m_shadowSRVHandle, MAX_LIGHTS);
-
-    m_shadowViewport.TopLeftX = 0;
-    m_shadowViewport.TopLeftY = 0;
-    m_shadowViewport.Width = float(m_shadowWidth);
-    m_shadowViewport.Height = float(m_shadowHeight);
-    m_shadowViewport.MinDepth = 0.0f;
-    m_shadowViewport.MaxDepth = 1.0f;
-
-    m_shadowScissorRect.left = 0;
-    m_shadowScissorRect.top = 0;
-    m_shadowScissorRect.right = m_shadowWidth;
-    m_shadowScissorRect.bottom = m_shadowHeight;
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-    D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-    depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-    depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-    depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_shadowSRVHandle.cpuHandle);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(), m_dsvDescriptorSize,
-                                            DSV_DESCRIPTOR_INDEX_SHADOW);
-    for (UINT i = 0; i < MAX_LIGHTS; i++)
-    {
-        ID3D12Resource *pDepthStencil = nullptr;
-
-        if (FAILED(m_pD3DDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, m_shadowWidth, m_shadowHeight, 1, 0, 1, 0,
-                                              D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
-        {
-            __debugbreak();
-        }
-        pDepthStencil->SetName(L"Shadow Map DepthStencil");
-
-        m_pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, srvHandle);
-        m_pD3DDevice->CreateDepthStencilView(pDepthStencil, &depthStencilDesc, dsvHandle);
-
-        m_pShadowMapTextures[i] =
-            m_pTextureManager->CreateRenderableTexture(m_shadowWidth, m_shadowHeight, DXGI_FORMAT_R8G8B8A8_UNORM);
-        m_pShadowDepthStencils[i] = pDepthStencil;
-
-        // Init Render Target View For Shadow Map Texture
-        m_pResourceManager->AllocRTVDescriptorTable(&m_shadowRTVHandles[i]);
-        m_pD3DDevice->CreateRenderTargetView(m_pShadowMapTextures[i]->pTexture, nullptr,
-                                             m_shadowRTVHandles[i].cpuHandle);
-
-        dsvHandle.Offset(m_dsvDescriptorSize);
-        srvHandle.Offset(m_srvDescriptorSize);
-    }
-
-    return TRUE;
-}
-
-void D3D12Renderer::CleanupShadowMaps()
-{
-    m_pResourceManager->DeallocDescriptorTable(&m_shadowSRVHandle);
-    for (UINT i = 0; i < MAX_LIGHTS; i++)
-    {
-        m_pResourceManager->DeallocRTVDescriptorTable(&m_shadowRTVHandles[i]);
-        if (m_pShadowMapTextures[i])
-        {
-            m_pTextureManager->DeleteTexture(m_pShadowMapTextures[i]);
-            m_pShadowMapTextures[i] = nullptr;
-        }
-        if (m_pShadowDepthStencils[i])
-        {
-            m_pShadowDepthStencils[i]->Release();
-            m_pShadowDepthStencils[i] = nullptr;
-        }
-    }
-}
-
-void D3D12Renderer::RenderShadowMaps()
-{
-    UINT                       threadIndex = 0;
-    DescriptorPool            *pDescriptorPool = INL_GetDescriptorPool(0);
-    CommandListPool           *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
-    ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
-    ID3D12DescriptorHeap      *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(),
-                                            DSV_DESCRIPTOR_INDEX_SHADOW, m_dsvDescriptorSize);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_shadowSRVHandle.cpuHandle);
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
-                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE));
-
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
-                                                                           D3D12_RESOURCE_STATE_COMMON,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_shadowRTVHandles[0].cpuHandle);
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-    pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-    m_pShadowMapRenderQueue->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                     GetShadowGlobalDescriptorHandle(threadIndex), &m_shadowViewport,
-                                     &m_shadowScissorRect, 1, DRAW_PASS_TYPE_SHADOW);
-
-    pCommandList = pCommandListPool->GetCurrentCommandList();
-
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTextures[0]->pTexture,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                                           D3D12_RESOURCE_STATE_COMMON));
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils[0],
-                                                                           D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
-    pCommandListPool->CloseAndExecute(m_pCommandQueue);
-}
-
-void D3D12Renderer::UpdateShadowGlobalConsts()
-{
-    for (int i = 0; i < MAX_LIGHTS; i++)
-    {
-        Light &light = m_pLights[i];
-
-        if (light.type != LIGHT_TYPE_OFF && light.type & LIGHT_TYPE_SHADOW)
-        {
-            float   aspect = GetAspectRatio();
-            Vector3 up = Vector3::Up;
-            if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
-                up = Vector3(1.0f, 0.0f, 0.0f);
-
-            Matrix lightViewRow = XMMatrixLookToLH(light.position, light.direction, up);
-            Matrix lightProjRow = (light.type & LIGHT_TYPE_DIRECTIONAL)
-                                      ? XMMatrixOrthographicOffCenterLH(-aspect, aspect, -1.0f, 1.0f, 0.1f, 10.0f)
-                                      : XMMatrixPerspectiveFovLH(XMConvertToRadians(120.0f), 1.0f, 0.1f, 10.0f);
-            m_shadowGlobalConsts[i].eyeWorld = light.position;
-            m_shadowGlobalConsts[i].view = lightViewRow.Transpose();
-            m_shadowGlobalConsts[i].proj = lightProjRow.Transpose();
-            m_shadowGlobalConsts[i].invProj = lightProjRow.Invert().Transpose();
-            m_shadowGlobalConsts[i].viewProj = (lightViewRow * lightProjRow).Transpose();
-
-            light.viewProj = m_shadowGlobalConsts[i].viewProj;
-            light.invProj = m_shadowGlobalConsts[i].invProj;
-        }
     }
 }

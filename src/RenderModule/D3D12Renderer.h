@@ -105,15 +105,7 @@ class D3D12Renderer : public IRenderer
     // Shadow Map
     // CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
     ShadowManager *m_pShadowManager = nullptr;
-
-    UINT              m_shadowWidth = 1280;
-    UINT              m_shadowHeight = 1280;
-    D3D12_VIEWPORT    m_shadowViewport = {};
-    D3D12_RECT        m_shadowScissorRect = {};
-    ID3D12Resource   *m_pShadowDepthStencils[MAX_LIGHTS] = {nullptr};
-    TEXTURE_HANDLE   *m_pShadowMapTextures[MAX_LIGHTS] = {};
-    DESCRIPTOR_HANDLE m_shadowRTVHandles[MAX_LIGHTS] = {};
-    DESCRIPTOR_HANDLE m_shadowSRVHandle;
+    UINT           m_shadowWidth = 1024;
 
     ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
     ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
@@ -127,8 +119,6 @@ class D3D12Renderer : public IRenderer
 
     CB_CONTAINER               *m_pGlobalCB = nullptr;
     GlobalConstants             m_globalConsts = {};
-    CB_CONTAINER               *m_pShadowGlobalCB[MAX_LIGHTS] = {nullptr};
-    GlobalConstants             m_shadowGlobalConsts[MAX_LIGHTS] = {};
     D3D12_GPU_DESCRIPTOR_HANDLE m_globalGpuDescriptorHandle[MAX_RENDER_THREAD_COUNT];
 
     Light m_pLights[MAX_LIGHTS];
@@ -165,12 +155,6 @@ class D3D12Renderer : public IRenderer
     // For multi-hThreads
     BOOL InitRenderThreadPool(UINT threadCount);
     void CleanupRenderThreadPool();
-
-    // For Shadow Map
-    BOOL CreateShadowMaps();
-    void CleanupShadowMaps();
-    void RenderShadowMaps();
-    void UpdateShadowGlobalConsts();
 
   public:
     // Inherited via IRenderer
@@ -213,7 +197,6 @@ class D3D12Renderer : public IRenderer
 
     void UpdateGlobal();
     void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
-    void UpdateShadowGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
 
     ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b);
     ITextureHandle *CreateDynamicTexture(UINT texWidth, UINT texHeight);
@@ -256,7 +239,6 @@ class D3D12Renderer : public IRenderer
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
-    D3D12_GPU_DESCRIPTOR_HANDLE GetShadowGlobalDescriptorHandle(UINT threadIndex);
 
     DescriptorPool *INL_GetDescriptorPool(UINT threadIndex) const
     {
@@ -278,8 +260,6 @@ class D3D12Renderer : public IRenderer
     TextureManager       *INL_GetTextureManager() const { return m_pTextureManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
-    D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapSRVHandle(UINT lightIndex) const;
-    D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapDSVHandle(UINT lightIndex) const;
 
     // void UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) override;
     ITextureHandle *GetShadowMapTexture(UINT lightIndex) override;

@@ -51,6 +51,7 @@ class ShadowManager
                 float nearZ, float farZ);
 
     TEXTURE_HANDLE *GetShadowMapTexture() const { return m_pShadowMapTexture; }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetShadowMapDescriptorHandle() const { return m_shadowMapSRV.cpuHandle; }
 
     void Render(ID3D12CommandQueue *pCommandQueue);
 

@@ -71,7 +71,7 @@ void ShadowManager::CreateAABBPoints(Vector3 *pOutAABBPoints, const Vector3 &cen
         {1.0f, 1.0f, -1.0f, 1.0f}, {-1.0f, 1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
         {1.0f, 1.0f, 1.0f, 1.0f},  {-1.0f, 1.0f, 1.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 1.0f},  {-1.0f, -1.0f, 1.0f, 1.0f}};
 
-    for (INT index = 0; index < 8; ++index)
+    for (INT index = 0; index < 8; index++)
     {
         pOutAABBPoints[index] = XMVectorMultiplyAdd(vExtentsMap[index], center, extends);
     }
@@ -355,6 +355,8 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
     D3D12ResourceManager *pResourceManager = pRnd->INL_GetResourceManager();
     TextureManager       *pTextureManager = pRnd->INL_GetTextureManager();
 
+    UINT srvDescriptorSize = pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     m_shadowWidth = shadowWidth;
 
     // Init
@@ -372,7 +374,7 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
 
     pResourceManager->AllocDSVDescriptorTable(&m_shadowMapDSV);
     pResourceManager->AllocRTVDescriptorTable(&m_shadowMapRTV);
-    pResourceManager->AllocDescriptorTable(&m_shadowMapSRV, 1);
+    pResourceManager->AllocDescriptorTable(&m_shadowMapSRV, MAX_LIGHTS);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
@@ -402,7 +404,12 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
     }
     pDepthStencil->SetName(L"Cascaded Shadow Map DepthStencil");
 
-    pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, m_shadowMapSRV.cpuHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_shadowMapSRV.cpuHandle);
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        pD3DDevice->CreateShaderResourceView(pDepthStencil, &srvDesc, cpuHandle);
+        cpuHandle.Offset(srvDescriptorSize);
+    }
     pD3DDevice->CreateDepthStencilView(pDepthStencil, &dsvDesc, m_shadowMapDSV.cpuHandle);
 
     m_pShadowMapTexture =
@@ -477,8 +484,9 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     }
 
     // 프러스텀 포인트들을 계산하기
-    XMFLOAT3        frustumPoints[8];
-    BoundingFrustum frustum(viewerCameraProjection);
+    Vector3         frustumPoints[8];
+    BoundingFrustum frustum;
+    BoundingFrustum::CreateFromMatrix(frustum, viewerCameraProjection);
     frustum.GetCorners(frustumPoints);
 
     Vector3 tempTranslatedCornerPoint;
@@ -494,6 +502,37 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
         lightCameraOrthographicMax = Vector3::Max(tempTranslatedCornerPoint, lightCameraOrthographicMax);
     }
 
+    Vector3 diagonal = frustumPoints[0] - frustumPoints[6];
+    diagonal = XMVector3Length(diagonal);
+
+    // The bound is the length of the diagonal of the frustum interval.
+    FLOAT fCascadeBound = diagonal.x;
+
+    // The offset calculated will pad the ortho projection so that it is always the same size
+    // and big enough to cover the entire cascade interval.
+    Vector3 vBoarderOffset = (diagonal - (lightCameraOrthographicMax - lightCameraOrthographicMin)) * 0.5f;
+    // Set the Z and W components to zero.
+    vBoarderOffset.z = 0.0f;
+
+    // Add the offsets to the projection.
+    lightCameraOrthographicMax += vBoarderOffset;
+    lightCameraOrthographicMin -= vBoarderOffset;
+
+    // The world units per texel are used to snap the shadow the orthographic projection
+    // to texel sized increments.  This keeps the edges of the shadows from shimmering.
+    FLOAT   fWorldUnitsPerTexel = fCascadeBound / (float)m_shadowWidth;
+    Vector3 vWorldUnitsPerTexel = Vector3(fWorldUnitsPerTexel, fWorldUnitsPerTexel, 0.0f);
+
+    // We snape the camera to 1 pixel increments so that moving the camera does not cause the shadows to jitter.
+    // This is a matter of integer dividing by the world space size of a texel
+    lightCameraOrthographicMin = lightCameraOrthographicMin / vWorldUnitsPerTexel;
+    lightCameraOrthographicMin = XMVectorFloor(lightCameraOrthographicMin);
+    lightCameraOrthographicMin *= vWorldUnitsPerTexel;
+
+    lightCameraOrthographicMax = lightCameraOrthographicMax / vWorldUnitsPerTexel;
+    lightCameraOrthographicMax = XMVectorFloor(lightCameraOrthographicMax);
+    lightCameraOrthographicMax *= vWorldUnitsPerTexel;
+
     // These are the unconfigured near and far plane values.  They are purposly awful to show
     //  how important calculating accurate near and far planes is.
     FLOAT nearPlane = 0.0f;
@@ -503,9 +542,6 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
                       sceneAABBPointsLightSpace);
 
     // Craete the orthographic projection for this cascade.
-  /*  m_shadowProj = XMMatrixOrthographicOffCenterLH(lightCameraOrthographicMin.x, lightCameraOrthographicMax.x,
-                                                   lightCameraOrthographicMin.y, lightCameraOrthographicMax.y,
-                                                   nearPlane, farPlane);*/
     m_shadowProj = XMMatrixOrthographicOffCenterLH(lightCameraOrthographicMin.x, lightCameraOrthographicMax.x,
                                                    lightCameraOrthographicMin.y, lightCameraOrthographicMax.y,
                                                    nearPlane, farPlane);
