@@ -18,13 +18,24 @@ class GameObject : public IGameObject
   public:
     SORT_LINK m_LinkInGame;
 
+    // Physics
+    Vector3 m_linearVelocity = Vector3::Zero;
+    float   m_invMass = 0.0f;
+
+    COLLISION_SHAPE_TYPE m_collisionType = COLLISION_SHAPE_TYPE_NONE;
+    BoundingOrientedBox  m_collisionBox;
+    BoundingSphere       m_collisionSphere;
+
   private:
     void Cleanup();
 
   public:
-    void Initialize(GameEngine *pGameEngine);
+    void         Initialize(GameEngine *pGameEngine);
     virtual void Run();
-    void Render();
+    void         Render();
+
+    // Physics
+    void ApplyImpulseLinear(const Vector3 &impulse);
 
     // Getter
     inline const Transform &GetTransform() { return m_transform; }
@@ -37,7 +48,13 @@ class GameObject : public IGameObject
     inline float   GetRotationY() override { return m_transform.GetRotation().ToEuler().y; }
     inline float   GetRotationZ() override { return m_transform.GetRotation().ToEuler().z; }
 
+    BoundingOrientedBox GetBoxInWorld();
+    BoundingSphere GetSphereInWorld();
+    BOOL           IsIntersect(GameObject *pOther);
+
     // Setter
+    void SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass) override;
+
     void SetModel(IGameModel *pModel) override;
     void SetPosition(float x, float y, float z) override;
     void SetScale(float x, float y, float z) override;

@@ -24,7 +24,7 @@ void Transform::AddPitchRotation(float degree)
 Vector3 Transform::GetForward() const
 {
     // RollÀº ¹«½Ã
-    return Vector3::Transform(Vector3::Forward, Rotation);
+    return Vector3::Transform(Vector3::UnitZ, Rotation);
 }
 
 Matrix Transform::GetMatrix() const

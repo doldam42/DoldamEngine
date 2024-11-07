@@ -13,11 +13,11 @@
 using namespace std;
 
 static void CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices, const uint32_t *pIndices,
-                                   UINT numTriangles)
+                               UINT numTriangles)
 {
     for (int i = 0; i < numVertices; i++)
     {
-        BasicVertex& v = pInOutVertices[i];
+        BasicVertex &v = pInOutVertices[i];
 
         Vector3 tangent;
         Vector3 c1 = v.normal.Cross(Vector3::UnitZ);
@@ -312,7 +312,7 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
         16, 17, 18, 16, 18, 19, // 왼쪽
         20, 21, 22, 20, 22, 23  // 오른쪽
     };
-    CalcVerticeTangent(pVertices, 4, indices, 2);
+    CalcVerticeTangent(pVertices, 24, indices, 12);
     Model *pModel = new Model;
 
     MeshObject *pObj = new MeshObject;
@@ -385,71 +385,88 @@ Model *GeometryGenerator::MakeWireBox(const Vector3 center, const Vector3 extend
 //  return meshData;
 //}
 //
-// MeshData GeometryGenerator::MakeSphere(const float radius, const int numSlices,
-//                                       const int numStacks) {
-//
-//  // 참고: OpenGL Sphere
-//  // http://www.songho.ca/opengl/gl_sphere.html
-//  // Texture 좌표계때문에 (numSlices + 1) 개의 버텍스 사용 (마지막에 닫아주는
-//  // 버텍스가 중복) Stack은 y 위쪽 방향으로 쌓아가는 방식
-//
-//  const float dTheta = -XM_2PI / float(numSlices);
-//  const float dPhi = -XM_PI / float(numStacks);
-//
-//  MeshData meshData;
-//
-//  vector<BasicVertex> &vertices = meshData.vertices;
-//
-//  for (int j = 0; j <= numStacks; j++) {
-//
-//    // 스택에 쌓일 수록 시작점을 x-y 평면에서 회전 시켜서 위로 올리는 구조
-//    Vector3 stackStartPoint = Vector3::Transform(
-//        Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dPhi * j));
-//
-//    for (int i = 0; i <= numSlices; i++) {
-//      BasicVertex v;
-//
-//      // 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조
-//      v.position = Vector3::Transform(
-//          stackStartPoint, Matrix::CreateRotationY(dTheta * float(i)));
-//
-//      v.normal = v.position; // 원점이 구의 중심
-//      v.normal.Normalize();
-//      v.texcoord = Vector2(float(i) / numSlices, 1.0f - float(j) / numStacks);
-//
-//      vertices.push_back(v);
-//    }
-//  }
-//
-//  // cout << vertices.size() << endl;
-//
-//  vector<uint32_t> &indices = meshData.indices;
-//
-//  for (int j = 0; j < numStacks; j++) {
-//
-//    const int offset = (numSlices + 1) * j;
-//
-//    for (int i = 0; i < numSlices; i++) {
-//
-//      indices.push_back(offset + i);
-//      indices.push_back(offset + i + numSlices + 1);
-//      indices.push_back(offset + i + 1 + numSlices + 1);
-//
-//      indices.push_back(offset + i);
-//      indices.push_back(offset + i + 1 + numSlices + 1);
-//      indices.push_back(offset + i + 1);
-//    }
-//  }
-//
-//  // cout << indices.size() << endl;
-//  // for (int i = 0; i < indices.size(); i++) {
-//  //     cout << indices[i] << " ";
-//  // }
-//  // cout << endl;
-//
-//  return meshData;
-//}
-//
+
+Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, const int numstacks)
+{
+
+    // 참고: opengl sphere
+    // http://www.songho.ca/opengl/gl_sphere.html
+    // texture 좌표계때문에 (numslices + 1) 개의 버텍스 사용 (마지막에 닫아주는
+    // 버텍스가 중복) stack은 y 위쪽 방향으로 쌓아가는 방식
+
+    const float dtheta = -XM_2PI / float(numslices);
+    const float dphi = -XM_2PI / float(numstacks);
+
+    vector<BasicVertex> vertices;
+    vertices.reserve(numstacks * numslices);
+
+    for (int j = 0; j <= numstacks; j++)
+    {
+
+        // 스택에 쌓일 수록 시작점을 x-y 평면에서 회전 시켜서 위로 올리는 구조
+        Vector3 stackstartpoint = Vector3::Transform(Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dphi * j));
+
+        for (int i = 0; i <= numslices; i++)
+        {
+            BasicVertex v;
+
+            // 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조
+            v.position = Vector3::Transform(stackstartpoint, Matrix::CreateRotationY(dtheta * float(i)));
+
+            v.normal = v.position; // 원점이 구의 중심
+            v.normal.Normalize();
+            v.texcoord = Vector2(float(i) / numslices, 1.0f - float(j) / numstacks);
+
+            vertices.push_back(v);
+        }
+    }
+
+    // cout << vertices.size() << endl;
+
+    vector<uint32_t> indices;
+    indices.reserve(numstacks * numslices);
+    for (int j = 0; j < numstacks; j++)
+    {
+
+        const int offset = (numslices + 1) * j;
+
+        for (int i = 0; i < numslices; i++)
+        {
+
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + numslices + 1);
+            indices.push_back(offset + i + 1 + numslices + 1);
+
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + 1 + numslices + 1);
+            indices.push_back(offset + i + 1);
+        }
+    }
+
+    // cout << indices.size() << endl;
+    // for (int i = 0; i < indices.size(); i++) {
+    //     cout << indices[i] << " ";
+    // }
+    // cout << endl;
+
+    CalcVerticeTangent(vertices.data(), vertices.size(), indices.data(), indices.size() / 3);
+    Model *pModel = new Model;
+
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"Sphere");
+
+    pObj->BeginCreateMesh(vertices.data(), vertices.size(), 1);
+    pObj->InsertFaceGroup(indices.data(), indices.size() / 3, 0);
+    pObj->EndCreateMesh();
+
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
+    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
+    pModel->AddRef();
+    return pModel;
+}
+
 // MeshData GeometryGenerator::MakeIcosahedron() {
 //
 //  // Luna DX12 교재 참고
@@ -759,11 +776,11 @@ void GeometryGenerator::Normalize(const Vector3 center, const float longestLengt
         }
     }
 
-    UINT jointCount = pInOutModel->GetJointCount();
+    UINT   jointCount = pInOutModel->GetJointCount();
     Matrix tm = Matrix::CreateTranslation(translation) * Matrix::CreateScale(scale);
     for (UINT i = 0; i < jointCount; i++)
     {
-        Joint* pJoint = pInOutModel->GetJointByIdx(i);
+        Joint *pJoint = pInOutModel->GetJointByIdx(i);
         pJoint->globalBindposeInverse = tm.Invert() * pJoint->globalBindposeInverse;
     }
 }

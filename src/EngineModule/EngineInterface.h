@@ -18,6 +18,14 @@ enum PRIMITIVE_MODEL_TYPE : UINT
 {
     PRIMITIVE_MODEL_TYPE_SQUARE = 0,
     PRIMITIVE_MODEL_TYPE_BOX,
+    PRIMITIVE_MODEL_TYPE_SPHERE,
+};
+
+enum COLLISION_SHAPE_TYPE : UINT
+{
+    COLLISION_SHAPE_TYPE_NONE = 0,
+    COLLISION_SHAPE_TYPE_BOX,
+    COLLISION_SHAPE_TYPE_SPHERE
 };
 
 enum MESH_TYPE : UINT
@@ -26,6 +34,8 @@ enum MESH_TYPE : UINT
     MESH_TYPE_DEFAULT,
     MESH_TYPE_SKINNED,
 };
+
+interface ICollisionShape { virtual COLLISION_SHAPE_TYPE GetType() const = 0; };
 
 interface ISerializable
 {
@@ -63,6 +73,8 @@ interface IGameObject
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
 
+    virtual void SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass) = 0;
+
     virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;
     virtual void SetScale(float x, float y, float z) = 0;
@@ -80,10 +92,7 @@ interface IGameAnimation : public IUnknown, public ISerializable
     virtual void EndCreateAnim() = 0;
 };
 
-interface IGameCharacter : public IGameObject
-{
-    virtual void InsertAnimation(IGameAnimation * pClip) = 0;
-};
+interface IGameCharacter : public IGameObject { virtual void InsertAnimation(IGameAnimation * pClip) = 0; };
 
 interface IGameSprite
 {
@@ -138,9 +147,9 @@ interface IGameEngine
     virtual void OnMouseWheel(float deltaWheel) = 0;
 
     virtual IGameCharacter *CreateCharacter() = 0;
-    virtual IGameObject *CreateGameObject() = 0;
-    virtual void         DeleteGameObject(IGameObject * pGameObj) = 0;
-    virtual void         DeleteAllGameObject() = 0;
+    virtual IGameObject    *CreateGameObject() = 0;
+    virtual void            DeleteGameObject(IGameObject * pGameObj) = 0;
+    virtual void            DeleteAllGameObject() = 0;
 
     virtual IGameModel *GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type) = 0;
     virtual IGameModel *CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
@@ -159,6 +168,8 @@ interface IGameEngine
     virtual IGameAnimation *GetAnimationByName(const WCHAR *name) = 0;
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
+
+    virtual void SetCameraFollowTarget(IGameObject * pObj) = 0;
 
     virtual Vector3 GetCameraPos() = 0;
     virtual Vector3 GetCameraLookAt() = 0;

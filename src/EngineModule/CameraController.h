@@ -48,6 +48,8 @@ class CameraController
     void SetAspectRatio(float aspect);
     void SetFollowTarget(GameObject *pTarget);
 
+    GameObject *GetFollowTarget() const { return m_pTarget; }
+
     void ToggleProjectionSetting();
 
     CameraController();

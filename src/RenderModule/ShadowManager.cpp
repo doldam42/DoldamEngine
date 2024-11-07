@@ -538,10 +538,20 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     FLOAT nearPlane = 0.0f;
     FLOAT farPlane = 10000.0f;
 
+    lightCameraOrthographicMax *= 0.5f;
+    lightCameraOrthographicMin *= 0.5f;
+    
     ComputeNearAndFar(nearPlane, farPlane, lightCameraOrthographicMin, lightCameraOrthographicMax,
                       sceneAABBPointsLightSpace);
 
     // Craete the orthographic projection for this cascade.
+
+    // TODO: ¶«»§
+    if (farPlane < nearPlane + 1e-3)
+    {
+        farPlane += 10.f;
+    }
+
     m_shadowProj = XMMatrixOrthographicOffCenterLH(lightCameraOrthographicMin.x, lightCameraOrthographicMax.x,
                                                    lightCameraOrthographicMin.y, lightCameraOrthographicMax.y,
                                                    nearPlane, farPlane);

@@ -80,6 +80,13 @@ void Client::LoadResources()
  
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
+    IGameObject *pSphere = m_pGame->CreateGameObject();
+    pSphere->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE));
+    pSphere->SetPosition(0.0f, 2.0f, 0.0f);
+    pSphere->SetPhysics(COLLISION_SHAPE_TYPE_SPHERE, 1.0f);
+
+    // m_pGame->SetCameraFollowTarget(pSphere);
+    
     /* IGameObject *pBox = m_pGame->CreateGameObject();
      pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
      pBox->SetScale(2.0f);*/
@@ -95,25 +102,26 @@ void Client::LoadResources()
     // pStage->SetModel(pStageModel);
     // pStage->SetScale(10.f);
 
-    p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
-    if (!fs::exists(p))
-    {
-        m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
-        m_pAssimpExporter->ExportModel();
-    }
+    //p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
+    //if (!fs::exists(p))
+    //{
+    //    m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
+    //    m_pAssimpExporter->ExportModel();
+    //}
 
-    IGameModel *pSponzaModel =
-        m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
-    IGameObject *pSponza = m_pGame->CreateGameObject();
-    pSponza->SetModel(pSponzaModel);
-    pSponza->SetScale(30.f);
+    //IGameModel *pSponzaModel =
+    //    m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
+    //IGameObject *pSponza = m_pGame->CreateGameObject();
+    //pSponza->SetModel(pSponzaModel);
+    //pSponza->SetScale(30.f);
 
-    /*IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     pGround->SetRotationX(XM_PIDIV2);
-    pGround->SetPosition(0.0f, -0.2f, 0.f);
-    pGround->SetScale(2.0f);*/
+    pGround->SetPosition(0.0f, -2.f, 0.f);
+    pGround->SetScale(100.0f);
+    pGround->SetPhysics(COLLISION_SHAPE_TYPE_BOX, 0.0f);
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     if (!fs::exists(p))

@@ -54,7 +54,7 @@ class GameEngine : public IGameEngine
     UINT      m_commandListCount = 0;
     UINT      m_renderThreadCount = 0;
     ULONGLONG m_prevUpdateTick = 0;
-    
+
     float m_deltaTime = 0.0f;
 
     Character *m_pMainCharacter = nullptr;
@@ -121,6 +121,7 @@ class GameEngine : public IGameEngine
 
     void ToggleCamera();
 
+    void    SetCameraFollowTarget(IGameObject *pObj) override { m_pMainCamera->SetFollowTarget((GameObject *)pObj); }
     Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
     Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
 

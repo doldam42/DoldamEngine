@@ -1,15 +1,15 @@
 #pragma once
 
 #include "../GenericModule/LinkedList.h"
-#include "EngineInterface.h"
 #include "BaseObject.h"
+#include "EngineInterface.h"
 #include "MeshObject.h"
 
 class GameObject;
 class Model : public IGameModel
 {
     static const UINT MAX_INSTANCE_COUNT = 256;
-    IRenderer   *m_pRenderer = nullptr;
+    IRenderer        *m_pRenderer = nullptr;
 
     Matrix  m_defaultTransform = Matrix::Identity;
     Matrix *m_pBoneMatrices = nullptr;
@@ -24,7 +24,10 @@ class Model : public IGameModel
 
     Material    *m_pMaterials = nullptr;
     MeshObject **m_ppMeshObjects = nullptr;
-    Joint       *m_pJoints = nullptr;;
+    Joint       *m_pJoints = nullptr;
+
+    BoundingOrientedBox m_boundingBox;
+    BoundingSphere m_boundingSphere;
 
   public:
     SORT_LINK m_LinkInGame;
@@ -37,6 +40,11 @@ class Model : public IGameModel
                     Joint *pInJoint = nullptr, int jointCount = 0) override;
     void InitMeshHandles(IRenderer *pRenderer);
 
+    void InitBoundary();
+
+    const BoundingOrientedBox &GetBoundingBox();
+    const BoundingSphere& GetBoundingSphere();
+
     void ReadFile(FILE *fp);
     void WriteFile(FILE *fp);
 
@@ -44,7 +52,7 @@ class Model : public IGameModel
     void Render(GameObject *pGameObj);
 
     // Getter
-    inline UINT GetObjectCount() const { return m_objectCount; }
+    inline UINT        GetObjectCount() const { return m_objectCount; }
     inline MeshObject *GetObjectByIdx(UINT index) const { return m_ppMeshObjects[index]; }
     inline UINT        GetJointCount() const { return m_jointCount; }
     inline Joint      *GetJointByIdx(UINT index) const { return m_pJoints + index; }

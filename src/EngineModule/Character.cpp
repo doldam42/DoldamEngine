@@ -51,6 +51,11 @@ float Character::GetRotationY() { return GameObject::GetRotationY(); }
 
 float Character::GetRotationZ() { return GameObject::GetRotationZ(); }
 
+void Character::SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass)
+{
+    GameObject::SetPhysics(collisionType, mass);
+}
+
 void Character::SetModel(IGameModel *pModel) { GameObject::SetModel(pModel); }
 
 void Character::SetPosition(float x, float y, float z) { GameObject::SetPosition(x, y, z); }
@@ -71,8 +76,8 @@ void Character::InsertAnimation(IGameAnimation *pClip)
     m_clipCount++;
 }
 
-void Character::SetCurrentAnimationByName(const WCHAR *pAnimationName) 
-{ 
+void Character::SetCurrentAnimationByName(const WCHAR *pAnimationName)
+{
     for (int i = 0; i < m_clipCount; i++)
     {
         AnimationClip *pClip = m_ppAnimationClips[i];

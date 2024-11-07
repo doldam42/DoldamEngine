@@ -57,7 +57,7 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, IGameMesh
         MeshObject **ppObjs = new MeshObject *[objectCount];
         for (UINT i = 0; i < objectCount; i++)
         {
-            ppObjs[i] = dynamic_cast<MeshObject*>(ppInObjs[i]);
+            ppObjs[i] = dynamic_cast<MeshObject *>(ppInObjs[i]);
         }
         m_ppMeshObjects = ppObjs;
     }
@@ -80,8 +80,80 @@ void Model::InitMeshHandles(IRenderer *pRenderer)
     {
         m_ppMeshObjects[i]->InitMeshHandle(pRenderer, m_pMaterials, m_basePath);
     }
+    InitBoundary();
     m_pRenderer = pRenderer;
 }
+
+void Model::InitBoundary()
+{
+    Vector3 minCorner(FLT_MAX);
+    Vector3 maxCorner(FLT_MIN);
+
+    for (int i = 0; i < m_objectCount; i++)
+    {
+        MeshObject *pObj = GetObjectByIdx(i);
+
+        UINT vertexCount = pObj->GetVertexCount();
+        if (vertexCount == 0)
+            continue;
+
+        if (pObj->IsSkinned())
+        {
+            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+            for (int i = 0; i < vertexCount; i++)
+            {
+                minCorner = Vector3::Min(minCorner, pVertice[i].position);
+                maxCorner = Vector3::Max(maxCorner, pVertice[i].position);
+            }
+        }
+        else
+        {
+            BasicVertex *pVertice = pObj->GetBasicVertices();
+            for (int i = 0; i < vertexCount; i++)
+            {
+                minCorner = Vector3::Min(minCorner, pVertice[i].position);
+                maxCorner = Vector3::Max(maxCorner, pVertice[i].position);
+            }
+        }
+    }
+
+    Vector3 center = (minCorner + maxCorner) * 0.5f;
+    Vector3 extents = maxCorner - center;
+
+    float maxRadius = 0.0f;
+    for (int i = 0; i < m_objectCount; i++)
+    {
+        MeshObject *pObj = GetObjectByIdx(i);
+
+        UINT vertexCount = pObj->GetVertexCount();
+        if (vertexCount == 0)
+            continue;
+
+        if (pObj->IsSkinned())
+        {
+            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+            for (int i = 0; i < vertexCount; i++)
+            {
+                maxRadius = max((center - pVertice->position).Length(), maxRadius);
+            }
+        }
+        else
+        {
+            BasicVertex *pVertice = pObj->GetBasicVertices();
+            for (int i = 0; i < vertexCount; i++)
+            {
+                maxRadius = max((center - pVertice->position).Length(), maxRadius);
+            }
+        }
+    }
+    maxRadius += 1e-3f;
+    m_boundingBox = BoundingOrientedBox(center, extents, Quaternion());
+    m_boundingSphere = BoundingSphere(center, maxRadius);
+}
+
+const BoundingOrientedBox &Model::GetBoundingBox() { return m_boundingBox; }
+
+const BoundingSphere& Model::GetBoundingSphere() { return m_boundingSphere; }
 
 void Model::ReadFile(FILE *fp)
 {
@@ -97,7 +169,7 @@ void Model::ReadFile(FILE *fp)
     {
         m_pMaterials = new Material[m_materialCount];
     }
-    if (m_objectCount!=0)
+    if (m_objectCount != 0)
     {
         m_ppMeshObjects = new MeshObject *[m_objectCount];
     }

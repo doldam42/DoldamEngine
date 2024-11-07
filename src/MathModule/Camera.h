@@ -8,9 +8,6 @@ class Camera
     float m_farZ = 100.0f;
     float m_aspect = 16.0f / 9.0f;
 
-    float m_yaw;
-    float m_pitch;
-
     Vector3 m_position = Vector3::Zero;
     Vector3 m_rightDir = Vector3::Right;
     Vector3 m_upDir = Vector3::Up;
@@ -38,8 +35,9 @@ class Camera
     void SetLookDirection(Vector3 forward, Vector3 up);
     void SetPosition(Vector3 worldPos);
 
-    void SetPitch(float pitch);
-    void SetYaw(float yaw);
+    //void SetPitch(float pitch);
+    //void SetYaw(float yaw);
+    void SetYawPitchRoll(float yaw, float pitch, float roll);
 
     void SetPerspective(float verticalFovRadians, float aspectRatio, float nearZ, float farZ);
     void SetFOV(float verticalFovRadians);

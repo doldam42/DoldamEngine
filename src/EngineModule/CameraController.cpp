@@ -10,15 +10,15 @@ void CameraController::Update(const float dt)
 {
     if (m_pTarget && !m_useFirstPersonView)
     {
-        float offset = 1.f;
+        float offset = 2.f;
 
         const Transform &targetTM = m_pTarget->GetTransform();
 
         Vector3 up = Vector3::UnitY;
         Vector3 viewDir = targetTM.GetForward();
-        Vector3 eye = targetTM.GetPosition() + up * 0.75 * offset - viewDir * offset;
+        Vector3 eye = targetTM.GetPosition() + up * offset - viewDir * offset;
 
-        m_pCamera->SetEyeAtUp(eye, eye + viewDir, up);
+        m_pCamera->SetEyeAtUp(eye, targetTM.GetPosition(), up);
     }
     else
     {
@@ -72,9 +72,8 @@ void CameraController::UpdateMouse(float mouseNdcX, float mouseNdcY)
         // 얼마나 회전할지 계산
         float yaw = mouseNdcX * XM_2PI;      // 좌우 360도
         float pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
-
-        m_pCamera->SetYaw(yaw);
-        m_pCamera->SetPitch(-pitch);
+        
+        m_pCamera->SetYawPitchRoll(yaw, -pitch, 0.0f);
     }
 }
 
@@ -113,7 +112,21 @@ void CameraController::MoveRight(float dt)
 
 void CameraController::SetAspectRatio(float aspect) { m_pCamera->SetAspectRatio(aspect); }
 
-void CameraController::SetFollowTarget(GameObject *pTarget) { m_pTarget = pTarget; }
+static void Jump(void *)
+{
+    float dt = g_pGame->GetDeltaTime();
+    GameObject *pTarget = g_pGame->GetCamera()->GetFollowTarget();
+
+    pTarget->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
+}
+
+void CameraController::SetFollowTarget(GameObject *pTarget)
+{
+    InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
+    pInputManager->AddKeyListener(VK_SPACE, Jump);
+    m_useFirstPersonView = FALSE;
+    m_pTarget = pTarget;
+}
 
 void CameraController::ToggleProjectionSetting()
 {

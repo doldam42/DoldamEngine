@@ -30,6 +30,11 @@ void GameEngine::LoadPrimitiveMeshes()
         SquareMesh = GeometryGenerator::MakeSquare();
         SquareMesh->InitMeshHandles(m_pRenderer);
     }
+    if (!SphereMesh)
+    {
+        SphereMesh = GeometryGenerator::MakeSphere(1.0f, 32, 32);
+        SphereMesh->InitMeshHandles(m_pRenderer);
+    }
 }
 
 void GameEngine::DeletePrimitiveMeshes()
@@ -43,6 +48,11 @@ void GameEngine::DeletePrimitiveMeshes()
     {
         delete SquareMesh;
         SquareMesh = nullptr;
+    }
+    if (SphereMesh)
+    {
+        delete SphereMesh;
+        SphereMesh = nullptr;
     }
 }
 
@@ -180,7 +190,7 @@ void GameEngine::Update(ULONGLONG curTick)
     {
         return;
     }
-    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
+    float dt = (m_prevUpdateTick == 0) ? 0.0f : static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
     m_prevUpdateTick = curTick;
 
     m_deltaTime = dt;
@@ -196,7 +206,50 @@ void GameEngine::Update(ULONGLONG curTick)
     while (pCur)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
+
+        // Physics
+        float   mass = 1.0f / pGameObj->m_invMass;
+        Vector3 impulseGravity = Vector3(0.0f, -1.f, 0.0f) * mass * dt;
+        pGameObj->ApplyImpulseLinear(impulseGravity);
+
+        pCur = pCur->pNext;
+    }
+
+    pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pCurObj = (GameObject *)pCur->pItem;
+        SORT_LINK *pOther = pCur->pNext;
+        while (pOther)
+        {
+            GameObject *pOtherObj = (GameObject *)pOther->pItem;
+
+            if (pCurObj->m_invMass != 0 || pOtherObj->m_invMass != 0)
+            {
+                if (pCurObj->IsIntersect(pOtherObj))
+                {
+                    pCurObj->m_linearVelocity = Vector3::Zero;
+                    pOtherObj->m_linearVelocity = Vector3::Zero;
+                }
+            }
+
+            pOther = pOther->pNext;
+        }
+
+        pCur = pCur->pNext;
+    }
+
+    pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pGameObj = (GameObject *)pCur->pItem;
+
+        Vector3 pos = pGameObj->GetPosition();
+        pos += pGameObj->m_linearVelocity * dt;
+        pGameObj->SetPosition(pos.x, pos.y, pos.z);
+
         pGameObj->Run();
+
         pCur = pCur->pNext;
     }
 }
@@ -311,6 +364,9 @@ IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
     case PRIMITIVE_MODEL_TYPE_BOX:
         BoxMesh->AddRef();
         return BoxMesh;
+    case PRIMITIVE_MODEL_TYPE_SPHERE:
+        SphereMesh->AddRef();
+        return SphereMesh;
     default:
         break;
     }
