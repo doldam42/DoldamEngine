@@ -266,8 +266,6 @@ void D3D12Renderer::BeginRender()
 
     m_pMaterialManager->Update(pCommandList);
 
-    UpdateGlobal();
-
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -282,7 +280,25 @@ void D3D12Renderer::BeginRender()
     pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+}
 
+void D3D12Renderer::EndRender()
+{
+    // RenderShadowMaps();
+
+    CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+                                           m_uiFrameIndex, m_rtvDescriptorSize);
+
+    UpdateGlobal();
+
+    m_pShadowManager->Render(m_pCommandQueue);
+    // m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
+
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
     {
         pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -292,22 +308,6 @@ void D3D12Renderer::BeginRender()
     }
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
-}
-
-void D3D12Renderer::EndRender()
-{
-    // RenderShadowMaps();
-
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
-    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-
-    D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                           m_uiFrameIndex, m_rtvDescriptorSize);
-
-    m_pShadowManager->Render(m_pCommandQueue);
-    // m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
 
 #if defined(USE_MULTI_THREAD)
     m_activeThreadCount = m_renderThreadCount;
@@ -317,7 +317,7 @@ void D3D12Renderer::EndRender()
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 
-    m_pNonOpaqueRenderQueue->Process(0, pCommadListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
+    m_pNonOpaqueRenderQueue->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
                                      GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
                                      DRAW_PASS_TYPE_NON_OPAQUE);
 
@@ -344,7 +344,7 @@ void D3D12Renderer::EndRender()
                                     &m_ScissorRect);
     }
 #endif
-    pCommandList = pCommadListPool->GetCurrentCommandList();
+    pCommandList = pCommandListPool->GetCurrentCommandList();
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -370,7 +370,7 @@ void D3D12Renderer::EndRender()
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
-    pCommadListPool->CloseAndExecute(m_pCommandQueue);
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -759,7 +759,7 @@ void D3D12Renderer::UpdateGlobal()
     const Matrix &projRow = m_pShadowManager->GetShadowProjMatrix();
 
     m_pLights[0].invProj = projRow.Invert().Transpose();
-    m_pLights[0].viewProj = (viewRow * projRow).Invert().Transpose();
+    m_pLights[0].viewProj = (viewRow * projRow).Transpose();
     UpdateGlobalConstants(m_camPosition, m_camViewRow, m_camProjRow);
 
     // | Global Constants(b0) | Materials(t5) | IBL Textures(t10~14) |

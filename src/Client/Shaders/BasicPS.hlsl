@@ -210,7 +210,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
     [unroll]
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
-        if (lights[i].type)
+        if (lights[i].type != LIGHT_OFF)
         {
             float3 L = lights[i].position - input.posWorld;
             float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));

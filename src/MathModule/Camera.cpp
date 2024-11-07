@@ -12,7 +12,7 @@ void Camera::UpdateProjMatrix()
 
 void Camera::UpdateViewMatrix() 
 { 
-    m_viewMatrix = XMMatrixLookAtLH(m_position, m_position + m_forwardDir, m_upDir);
+    m_viewMatrix = XMMatrixLookToLH(m_position, m_forwardDir, m_upDir);
     // Vector4 pos(m_position);
     // pos.w = 1.0f;
     // m_viewMatrix = Matrix(Vector4(m_rightDir), Vector4(m_upDir), Vector4(m_forwardDir), pos).Invert();

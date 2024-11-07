@@ -525,12 +525,12 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
 
     // We snape the camera to 1 pixel increments so that moving the camera does not cause the shadows to jitter.
     // This is a matter of integer dividing by the world space size of a texel
-    lightCameraOrthographicMin = lightCameraOrthographicMin / vWorldUnitsPerTexel;
-    lightCameraOrthographicMin = XMVectorFloor(lightCameraOrthographicMin);
+    /*lightCameraOrthographicMin = lightCameraOrthographicMin / vWorldUnitsPerTexel;
+    lightCameraOrthographicMin = XMVectorFloor(lightCameraOrthographicMin);*/
     lightCameraOrthographicMin *= vWorldUnitsPerTexel;
 
-    lightCameraOrthographicMax = lightCameraOrthographicMax / vWorldUnitsPerTexel;
-    lightCameraOrthographicMax = XMVectorFloor(lightCameraOrthographicMax);
+    /*lightCameraOrthographicMax = lightCameraOrthographicMax / vWorldUnitsPerTexel;
+    lightCameraOrthographicMax = XMVectorFloor(lightCameraOrthographicMax);*/
     lightCameraOrthographicMax *= vWorldUnitsPerTexel;
 
     // These are the unconfigured near and far plane values.  They are purposly awful to show
@@ -549,9 +549,6 @@ BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCa
     m_shadowView = lightCameraView;
 
     UpdateGlobalConstants();
-
-    m_sceneMaxCorner = Vector3(FLT_MIN);
-    m_sceneMinCorner = Vector3(FLT_MAX);
 
     return TRUE;
 }
@@ -602,6 +599,11 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
     pCommandListPool->CloseAndExecute(pCommandQueue);
 }
 
-void ShadowManager::Reset() { m_pRenderQueue->Reset(); }
+void ShadowManager::Reset()
+{
+    m_pRenderQueue->Reset();
+    m_sceneMaxCorner = Vector3(FLT_MIN);
+    m_sceneMinCorner = Vector3(FLT_MAX);
+}
 
 ShadowManager::~ShadowManager() { Cleanup(); }
