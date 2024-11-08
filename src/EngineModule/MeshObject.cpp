@@ -111,6 +111,11 @@ void MeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int ma
 
 void MeshObject::EndCreateMesh() {}
 
+BOOL MeshObject::UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex)
+{
+    return m_pMeshHandle->UpdateMaterial(pInMaterial, faceGroupIndex);
+}
+
 void MeshObject::ReadFile(FILE *fp)
 {
     BaseObject::ReadFile(fp);

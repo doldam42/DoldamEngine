@@ -16,7 +16,7 @@
 
 #include "D3DMeshObject.h"
 
-BoundingBox D3DMeshObject::GetBoundingBox(const BasicVertex *pVertice, UINT numVertice) 
+BoundingBox D3DMeshObject::GetBoundingBox(const BasicVertex *pVertice, UINT numVertice)
 {
     if (numVertice == 0)
         return BoundingBox();
@@ -107,7 +107,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     {
         UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex);
     }
-    
+
     // set RootSignature
     ID3D12RootSignature *pSignature = pRS;
     ID3D12PipelineState *pPipelineState = pPSO;
@@ -145,8 +145,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
 }
 
 void D3DMeshObject::RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode,
-                                 UINT numInstance)
+                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -235,11 +234,11 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
     CB_CONTAINER       *pGeomCBs;
     ConstantBufferPool *pGeometryConstantBufferPool =
         m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
-    
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(descriptorTable);
     if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
         dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
-    else       
+    else
         dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
 
     pGeomCBs = pGeometryConstantBufferPool->Alloc(m_faceGroupCount);
@@ -271,27 +270,27 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
         if (pAlbedoTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, albedoSRV, pAlbedoTexHandle->srv.cpuHandle,
-                                           D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pNormalTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, normalSRV, pNormalTexHandle->srv.cpuHandle,
-                                           D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pAOTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, aoSRV, pAOTexHandle->srv.cpuHandle,
-                                           D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pMetallicRoughnessTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, metallicRoughnessSRV, pMetallicRoughnessTexHandle->srv.cpuHandle,
-                                           D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         if (pEmissiveTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, emissiveSRV, pEmissiveTexHandle->srv.cpuHandle,
-                                           D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
     }
@@ -411,33 +410,9 @@ lb_return:
     return result;
 }
 
-BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
+void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
 {
     wchar_t path[MAX_PATH];
-
-    BOOL                  result = FALSE;
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
-    D3D12ResourceManager *resourceManager = m_pRenderer->INL_GetResourceManager();
-    UINT                  srvDescriptorSize = resourceManager->GetDescriptorSize();
-
-    ID3D12Resource         *pIndexBuffer = nullptr;
-    D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
-
-    if (m_faceGroupCount >= m_maxFaceGroupCount)
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-    if (FAILED(resourceManager->CreateIndexBuffer(&pIndexBuffer, &IndexBufferView, numTriangles * 3, pIndices)))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-
-    INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + m_faceGroupCount;
-    pFaceGroup->pIndexBuffer = pIndexBuffer;
-    pFaceGroup->IndexBufferView = IndexBufferView;
-    pFaceGroup->numTriangles = numTriangles;
 
     TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
     TEXTURE_HANDLE *pNormalTexHandle = nullptr;
@@ -505,14 +480,77 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
         pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
     }
 
-    m_passType = (pInMaterial->opacityFactor < 0.99f) ? DRAW_PASS_TYPE_NON_OPAQUE : DRAW_PASS_TYPE_DEFAULT;
+    m_passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_NON_OPAQUE : DRAW_PASS_TYPE_DEFAULT;
 
-    pFaceGroup->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
-    pFaceGroup->pAlbedoTexHandle = pAlbedoTexHandle;
-    pFaceGroup->pNormalTexHandle = pNormalTexHandle;
-    pFaceGroup->pAOTexHandle = pAOTexHandle;
-    pFaceGroup->pMetallicRoughnessTexHandle = pMetallicRoughnessTexHandle;
-    pFaceGroup->pEmissiveTexHandle = pEmissiveTexHandle;
+    pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
+    pFace->pAlbedoTexHandle = pAlbedoTexHandle;
+    pFace->pNormalTexHandle = pNormalTexHandle;
+    pFace->pAOTexHandle = pAOTexHandle;
+    pFace->pMetallicRoughnessTexHandle = pMetallicRoughnessTexHandle;
+    pFace->pEmissiveTexHandle = pEmissiveTexHandle;
+}
+
+void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace) 
+{
+    if (pFace->pMaterialHandle)
+    {
+        m_pRenderer->DeleteMaterialHandle(pFace->pMaterialHandle);
+        pFace->pMaterialHandle = nullptr;
+    }
+    if (pFace->pAlbedoTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pFace->pAlbedoTexHandle);
+        pFace->pAlbedoTexHandle = nullptr;
+    }
+    if (pFace->pNormalTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pFace->pNormalTexHandle);
+        pFace->pNormalTexHandle = nullptr;
+    }
+    if (pFace->pAOTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pFace->pAOTexHandle);
+        pFace->pAOTexHandle = nullptr;
+    }
+    if (pFace->pMetallicRoughnessTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pFace->pMetallicRoughnessTexHandle);
+        pFace->pMetallicRoughnessTexHandle = nullptr;
+    }
+    if (pFace->pEmissiveTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pFace->pEmissiveTexHandle);
+        pFace->pEmissiveTexHandle = nullptr;
+    }
+}
+
+BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
+{
+    BOOL                  result = FALSE;
+    ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
+    D3D12ResourceManager *resourceManager = m_pRenderer->INL_GetResourceManager();
+    UINT                  srvDescriptorSize = resourceManager->GetDescriptorSize();
+
+    ID3D12Resource         *pIndexBuffer = nullptr;
+    D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
+
+    if (m_faceGroupCount >= m_maxFaceGroupCount)
+    {
+        __debugbreak();
+        goto lb_return;
+    }
+    if (FAILED(resourceManager->CreateIndexBuffer(&pIndexBuffer, &IndexBufferView, numTriangles * 3, pIndices)))
+    {
+        __debugbreak();
+        goto lb_return;
+    }
+
+    INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + m_faceGroupCount;
+    pFaceGroup->pIndexBuffer = pIndexBuffer;
+    pFaceGroup->IndexBufferView = IndexBufferView;
+    pFaceGroup->numTriangles = numTriangles;
+
+    InitMaterial(pFaceGroup, pInMaterial);
 
     // root arg per geometry
     {
@@ -531,6 +569,16 @@ lb_return:
 }
 
 void D3DMeshObject::EndCreateMesh() {}
+
+BOOL D3DMeshObject::UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex)
+{
+    INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
+
+    CleanupMaterial(pFace);
+    InitMaterial(pFace, pInMaterial);
+
+    return TRUE;
+}
 
 void D3DMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 {

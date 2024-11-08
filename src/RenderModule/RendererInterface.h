@@ -10,11 +10,13 @@
 
 interface IRenderableObject : public IUnknown{};
 
-interface IDIMeshObject : public IRenderableObject
+interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path) = 0;
     virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) = 0;
     virtual void EndCreateMesh() = 0;
+
+    virtual BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IRenderSprite : public IRenderableObject{};
@@ -35,21 +37,21 @@ interface IRenderer
 
     virtual void OnUpdateWindowSize(UINT width, UINT height) = 0;
 
-    virtual IDIMeshObject *CreateSkinnedObject() = 0;
-    virtual IDIMeshObject *CreateMeshObject() = 0;
+    virtual IRenderMesh *CreateSkinnedObject() = 0;
+    virtual IRenderMesh *CreateMeshObject() = 0;
 
-    virtual BOOL BeginCreateMesh(IDIMeshObject * pMeshObjHandle, const void *pVertices, UINT numVertices,
+    virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
                                  UINT numFaceGroup, const wchar_t *path) = 0;
-    virtual BOOL InsertFaceGroup(IDIMeshObject * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                                  const Material *pInMaterial) = 0;
-    virtual void EndCreateMesh(IDIMeshObject * pMeshObjHandle) = 0;
+    virtual void EndCreateMesh(IRenderMesh * pMeshObjHandle) = 0;
 
     virtual IRenderSprite *CreateSpriteObject() = 0;
     virtual IRenderSprite *CreateSpriteObject(const WCHAR *texFileName, int PosX, int PosY, int Width, int Height) = 0;
 
-    virtual void RenderMeshObject(IDIMeshObject * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
+    virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                                   UINT numInstance = 1) = 0;
-    virtual void RenderCharacterObject(IDIMeshObject * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
+    virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
                                        UINT numBones, bool isWired = false) = 0;
 
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,

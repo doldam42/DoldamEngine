@@ -37,7 +37,7 @@ class GameObject : public IGameObject
 
     static void ResolveContact(GameObject *pA, GameObject *pB, const Contact &contact);
 
-    void ApplyImpulseLinear(const Vector3 &impulse);
+    void ApplyImpulseLinear(const Vector3 &impulse) override;
     BOOL Intersect(const GameObject *pOther, Contact *pOutContact) const;
 
     // Getter

@@ -164,15 +164,15 @@ class D3D12Renderer : public IRenderer
     void Present() override;
     void OnUpdateWindowSize(UINT width, UINT height) override;
 
-    IDIMeshObject *CreateSkinnedObject() override;
-    IDIMeshObject *CreateMeshObject() override;
+    IRenderMesh *CreateSkinnedObject() override;
+    IRenderMesh *CreateMeshObject() override;
 
     IRenderSprite *CreateSpriteObject() override;
     IRenderSprite *CreateSpriteObject(const WCHAR *texFileName, int PosX, int PosY, int Width, int Height) override;
 
-    void RenderMeshObject(IDIMeshObject *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
+    void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                           UINT numInstance = 1) override;
-    void RenderCharacterObject(IDIMeshObject *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
+    void RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
                                bool isWired = false) override;
     void RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                              const RECT *pRect, float Z, void *pTexHandle) override;
@@ -184,11 +184,11 @@ class D3D12Renderer : public IRenderer
     BOOL         WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT destHeight, UINT destPitch, int *pOutWidth,
                                    int *pOutHeight, IFontHandle *pFontObjHandle, const WCHAR *inStr, UINT len) override;
 
-    BOOL BeginCreateMesh(IDIMeshObject *pMeshObjHandle, const void *pVertices, UINT numVertices, UINT numFaceGroup,
+    BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices, UINT numFaceGroup,
                          const wchar_t *path) override;
-    BOOL InsertFaceGroup(IDIMeshObject *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                          const Material *pInMaterial) override;
-    void EndCreateMesh(IDIMeshObject *pMeshObjHandle) override;
+    void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
 
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
     void UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,

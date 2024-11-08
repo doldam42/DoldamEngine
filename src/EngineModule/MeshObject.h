@@ -5,7 +5,7 @@
 
 interface IRenderer;
 interface IGameEngine;
-interface IDIMeshObject;
+interface IRenderMesh;
 
 struct FaceGroup
 {
@@ -27,7 +27,7 @@ class MeshObject : public IGameMesh, public BaseObject
     SkinnedVertex *m_pSkinnedVertices = nullptr;
     FaceGroup     *m_pFaceGroups = nullptr;
 
-    IDIMeshObject *m_pMeshHandle = nullptr;
+    IRenderMesh *m_pMeshHandle = nullptr;
 
   private:
     void Cleanup();
@@ -38,9 +38,12 @@ class MeshObject : public IGameMesh, public BaseObject
                     MESH_TYPE meshType);
     BOOL InitRenderComponent(IRenderer *pRnd, const Material *pMaterials, const WCHAR *basePath);
 
-    void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup);
-    void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex);
-    void EndCreateMesh();
+    void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
+    void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
+    void EndCreateMesh() override;
+
+    BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) override;
+
 
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;

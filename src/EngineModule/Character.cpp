@@ -57,6 +57,8 @@ void Character::SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticit
 
 Vector3 Character::GetVelocity() const { return GameObject::GetVelocity(); }
 
+void Character::ApplyImpulseLinear(const Vector3 &impulse) { GameObject::ApplyImpulseLinear(impulse); }
+
 void Character::SetModel(IGameModel *pModel) { GameObject::SetModel(pModel); }
 
 void Character::SetPosition(float x, float y, float z) { GameObject::SetPosition(x, y, z); }

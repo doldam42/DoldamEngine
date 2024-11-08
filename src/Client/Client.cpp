@@ -77,17 +77,32 @@ BOOL Client::Initialize(HWND hWnd)
 void Client::LoadResources()
 {
     fs::path p;
- 
+
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
 
     IGameObject *pSphere = m_pGame->CreateGameObject();
-    pSphere->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE));
-    pSphere->SetPosition(0.0f, 2.0f, 0.0f);
-    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f, 0.5f);
+
+    Material mat;
+
+    wcscpy_s(mat.name, L"wall");
+    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\wall.jpg");
+    mat.roughnessFactor = 0.2f;
+    mat.metallicFactor = 0.8f;
+
+    IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    IGameMesh  *pMesh = pModel->GetMeshAt(0);
+    pMesh->UpdateMaterial(&mat, 0);
+
+    pSphere->SetModel(pModel);
+    pSphere->SetPosition(0.0f, 5.0f, 3.0f);
+    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f, 0.8f);
+
+    pSphere->ApplyImpulseLinear(2.0f * Vector3::UnitZ);
+
     m_pSphere = pSphere;
     // m_pGame->SetCameraFollowTarget(pSphere);
-    
-    /* IGameObject *pBox = m_pGame->CreateGameObject();
+
+    /* IGameObject *pBox = m_pGame->CreateGameObject();R
      pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
      pBox->SetScale(2.0f);*/
 
@@ -102,20 +117,29 @@ void Client::LoadResources()
     // pStage->SetModel(pStageModel);
     // pStage->SetScale(10.f);
 
-    //p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
-    //if (!fs::exists(p))
+    // p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
+    // if (!fs::exists(p))
     //{
-    //    m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
-    //    m_pAssimpExporter->ExportModel();
-    //}
+    //     m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
+    //     m_pAssimpExporter->ExportModel();
+    // }
 
-    //IGameModel *pSponzaModel =
-    //    m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
-    //IGameObject *pSponza = m_pGame->CreateGameObject();
-    //pSponza->SetModel(pSponzaModel);
-    //pSponza->SetScale(30.f);
+    // IGameModel *pSponzaModel =
+    //     m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
+    // IGameObject *pSponza = m_pGame->CreateGameObject();
+    // pSponza->SetModel(pSponzaModel);
+    // pSponza->SetScale(30.f);
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+
+    mat = Material();
+    mat.roughnessFactor = 0.2f;
+    mat.metallicFactor = 0.8f;
+
+    wcscpy_s(mat.name, L"ground");
+    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\blender_uv_grid_2k.png");
+    pGroundModel->GetMeshAt(0)->UpdateMaterial(&mat, 0);
+
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     pGround->SetRotationX(XM_PIDIV2);
@@ -123,27 +147,27 @@ void Client::LoadResources()
     pGround->SetScale(100.0f);
     pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f, 1.0f);
 
-    //p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    //if (!fs::exists(p))
+    // p = L"..\\..\\assets\\characters\\gura\\gura.dom";
+    // if (!fs::exists(p))
     //{
-    //    m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
-    //    m_pFbxExporter->ExportModel();
-    //}
-    //IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
-    //IGameCharacter *pGura = m_pGame->CreateCharacter();
+    //     m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
+    //     m_pFbxExporter->ExportModel();
+    // }
+    // IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
+    // IGameCharacter *pGura = m_pGame->CreateCharacter();
 
-    //pGura->SetModel(pGuraModel);
-    //pGura->SetRotationX(-XM_PIDIV2);
-    //p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    //if (!fs::exists(p))
+    // pGura->SetModel(pGuraModel);
+    // pGura->SetRotationX(-XM_PIDIV2);
+    // p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
+    // if (!fs::exists(p))
     //{
-    //    m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
-    //    m_pFbxExporter->ExportAnimation();
-    //}
-    //IGameAnimation *pGuraAnim =
-    //    m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
-    //pGura->InsertAnimation(pGuraAnim);
-    //m_pCharacter = pGura;
+    //     m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
+    //     m_pFbxExporter->ExportAnimation();
+    // }
+    // IGameAnimation *pGuraAnim =
+    //     m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
+    // pGura->InsertAnimation(pGuraAnim);
+    // m_pCharacter = pGura;
 
     // Create texture from draw Text
     m_textImageWidth = 712;

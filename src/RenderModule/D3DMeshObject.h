@@ -67,7 +67,7 @@ class D3D12Renderer;
 class ShaderRecord;
 struct DESCRIPTOR_HANDLE;
 
-class D3DMeshObject : public IDIMeshObject
+class D3DMeshObject : public IRenderMesh
 {
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
@@ -156,6 +156,9 @@ class D3DMeshObject : public IDIMeshObject
                                      const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex);
 
+    void InitMaterial(INDEXED_FACE_GROUP* pFace, const Material* pInMaterial);
+    void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
+
     void CleanupMesh();
     void Cleanup();
 
@@ -190,4 +193,6 @@ class D3DMeshObject : public IDIMeshObject
     BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path) override;
     BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) override;
     void EndCreateMesh() override;
+
+    BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) override;
 };

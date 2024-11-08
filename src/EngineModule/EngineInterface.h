@@ -48,6 +48,8 @@ interface IGameMesh : public IBaseObject
     virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
+
+    virtual BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IGameModel : public IUnknown, public ISerializable
@@ -55,7 +57,7 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                             Joint *pInJoints = nullptr, int jointCount = 0) = 0;
 
-    
+    virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
 interface IGameObject
@@ -69,6 +71,8 @@ interface IGameObject
     virtual void SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) = 0;
     
     virtual Vector3 GetVelocity() const = 0;
+
+    virtual void ApplyImpulseLinear(const Vector3 &impulse) = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;

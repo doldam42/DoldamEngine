@@ -65,6 +65,7 @@ class Model : public IGameModel
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 
+    inline IGameMesh *GetMeshAt(UINT index) override { return m_ppMeshObjects[index]; }
     Model();
     ~Model();
 };
