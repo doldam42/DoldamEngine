@@ -51,7 +51,7 @@ float Character::GetRotationY() { return GameObject::GetRotationY(); }
 
 float Character::GetRotationZ() { return GameObject::GetRotationZ(); }
 
-void Character::SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass)
+void Character::SetPhysics(SHAPE_TYPE collisionType, float mass)
 {
     GameObject::SetPhysics(collisionType, mass);
 }

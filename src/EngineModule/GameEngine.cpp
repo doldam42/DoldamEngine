@@ -219,6 +219,22 @@ void GameEngine::Update(ULONGLONG curTick)
     while (pCur)
     {
         GameObject *pCurObj = (GameObject *)pCur->pItem;
+
+        Box    box;
+        Sphere sphere;
+
+        IShape *pShape = nullptr;
+
+        if (pCurObj->m_collisionShapeType == SHAPE_TYPE_BOX)
+        {
+            pCurObj->GetBoxInWorld(&box);
+            pShape = &box;
+        }
+        else if (pCurObj->m_collisionShapeType == SHAPE_TYPE_SPHERE)
+        {
+
+        }
+
         SORT_LINK *pOther = pCur->pNext;
         while (pOther)
         {
@@ -226,10 +242,10 @@ void GameEngine::Update(ULONGLONG curTick)
 
             if (pCurObj->m_invMass != 0 || pOtherObj->m_invMass != 0)
             {
-                if (pCurObj->IsIntersect(pOtherObj))
+                Contact contact;
+                if (pCurObj->Intersect(pOtherObj, &contact))
                 {
-                    pCurObj->m_linearVelocity = Vector3::Zero;
-                    pOtherObj->m_linearVelocity = Vector3::Zero;
+                    GameObject::ResolveContact(pCurObj, pOtherObj, contact);
                 }
             }
 

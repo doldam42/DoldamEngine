@@ -26,8 +26,8 @@ class Model : public IGameModel
     MeshObject **m_ppMeshObjects = nullptr;
     Joint       *m_pJoints = nullptr;
 
-    BoundingOrientedBox m_boundingBox;
-    BoundingSphere m_boundingSphere;
+    Box    m_boundingBox;
+    Sphere m_boundingSphere;
 
   public:
     SORT_LINK m_LinkInGame;
@@ -42,8 +42,8 @@ class Model : public IGameModel
 
     void InitBoundary();
 
-    const BoundingOrientedBox &GetBoundingBox();
-    const BoundingSphere& GetBoundingSphere();
+    const Box    &GetBoundingBox();
+    const Sphere &GetBoundingSphere();
 
     void ReadFile(FILE *fp);
     void WriteFile(FILE *fp);

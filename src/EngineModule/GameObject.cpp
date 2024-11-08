@@ -37,6 +37,12 @@ void GameObject::Render()
     }
 }
 
+void GameObject::ResolveContact(GameObject *pA, GameObject *pB, const Contact &contact)
+{
+    pA->m_linearVelocity = Vector3::Zero;
+    pB->m_linearVelocity = Vector3::Zero;
+}
+
 void GameObject::ApplyImpulseLinear(const Vector3 &impulse)
 {
     if (m_invMass == 0.0f)
@@ -44,63 +50,61 @@ void GameObject::ApplyImpulseLinear(const Vector3 &impulse)
     m_linearVelocity += impulse * m_invMass;
 }
 
-BoundingOrientedBox GameObject::GetBoxInWorld()
+void GameObject::GetBoxInWorld(Box *pOutBox) const
 {
-    if (!m_pModel)
-        return BoundingOrientedBox();
-
-    BoundingOrientedBox worldBox;
-
-    m_pModel->GetBoundingBox().Transform(worldBox, m_transform.GetMatrix());
-    m_collisionBox = worldBox;
-
-    return worldBox;
+    m_pModel->GetBoundingBox().LocalToWorld(pOutBox, m_transform.GetMatrix());
 }
 
-BoundingSphere GameObject::GetSphereInWorld()
+void GameObject::GetSphereInWorld(Sphere *pOutSphere) const
 {
-    if (!m_pModel)
-        return BoundingSphere();
-
-    BoundingSphere worldSphere;
-    m_pModel->GetBoundingSphere().Transform(worldSphere, m_transform.GetMatrix());
-
-    m_collisionSphere = worldSphere;
-    return worldSphere;
+    m_pModel->GetBoundingSphere().LocalToWorld(pOutSphere, m_transform.GetMatrix());
 }
 
-BOOL GameObject::IsIntersect(GameObject *pOther)
+
+BOOL GameObject::Intersect(const GameObject *pOther, Contact *pOutContact) const
 {
-    if (m_collisionType == COLLISION_SHAPE_TYPE_NONE || pOther->m_collisionType == COLLISION_SHAPE_TYPE_NONE)
+    if (m_collisionShapeType == SHAPE_TYPE_NONE || pOther->m_collisionShapeType == SHAPE_TYPE_NONE)
         return FALSE;
 
-    if (m_collisionType == COLLISION_SHAPE_TYPE_BOX)
+    if (m_collisionShapeType == SHAPE_TYPE_BOX)
     {
-        if (pOther->m_collisionType == COLLISION_SHAPE_TYPE_BOX)
+        Box cur;
+        GetBoxInWorld(&cur);
+        if (pOther->m_collisionShapeType == SHAPE_TYPE_BOX)
         {
-            return GetBoxInWorld().Intersects(pOther->GetBoxInWorld());
+            Box other;
+            pOther->GetBoxInWorld(&other);
+            return cur.Intersect(other);
         }
         else
         {
-            return GetBoxInWorld().Intersects(pOther->GetSphereInWorld());
+            Sphere other;
+            pOther->GetSphereInWorld(&other);
+            return CheckCollision(cur, other, pOutContact);
         }
     }
     else
     {
-        if (pOther->m_collisionType == COLLISION_SHAPE_TYPE_BOX)
+        Sphere cur;
+        GetSphereInWorld(&cur);
+        if (pOther->m_collisionShapeType == SHAPE_TYPE_BOX)
         {
-            return GetSphereInWorld().Intersects(pOther->GetBoxInWorld());
+            Box other;
+            pOther->GetBoxInWorld(&other);
+            return CheckCollision(other, cur, pOutContact);
         }
         else
         {
-            return GetSphereInWorld().Intersects(pOther->GetSphereInWorld());
+            Sphere other;
+            pOther->GetSphereInWorld(&other);
+            return CheckCollision(cur, other, pOutContact);
         }
     }
 }
 
-void GameObject::SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass)
+void GameObject::SetPhysics(SHAPE_TYPE collisionType, float mass)
 {
-    m_collisionType = collisionType;
+    m_collisionShapeType = collisionType;
     m_invMass = (mass < 1e-4f) ? 0.0f : 1.0f / mass;
 }
 

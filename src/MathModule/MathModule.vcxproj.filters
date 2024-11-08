@@ -4,22 +4,35 @@
     <Filter Include="pch">
       <UniqueIdentifier>{f7503ace-5b08-4961-993c-cbbeb40557f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shape">
+      <UniqueIdentifier>{f81df06a-73c1-443f-9321-566305cceddc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="Box.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Joint.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MathHeaders.h" />
     <ClInclude Include="MathUtils.h" />
-    <ClInclude Include="Sphere.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Box.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -27,5 +40,14 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Collider.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Box.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -33,7 +33,6 @@
     <ClCompile Include="Model.cpp">
       <Filter>Model</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionShape.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -65,7 +64,6 @@
     <ClInclude Include="Model.h">
       <Filter>Model</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionShape.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

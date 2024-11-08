@@ -21,21 +21,12 @@ enum PRIMITIVE_MODEL_TYPE : UINT
     PRIMITIVE_MODEL_TYPE_SPHERE,
 };
 
-enum COLLISION_SHAPE_TYPE : UINT
-{
-    COLLISION_SHAPE_TYPE_NONE = 0,
-    COLLISION_SHAPE_TYPE_BOX,
-    COLLISION_SHAPE_TYPE_SPHERE
-};
-
 enum MESH_TYPE : UINT
 {
     MESH_TYPE_UNKNOWN = 0,
     MESH_TYPE_DEFAULT,
     MESH_TYPE_SKINNED,
 };
-
-interface ICollisionShape { virtual COLLISION_SHAPE_TYPE GetType() const = 0; };
 
 interface ISerializable
 {
@@ -73,7 +64,7 @@ interface IGameObject
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
 
-    virtual void SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass) = 0;
+    virtual void SetPhysics(SHAPE_TYPE collisionType, float mass) = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;

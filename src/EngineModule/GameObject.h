@@ -19,12 +19,9 @@ class GameObject : public IGameObject
     SORT_LINK m_LinkInGame;
 
     // Physics
-    Vector3 m_linearVelocity = Vector3::Zero;
-    float   m_invMass = 0.0f;
-
-    COLLISION_SHAPE_TYPE m_collisionType = COLLISION_SHAPE_TYPE_NONE;
-    BoundingOrientedBox  m_collisionBox;
-    BoundingSphere       m_collisionSphere;
+    Vector3    m_linearVelocity = Vector3::Zero;
+    float      m_invMass = 0.0f;
+    SHAPE_TYPE m_collisionShapeType = SHAPE_TYPE_NONE;
 
   private:
     void Cleanup();
@@ -35,7 +32,10 @@ class GameObject : public IGameObject
     void         Render();
 
     // Physics
+    static void ResolveContact(GameObject *pA, GameObject *pB, const Contact &contact);
+
     void ApplyImpulseLinear(const Vector3 &impulse);
+    BOOL Intersect(const GameObject *pOther, Contact* pOutContact) const;
 
     // Getter
     inline const Transform &GetTransform() { return m_transform; }
@@ -48,12 +48,11 @@ class GameObject : public IGameObject
     inline float   GetRotationY() override { return m_transform.GetRotation().ToEuler().y; }
     inline float   GetRotationZ() override { return m_transform.GetRotation().ToEuler().z; }
 
-    BoundingOrientedBox GetBoxInWorld();
-    BoundingSphere GetSphereInWorld();
-    BOOL           IsIntersect(GameObject *pOther);
+    void GetBoxInWorld(Box *pOutBox) const;
+    void GetSphereInWorld(Sphere *pOutSphere) const;
 
     // Setter
-    void SetPhysics(COLLISION_SHAPE_TYPE collisionType, float mass) override;
+    void SetPhysics(SHAPE_TYPE collisionType, float mass) override;
 
     void SetModel(IGameModel *pModel) override;
     void SetPosition(float x, float y, float z) override;

@@ -83,7 +83,7 @@ void Client::LoadResources()
     IGameObject *pSphere = m_pGame->CreateGameObject();
     pSphere->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE));
     pSphere->SetPosition(0.0f, 2.0f, 0.0f);
-    pSphere->SetPhysics(COLLISION_SHAPE_TYPE_SPHERE, 1.0f);
+    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f);
 
     // m_pGame->SetCameraFollowTarget(pSphere);
     
@@ -121,7 +121,7 @@ void Client::LoadResources()
     pGround->SetRotationX(XM_PIDIV2);
     pGround->SetPosition(0.0f, -2.f, 0.f);
     pGround->SetScale(100.0f);
-    pGround->SetPhysics(COLLISION_SHAPE_TYPE_BOX, 0.0f);
+    pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f);
 
     p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     if (!fs::exists(p))

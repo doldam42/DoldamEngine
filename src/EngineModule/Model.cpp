@@ -147,13 +147,13 @@ void Model::InitBoundary()
         }
     }
     maxRadius += 1e-3f;
-    m_boundingBox = BoundingOrientedBox(center, extents, Quaternion());
-    m_boundingSphere = BoundingSphere(center, maxRadius);
+    m_boundingBox = Box(minCorner, maxCorner);
+    m_boundingSphere = Sphere(center, maxRadius);
 }
 
-const BoundingOrientedBox &Model::GetBoundingBox() { return m_boundingBox; }
+const Box &Model::GetBoundingBox() { return m_boundingBox; }
 
-const BoundingSphere& Model::GetBoundingSphere() { return m_boundingSphere; }
+const Sphere& Model::GetBoundingSphere() { return m_boundingSphere; }
 
 void Model::ReadFile(FILE *fp)
 {
