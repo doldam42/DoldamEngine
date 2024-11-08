@@ -54,6 +54,8 @@ interface IGameModel : public IUnknown, public ISerializable
 {
     virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                             Joint *pInJoints = nullptr, int jointCount = 0) = 0;
+
+    
 };
 
 interface IGameObject

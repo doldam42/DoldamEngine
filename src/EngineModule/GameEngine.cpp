@@ -23,17 +23,17 @@ void GameEngine::LoadPrimitiveMeshes()
     if (!BoxMesh)
     {
         BoxMesh = GeometryGenerator::MakeBox();
-        BoxMesh->InitMeshHandles(m_pRenderer);
+        BoxMesh->InitRenderComponents(m_pRenderer);
     }
     if (!SquareMesh)
     {
         SquareMesh = GeometryGenerator::MakeSquare();
-        SquareMesh->InitMeshHandles(m_pRenderer);
+        SquareMesh->InitRenderComponents(m_pRenderer);
     }
     if (!SphereMesh)
     {
         SphereMesh = GeometryGenerator::MakeSphere(1.0f, 32, 32);
-        SphereMesh->InitMeshHandles(m_pRenderer);
+        SphereMesh->InitRenderComponents(m_pRenderer);
     }
 }
 
@@ -393,7 +393,7 @@ IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
 IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
-    pModel->InitMeshHandles(m_pRenderer);
+    pModel->InitRenderComponents(m_pRenderer);
 
     LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
     pModel->AddRef();

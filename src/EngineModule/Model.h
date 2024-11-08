@@ -38,7 +38,7 @@ class Model : public IGameModel
   public:
     void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                     Joint *pInJoint = nullptr, int jointCount = 0) override;
-    void InitMeshHandles(IRenderer *pRenderer);
+    void InitRenderComponents(IRenderer *pRenderer);
 
     void InitBoundary();
 

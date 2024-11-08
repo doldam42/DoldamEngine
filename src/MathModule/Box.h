@@ -16,7 +16,7 @@ struct Box : public IShape
     inline Vector3 GetExtent() const;
 
     inline void GetCenterAndExtent(Vector3 *pOutCenter, Vector3 *pOutExtent) const;
-    void LocalToWorld(Box *pOutBox, const Matrix &worldTM) const;
+    void        LocalToWorld(Box *pOutBox, const Matrix &worldTM) const;
 
     inline Vector3 GetClosestPoint(const Vector3 &point) const;
 
@@ -27,6 +27,7 @@ struct Box : public IShape
     // Inheritance via IShape
     inline Vector3    GetCenterOfMass() const override;
     inline SHAPE_TYPE GetType() const override { return SHAPE_TYPE_BOX; }
+    inline Matrix     InertiaTensor() const override { return Matrix(); };
 };
 
 bool Box::Intersect(const Box &inBox) const
@@ -59,7 +60,7 @@ bool Box::IsInside(const Vector3 &inVector) const
 
 Vector3 Box::GetSize() const { return (Max - Min); }
 //
-//inline bool Box::Intersect(const IShape *pOther, Contact *pOutContact)
+// inline bool Box::Intersect(const IShape *pOther, Contact *pOutContact)
 //{
 //    switch (pOther->GetType())
 //    {

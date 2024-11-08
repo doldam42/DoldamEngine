@@ -74,11 +74,11 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, IGameMesh
     }
 }
 
-void Model::InitMeshHandles(IRenderer *pRenderer)
+void Model::InitRenderComponents(IRenderer *pRenderer)
 {
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->InitMeshHandle(pRenderer, m_pMaterials, m_basePath);
+        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pMaterials, m_basePath);
     }
     InitBoundary();
     m_pRenderer = pRenderer;

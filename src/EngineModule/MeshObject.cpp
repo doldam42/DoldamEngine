@@ -51,7 +51,7 @@ BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     return TRUE;
 }
 
-BOOL MeshObject::InitMeshHandle(IRenderer *pRnd, const Material *pMaterials, const WCHAR *basePath)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials, const WCHAR *basePath)
 {
     if (IsSkinned())
     {
