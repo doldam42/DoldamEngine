@@ -64,7 +64,9 @@ interface IGameObject
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
 
-    virtual void SetPhysics(SHAPE_TYPE collisionType, float mass) = 0;
+    virtual void SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) = 0;
+    
+    virtual Vector3 GetVelocity() const = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;

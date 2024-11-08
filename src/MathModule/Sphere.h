@@ -20,7 +20,10 @@ struct Sphere : public IShape
 
     inline SHAPE_TYPE GetType() const override { return SHAPE_TYPE_BOX; }
 
-    Vector3 GetCenter() const override { return Center; }
+    Vector3 GetCenterOfMass() const override { return Center; }
+
+    // Inherited via IShape
+    Matrix InertiaTensor() const override;
 };
 
 bool Sphere::IsInside(const Vector3 &inVector) const

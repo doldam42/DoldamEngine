@@ -51,10 +51,11 @@ float Character::GetRotationY() { return GameObject::GetRotationY(); }
 
 float Character::GetRotationZ() { return GameObject::GetRotationZ(); }
 
-void Character::SetPhysics(SHAPE_TYPE collisionType, float mass)
+void Character::SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity)
 {
-    GameObject::SetPhysics(collisionType, mass);
-}
+    GameObject::SetPhysics(collisionType, mass, elasticity); }
+
+Vector3 Character::GetVelocity() const { return GameObject::GetVelocity(); }
 
 void Character::SetModel(IGameModel *pModel) { GameObject::SetModel(pModel); }
 

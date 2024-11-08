@@ -25,7 +25,7 @@ struct Box : public IShape
     Box(const Vector3 &inMin, const Vector3 &inMax) : Min(inMin), Max(inMax) {}
 
     // Inheritance via IShape
-    inline Vector3    GetCenter() const override;
+    inline Vector3    GetCenterOfMass() const override;
     inline SHAPE_TYPE GetType() const override { return SHAPE_TYPE_BOX; }
 };
 
@@ -77,14 +77,14 @@ Vector3 Box::GetSize() const { return (Max - Min); }
 //    }
 //}
 
-Vector3 Box::GetCenter() const { return (Max + Min) * 0.5f; }
+Vector3 Box::GetCenterOfMass() const { return (Max + Min) * 0.5f; }
 
 Vector3 Box::GetExtent() const { return GetSize() * 0.5f; }
 
 void Box::GetCenterAndExtent(Vector3 *pOutCenter, Vector3 *pOutExtent) const
 {
     *pOutExtent = GetExtent();
-    *pOutCenter = GetCenter();
+    *pOutCenter = GetCenterOfMass();
 }
 
 Vector3 Box::GetClosestPoint(const Vector3 &point) const

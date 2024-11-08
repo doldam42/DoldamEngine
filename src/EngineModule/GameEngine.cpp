@@ -208,8 +208,10 @@ void GameEngine::Update(ULONGLONG curTick)
         GameObject *pGameObj = (GameObject *)pCur->pItem;
 
         // Physics
+        static const Vector3 gravity(0.0f, -10.0f, 0.0f);
+
         float   mass = 1.0f / pGameObj->m_invMass;
-        Vector3 impulseGravity = Vector3(0.0f, -1.f, 0.0f) * mass * dt;
+        Vector3 impulseGravity = gravity * mass * dt;
         pGameObj->ApplyImpulseLinear(impulseGravity);
 
         pCur = pCur->pNext;
@@ -232,7 +234,6 @@ void GameEngine::Update(ULONGLONG curTick)
         }
         else if (pCurObj->m_collisionShapeType == SHAPE_TYPE_SPHERE)
         {
-
         }
 
         SORT_LINK *pOther = pCur->pNext;

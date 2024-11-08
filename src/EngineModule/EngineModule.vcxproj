@@ -163,6 +163,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="DebugConsoleSprite.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EngineInterface.cpp" />
     <ClCompile Include="GameEngine.cpp" />
@@ -190,6 +191,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Character.h" />
+    <ClInclude Include="DebugConsoleSprite.h" />
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />

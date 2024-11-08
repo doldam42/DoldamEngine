@@ -24,6 +24,15 @@ void Sphere::LocalToWorld(Sphere *pOutSphere, const Matrix &worldTM) const
     pOutSphere->Radius = Radius * Scale;
 }
 
+Matrix Sphere::InertiaTensor() const 
+{ 
+    Matrix tensor;
+    tensor.m[0][0] = 2.0f * Radius * Radius / 5.0f;
+    tensor.m[1][1] = 2.0f * Radius * Radius / 5.0f;
+    tensor.m[2][2] = 2.0f * Radius * Radius / 5.0f;
+    return tensor;
+}
+
 bool Sphere::Intersect(const Box &inBox) const
 {
     Contact c;

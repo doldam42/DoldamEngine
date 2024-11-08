@@ -31,7 +31,8 @@ class Character : public IGameCharacter, public GameObject
     float   GetRotationX() override;
     float   GetRotationY() override;
     float   GetRotationZ() override;
-    void    SetPhysics(SHAPE_TYPE collisionType, float mass) override;
+    void    SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) override;
+    Vector3 GetVelocity() const override;
     void    SetModel(IGameModel *pModel) override;
     void    SetPosition(float x, float y, float z) override;
     void    SetScale(float x, float y, float z) override;

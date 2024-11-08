@@ -21,6 +21,7 @@ class GameObject : public IGameObject
     // Physics
     Vector3    m_linearVelocity = Vector3::Zero;
     float      m_invMass = 0.0f;
+    float      m_elasticity = 1.0f;
     SHAPE_TYPE m_collisionShapeType = SHAPE_TYPE_NONE;
 
   private:
@@ -32,10 +33,12 @@ class GameObject : public IGameObject
     void         Render();
 
     // Physics
+    Vector3 GetVelocity() const override { return m_linearVelocity; }
+
     static void ResolveContact(GameObject *pA, GameObject *pB, const Contact &contact);
 
     void ApplyImpulseLinear(const Vector3 &impulse);
-    BOOL Intersect(const GameObject *pOther, Contact* pOutContact) const;
+    BOOL Intersect(const GameObject *pOther, Contact *pOutContact) const;
 
     // Getter
     inline const Transform &GetTransform() { return m_transform; }
@@ -52,7 +55,7 @@ class GameObject : public IGameObject
     void GetSphereInWorld(Sphere *pOutSphere) const;
 
     // Setter
-    void SetPhysics(SHAPE_TYPE collisionType, float mass) override;
+    void SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) override;
 
     void SetModel(IGameModel *pModel) override;
     void SetPosition(float x, float y, float z) override;

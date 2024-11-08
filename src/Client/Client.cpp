@@ -83,8 +83,8 @@ void Client::LoadResources()
     IGameObject *pSphere = m_pGame->CreateGameObject();
     pSphere->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE));
     pSphere->SetPosition(0.0f, 2.0f, 0.0f);
-    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f);
-
+    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f, 0.5f);
+    m_pSphere = pSphere;
     // m_pGame->SetCameraFollowTarget(pSphere);
     
     /* IGameObject *pBox = m_pGame->CreateGameObject();
@@ -121,29 +121,29 @@ void Client::LoadResources()
     pGround->SetRotationX(XM_PIDIV2);
     pGround->SetPosition(0.0f, -2.f, 0.f);
     pGround->SetScale(100.0f);
-    pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f);
+    pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f, 1.0f);
 
-    p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    if (!fs::exists(p))
-    {
-        m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
-        m_pFbxExporter->ExportModel();
-    }
-    IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
-    IGameCharacter *pGura = m_pGame->CreateCharacter();
+    //p = L"..\\..\\assets\\characters\\gura\\gura.dom";
+    //if (!fs::exists(p))
+    //{
+    //    m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
+    //    m_pFbxExporter->ExportModel();
+    //}
+    //IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
+    //IGameCharacter *pGura = m_pGame->CreateCharacter();
 
-    pGura->SetModel(pGuraModel);
-    pGura->SetRotationX(-XM_PIDIV2);
-    p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    if (!fs::exists(p))
-    {
-        m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
-        m_pFbxExporter->ExportAnimation();
-    }
-    IGameAnimation *pGuraAnim =
-        m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
-    pGura->InsertAnimation(pGuraAnim);
-    m_pCharacter = pGura;
+    //pGura->SetModel(pGuraModel);
+    //pGura->SetRotationX(-XM_PIDIV2);
+    //p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
+    //if (!fs::exists(p))
+    //{
+    //    m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
+    //    m_pFbxExporter->ExportAnimation();
+    //}
+    //IGameAnimation *pGuraAnim =
+    //    m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
+    //pGura->InsertAnimation(pGuraAnim);
+    //m_pCharacter = pGura;
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -271,16 +271,16 @@ void Client::Update(ULONGLONG curTick)
     m_pDynamicSprite->UpdateTextureWidthImage(m_pImage, 512, 256);
 
     // draw text
-    Vector3 camPos = m_pGame->GetCameraPos();
-    Vector3 camLookAt = m_pGame->GetCameraLookAt();
+    Vector3 pos = m_pSphere->GetPosition();
+    Vector3 velocity = m_pSphere->GetVelocity();
 
     int   iTextWidth = 0;
     int   iTextHeight = 0;
     WCHAR wchTxt[260];
     memset(wchTxt, 0, sizeof(wchTxt));
     DWORD dwTxtLen =
-        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nLook At: (%.3f, %.3f, %.3f)",
-                   m_FPS, camPos.x, camPos.y, camPos.z, camLookAt.x, camLookAt.y, camLookAt.z);
+        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nVelocity: (%.3f, %.3f, %.3f)",
+                   m_FPS, pos.x, pos.y, pos.z, velocity.x, velocity.y, velocity.z);
 
     if (wcscmp(m_text, wchTxt))
     {

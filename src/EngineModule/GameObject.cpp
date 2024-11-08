@@ -39,8 +39,33 @@ void GameObject::Render()
 
 void GameObject::ResolveContact(GameObject *pA, GameObject *pB, const Contact &contact)
 {
-    pA->m_linearVelocity = Vector3::Zero;
-    pB->m_linearVelocity = Vector3::Zero;
+    const float invMassA = pA->m_invMass;
+    const float invMassB = pB->m_invMass;
+
+    const float elasticityA = pA->m_elasticity;
+    const float elasticityB = pB->m_elasticity;
+    const float elasticity = elasticityA * elasticityB;
+
+    // Calculate the collision impulse
+    const Vector3 &n = contact.normal;
+    const Vector3  vab = pA->m_linearVelocity - pB->m_linearVelocity;
+
+    const float    impulseJ = -(1.0f + elasticity) * vab.Dot(n) / (invMassA + invMassB);
+    const Vector3  vectorImpulseJ = n * impulseJ;
+
+    pA->ApplyImpulseLinear(vectorImpulseJ);
+    pB->ApplyImpulseLinear(-vectorImpulseJ);
+
+    const float tA = pA->m_invMass / (pA->m_invMass + pB->m_invMass);
+    const float tB = pB->m_invMass / (pA->m_invMass + pB->m_invMass);
+
+    const Vector3 ds = contact.worldSpaceA - contact.worldSpaceB;
+
+    Vector3 posA = pA->GetPosition() + ds * tA;
+    Vector3 posB = pB->GetPosition() - ds * tB;
+
+    pA->SetPosition(posA.x, posA.y, posA.z);
+    pB->SetPosition(posB.x, posB.y, posB.z);
 }
 
 void GameObject::ApplyImpulseLinear(const Vector3 &impulse)
@@ -59,7 +84,6 @@ void GameObject::GetSphereInWorld(Sphere *pOutSphere) const
 {
     m_pModel->GetBoundingSphere().LocalToWorld(pOutSphere, m_transform.GetMatrix());
 }
-
 
 BOOL GameObject::Intersect(const GameObject *pOther, Contact *pOutContact) const
 {
@@ -102,10 +126,11 @@ BOOL GameObject::Intersect(const GameObject *pOther, Contact *pOutContact) const
     }
 }
 
-void GameObject::SetPhysics(SHAPE_TYPE collisionType, float mass)
+void GameObject::SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity)
 {
     m_collisionShapeType = collisionType;
     m_invMass = (mass < 1e-4f) ? 0.0f : 1.0f / mass;
+    m_elasticity = elasticity;
 }
 
 void GameObject::SetModel(IGameModel *pModel)

@@ -10,7 +10,7 @@ BOOL CheckCollision(const Box &box, const Sphere &sphere, Contact *pOutContact)
     // 여기서 문제가 있음...
     Vector3 closestPoint = box.GetClosestPoint(sphere.Center);
 
-    Vector3 collisionNormal = sphere.Center - closestPoint;
+    Vector3 collisionNormal = closestPoint - sphere.Center;
     float   penetrationDepth = sphere.Radius - collisionNormal.Length();
 
     if (penetrationDepth < 1e-4f)

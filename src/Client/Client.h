@@ -6,6 +6,7 @@ class Client
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
     IRenderer   *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
+    IGameObject    *m_pSphere = nullptr;
 
     IModelExporter *m_pFbxExporter = nullptr;
     IModelExporter *m_pAssimpExporter = nullptr;
