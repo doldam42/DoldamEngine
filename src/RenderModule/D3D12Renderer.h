@@ -184,10 +184,9 @@ class D3D12Renderer : public IRenderer
     BOOL         WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT destHeight, UINT destPitch, int *pOutWidth,
                                    int *pOutHeight, IFontHandle *pFontObjHandle, const WCHAR *inStr, UINT len) override;
 
-    BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices, UINT numFaceGroup,
-                         const wchar_t *path) override;
+    BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
     BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                         const Material *pInMaterial) override;
+                         const Material *pInMaterial, const wchar_t *path) override;
     void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
 
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);

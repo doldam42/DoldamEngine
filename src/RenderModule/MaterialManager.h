@@ -21,25 +21,26 @@ class MaterialManager
     UINT m_sizePerMat = 0;
     UINT m_maxMatNum = 0;
 
-    MATERIAL_HANDLE *AllocMaterialHandle();
+  private:
+    void InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const Material *pInMaterial);
+    void CleanupMaterial(MATERIAL_HANDLE *pMaterial);
+
+    MATERIAL_HANDLE *AllocMaterialHandle(const Material *pMaterial);
     UINT             DeallocMaterialHandle(MATERIAL_HANDLE *pMatHandle);
 
-    void Cleanup(); 
+    void Cleanup();
 
   public:
     bool Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT maxMatNum);
 
-    MATERIAL_HANDLE* CreateMaterial(const void *pInMaterial, const wchar_t* pMaterialName);
+    MATERIAL_HANDLE *CreateMaterial(const void *pInMaterial, const wchar_t *pMaterialName);
     void             DeleteMaterial(MATERIAL_HANDLE *pMatHandle);
 
     BOOL UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial);
-    
+
     void Update(ID3D12GraphicsCommandList *pCommandList);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const
-    {
-        return m_srv.cpuHandle;
-    }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const { return m_srv.cpuHandle; }
 
     MaterialManager() = default;
     ~MaterialManager();

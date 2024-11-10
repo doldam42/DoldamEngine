@@ -11,6 +11,12 @@ void MemoryPool::Cleanup()
     }
 }
 
+void MemoryPool::Initialize(UINT sizeInBytes, UINT maxItemNum) \
+{
+    uint8_t* pBaseAddress = new uint8_t[sizeInBytes * maxItemNum];
+    Initialize(pBaseAddress, sizeInBytes, maxItemNum);
+}
+
 void MemoryPool::Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum)
 {
     m_pBaseAddress = (uint8_t*)pBaseAddr;

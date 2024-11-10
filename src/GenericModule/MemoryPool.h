@@ -11,14 +11,15 @@ class MemoryPool
     void Cleanup();
 
   public:
-    void  Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum);
+    void Initialize(UINT sizeInBytes, UINT maxItemNum);
+    void Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum);
 
     BOOL Has(void *pInAddr);
 
     void *Alloc();
     void  Dealloc(void *pInAddr);
 
-    UINT GetIndexOf(void* pInAddr);
+    UINT  GetIndexOf(void *pInAddr);
     void *GetAddressOf(UINT index);
 
     MemoryPool() = default;

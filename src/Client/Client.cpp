@@ -102,7 +102,7 @@ void Client::LoadResources()
     m_pSphere = pSphere;
     // m_pGame->SetCameraFollowTarget(pSphere);
 
-    /* IGameObject *pBox = m_pGame->CreateGameObject();R
+    /* IGameObject *pBox = m_pGame->CreateGameObject();
      pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
      pBox->SetScale(2.0f);*/
 

@@ -2,6 +2,7 @@
 
 struct Material
 {
+    WCHAR basePath[MAX_PATH] = {0};
     WCHAR name[MAX_NAME] = {0};
     WCHAR albedoTextureName[MAX_NAME] = {0};
     WCHAR emissiveTextureName[MAX_NAME] = {0};

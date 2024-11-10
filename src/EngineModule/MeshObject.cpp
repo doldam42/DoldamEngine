@@ -56,19 +56,19 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials
     if (IsSkinned())
     {
         m_pMeshHandle = pRnd->CreateSkinnedObject();
-        m_pMeshHandle->BeginCreateMesh(m_pSkinnedVertices, m_vertexCount, m_faceGroupCount, basePath);
+        m_pMeshHandle->BeginCreateMesh(m_pSkinnedVertices, m_vertexCount, m_faceGroupCount);
     }
     else
     {
         m_pMeshHandle = pRnd->CreateMeshObject();
-        m_pMeshHandle->BeginCreateMesh(m_pBasicVertices, m_vertexCount, m_faceGroupCount, basePath);
+        m_pMeshHandle->BeginCreateMesh(m_pBasicVertices, m_vertexCount, m_faceGroupCount);
     }
 
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
 
-        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials + pFace->materialIndex);
+        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials + pFace->materialIndex, basePath);
     }
     m_pMeshHandle->EndCreateMesh();
     return TRUE;

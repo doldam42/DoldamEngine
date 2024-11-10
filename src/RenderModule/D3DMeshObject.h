@@ -52,14 +52,10 @@ enum SKINNING_DESCRIPTOR_INDEX
 
 struct INDEXED_FACE_GROUP
 {
+    DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
     ID3D12Resource         *pIndexBuffer = nullptr;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
     UINT                    numTriangles = 0;
-    TEXTURE_HANDLE         *pAlbedoTexHandle = nullptr;
-    TEXTURE_HANDLE         *pNormalTexHandle = nullptr;
-    TEXTURE_HANDLE         *pAOTexHandle = nullptr;
-    TEXTURE_HANDLE         *pEmissiveTexHandle = nullptr;
-    TEXTURE_HANDLE         *pMetallicRoughnessTexHandle = nullptr;
     MATERIAL_HANDLE        *pMaterialHandle = nullptr;
 };
 
@@ -85,8 +81,6 @@ class D3DMeshObject : public IRenderMesh
         DESCRIPTOR_COUNT_PER_BLAS + 2 * MAX_FACE_GROUP_COUNT_PER_OBJ; // TODO
 
   private:
-    wchar_t m_basePath[MAX_PATH] = {0};
-
     D3D12Renderer *m_pRenderer = nullptr;
     ID3D12Device  *m_pD3DDevice = nullptr;
 
@@ -106,7 +100,6 @@ class D3DMeshObject : public IRenderMesh
     ULONG m_refCount = 0;
 
     RENDER_ITEM_TYPE m_type;
-    DRAW_PASS_TYPE   m_passType;
 
     // Bounding Box
     BoundingBox m_boundingBox;
@@ -180,7 +173,7 @@ class D3DMeshObject : public IRenderMesh
     const BoundingBox &GetBoundingBox() const { return m_boundingBox; }
 
     RENDER_ITEM_TYPE GetType() const { return m_type; }
-    DRAW_PASS_TYPE   GetPassType() const { return m_passType; }
+    DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }
 
     D3DMeshObject() = default;
     ~D3DMeshObject();
@@ -190,8 +183,9 @@ class D3DMeshObject : public IRenderMesh
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 
-    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path) override;
-    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) override;
+    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
+    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
+                         const wchar_t *path) override;
     void EndCreateMesh() override;
 
     BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) override;

@@ -248,51 +248,17 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
 
         MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
-        TEXTURE_HANDLE  *pAlbedoTexHandle = pFaceGroup->pAlbedoTexHandle;
-        TEXTURE_HANDLE  *pAOTexHandle = pFaceGroup->pAOTexHandle;
-        TEXTURE_HANDLE  *pEmissiveTexHandle = pFaceGroup->pEmissiveTexHandle;
-        TEXTURE_HANDLE  *pMetallicRoughnessTexHandle = pFaceGroup->pMetallicRoughnessTexHandle;
-        TEXTURE_HANDLE  *pNormalTexHandle = pFaceGroup->pNormalTexHandle;
 
         GeometryConstants *pGeometry = (GeometryConstants *)pGeomCB->pSystemMemAddr;
         pGeometry->materialIndex = pMatHandle->index;
-        pGeometry->useTexture = !pAlbedoTexHandle ? FALSE : TRUE;
+        pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE materialCBV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_MATERIAL);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE albedoSRV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_ALBEDO);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE normalSRV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_NORMAL);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE aoSRV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_AO);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE metallicRoughnessSRV(dest, m_descriptorSize,
-                                                           DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_METALLIC_ROUGHNESS);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE emissiveSRV(dest, m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_EMISSIVE);
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle,
+                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dest.Offset(m_descriptorSize);
 
-        m_pD3DDevice->CopyDescriptorsSimple(1, materialCBV, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        if (pAlbedoTexHandle)
-        {
-            m_pD3DDevice->CopyDescriptorsSimple(1, albedoSRV, pAlbedoTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        }
-        if (pNormalTexHandle)
-        {
-            m_pD3DDevice->CopyDescriptorsSimple(1, normalSRV, pNormalTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        }
-        if (pAOTexHandle)
-        {
-            m_pD3DDevice->CopyDescriptorsSimple(1, aoSRV, pAOTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        }
-        if (pMetallicRoughnessTexHandle)
-        {
-            m_pD3DDevice->CopyDescriptorsSimple(1, metallicRoughnessSRV, pMetallicRoughnessTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        }
-        if (pEmissiveTexHandle)
-        {
-            m_pD3DDevice->CopyDescriptorsSimple(1, emissiveSRV, pEmissiveTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        }
-        dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+        pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+        dest.Offset(m_descriptorSize, MATERIAL_HANDLE::MATERIAL_DESCRIPTOR_SIZE);
     }
 }
 
@@ -336,17 +302,11 @@ Graphics::LOCAL_ROOT_ARG *D3DMeshObject::GetRootArgs()
     return m_pRootArgPerGeometries;
 }
 
-BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup, const wchar_t *path)
+BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
     D3D12ResourceManager *resourceManager = m_pRenderer->INL_GetResourceManager();
-
-    if (path)
-    {
-        memset(m_basePath, 0, sizeof(m_basePath));
-        wcscpy_s(m_basePath, path);
-    }
 
     if (numFaceGroup > MAX_FACE_GROUP_COUNT_PER_OBJ)
         __debugbreak();
@@ -412,82 +372,12 @@ lb_return:
 
 void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
 {
-    wchar_t path[MAX_PATH];
+    Material mat;
+    memcpy(&mat, pInMaterial, sizeof(Material));
 
-    TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
-    TEXTURE_HANDLE *pNormalTexHandle = nullptr;
-    TEXTURE_HANDLE *pAOTexHandle = nullptr;
-    TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
-    TEXTURE_HANDLE *pEmissiveTexHandle = nullptr;
-
-    // Albedo
-    memset(path, 0, sizeof(path));
-    wcscpy_s(path, m_basePath);
-    wcscat_s(path, pInMaterial->albedoTextureName);
-    pAlbedoTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-
-    // Normal
-    memset(path, 0, sizeof(path));
-    wcscpy_s(path, m_basePath);
-    wcscat_s(path, pInMaterial->normalTextureName);
-    pNormalTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-
-    // AO
-    memset(path, 0, sizeof(path));
-    wcscpy_s(path, m_basePath);
-    wcscat_s(path, pInMaterial->aoTextureName);
-    pAOTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-
-    // Emissive
-    memset(path, 0, sizeof(path));
-    wcscpy_s(path, m_basePath);
-    wcscat_s(path, pInMaterial->emissiveTextureName);
-    pEmissiveTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-
-    // Metallic-Roughness
-    WCHAR metallicPath[MAX_PATH];
-    WCHAR roughnessPath[MAX_PATH];
-    memset(metallicPath, 0, sizeof(metallicPath));
-    memset(roughnessPath, 0, sizeof(roughnessPath));
-
-    wcscpy_s(metallicPath, m_basePath);
-    wcscpy_s(roughnessPath, m_basePath);
-
-    wcscat_s(metallicPath, pInMaterial->metallicTextureName);
-    wcscat_s(roughnessPath, pInMaterial->roughnessTextureName);
-
-    pMetallicRoughnessTexHandle =
-        static_cast<TEXTURE_HANDLE *>(m_pRenderer->CreateMetallicRoughnessTexture(metallicPath, roughnessPath));
-
-    if (!pAlbedoTexHandle)
-    {
-        pAlbedoTexHandle = m_pRenderer->GetDefaultTex();
-    }
-    if (!pNormalTexHandle)
-    {
-        pNormalTexHandle = m_pRenderer->GetDefaultTex();
-    }
-    if (!pAOTexHandle)
-    {
-        pAOTexHandle = m_pRenderer->GetDefaultTex();
-    }
-    if (!pEmissiveTexHandle)
-    {
-        pEmissiveTexHandle = m_pRenderer->GetDefaultTex();
-    }
-    if (!pMetallicRoughnessTexHandle)
-    {
-        pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
-    }
-
-    m_passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_NON_OPAQUE : DRAW_PASS_TYPE_DEFAULT;
+    pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_NON_OPAQUE : DRAW_PASS_TYPE_DEFAULT;
 
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
-    pFace->pAlbedoTexHandle = pAlbedoTexHandle;
-    pFace->pNormalTexHandle = pNormalTexHandle;
-    pFace->pAOTexHandle = pAOTexHandle;
-    pFace->pMetallicRoughnessTexHandle = pMetallicRoughnessTexHandle;
-    pFace->pEmissiveTexHandle = pEmissiveTexHandle;
 }
 
 void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace) 
@@ -497,34 +387,10 @@ void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
         m_pRenderer->DeleteMaterialHandle(pFace->pMaterialHandle);
         pFace->pMaterialHandle = nullptr;
     }
-    if (pFace->pAlbedoTexHandle)
-    {
-        m_pRenderer->DeleteTexture(pFace->pAlbedoTexHandle);
-        pFace->pAlbedoTexHandle = nullptr;
-    }
-    if (pFace->pNormalTexHandle)
-    {
-        m_pRenderer->DeleteTexture(pFace->pNormalTexHandle);
-        pFace->pNormalTexHandle = nullptr;
-    }
-    if (pFace->pAOTexHandle)
-    {
-        m_pRenderer->DeleteTexture(pFace->pAOTexHandle);
-        pFace->pAOTexHandle = nullptr;
-    }
-    if (pFace->pMetallicRoughnessTexHandle)
-    {
-        m_pRenderer->DeleteTexture(pFace->pMetallicRoughnessTexHandle);
-        pFace->pMetallicRoughnessTexHandle = nullptr;
-    }
-    if (pFace->pEmissiveTexHandle)
-    {
-        m_pRenderer->DeleteTexture(pFace->pEmissiveTexHandle);
-        pFace->pEmissiveTexHandle = nullptr;
-    }
 }
 
-BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
+BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
+                                    const wchar_t *path)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
@@ -534,6 +400,9 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
     ID3D12Resource         *pIndexBuffer = nullptr;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
 
+    Material mat = *pInMaterial;
+    wcscpy_s(mat.basePath, wcslen(path) + 1, path);
+    
     if (m_faceGroupCount >= m_maxFaceGroupCount)
     {
         __debugbreak();
@@ -550,7 +419,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
     pFaceGroup->IndexBufferView = IndexBufferView;
     pFaceGroup->numTriangles = numTriangles;
 
-    InitMaterial(pFaceGroup, pInMaterial);
+    InitMaterial(pFaceGroup, &mat);
 
     // root arg per geometry
     {
@@ -860,9 +729,9 @@ void D3DMeshObject::CreateRootArgsSRV()
         pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
         cpuHandle.Offset(m_descriptorSize);
 
-        D3D12_CPU_DESCRIPTOR_HANDLE diffuseTexHandle = !pFace->pAlbedoTexHandle
+        D3D12_CPU_DESCRIPTOR_HANDLE diffuseTexHandle = !pFace->pMaterialHandle->pAlbedoTexHandle
                                                            ? m_pRenderer->GetDefaultTex()->srv.cpuHandle
-                                                           : pFace->pAlbedoTexHandle->srv.cpuHandle;
+                                                           : pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle;
         pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, diffuseTexHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         cpuHandle.Offset(m_descriptorSize);
     }
@@ -914,31 +783,6 @@ void D3DMeshObject::CleanupMesh()
             {
                 m_pRenderer->DeleteMaterialHandle(m_pFaceGroups[i].pMaterialHandle);
                 m_pFaceGroups[i].pMaterialHandle = nullptr;
-            }
-            if (m_pFaceGroups[i].pAlbedoTexHandle)
-            {
-                m_pRenderer->DeleteTexture(m_pFaceGroups[i].pAlbedoTexHandle);
-                m_pFaceGroups[i].pAlbedoTexHandle = nullptr;
-            }
-            if (m_pFaceGroups[i].pNormalTexHandle)
-            {
-                m_pRenderer->DeleteTexture(m_pFaceGroups[i].pNormalTexHandle);
-                m_pFaceGroups[i].pNormalTexHandle = nullptr;
-            }
-            if (m_pFaceGroups[i].pAOTexHandle)
-            {
-                m_pRenderer->DeleteTexture(m_pFaceGroups[i].pAOTexHandle);
-                m_pFaceGroups[i].pAOTexHandle = nullptr;
-            }
-            if (m_pFaceGroups[i].pMetallicRoughnessTexHandle)
-            {
-                m_pRenderer->DeleteTexture(m_pFaceGroups[i].pMetallicRoughnessTexHandle);
-                m_pFaceGroups[i].pMetallicRoughnessTexHandle = nullptr;
-            }
-            if (m_pFaceGroups[i].pEmissiveTexHandle)
-            {
-                m_pRenderer->DeleteTexture(m_pFaceGroups[i].pEmissiveTexHandle);
-                m_pFaceGroups[i].pEmissiveTexHandle = nullptr;
             }
         }
         delete[] m_pFaceGroups;

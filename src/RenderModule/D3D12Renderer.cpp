@@ -663,18 +663,18 @@ BOOL D3D12Renderer::WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT des
 }
 
 BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
-                                    UINT numFaceGroup, const wchar_t *path)
+                                    UINT numFaceGroup)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL           result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup, path);
+    BOOL           result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup);
     return result;
 }
 
 BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                                    const Material *pInMaterial)
+                                    const Material *pInMaterial, const wchar_t *path)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL           result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
+    BOOL           result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial, path);
 
     return result;
 }
@@ -991,23 +991,7 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
 
 IMaterialHandle *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
 {
-    MaterialConstants mat;
-
-    mat.albedo = pInMaterial->albedo;
-    mat.emissive = pInMaterial->emissive;
-    mat.metallicFactor = pInMaterial->metallicFactor;
-    mat.roughnessFactor = pInMaterial->roughnessFactor;
-    mat.opacityFactor = pInMaterial->opacityFactor;
-    mat.reflectionFactor = pInMaterial->reflectionFactor;
-
-    mat.useAlbedoMap = wcslen(pInMaterial->albedoTextureName) == 0 ? FALSE : TRUE;
-    mat.useAOMap = wcslen(pInMaterial->aoTextureName) == 0 ? FALSE : TRUE;
-    mat.useEmissiveMap = wcslen(pInMaterial->emissiveTextureName) == 0 ? FALSE : TRUE;
-    mat.useMetallicMap = wcslen(pInMaterial->metallicTextureName) == 0 ? FALSE : TRUE;
-    mat.useRoughnessMap = mat.useMetallicMap;
-    mat.useNormalMap = wcslen(pInMaterial->normalTextureName) == 0 ? FALSE : TRUE;
-
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat, pInMaterial->name);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial, pInMaterial->name);
     return pMatHandle;
 }
 

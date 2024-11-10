@@ -4,8 +4,129 @@
 #include "D3D12ResourceManager.h"
 #include "MaterialManager.h"
 
-MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle()
+void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const Material *pInMaterial)
 {
+    wchar_t path[MAX_PATH];
+
+    TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
+    TEXTURE_HANDLE *pNormalTexHandle = nullptr;
+    TEXTURE_HANDLE *pAOTexHandle = nullptr;
+    TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
+    TEXTURE_HANDLE *pEmissiveTexHandle = nullptr;
+
+    // Albedo
+    memset(path, 0, sizeof(path));
+    wcscpy_s(path, pInMaterial->basePath);
+    wcscat_s(path, pInMaterial->albedoTextureName);
+    pAlbedoTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
+
+    // Normal
+    memset(path, 0, sizeof(path));
+    wcscpy_s(path, pInMaterial->basePath);
+    wcscat_s(path, pInMaterial->normalTextureName);
+    pNormalTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
+
+    // AO
+    memset(path, 0, sizeof(path));
+    wcscpy_s(path, pInMaterial->basePath);
+    wcscat_s(path, pInMaterial->aoTextureName);
+    pAOTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
+
+    // Emissive
+    memset(path, 0, sizeof(path));
+    wcscpy_s(path, pInMaterial->basePath);
+    wcscat_s(path, pInMaterial->emissiveTextureName);
+    pEmissiveTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
+
+    // Metallic-Roughness
+    WCHAR metallicPath[MAX_PATH];
+    WCHAR roughnessPath[MAX_PATH];
+    memset(metallicPath, 0, sizeof(metallicPath));
+    memset(roughnessPath, 0, sizeof(roughnessPath));
+
+    wcscpy_s(metallicPath, pInMaterial->basePath);
+    wcscpy_s(roughnessPath, pInMaterial->basePath);
+
+    wcscat_s(metallicPath, pInMaterial->metallicTextureName);
+    wcscat_s(roughnessPath, pInMaterial->roughnessTextureName);
+
+    pMetallicRoughnessTexHandle =
+        static_cast<TEXTURE_HANDLE *>(m_pRenderer->CreateMetallicRoughnessTexture(metallicPath, roughnessPath));
+
+    if (!pAlbedoTexHandle)
+    {
+        pAlbedoTexHandle = m_pRenderer->GetDefaultTex();
+    }
+    if (!pNormalTexHandle)
+    {
+        pNormalTexHandle = m_pRenderer->GetDefaultTex();
+    }
+    if (!pAOTexHandle)
+    {
+        pAOTexHandle = m_pRenderer->GetDefaultTex();
+    }
+    if (!pEmissiveTexHandle)
+    {
+        pEmissiveTexHandle = m_pRenderer->GetDefaultTex();
+    }
+    if (!pMetallicRoughnessTexHandle)
+    {
+        pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
+    }
+
+    pOutMaterial->pAlbedoTexHandle = pAlbedoTexHandle;
+    pOutMaterial->pNormalTexHandle = pNormalTexHandle;
+    pOutMaterial->pAOTexHandle = pAOTexHandle;
+    pOutMaterial->pMetallicRoughnessTexHandle = pMetallicRoughnessTexHandle;
+    pOutMaterial->pEmissiveTexHandle = pEmissiveTexHandle;
+}
+
+void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
+{
+    void *pAddr = m_pMemoryPool->GetAddressOf(pMaterial->index);
+    if (pAddr)
+    {
+        m_pMemoryPool->Dealloc(pAddr);
+        pMaterial->index = UINT_MAX; // invalid index
+    }
+
+    if (pMaterial->pSearchHandle)
+    {
+        m_pHashTable->Delete(pMaterial->pSearchHandle);
+        pMaterial->pSearchHandle = nullptr;
+    }
+    if (pMaterial->pAlbedoTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pAlbedoTexHandle);
+        pMaterial->pAlbedoTexHandle = nullptr;
+    }
+    if (pMaterial->pNormalTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pNormalTexHandle);
+        pMaterial->pNormalTexHandle = nullptr;
+    }
+    if (pMaterial->pAOTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pAOTexHandle);
+        pMaterial->pAOTexHandle = nullptr;
+    }
+    if (pMaterial->pMetallicRoughnessTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pMetallicRoughnessTexHandle);
+        pMaterial->pMetallicRoughnessTexHandle = nullptr;
+    }
+    if (pMaterial->pEmissiveTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pEmissiveTexHandle);
+        pMaterial->pEmissiveTexHandle = nullptr;
+    }
+}
+
+MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
+{
+    MATERIAL_HANDLE *pMatHandle = new MATERIAL_HANDLE;
+    memset(pMatHandle, 0, sizeof(MATERIAL_HANDLE));
+
     UINT8 *sysMemAddr = (UINT8 *)m_pMemoryPool->Alloc();
     if (!sysMemAddr)
     {
@@ -13,10 +134,30 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle()
         return nullptr;
     }
 
-    MATERIAL_HANDLE *pMatHandle = new MATERIAL_HANDLE;
-    memset(pMatHandle, 0, sizeof(MATERIAL_HANDLE));
     pMatHandle->refCount = 1;
     pMatHandle->index = m_pMemoryPool->GetIndexOf(sysMemAddr);
+
+    MaterialConstants materialCB;
+
+    materialCB.albedo = pMaterial->albedo;
+    materialCB.emissive = pMaterial->emissive;
+    materialCB.metallicFactor = pMaterial->metallicFactor;
+    materialCB.roughnessFactor = pMaterial->roughnessFactor;
+    materialCB.opacityFactor = pMaterial->opacityFactor;
+    materialCB.reflectionFactor = pMaterial->reflectionFactor;
+
+    materialCB.useAlbedoMap = wcslen(pMaterial->albedoTextureName) == 0 ? FALSE : TRUE;
+    materialCB.useAOMap = wcslen(pMaterial->aoTextureName) == 0 ? FALSE : TRUE;
+    materialCB.useEmissiveMap = wcslen(pMaterial->emissiveTextureName) == 0 ? FALSE : TRUE;
+    materialCB.useMetallicMap = wcslen(pMaterial->metallicTextureName) == 0 ? FALSE : TRUE;
+    materialCB.useRoughnessMap = materialCB.useMetallicMap;
+    materialCB.useNormalMap = wcslen(pMaterial->normalTextureName) == 0 ? FALSE : TRUE;
+
+    memcpy(sysMemAddr, &materialCB, m_sizePerMat);
+
+    pMatHandle->pSysMemAddr = sysMemAddr;
+
+    InitMaterialTextures(pMatHandle, pMaterial);
 
     return pMatHandle;
 }
@@ -29,19 +170,7 @@ UINT MaterialManager::DeallocMaterialHandle(MATERIAL_HANDLE *pMatHandle)
     UINT refCount = --pMatHandle->refCount;
     if (!refCount)
     {
-        void *pAddr = m_pMemoryPool->GetAddressOf(pMatHandle->index);
-        if (pAddr)
-        {
-            m_pMemoryPool->Dealloc(pAddr);
-            pMatHandle->index = UINT_MAX; // invalid index
-        }
-
-        if (pMatHandle->pSearchHandle)
-        {
-            m_pHashTable->Delete(pMatHandle->pSearchHandle);
-            pMatHandle->pSearchHandle = nullptr;
-        }
-
+        CleanupMaterial(pMatHandle);
         delete pMatHandle;
     }
     return refCount;
@@ -154,11 +283,7 @@ MATERIAL_HANDLE *MaterialManager::CreateMaterial(const void *pInMaterial, const 
     }
     else
     {
-        pMatHandle = AllocMaterialHandle();
-
-        void *sysMemAddr = m_pMemoryPool->GetAddressOf(pMatHandle->index);
-        memcpy(sysMemAddr, pInMaterial, m_sizePerMat);
-        pMatHandle->pSysMemAddr = sysMemAddr;
+        pMatHandle = AllocMaterialHandle((Material *)pInMaterial);
 
         m_isUpdated = true;
 
@@ -168,9 +293,7 @@ MATERIAL_HANDLE *MaterialManager::CreateMaterial(const void *pInMaterial, const 
     return pMatHandle;
 }
 
-void MaterialManager::DeleteMaterial(MATERIAL_HANDLE *pMatHandle) { 
-    DeallocMaterialHandle(pMatHandle); 
-}
+void MaterialManager::DeleteMaterial(MATERIAL_HANDLE *pMatHandle) { DeallocMaterialHandle(pMatHandle); }
 
 BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial)
 {
