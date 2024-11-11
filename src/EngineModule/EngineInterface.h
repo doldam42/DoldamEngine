@@ -10,7 +10,8 @@
 #include <combaseapi.h>
 
 interface IRenderer;
-class IRenderer;
+interface IMaterialHandle;
+
 struct Material;
 struct Joint;
 struct Transform;
@@ -49,7 +50,7 @@ interface IGameMesh : public IBaseObject
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
 
-    virtual BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) = 0;
+    virtual BOOL UpdateMaterial(IMaterialHandle* pMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IGameModel : public IUnknown, public ISerializable

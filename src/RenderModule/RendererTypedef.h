@@ -92,7 +92,7 @@ struct TEXTURE_HANDLE : public ITextureHandle
 struct MATERIAL_HANDLE : IMaterialHandle
 {
     static const UINT MATERIAL_DESCRIPTOR_SIZE = 5;
-    
+
     UINT  index;
     UINT  refCount;
     void *pSysMemAddr;
@@ -113,8 +113,7 @@ struct MATERIAL_HANDLE : IMaterialHandle
         pDevice->CopyDescriptorsSimple(1, dest, pNormalTexHandle->srv.cpuHandle,
                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(descriptorSize);
-        pDevice->CopyDescriptorsSimple(1, dest, pAOTexHandle->srv.cpuHandle,
-                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        pDevice->CopyDescriptorsSimple(1, dest, pAOTexHandle->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(descriptorSize);
         pDevice->CopyDescriptorsSimple(1, dest, pMetallicRoughnessTexHandle->srv.cpuHandle,
                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

@@ -82,16 +82,27 @@ void Client::LoadResources()
 
     IGameObject *pSphere = m_pGame->CreateGameObject();
 
+    // Create Materials
     Material mat;
-
     wcscpy_s(mat.name, L"wall");
-    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\wall.jpg");
+    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(mat.albedoTextureName, L"wall.jpg");
     mat.roughnessFactor = 0.2f;
     mat.metallicFactor = 0.8f;
+    mat.opacityFactor = 1.0f;
+    IMaterialHandle* pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+    
+    mat = Material();
+    mat.roughnessFactor = 0.1f;
+    mat.metallicFactor =0.8f;
+    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(mat.name, L"ground");
+    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\blender_uv_grid_2k.png");
+    IMaterialHandle *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
     IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
     IGameMesh  *pMesh = pModel->GetMeshAt(0);
-    pMesh->UpdateMaterial(&mat, 0);
+    pMesh->UpdateMaterial(pWallMaterial, 0);
 
     pSphere->SetModel(pModel);
     pSphere->SetPosition(0.0f, 5.0f, 3.0f);
@@ -132,20 +143,13 @@ void Client::LoadResources()
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
 
-    mat = Material();
-    mat.roughnessFactor = 0.2f;
-    mat.metallicFactor = 0.8f;
-
-    wcscpy_s(mat.name, L"ground");
-    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\blender_uv_grid_2k.png");
-    pGroundModel->GetMeshAt(0)->UpdateMaterial(&mat, 0);
-
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     pGround->SetRotationX(XM_PIDIV2);
     pGround->SetPosition(0.0f, -2.f, 0.f);
-    pGround->SetScale(100.0f);
+    pGround->SetScale(50.0f);
     pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f, 1.0f);
+    pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
 
     // p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     // if (!fs::exists(p))

@@ -439,12 +439,14 @@ lb_return:
 
 void D3DMeshObject::EndCreateMesh() {}
 
-BOOL D3DMeshObject::UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex)
+BOOL D3DMeshObject::UpdateMaterial(IMaterialHandle *pInMaterial, UINT faceGroupIndex)
 {
     INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
+    MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE*)pInMaterial;
 
     CleanupMaterial(pFace);
-    InitMaterial(pFace, pInMaterial);
+
+    pFace->pMaterialHandle = pMaterial;
 
     return TRUE;
 }

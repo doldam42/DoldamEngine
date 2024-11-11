@@ -42,7 +42,7 @@ class MeshObject : public IGameMesh, public BaseObject
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
     void EndCreateMesh() override;
 
-    BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) override;
+    BOOL UpdateMaterial(IMaterialHandle *pMaterial, UINT faceGroupIndex) override;
 
 
     virtual void ReadFile(FILE *fp) override;

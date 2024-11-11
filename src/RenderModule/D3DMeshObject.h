@@ -188,5 +188,5 @@ class D3DMeshObject : public IRenderMesh
                          const wchar_t *path) override;
     void EndCreateMesh() override;
 
-    BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) override;
+    BOOL UpdateMaterial(IMaterialHandle *pInMaterial, UINT faceGroupIndex) override;
 };

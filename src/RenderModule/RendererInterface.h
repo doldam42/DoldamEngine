@@ -8,8 +8,13 @@
 
 #include <combaseapi.h>
 
-interface IRenderableObject : public IUnknown{};
+interface IFontHandle{};
+interface ITextureHandle{};
+interface IMaterialHandle{};
+interface ILightHandle{};
 
+interface IRenderableObject : public IUnknown{};
+interface IRenderSprite : public IRenderableObject{};
 interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
@@ -17,15 +22,8 @@ interface IRenderMesh : public IRenderableObject
                                  const wchar_t *path) = 0;
     virtual void EndCreateMesh() = 0;
 
-    virtual BOOL UpdateMaterial(const Material *pInMaterial, UINT faceGroupIndex) = 0;
+    virtual BOOL UpdateMaterial(IMaterialHandle * pInMaterial, UINT faceGroupIndex) = 0;
 };
-
-interface IRenderSprite : public IRenderableObject{};
-
-interface IFontHandle{};
-interface ITextureHandle{};
-interface IMaterialHandle{};
-interface ILightHandle{};
 
 interface IRenderer
 {
