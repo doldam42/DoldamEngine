@@ -4,7 +4,7 @@
     <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="EngineInterface.cpp" />
-    <ClCompile Include="GameEngine.cpp" />
+    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -33,11 +33,18 @@
     <ClCompile Include="Model.cpp">
       <Filter>Model</Filter>
     </ClCompile>
+    <ClCompile Include="DebugConsoleSprite.cpp" />
+    <ClCompile Include="PhysicsComponent.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsManager.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
     <ClInclude Include="CameraController.h" />
-    <ClInclude Include="GameEngine.h" />
+    <ClInclude Include="GameManager.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
@@ -63,6 +70,13 @@
     </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>Model</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugConsoleSprite.h" />
+    <ClInclude Include="PhysicsComponent.h">
+      <Filter>Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsManager.h">
+      <Filter>Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

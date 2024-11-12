@@ -19,7 +19,7 @@ enum aiTextureType;
 class AssimpLoader : public IModelExporter
 {
   private:
-    IGameEngine      *m_pGame = nullptr;
+    IGameManager      *m_pGame = nullptr;
 
   public:
     wchar_t         m_basePath[MAX_PATH] = {0};
@@ -51,7 +51,7 @@ class AssimpLoader : public IModelExporter
 
   public:
     // Inherited via IModelExporter
-    BOOL            Initialize(IGameEngine *pGame) override;
+    BOOL            Initialize(IGameManager *pGame) override;
     BOOL            Load(const WCHAR *basePath, const WCHAR *filename) override;
     BOOL            LoadAnimation(const WCHAR *filename) override;
     IGameModel     *GetModel() override;

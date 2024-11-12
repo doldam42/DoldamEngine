@@ -8,17 +8,17 @@
 #include "Model.h"
 #include "Sprite.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 
-GameEngine *g_pGame = nullptr;
+GameManager *g_pGame = nullptr;
 
-UINT GameEngine::initRefCount = 0;
+UINT GameManager::initRefCount = 0;
 
-Model *GameEngine::SquareMesh = nullptr;
-Model *GameEngine::BoxMesh = nullptr;
-Model *GameEngine::SphereMesh = nullptr;
+Model *GameManager::SquareMesh = nullptr;
+Model *GameManager::BoxMesh = nullptr;
+Model *GameManager::SphereMesh = nullptr;
 
-void GameEngine::LoadPrimitiveMeshes()
+void GameManager::LoadPrimitiveMeshes()
 {
     if (!BoxMesh)
     {
@@ -37,7 +37,7 @@ void GameEngine::LoadPrimitiveMeshes()
     }
 }
 
-void GameEngine::DeletePrimitiveMeshes()
+void GameManager::DeletePrimitiveMeshes()
 {
     if (BoxMesh)
     {
@@ -56,7 +56,7 @@ void GameEngine::DeletePrimitiveMeshes()
     }
 }
 
-void GameEngine::Cleanup()
+void GameManager::Cleanup()
 {
     if (m_pShadowMapSprite)
     {
@@ -101,7 +101,7 @@ void GameEngine::Cleanup()
     }
 }
 
-BOOL GameEngine::Initialize(HWND hWnd)
+BOOL GameManager::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
 
@@ -145,7 +145,7 @@ lb_return:
     return result;
 }
 
-void GameEngine::LoadResources()
+void GameManager::LoadResources()
 {
     // Create Shadow Map Sprite
     m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
@@ -167,13 +167,13 @@ void GameEngine::LoadResources()
     m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction, &position);
 }
 
-void GameEngine::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
+void GameManager::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
 
-void GameEngine::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
+void GameManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
 
-void GameEngine::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
+void GameManager::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
 
-void GameEngine::ProcessInput()
+void GameManager::ProcessInput()
 {
     if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
     {
@@ -181,9 +181,9 @@ void GameEngine::ProcessInput()
     }
 }
 
-void GameEngine::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
+void GameManager::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
 
-void GameEngine::Update(ULONGLONG curTick)
+void GameManager::Update(ULONGLONG curTick)
 {
     // Update Scene with 60FPS
     if (curTick - m_prevUpdateTick < 23)
@@ -271,7 +271,7 @@ void GameEngine::Update(ULONGLONG curTick)
     }
 }
 
-void GameEngine::LateUpdate(ULONGLONG curTick)
+void GameManager::LateUpdate(ULONGLONG curTick)
 {
     //// m_pMainCharacter->LateUpdate();
     // for (int i = 0; i < m_scene.size(); i++)
@@ -280,7 +280,7 @@ void GameEngine::LateUpdate(ULONGLONG curTick)
     // }
 }
 
-void GameEngine::Render()
+void GameManager::Render()
 {
     m_pRenderer->UpdateCamera(m_pMainCamera->Eye(), m_pMainCamera->GetViewRow(), m_pMainCamera->GetProjRow());
 
@@ -323,7 +323,7 @@ void GameEngine::Render()
     m_pRenderer->Present();
 }
 
-BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
+BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
 {
     m_pInputManager->SetWindowSize(width, height);
     m_pMainCamera->SetAspectRatio(float(width) / height);
@@ -335,9 +335,9 @@ BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
     return TRUE;
 }
 
-void GameEngine::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
+void GameManager::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
-IGameCharacter *GameEngine::CreateCharacter()
+IGameCharacter *GameManager::CreateCharacter()
 {
     Character *pGameObj = new Character;
     pGameObj->Initialize(this, 5);
@@ -346,7 +346,7 @@ IGameCharacter *GameEngine::CreateCharacter()
     return pGameObj;
 }
 
-IGameObject *GameEngine::CreateGameObject()
+IGameObject *GameManager::CreateGameObject()
 {
     GameObject *pGameObj = new GameObject;
     pGameObj->Initialize(this);
@@ -355,14 +355,14 @@ IGameObject *GameEngine::CreateGameObject()
     return pGameObj;
 }
 
-void GameEngine::DeleteGameObject(IGameObject *pGameObj)
+void GameManager::DeleteGameObject(IGameObject *pGameObj)
 {
     GameObject *pObj = (GameObject *)pGameObj;
     UnLinkFromLinkedList(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pObj->m_LinkInGame);
     delete pObj;
 }
 
-void GameEngine::DeleteAllGameObject()
+void GameManager::DeleteAllGameObject()
 {
     while (m_pGameObjLinkHead)
     {
@@ -371,7 +371,7 @@ void GameEngine::DeleteAllGameObject()
     }
 }
 
-IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
+IGameModel *GameManager::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
 {
     switch (type)
     {
@@ -390,7 +390,7 @@ IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
     return nullptr;
 }
 
-IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameModel *GameManager::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
     pModel->InitRenderComponents(m_pRenderer);
@@ -400,7 +400,7 @@ IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *
     return pModel;
 }
 
-IGameModel *GameEngine::CreateEmptyModel()
+IGameModel *GameManager::CreateEmptyModel()
 {
     Model *pModel = new Model;
 
@@ -409,14 +409,14 @@ IGameModel *GameEngine::CreateEmptyModel()
     return pModel;
 }
 
-void GameEngine::DeleteModel(IGameModel *pModel)
+void GameManager::DeleteModel(IGameModel *pModel)
 {
     Model *pM = (Model *)pModel;
     UnLinkFromLinkedList(&m_pModelLinkHead, &m_pModelLinkTail, &pM->m_LinkInGame);
     delete pM;
 }
 
-void GameEngine::DeleteAllModel()
+void GameManager::DeleteAllModel()
 {
     while (m_pModelLinkHead)
     {
@@ -425,7 +425,7 @@ void GameEngine::DeleteAllModel()
     }
 }
 
-IGameSprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
+IGameSprite *GameManager::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
 {
     WCHAR path[MAX_PATH] = {L'\0'};
     wcscpy_s(path, basePath);
@@ -437,7 +437,7 @@ IGameSprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR
     return pSprite;
 }
 
-IGameSprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
+IGameSprite *GameManager::CreateDynamicSprite(UINT width, UINT height)
 {
     DynamicSprite *pSprite = new DynamicSprite;
     pSprite->Initialize(m_pRenderer, width, height);
@@ -445,14 +445,14 @@ IGameSprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
     return pSprite;
 }
 
-void GameEngine::DeleteSprite(IGameSprite *pSprite)
+void GameManager::DeleteSprite(IGameSprite *pSprite)
 {
     Sprite *pS = (Sprite *)pSprite;
     UnLinkFromLinkedList(&m_pSpriteLinkHead, &m_pSpriteLinkTail, &pS->m_LinkInGame);
     delete pS;
 }
 
-void GameEngine::DeleteAllSprite()
+void GameManager::DeleteAllSprite()
 {
     while (m_pSpriteLinkHead)
     {
@@ -461,7 +461,7 @@ void GameEngine::DeleteAllSprite()
     }
 }
 
-IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameAnimation *GameManager::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     AnimationClip *pClip = nullptr;
     UINT           keySize = wcslen(filename) * sizeof(WCHAR);
@@ -480,7 +480,7 @@ IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const
     return pClip;
 }
 
-IGameAnimation *GameEngine::CreateEmptyAnimation()
+IGameAnimation *GameManager::CreateEmptyAnimation()
 {
     const WCHAR   *filename = L"EmptyAnimation";
     AnimationClip *pClip = nullptr;
@@ -500,7 +500,7 @@ IGameAnimation *GameEngine::CreateEmptyAnimation()
     return pClip;
 }
 
-IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name)
+IGameAnimation *GameManager::GetAnimationByName(const WCHAR *name)
 {
     AnimationClip *pClip = nullptr;
     UINT           keySize = wcslen(name) * sizeof(WCHAR);
@@ -513,7 +513,7 @@ IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name)
     return pClip;
 }
 
-void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
+void GameManager::DeleteAnimation(IGameAnimation *pInAnim)
 {
     AnimationClip *pAnim = dynamic_cast<AnimationClip *>(pInAnim);
     if (!pAnim->ref_count)
@@ -529,7 +529,7 @@ void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
     }
 }
 
-void GameEngine::DeleteAllAnimation()
+void GameManager::DeleteAllAnimation()
 {
     if (m_pAnimationHashTable)
     {
@@ -539,6 +539,6 @@ void GameEngine::DeleteAllAnimation()
     }
 }
 
-void GameEngine::ToggleCamera() { m_activateCamera = !m_activateCamera; }
+void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
-GameEngine::~GameEngine() { Cleanup(); }
+GameManager::~GameManager() { Cleanup(); }

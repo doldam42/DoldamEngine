@@ -15,7 +15,7 @@ class Model;
 class AnimationClip;
 class GameObject;
 class Character;
-class GameEngine : public IGameEngine
+class GameManager : public IGameManager
 {
   public:
     static Model *SquareMesh;
@@ -130,8 +130,8 @@ class GameEngine : public IGameEngine
     inline CameraController *GetCamera() const { return m_pMainCamera; }
     inline Timer            *GetPerformanceTimer() const { return m_pPerformanceTimer; }
 
-    GameEngine() = default;
-    ~GameEngine();
+    GameManager() = default;
+    ~GameManager();
 };
 
-extern GameEngine *g_pGame;
+extern GameManager *g_pGame;

@@ -153,7 +153,7 @@ void FBXLoader::Cleanup()
     }
 }
 
-BOOL FBXLoader::Initialize(IGameEngine *pGame)
+BOOL FBXLoader::Initialize(IGameManager *pGame)
 {
     m_pManager = FbxManager::Create();
     if (!m_pManager)

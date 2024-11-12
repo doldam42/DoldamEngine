@@ -4,7 +4,7 @@
 #include "EngineInterface.h"
 
 interface IRenderer;
-interface IGameEngine;
+interface IGameManager;
 interface IRenderMesh;
 
 struct FaceGroup

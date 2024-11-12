@@ -130,7 +130,7 @@ interface IInputManager
     virtual BOOL IsKeyPressed(UINT nChar) const = 0;
 };
 
-interface IGameEngine
+interface IGameManager
 {
     virtual BOOL Initialize(HWND hWnd) = 0;
 
@@ -178,8 +178,8 @@ interface IGameEngine
     virtual IInputManager *GetInputManager() const = 0;
 };
 
-extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine);
-extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine);
+extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameManager **ppOutGameEngine);
+extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameManager *pGameEngine);
 
 extern "C" ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh **ppOutMesh);
 extern "C" ENGINEMODULE_API void DeleteGameMesh(IGameMesh *pInMesh);

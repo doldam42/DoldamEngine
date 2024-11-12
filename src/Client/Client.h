@@ -2,7 +2,7 @@
 class Client
 {
     HWND         m_hWnd = nullptr;
-    IGameEngine *m_pGame = nullptr;
+    IGameManager *m_pGame = nullptr;
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
     IRenderer   *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;

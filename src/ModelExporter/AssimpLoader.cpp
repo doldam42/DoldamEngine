@@ -340,7 +340,7 @@ std::string AssimpLoader::ReadTextureFilename(const aiScene *scene, const aiMate
     }
 }
 
-BOOL AssimpLoader::Initialize(IGameEngine *pGame)
+BOOL AssimpLoader::Initialize(IGameManager *pGame)
 {
     m_pGame = pGame;
     return TRUE;

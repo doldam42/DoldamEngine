@@ -2,7 +2,7 @@
 
 #include "AnimationClip.h"
 #include "Character.h"
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "Model.h"
 
 void Character::Cleanup()
@@ -22,7 +22,7 @@ void Character::Cleanup()
     }
 }
 
-void Character::Initialize(GameEngine *pGameEngine, UINT maxClipCount)
+void Character::Initialize(GameManager *pGameEngine, UINT maxClipCount)
 {
     GameObject::Initialize(pGameEngine);
     m_maxClipCount = maxClipCount;

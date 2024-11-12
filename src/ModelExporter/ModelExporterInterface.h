@@ -12,7 +12,7 @@ interface IGameModel;
 interface IGameAnimation;
 interface IModelExporter 
 { 
-	virtual BOOL Initialize(IGameEngine* pGame) = 0;
+	virtual BOOL Initialize(IGameManager* pGame) = 0;
 
 	virtual BOOL Load(const WCHAR *basePath, const WCHAR *filename) = 0;
     virtual BOOL LoadAnimation(const WCHAR *filename) = 0;

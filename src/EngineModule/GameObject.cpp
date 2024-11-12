@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "Model.h"
 
 #include "GameObject.h"
@@ -14,7 +14,7 @@ void GameObject::Cleanup()
     }
 }
 
-void GameObject::Initialize(GameEngine *pGameEngine)
+void GameObject::Initialize(GameManager *pGameEngine)
 {
     m_pGameEngine = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();

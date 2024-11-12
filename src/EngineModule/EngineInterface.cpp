@@ -1,15 +1,15 @@
 #include "pch.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "MeshObject.h"
 
 #include "EngineInterface.h"
 
-ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine)
+ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameManager **ppOutGameEngine)
 {
     BOOL result = false;
 
-    GameEngine *pGameEngine = new GameEngine;
+    GameManager *pGameEngine = new GameManager;
 
     result = pGameEngine->Initialize(hWnd);
     *ppOutGameEngine = pGameEngine;
@@ -19,9 +19,9 @@ ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine)
     return result;
 }
 
-ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine)
+ENGINEMODULE_API void DeleteGameEngine(IGameManager *pGameEngine)
 {
-    GameEngine *pGame = (GameEngine *)pGameEngine;
+    GameManager *pGame = (GameManager *)pGameEngine;
     delete pGame;
 
 #ifdef _DEBUG

@@ -2,14 +2,14 @@
 #include "MathHeaders.h"
 
 class IRenderer;
-class GameEngine;
+class GameManager;
 class Model;
 class GameObject : public IGameObject
 {
     Transform m_transform;
     Matrix    m_worldMatrix;
 
-    GameEngine *m_pGameEngine = nullptr;
+    GameManager *m_pGameEngine = nullptr;
     IRenderer  *m_pRenderer = nullptr;
     Model      *m_pModel = nullptr;
 
@@ -28,7 +28,7 @@ class GameObject : public IGameObject
     void Cleanup();
 
   public:
-    void         Initialize(GameEngine *pGameEngine);
+    void         Initialize(GameManager *pGameEngine);
     virtual void Run();
     void         Render();
 
@@ -50,6 +50,8 @@ class GameObject : public IGameObject
     inline float   GetRotationX() override { return m_transform.GetRotation().ToEuler().x; }
     inline float   GetRotationY() override { return m_transform.GetRotation().ToEuler().y; }
     inline float   GetRotationZ() override { return m_transform.GetRotation().ToEuler().z; }
+
+    inline Quaternion GetRotation() { return m_transform.GetRotation(); }
 
     void GetBoxInWorld(Box *pOutBox) const;
     void GetSphereInWorld(Sphere *pOutSphere) const;
