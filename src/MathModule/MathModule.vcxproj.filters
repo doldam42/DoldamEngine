@@ -5,7 +5,7 @@
       <UniqueIdentifier>{f7503ace-5b08-4961-993c-cbbeb40557f4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shape">
-      <UniqueIdentifier>{f81df06a-73c1-443f-9321-566305cceddc}</UniqueIdentifier>
+      <UniqueIdentifier>{67ae1203-e691-4c94-b43f-15c76b79bd51}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -21,16 +21,10 @@
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Box.h">
+    <ClInclude Include="ShapeBase.h">
       <Filter>Shape</Filter>
     </ClInclude>
     <ClInclude Include="Sphere.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Shape.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Collider.h">
       <Filter>Shape</Filter>
     </ClInclude>
   </ItemGroup>
@@ -40,14 +34,5 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Collider.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
-    <ClCompile Include="Sphere.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
-    <ClCompile Include="Box.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

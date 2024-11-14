@@ -201,71 +201,12 @@ void GameEngine::Update(ULONGLONG curTick)
         m_pMainCamera->Update(dt);
     }
 
-    // update objects
-    SORT_LINK *pCur = m_pGameObjLinkHead;
+    SORT_LINK* pCur = m_pGameObjLinkHead;
     while (pCur)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
 
-        // Physics
-        static const Vector3 gravity(0.0f, -10.0f, 0.0f);
-
-        float   mass = 1.0f / pGameObj->m_invMass;
-        Vector3 impulseGravity = gravity * mass * dt;
-        pGameObj->ApplyImpulseLinear(impulseGravity);
-
-        pCur = pCur->pNext;
-    }
-
-    pCur = m_pGameObjLinkHead;
-    while (pCur)
-    {
-        GameObject *pCurObj = (GameObject *)pCur->pItem;
-
-        Box    box;
-        Sphere sphere;
-
-        IShape *pShape = nullptr;
-
-        if (pCurObj->m_collisionShapeType == SHAPE_TYPE_BOX)
-        {
-            pCurObj->GetBoxInWorld(&box);
-            pShape = &box;
-        }
-        else if (pCurObj->m_collisionShapeType == SHAPE_TYPE_SPHERE)
-        {
-        }
-
-        SORT_LINK *pOther = pCur->pNext;
-        while (pOther)
-        {
-            GameObject *pOtherObj = (GameObject *)pOther->pItem;
-
-            if (pCurObj->m_invMass != 0 || pOtherObj->m_invMass != 0)
-            {
-                Contact contact;
-                if (pCurObj->Intersect(pOtherObj, &contact))
-                {
-                    GameObject::ResolveContact(pCurObj, pOtherObj, contact);
-                }
-            }
-
-            pOther = pOther->pNext;
-        }
-
-        pCur = pCur->pNext;
-    }
-
-    pCur = m_pGameObjLinkHead;
-    while (pCur)
-    {
-        GameObject *pGameObj = (GameObject *)pCur->pItem;
-
-        Vector3 pos = pGameObj->GetPosition();
-        pos += pGameObj->m_linearVelocity * dt;
-        pGameObj->SetPosition(pos.x, pos.y, pos.z);
-
-        pGameObj->Run();
+        pGameObj->Update(dt);
 
         pCur = pCur->pNext;
     }

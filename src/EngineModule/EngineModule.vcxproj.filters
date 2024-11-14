@@ -33,6 +33,10 @@
     <ClCompile Include="Model.cpp">
       <Filter>Model</Filter>
     </ClCompile>
+    <ClCompile Include="DebugConsoleSprite.cpp" />
+    <ClCompile Include="PhysicsComponent.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -64,6 +68,10 @@
     <ClInclude Include="Model.h">
       <Filter>Model</Filter>
     </ClInclude>
+    <ClInclude Include="DebugConsoleSprite.h" />
+    <ClInclude Include="PhysicsComponent.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">
@@ -81,7 +89,7 @@
     <Filter Include="GameUtils">
       <UniqueIdentifier>{9cfe771c-b251-463c-ba0b-dc9fea5e6bd1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Collision">
+    <Filter Include="Physics">
       <UniqueIdentifier>{894be68f-dfa3-41d8-814f-5df68a4c3692}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

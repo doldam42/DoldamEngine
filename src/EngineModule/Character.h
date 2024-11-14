@@ -16,8 +16,9 @@ class Character : public IGameCharacter, public GameObject
     void Cleanup();
 
   public:
+
     void Initialize(GameEngine *pGameEngine, UINT maxClipCount);
-    void Run() override;
+    void Update(float dt) override;
 
     void InsertAnimation(IGameAnimation *pClip) override;
     void SetCurrentAnimationByName(const WCHAR *pAnimationName);
@@ -26,14 +27,15 @@ class Character : public IGameCharacter, public GameObject
     ~Character() override;
 
     // Inherited via GameObject
+    void InitPhysics(const Shape *pInShape, float mass, float elasticity) override;
+
     Vector3 GetPosition() override;
     Vector3 GetScale() override;
     float   GetRotationX() override;
     float   GetRotationY() override;
     float   GetRotationZ() override;
-    void    SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) override;
-    Vector3 GetVelocity() const override;
-    void    ApplyImpulseLinear(const Vector3 &impulse) override;
+    Quaternion GetRotation() override;
+
     void    SetModel(IGameModel *pModel) override;
     void    SetPosition(float x, float y, float z) override;
     void    SetScale(float x, float y, float z) override;
@@ -41,4 +43,6 @@ class Character : public IGameCharacter, public GameObject
     void    SetRotationX(float rotX) override;
     void    SetRotationY(float rotY) override;
     void    SetRotationZ(float rotZ) override;
+
+    void AddPosition(const Vector3 *pInDeltaPos) override;
 };

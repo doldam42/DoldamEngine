@@ -39,10 +39,8 @@ using DirectX::BoundingFrustum;
 using DirectX::BoundingOrientedBox;
 using DirectX::ContainmentType;
 
-#include "Shape.h"
-#include "Box.h"
+#include "ShapeBase.h"
 #include "Sphere.h"
-#include "Collider.h"
 
 #include "Camera.h"
 #include "Frustum.h"

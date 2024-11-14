@@ -106,9 +106,9 @@ void Client::LoadResources()
 
     pSphere->SetModel(pModel);
     pSphere->SetPosition(0.0f, 5.0f, 3.0f);
-    pSphere->SetPhysics(SHAPE_TYPE_SPHERE, 1.0f, 0.8f);
 
-    pSphere->ApplyImpulseLinear(2.0f * Vector3::UnitZ);
+    Sphere sphere(1.0f);
+    pSphere->InitPhysics(&sphere, 1.0f, 1.0f);
 
     m_pSphere = pSphere;
     // m_pGame->SetCameraFollowTarget(pSphere);
@@ -148,8 +148,8 @@ void Client::LoadResources()
     pGround->SetRotationX(XM_PIDIV2);
     pGround->SetPosition(0.0f, -2.f, 0.f);
     pGround->SetScale(50.0f);
-    pGround->SetPhysics(SHAPE_TYPE_BOX, 0.0f, 1.0f);
     pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
+
 
     // p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     // if (!fs::exists(p))
@@ -300,7 +300,7 @@ void Client::Update(ULONGLONG curTick)
 
     // draw text
     Vector3 pos = m_pSphere->GetPosition();
-    Vector3 velocity = m_pSphere->GetVelocity();
+    Vector3 velocity = Vector3::Zero;
 
     int   iTextWidth = 0;
     int   iTextHeight = 0;

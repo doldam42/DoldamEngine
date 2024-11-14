@@ -29,9 +29,9 @@ void Character::Initialize(GameEngine *pGameEngine, UINT maxClipCount)
     m_ppAnimationClips = new AnimationClip *[maxClipCount];
 }
 
-void Character::Run()
+void Character::Update(float dt)
 {
-    GameObject::Run();
+    GameObject::Update(dt);
 
     AnimationClip *clip = m_ppAnimationClips[m_clipId];
     GetModel()->UpdateAnimation(clip, m_frameCount);
@@ -40,6 +40,11 @@ void Character::Run()
 }
 
 Character::~Character() { Cleanup(); }
+
+void Character::InitPhysics(const Shape *pInShape, float mass, float elasticity)
+{
+    GameObject::InitPhysics(pInShape, mass, elasticity);
+}
 
 Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
 
@@ -51,13 +56,7 @@ float Character::GetRotationY() { return GameObject::GetRotationY(); }
 
 float Character::GetRotationZ() { return GameObject::GetRotationZ(); }
 
-void Character::SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity)
-{
-    GameObject::SetPhysics(collisionType, mass, elasticity); }
-
-Vector3 Character::GetVelocity() const { return GameObject::GetVelocity(); }
-
-void Character::ApplyImpulseLinear(const Vector3 &impulse) { GameObject::ApplyImpulseLinear(impulse); }
+Quaternion Character::GetRotation() { return GameObject::GetRotation(); }
 
 void Character::SetModel(IGameModel *pModel) { GameObject::SetModel(pModel); }
 
@@ -72,6 +71,8 @@ void Character::SetRotationX(float rotX) { GameObject::SetRotationX(rotX); }
 void Character::SetRotationY(float rotY) { GameObject::SetRotationY(rotY); }
 
 void Character::SetRotationZ(float rotZ) { GameObject::SetRotationZ(rotZ); }
+
+void Character::AddPosition(const Vector3 *pInDeltaPos) { GameObject::AddPosition(pInDeltaPos); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)
 {

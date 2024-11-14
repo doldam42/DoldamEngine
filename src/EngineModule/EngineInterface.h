@@ -50,7 +50,7 @@ interface IGameMesh : public IBaseObject
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
 
-    virtual BOOL UpdateMaterial(IMaterialHandle* pMaterial, UINT faceGroupIndex) = 0;
+    virtual BOOL UpdateMaterial(IMaterialHandle * pMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IGameModel : public IUnknown, public ISerializable
@@ -61,19 +61,24 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
+interface IPhysicsComponent
+{
+    virtual Vector3 GetVelocity() const = 0;
+
+    virtual void ApplyImpulseLinear(const Vector3 &impulse) = 0;
+};
+
 interface IGameObject
 {
+    virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity) = 0;
+
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
     virtual float   GetRotationX() = 0;
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
 
-    virtual void SetPhysics(SHAPE_TYPE collisionType, float mass, float elasticity) = 0;
-    
-    virtual Vector3 GetVelocity() const = 0;
-
-    virtual void ApplyImpulseLinear(const Vector3 &impulse) = 0;
+    virtual Quaternion GetRotation() = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
     virtual void SetPosition(float x, float y, float z) = 0;
@@ -82,6 +87,8 @@ interface IGameObject
     virtual void SetRotationX(float rotX) = 0;
     virtual void SetRotationY(float rotY) = 0;
     virtual void SetRotationZ(float rotZ) = 0;
+
+    virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
 };
 
 interface IGameAnimation : public IUnknown, public ISerializable

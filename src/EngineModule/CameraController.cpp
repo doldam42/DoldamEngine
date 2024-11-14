@@ -117,7 +117,7 @@ static void Jump(void *)
     float dt = g_pGame->GetDeltaTime();
     GameObject *pTarget = g_pGame->GetCamera()->GetFollowTarget();
 
-    pTarget->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
+    // pTarget->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
 }
 
 void CameraController::SetFollowTarget(GameObject *pTarget)
