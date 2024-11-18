@@ -26,10 +26,10 @@ void GameObject::Initialize(GameEngine *pGameEngine)
     m_pRenderer = pGameEngine->GetRenderer();
 }
 
-void GameObject::InitPhysics(const Shape *pInShape, float mass, float elasticity) 
+void GameObject::InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction)
 {
     m_pPhysicsComponent = new PhysicsComponent;
-    m_pPhysicsComponent->Initialize(this, pInShape, mass, elasticity);
+    m_pPhysicsComponent->Initialize(this, pInShape, mass, elasticity, friction);
 }
 
 void GameObject::Update(float dt)
@@ -115,5 +115,7 @@ void GameObject::SetRotationZ(float rotZ)
     m_transform.SetRotation(Quaternion::CreateFromYawPitchRoll(0, 0, rotZ));
     m_IsUpdated = true;
 }
+
+void GameObject::SetRotation(const Quaternion *pInQuaternion) { m_transform.SetRotation(*pInQuaternion); }
 
 void GameObject::AddPosition(const Vector3 *pInDeltaPos) { m_transform.AddPosition(*pInDeltaPos); }

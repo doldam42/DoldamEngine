@@ -27,7 +27,7 @@ class Character : public IGameCharacter, public GameObject
     ~Character() override;
 
     // Inherited via GameObject
-    void InitPhysics(const Shape *pInShape, float mass, float elasticity) override;
+    void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) override;
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;
@@ -43,6 +43,7 @@ class Character : public IGameCharacter, public GameObject
     void    SetRotationX(float rotX) override;
     void    SetRotationY(float rotY) override;
     void    SetRotationZ(float rotZ) override;
+    void    SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
 };

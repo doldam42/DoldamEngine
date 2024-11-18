@@ -41,9 +41,9 @@ void Character::Update(float dt)
 
 Character::~Character() { Cleanup(); }
 
-void Character::InitPhysics(const Shape *pInShape, float mass, float elasticity)
+void Character::InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction)
 {
-    GameObject::InitPhysics(pInShape, mass, elasticity);
+    GameObject::InitPhysics(pInShape, mass, elasticity, friction);
 }
 
 Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
@@ -71,6 +71,8 @@ void Character::SetRotationX(float rotX) { GameObject::SetRotationX(rotX); }
 void Character::SetRotationY(float rotY) { GameObject::SetRotationY(rotY); }
 
 void Character::SetRotationZ(float rotZ) { GameObject::SetRotationZ(rotZ); }
+
+void Character::SetRotation(const Quaternion *pInQuaternion) { GameObject::SetRotation(pInQuaternion); }
 
 void Character::AddPosition(const Vector3 *pInDeltaPos) { GameObject::AddPosition(pInDeltaPos); }
 

@@ -151,6 +151,7 @@
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="GenericHeaders.h" />
     <ClInclude Include="HashTable.h" />
+    <ClInclude Include="KDTree.h" />
     <ClInclude Include="LinkedList.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="pch.h" />
@@ -162,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="HashTable.cpp" />
+    <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="pch.cpp">

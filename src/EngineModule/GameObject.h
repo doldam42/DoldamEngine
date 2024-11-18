@@ -27,15 +27,16 @@ class GameObject : public IGameObject
   public:
     void Initialize(GameEngine *pGameEngine);
 
-    void InitPhysics(const Shape *pInShape, float mass, float elasticity) override;
+    void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) override;
 
     virtual void Update(float dt);
     void         Render();
 
     // Getter
-    inline const Transform &GetTransform() { return m_transform; }
-    inline const Matrix    &GetWorldMatrix() { return m_worldMatrix; }
-    inline Model           *GetModel() { return m_pModel; }
+    inline const Transform  &GetTransform() { return m_transform; }
+    inline const Matrix     &GetWorldMatrix() { return m_worldMatrix; }
+    inline Model            *GetModel() { return m_pModel; }
+    inline PhysicsComponent *GetPhysicsComponent() { return m_pPhysicsComponent; }
 
     inline Vector3    GetPosition() override { return m_transform.GetPosition(); }
     inline Vector3    GetScale() override { return m_transform.GetScale(); }
@@ -51,6 +52,7 @@ class GameObject : public IGameObject
     void SetRotationY(float rotY) override;
     void SetRotationX(float rotX) override;
     void SetRotationZ(float rotZ) override;
+    void SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
 

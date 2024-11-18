@@ -90,11 +90,11 @@ void Client::LoadResources()
     mat.roughnessFactor = 0.2f;
     mat.metallicFactor = 0.8f;
     mat.opacityFactor = 1.0f;
-    IMaterialHandle* pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
-    
+    IMaterialHandle *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+
     mat = Material();
     mat.roughnessFactor = 0.1f;
-    mat.metallicFactor =0.8f;
+    mat.metallicFactor = 0.8f;
     wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
     wcscpy_s(mat.name, L"ground");
     wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\blender_uv_grid_2k.png");
@@ -108,7 +108,7 @@ void Client::LoadResources()
     pSphere->SetPosition(0.0f, 5.0f, 3.0f);
 
     Sphere sphere(1.0f);
-    pSphere->InitPhysics(&sphere, 1.0f, 1.0f);
+    pSphere->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
 
     m_pSphere = pSphere;
     // m_pGame->SetCameraFollowTarget(pSphere);
@@ -141,15 +141,17 @@ void Client::LoadResources()
     // pSponza->SetModel(pSponzaModel);
     // pSponza->SetScale(30.f);
 
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
-    pGround->SetRotationX(XM_PIDIV2);
-    pGround->SetPosition(0.0f, -2.f, 0.f);
+    // pGround->SetRotationX(XM_PIDIV2);
+    pGround->SetPosition(0.0f, -52.f, 0.f);
     pGround->SetScale(50.0f);
-    pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
 
+    sphere.Radius = 50.0f;
+    pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
+    pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
 
     // p = L"..\\..\\assets\\characters\\gura\\gura.dom";
     // if (!fs::exists(p))
@@ -300,15 +302,18 @@ void Client::Update(ULONGLONG curTick)
 
     // draw text
     Vector3 pos = m_pSphere->GetPosition();
-    Vector3 velocity = Vector3::Zero;
+
+    float rotX = m_pSphere->GetRotationX();
+    float rotY = m_pSphere->GetRotationY();
+    float rotZ = m_pSphere->GetRotationZ();
 
     int   iTextWidth = 0;
     int   iTextHeight = 0;
     WCHAR wchTxt[260];
     memset(wchTxt, 0, sizeof(wchTxt));
     DWORD dwTxtLen =
-        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nVelocity: (%.3f, %.3f, %.3f)",
-                   m_FPS, pos.x, pos.y, pos.z, velocity.x, velocity.y, velocity.z);
+        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nOrient: (%.3f, %.3f, %.3f)",
+                   m_FPS, pos.x, pos.y, pos.z, rotX, rotY, rotZ);
 
     if (wcscmp(m_text, wchTxt))
     {

@@ -163,6 +163,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="Contact.cpp" />
     <ClCompile Include="DebugConsoleSprite.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EngineInterface.cpp" />
@@ -174,6 +175,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Intersect.cpp" />
     <ClCompile Include="MeshObject.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="pch.cpp">
@@ -181,6 +183,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
@@ -192,6 +195,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Character.h" />
+    <ClInclude Include="Contact.h" />
     <ClInclude Include="DebugConsoleSprite.h" />
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="GameObject.h" />
@@ -199,10 +203,12 @@
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Intersect.h" />
     <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>

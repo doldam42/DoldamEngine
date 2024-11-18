@@ -11,4 +11,14 @@ struct Sphere : public Shape
     Sphere(const Sphere &rhs) : Radius(rhs.Radius) { m_centerOfMass = rhs.m_centerOfMass; }
 
     SHAPE_TYPE GetType() const override { return SHAPE_TYPE_SPHERE; }
+
+    Matrix InertiaTensor() const override
+    {
+        Matrix tensor = Matrix::Identity;
+        tensor.m[0][0] = 2.0f * Radius * Radius / 5.0f;
+        tensor.m[1][1] = 2.0f * Radius * Radius / 5.0f;
+        tensor.m[2][2] = 2.0f * Radius * Radius / 5.0f;
+
+        return tensor;
+    }
 };

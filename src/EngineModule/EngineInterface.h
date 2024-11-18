@@ -66,11 +66,12 @@ interface IPhysicsComponent
     virtual Vector3 GetVelocity() const = 0;
 
     virtual void ApplyImpulseLinear(const Vector3 &impulse) = 0;
+    virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
 interface IGameObject
 {
-    virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity) = 0;
+    virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
@@ -87,6 +88,7 @@ interface IGameObject
     virtual void SetRotationX(float rotX) = 0;
     virtual void SetRotationY(float rotY) = 0;
     virtual void SetRotationZ(float rotZ) = 0;
+    virtual void SetRotation(const Quaternion *pInQuaternion) = 0;
 
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
 };

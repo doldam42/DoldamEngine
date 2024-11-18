@@ -12,6 +12,7 @@ class Shape
     virtual SHAPE_TYPE GetType() const = 0;
 
     virtual Vector3 GetCenterOfMass() const { return m_centerOfMass; }
+    virtual Matrix  InertiaTensor() const = 0;
 
   protected:
     Vector3 m_centerOfMass;

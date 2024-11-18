@@ -37,6 +37,15 @@
     <ClCompile Include="PhysicsComponent.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="Contact.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsManager.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Intersect.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -70,6 +79,15 @@
     </ClInclude>
     <ClInclude Include="DebugConsoleSprite.h" />
     <ClInclude Include="PhysicsComponent.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Contact.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsManager.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Intersect.h">
       <Filter>Physics</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,6 +7,7 @@
 #include "GeometryGenerator.h"
 #include "Model.h"
 #include "Sprite.h"
+#include "PhysicsManager.h"
 
 #include "GameEngine.h"
 
@@ -74,6 +75,12 @@ void GameEngine::Cleanup()
 
     DeleteAllAnimation();
 
+    if (m_pPhysicsManager)
+    {
+        delete m_pPhysicsManager;
+        m_pPhysicsManager = nullptr;
+    }
+
     if (m_pRenderer)
     {
         DeleteD3D12Renderer(m_pRenderer);
@@ -125,6 +132,9 @@ BOOL GameEngine::Initialize(HWND hWnd)
     }
 
     m_renderThreadCount = m_pRenderer->GetRenderThreadCount();
+
+    m_pPhysicsManager = new PhysicsManager;
+    m_pPhysicsManager->Initialize();
 
     m_pMainCamera = new CameraController;
     m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 100.0f);
@@ -190,9 +200,16 @@ void GameEngine::Update(ULONGLONG curTick)
     {
         return;
     }
-    float dt = (m_prevUpdateTick == 0) ? 0.0f : static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
-    m_prevUpdateTick = curTick;
+    
+    // 만약 현재 Tick과 이전 프레임 Tick간의 차이가 너무 클 경우
+    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
 
+    if (dt > 0.1f)
+    {
+        dt = 0.03f; // 30 FPS
+    }
+    m_prevUpdateTick = curTick;
+    
     m_deltaTime = dt;
 
     // camera
@@ -202,6 +219,19 @@ void GameEngine::Update(ULONGLONG curTick)
     }
 
     SORT_LINK* pCur = m_pGameObjLinkHead;
+    
+    while (pCur)
+    {
+        GameObject *pGameObj = (GameObject *)pCur->pItem;
+        
+        m_pPhysicsManager->CollisionTest(pGameObj);
+
+        pCur = pCur->pNext;
+    }
+    
+    m_pPhysicsManager->ResolveContactsAll();
+
+    pCur = m_pGameObjLinkHead;
     while (pCur)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;

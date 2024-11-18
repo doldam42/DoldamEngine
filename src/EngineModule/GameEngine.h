@@ -11,6 +11,7 @@
 
 #include "EngineInterface.h"
 
+class PhysicsManager;
 class Model;
 class AnimationClip;
 class GameObject;
@@ -28,6 +29,7 @@ class GameEngine : public IGameEngine
   private:
     static UINT initRefCount;
 
+    PhysicsManager   *m_pPhysicsManager = nullptr;
     CameraController *m_pMainCamera = nullptr;
     IRenderer        *m_pRenderer = nullptr;
     InputManager     *m_pInputManager = nullptr;

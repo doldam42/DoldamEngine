@@ -25,6 +25,9 @@
     <Filter Include="ThreadPool">
       <UniqueIdentifier>{b45b9f94-ef01-4a41-b605-5b7ad7653b32}</UniqueIdentifier>
     </Filter>
+    <Filter Include="KDTree">
+      <UniqueIdentifier>{651d4d2a-912c-4149-97f9-304b30c5e89b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtil.h">
@@ -56,6 +59,9 @@
       <Filter>ThreadPool</Filter>
     </ClInclude>
     <ClInclude Include="EventListener.h" />
+    <ClInclude Include="KDTree.h">
+      <Filter>KDTree</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -83,5 +89,8 @@
       <Filter>pch</Filter>
     </ClCompile>
     <ClCompile Include="EventListener.cpp" />
+    <ClCompile Include="KDTree.cpp">
+      <Filter>KDTree</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
