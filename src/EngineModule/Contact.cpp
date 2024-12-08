@@ -7,8 +7,8 @@ void ResolveContact(Contact &contact)
     PhysicsComponent *pA = contact.pA;
     PhysicsComponent *pB = contact.pB;
 
-    const Vector3 ptOnA = contact.contactPointA;
-    const Vector3 ptOnB = contact.contactPointB;
+    const Vector3 ptOnA = contact.contactPointAWorldSpace;
+    const Vector3 ptOnB = contact.contactPointBWorldSpace;
 
     const float invMassA = pA->m_invMass;
     const float invMassB = pB->m_invMass;
@@ -58,11 +58,16 @@ void ResolveContact(Contact &contact)
     pA->ApplyImpulse(ptOnA, -impulseFrition);
     pB->ApplyImpulse(ptOnB, impulseFrition);
 
-    const float tA = pA->m_invMass / (pA->m_invMass + pB->m_invMass);
-    const float tB = pB->m_invMass / (pA->m_invMass + pB->m_invMass);
-
-    const Vector3 ds = ptOnB - ptOnA;
-
-    pA->AddPosition(ds * tA);
-    pB->AddPosition(-ds * tB);
+    //
+    // Let's also move our colliding objects to just outside of each other (projection method)
+    //
+    if (contact.timeOfImpact == 0)
+    {
+        const Vector3 ds = ptOnB - ptOnA;
+        const float   tA = pA->m_invMass / (pA->m_invMass + pB->m_invMass);
+        const float   tB = pB->m_invMass / (pA->m_invMass + pB->m_invMass);
+        
+        pA->AddPosition(ds * tA);
+        pB->AddPosition(-ds * tB);
+    }
 }

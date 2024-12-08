@@ -2,4 +2,4 @@
 
 #include "Contact.h"
 
-BOOL Intersect(PhysicsComponent *pA, PhysicsComponent *pB, Contact *pOutContact);
+BOOL Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Contact *pOutContact);

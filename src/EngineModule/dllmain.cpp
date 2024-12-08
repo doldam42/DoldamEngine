@@ -3,8 +3,8 @@
 #include "pch.h"
 
 #pragma comment(lib, "DirectXTK12.lib")
-#pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
+#pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "RenderModule.lib")
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

@@ -3,23 +3,25 @@
 #include "AnimationClip.h"
 #include "Camera.h"
 #include "Character.h"
+#include "ControllerManager.h"
 #include "GameObject.h"
 #include "GeometryGenerator.h"
 #include "Model.h"
-#include "Sprite.h"
 #include "PhysicsManager.h"
+#include "Sprite.h"
+#include "World.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 
-GameEngine *g_pGame = nullptr;
+GameManager *g_pGame = nullptr;
 
-UINT GameEngine::initRefCount = 0;
+UINT GameManager::initRefCount = 0;
 
-Model *GameEngine::SquareMesh = nullptr;
-Model *GameEngine::BoxMesh = nullptr;
-Model *GameEngine::SphereMesh = nullptr;
+Model *GameManager::SquareMesh = nullptr;
+Model *GameManager::BoxMesh = nullptr;
+Model *GameManager::SphereMesh = nullptr;
 
-void GameEngine::LoadPrimitiveMeshes()
+void GameManager::LoadPrimitiveMeshes()
 {
     if (!BoxMesh)
     {
@@ -33,12 +35,12 @@ void GameEngine::LoadPrimitiveMeshes()
     }
     if (!SphereMesh)
     {
-        SphereMesh = GeometryGenerator::MakeSphere(1.0f, 32, 32);
+        SphereMesh = GeometryGenerator::MakeSphere(1.0f, 64, 64);
         SphereMesh->InitRenderComponents(m_pRenderer);
     }
 }
 
-void GameEngine::DeletePrimitiveMeshes()
+void GameManager::DeletePrimitiveMeshes()
 {
     if (BoxMesh)
     {
@@ -57,7 +59,7 @@ void GameEngine::DeletePrimitiveMeshes()
     }
 }
 
-void GameEngine::Cleanup()
+void GameManager::Cleanup()
 {
     if (m_pShadowMapSprite)
     {
@@ -74,6 +76,11 @@ void GameEngine::Cleanup()
     DeleteAllModel();
 
     DeleteAllAnimation();
+
+    if (m_pControllerManager)
+    {
+        delete m_pControllerManager;
+    }
 
     if (m_pPhysicsManager)
     {
@@ -108,7 +115,8 @@ void GameEngine::Cleanup()
     }
 }
 
-BOOL GameEngine::Initialize(HWND hWnd)
+static void pauseFun(void *) { g_pGame->m_isPaused = !g_pGame->m_isPaused; }
+BOOL        GameManager::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
 
@@ -121,6 +129,7 @@ BOOL GameEngine::Initialize(HWND hWnd)
 
     m_pInputManager = new InputManager();
     m_pInputManager->Initialize(width, height);
+    m_pInputManager->AddKeyListener('P', pauseFun);
 
     m_pTimer = new Timer;
     m_pPerformanceTimer = new Timer;
@@ -145,8 +154,7 @@ BOOL GameEngine::Initialize(HWND hWnd)
     m_pAnimationHashTable = new HashTable();
     m_pAnimationHashTable->Initialize(13, MAX_NAME, 128); // TODO: 최적의 버킷 개수 정하기
 
-    LoadPrimitiveMeshes();
-    LoadResources();
+    m_pControllerManager = new ControllerManager;
 
     result = TRUE;
 lb_return:
@@ -155,8 +163,10 @@ lb_return:
     return result;
 }
 
-void GameEngine::LoadResources()
+BOOL GameManager::LoadResources()
 {
+    LoadPrimitiveMeshes();
+
     // Create Shadow Map Sprite
     m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
@@ -175,15 +185,17 @@ void GameEngine::LoadResources()
     // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);
     // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
     m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction, &position);
+
+    return TRUE;
 }
 
-void GameEngine::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
+void GameManager::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
 
-void GameEngine::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
+void GameManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
 
-void GameEngine::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
+void GameManager::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
 
-void GameEngine::ProcessInput()
+void GameManager::ProcessInput()
 {
     if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
     {
@@ -191,16 +203,21 @@ void GameEngine::ProcessInput()
     }
 }
 
-void GameEngine::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
+void GameManager::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
 
-void GameEngine::Update(ULONGLONG curTick)
+void GameManager::Update(ULONGLONG curTick)
 {
+    if (m_isPaused)
+    {
+        m_prevUpdateTick = curTick;
+        return;
+    }
     // Update Scene with 60FPS
     if (curTick - m_prevUpdateTick < 23)
     {
         return;
     }
-    
+
     // 만약 현재 Tick과 이전 프레임 Tick간의 차이가 너무 클 경우
     float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
 
@@ -209,7 +226,6 @@ void GameEngine::Update(ULONGLONG curTick)
         dt = 0.03f; // 30 FPS
     }
     m_prevUpdateTick = curTick;
-    
     m_deltaTime = dt;
 
     // camera
@@ -218,18 +234,33 @@ void GameEngine::Update(ULONGLONG curTick)
         m_pMainCamera->Update(dt);
     }
 
-    SORT_LINK* pCur = m_pGameObjLinkHead;
-    
+    // Update Controller
+    m_pControllerManager->UpdateControllers(dt);
+
+    SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
-        GameObject *pGameObj = (GameObject *)pCur->pItem;
-        
-        m_pPhysicsManager->CollisionTest(pGameObj);
+        GameObject       *pGameObj = (GameObject *)pCur->pItem;
+        PhysicsComponent *pComp = pGameObj->GetPhysicsComponent();
+        if (pComp)
+        {
+            pComp->ApplyGravityImpulse(dt);
+        }
 
         pCur = pCur->pNext;
     }
-    
-    m_pPhysicsManager->ResolveContactsAll();
+
+    pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pGameObj = (GameObject *)pCur->pItem;
+
+        m_pPhysicsManager->CollisionTest(pGameObj, dt);
+
+        pCur = pCur->pNext;
+    }
+
+    m_pPhysicsManager->ResolveContactsAll(dt);
 
     pCur = m_pGameObjLinkHead;
     while (pCur)
@@ -242,7 +273,7 @@ void GameEngine::Update(ULONGLONG curTick)
     }
 }
 
-void GameEngine::LateUpdate(ULONGLONG curTick)
+void GameManager::LateUpdate(ULONGLONG curTick)
 {
     //// m_pMainCharacter->LateUpdate();
     // for (int i = 0; i < m_scene.size(); i++)
@@ -251,7 +282,7 @@ void GameEngine::LateUpdate(ULONGLONG curTick)
     // }
 }
 
-void GameEngine::Render()
+void GameManager::Render()
 {
     m_pRenderer->UpdateCamera(m_pMainCamera->Eye(), m_pMainCamera->GetViewRow(), m_pMainCamera->GetProjRow());
 
@@ -294,7 +325,7 @@ void GameEngine::Render()
     m_pRenderer->Present();
 }
 
-BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
+BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
 {
     m_pInputManager->SetWindowSize(width, height);
     m_pMainCamera->SetAspectRatio(float(width) / height);
@@ -306,9 +337,9 @@ BOOL GameEngine::OnUpdateWindowSize(UINT width, UINT height)
     return TRUE;
 }
 
-void GameEngine::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
+void GameManager::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
-IGameCharacter *GameEngine::CreateCharacter()
+IGameCharacter *GameManager::CreateCharacter()
 {
     Character *pGameObj = new Character;
     pGameObj->Initialize(this, 5);
@@ -317,7 +348,7 @@ IGameCharacter *GameEngine::CreateCharacter()
     return pGameObj;
 }
 
-IGameObject *GameEngine::CreateGameObject()
+IGameObject *GameManager::CreateGameObject()
 {
     GameObject *pGameObj = new GameObject;
     pGameObj->Initialize(this);
@@ -326,14 +357,14 @@ IGameObject *GameEngine::CreateGameObject()
     return pGameObj;
 }
 
-void GameEngine::DeleteGameObject(IGameObject *pGameObj)
+void GameManager::DeleteGameObject(IGameObject *pGameObj)
 {
     GameObject *pObj = (GameObject *)pGameObj;
     UnLinkFromLinkedList(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pObj->m_LinkInGame);
     delete pObj;
 }
 
-void GameEngine::DeleteAllGameObject()
+void GameManager::DeleteAllGameObject()
 {
     while (m_pGameObjLinkHead)
     {
@@ -342,7 +373,7 @@ void GameEngine::DeleteAllGameObject()
     }
 }
 
-IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
+IGameModel *GameManager::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
 {
     switch (type)
     {
@@ -361,7 +392,7 @@ IGameModel *GameEngine::GetPrimitiveModel(PRIMITIVE_MODEL_TYPE type)
     return nullptr;
 }
 
-IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameModel *GameManager::CreateModelFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     Model *pModel = GeometryGenerator::ReadFromFile(basePath, filename);
     pModel->InitRenderComponents(m_pRenderer);
@@ -371,7 +402,7 @@ IGameModel *GameEngine::CreateModelFromFile(const WCHAR *basePath, const WCHAR *
     return pModel;
 }
 
-IGameModel *GameEngine::CreateEmptyModel()
+IGameModel *GameManager::CreateEmptyModel()
 {
     Model *pModel = new Model;
 
@@ -380,14 +411,14 @@ IGameModel *GameEngine::CreateEmptyModel()
     return pModel;
 }
 
-void GameEngine::DeleteModel(IGameModel *pModel)
+void GameManager::DeleteModel(IGameModel *pModel)
 {
     Model *pM = (Model *)pModel;
     UnLinkFromLinkedList(&m_pModelLinkHead, &m_pModelLinkTail, &pM->m_LinkInGame);
     delete pM;
 }
 
-void GameEngine::DeleteAllModel()
+void GameManager::DeleteAllModel()
 {
     while (m_pModelLinkHead)
     {
@@ -396,7 +427,7 @@ void GameEngine::DeleteAllModel()
     }
 }
 
-IGameSprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
+IGameSprite *GameManager::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR *filename, UINT width, UINT height)
 {
     WCHAR path[MAX_PATH] = {L'\0'};
     wcscpy_s(path, basePath);
@@ -408,7 +439,7 @@ IGameSprite *GameEngine::CreateSpriteFromFile(const WCHAR *basePath, const WCHAR
     return pSprite;
 }
 
-IGameSprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
+IGameSprite *GameManager::CreateDynamicSprite(UINT width, UINT height)
 {
     DynamicSprite *pSprite = new DynamicSprite;
     pSprite->Initialize(m_pRenderer, width, height);
@@ -416,14 +447,14 @@ IGameSprite *GameEngine::CreateDynamicSprite(UINT width, UINT height)
     return pSprite;
 }
 
-void GameEngine::DeleteSprite(IGameSprite *pSprite)
+void GameManager::DeleteSprite(IGameSprite *pSprite)
 {
     Sprite *pS = (Sprite *)pSprite;
     UnLinkFromLinkedList(&m_pSpriteLinkHead, &m_pSpriteLinkTail, &pS->m_LinkInGame);
     delete pS;
 }
 
-void GameEngine::DeleteAllSprite()
+void GameManager::DeleteAllSprite()
 {
     while (m_pSpriteLinkHead)
     {
@@ -432,7 +463,7 @@ void GameEngine::DeleteAllSprite()
     }
 }
 
-IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
+IGameAnimation *GameManager::CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename)
 {
     AnimationClip *pClip = nullptr;
     UINT           keySize = wcslen(filename) * sizeof(WCHAR);
@@ -451,7 +482,7 @@ IGameAnimation *GameEngine::CreateAnimationFromFile(const WCHAR *basePath, const
     return pClip;
 }
 
-IGameAnimation *GameEngine::CreateEmptyAnimation()
+IGameAnimation *GameManager::CreateEmptyAnimation()
 {
     const WCHAR   *filename = L"EmptyAnimation";
     AnimationClip *pClip = nullptr;
@@ -471,7 +502,7 @@ IGameAnimation *GameEngine::CreateEmptyAnimation()
     return pClip;
 }
 
-IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name)
+IGameAnimation *GameManager::GetAnimationByName(const WCHAR *name)
 {
     AnimationClip *pClip = nullptr;
     UINT           keySize = wcslen(name) * sizeof(WCHAR);
@@ -484,7 +515,7 @@ IGameAnimation *GameEngine::GetAnimationByName(const WCHAR *name)
     return pClip;
 }
 
-void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
+void GameManager::DeleteAnimation(IGameAnimation *pInAnim)
 {
     AnimationClip *pAnim = dynamic_cast<AnimationClip *>(pInAnim);
     if (!pAnim->ref_count)
@@ -500,7 +531,7 @@ void GameEngine::DeleteAnimation(IGameAnimation *pInAnim)
     }
 }
 
-void GameEngine::DeleteAllAnimation()
+void GameManager::DeleteAllAnimation()
 {
     if (m_pAnimationHashTable)
     {
@@ -510,6 +541,11 @@ void GameEngine::DeleteAllAnimation()
     }
 }
 
-void GameEngine::ToggleCamera() { m_activateCamera = !m_activateCamera; }
+void GameManager::RegisterController(IController *pController)
+{
+    m_pControllerManager->RegisterController(pController);
+}
 
-GameEngine::~GameEngine() { Cleanup(); }
+void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
+
+GameManager::~GameManager() { Cleanup(); }

@@ -4,10 +4,16 @@
 
 struct Contact
 {
-    Vector3 contactPointA;
-    Vector3 contactPointB;
+    Vector3 contactPointAWorldSpace;
+    Vector3 contactPointBWorldSpace;
+
+    Vector3 contactPointALocalSpace;
+    Vector3 contactPointBLocalSpace;
 
     Vector3 normal;
+
+    float timeOfImpact;
+    float separationDistance;
     
     PhysicsComponent *pA;
     PhysicsComponent *pB;

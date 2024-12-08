@@ -2,7 +2,7 @@
 #include "MathHeaders.h"
 
 class IRenderer;
-class GameEngine;
+class GameManager;
 class Model;
 class PhysicsComponent;
 class GameObject : public IGameObject
@@ -10,7 +10,7 @@ class GameObject : public IGameObject
     Transform m_transform;
     Matrix    m_worldMatrix;
 
-    GameEngine *m_pGameEngine = nullptr;
+    GameManager *m_pGameEngine = nullptr;
     IRenderer  *m_pRenderer = nullptr;
     Model      *m_pModel = nullptr;
 
@@ -25,7 +25,7 @@ class GameObject : public IGameObject
     void Cleanup();
 
   public:
-    void Initialize(GameEngine *pGameEngine);
+    void Initialize(GameManager *pGameEngine);
 
     void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) override;
 
@@ -55,6 +55,8 @@ class GameObject : public IGameObject
     void SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
+
+    Bounds GetBounds() const override;
 
     GameObject();
     virtual ~GameObject();

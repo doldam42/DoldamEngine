@@ -12,8 +12,8 @@
 
 #pragma comment(lib, "DirectXTK12.lib")
 
-#pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
+#pragma comment(lib, "GenericModule.lib")
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // D3D12 Agility SDK Runtime

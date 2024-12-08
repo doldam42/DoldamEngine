@@ -39,7 +39,7 @@ class FBXLoader : public IModelExporter
 
     const size_t MAX_WORKING_VERTEX_COUNT = 262144; // 65536
 
-    IGameEngine          *m_pGame = nullptr;
+    IGameManager          *m_pGame = nullptr;
     FbxManager           *m_pManager = nullptr;
     FbxScene             *m_pScene = nullptr;
     FbxGeometryConverter *m_pGeoConverter = nullptr;
@@ -95,7 +95,7 @@ class FBXLoader : public IModelExporter
 
   public:
     // Inherited via IModelExporter
-    BOOL Initialize(IGameEngine *pGame) override;
+    BOOL Initialize(IGameManager *pGame) override;
 
     BOOL Load(const WCHAR *basePath, const WCHAR *filename) override;
     BOOL LoadAnimation(const WCHAR *filename) override;

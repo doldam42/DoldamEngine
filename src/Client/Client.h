@@ -1,10 +1,11 @@
 #pragma once
-class Client
+class Client : public IController
 {
-    HWND         m_hWnd = nullptr;
-    IGameEngine *m_pGame = nullptr;
+  private:
+    HWND            m_hWnd = nullptr;
+    IGameManager   *m_pGame = nullptr;
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
-    IRenderer   *m_pRenderer = nullptr;
+    IRenderer      *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
     IGameObject    *m_pSphere = nullptr;
 
@@ -41,14 +42,18 @@ class Client
 
     void LoadResources();
 
+    void LoadScene();
+
     void Process();
 
-    void Update(ULONGLONG curTick);
+    BOOL Start() override;
+    void Update(float dt) override;
 
     void OnKeyDown(UINT nChar, UINT uiScanCode);
     void OnKeyUp(UINT nChar, UINT uiScanCode);
     void OnMouseMove(int mouseX, int mouseY);
     void OnMouseWheel(float deltaWheel);
+    void OnPauseKeyPressed();
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     Client() = default;

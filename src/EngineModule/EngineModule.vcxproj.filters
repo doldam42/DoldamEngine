@@ -4,7 +4,7 @@
     <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="EngineInterface.cpp" />
-    <ClCompile Include="GameEngine.cpp" />
+    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -46,11 +46,16 @@
     <ClCompile Include="Intersect.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="BroadPhase.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp" />
+    <ClCompile Include="ControllerManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
     <ClInclude Include="CameraController.h" />
-    <ClInclude Include="GameEngine.h" />
+    <ClInclude Include="GameManager.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
@@ -90,6 +95,11 @@
     <ClInclude Include="Intersect.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="BroadPhase.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h" />
+    <ClInclude Include="ControllerManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

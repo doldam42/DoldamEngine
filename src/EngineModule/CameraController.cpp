@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "GameObject.h"
 
 #include "Camera.h"
@@ -150,7 +150,7 @@ void CameraController::Initialize(float verticalFovRadians, float aspectRatio, f
 
     InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
     pInputManager->AddKeyListener(
-        'P', [](void *) { g_pGame->GetCamera()->ToggleProjectionSetting(); }, nullptr);
+        'G', [](void *) { g_pGame->GetCamera()->ToggleProjectionSetting(); }, nullptr);
     pInputManager->AddKeyListener(
         'F', [](void *) { g_pGame->ToggleCamera(); }, nullptr);
 }

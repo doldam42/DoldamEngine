@@ -17,7 +17,7 @@ class Character : public IGameCharacter, public GameObject
 
   public:
 
-    void Initialize(GameEngine *pGameEngine, UINT maxClipCount);
+    void Initialize(GameManager *pGameEngine, UINT maxClipCount);
     void Update(float dt) override;
 
     void InsertAnimation(IGameAnimation *pClip) override;
@@ -46,4 +46,6 @@ class Character : public IGameCharacter, public GameObject
     void    SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
+
+    Bounds GetBounds() const override;
 };

@@ -1,7 +1,7 @@
 #include <filesystem>
 
 #include "AnimationClip.h"
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "GameUtils.h"
 #include "MeshObject.h"
 #include "Model.h"
@@ -417,6 +417,13 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
             v.normal.Normalize();
             v.texcoord = Vector2(float(i) / numslices, 1.0f - float(j) / numstacks);
 
+            const Vector3 biTangent = Vector3(0.0f, 1.0f, 0.0f);
+            Vector3 normalOrth = v.normal - biTangent.Dot(v.normal) * v.normal;
+            normalOrth.Normalize();
+
+            v.tangent = biTangent.Cross(normalOrth);
+            v.tangent.Normalize();
+
             vertices.push_back(v);
         }
     }
@@ -424,7 +431,7 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     // cout << vertices.size() << endl;
 
     vector<uint32_t> indices;
-    indices.reserve(numstacks * numslices);
+    indices.reserve(numstacks * numslices * 3);
     for (int j = 0; j < numstacks; j++)
     {
 
@@ -449,7 +456,7 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     // }
     // cout << endl;
 
-    CalcVerticeTangent(vertices.data(), vertices.size(), indices.data(), indices.size() / 3);
+    // CalcVerticeTangent(vertices.data(), vertices.size(), indices.data(), indices.size() / 3);
     Model *pModel = new Model;
 
     MeshObject *pObj = new MeshObject;

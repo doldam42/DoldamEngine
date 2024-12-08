@@ -7,6 +7,7 @@
 #endif
 
 #include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
 #include <combaseapi.h>
 
 interface IRenderer;
@@ -35,6 +36,14 @@ interface ISerializable
     virtual void ReadFile(FILE * fp) = 0;
 };
 
+interface IScriptable
+{
+    virtual BOOL Start() = 0;
+    virtual void Update(float dt) = 0;
+};
+
+interface IController : public IScriptable{};
+
 interface IBaseObject
 {
     virtual void SetName(const WCHAR *name) = 0;
@@ -61,7 +70,7 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
-interface IPhysicsComponent
+interface IPhysicsComponent : public IBoundable
 {
     virtual Vector3 GetVelocity() const = 0;
 
@@ -69,7 +78,7 @@ interface IPhysicsComponent
     virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
-interface IGameObject
+interface IGameObject : public IBoundable
 {
     virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) = 0;
 
@@ -139,9 +148,10 @@ interface IInputManager
     virtual BOOL IsKeyPressed(UINT nChar) const = 0;
 };
 
-interface IGameEngine
+interface IGameManager
 {
     virtual BOOL Initialize(HWND hWnd) = 0;
+    virtual BOOL LoadResources() = 0;
 
     virtual void PreUpdate(ULONGLONG curTick) = 0;
     virtual void Update(ULONGLONG curTick) = 0;
@@ -178,6 +188,8 @@ interface IGameEngine
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
+    virtual void RegisterController(IController * pController) = 0;
+
     virtual void SetCameraFollowTarget(IGameObject * pObj) = 0;
 
     virtual Vector3 GetCameraPos() = 0;
@@ -187,8 +199,8 @@ interface IGameEngine
     virtual IInputManager *GetInputManager() const = 0;
 };
 
-extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameEngine **ppOutGameEngine);
-extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameEngine *pGameEngine);
+extern "C" ENGINEMODULE_API BOOL CreateGameEngine(HWND hWnd, IGameManager **ppOutGameEngine);
+extern "C" ENGINEMODULE_API void DeleteGameEngine(IGameManager *pGameEngine);
 
 extern "C" ENGINEMODULE_API BOOL CreateGameMesh(IGameMesh **ppOutMesh);
 extern "C" ENGINEMODULE_API void DeleteGameMesh(IGameMesh *pInMesh);

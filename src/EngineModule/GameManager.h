@@ -16,7 +16,9 @@ class Model;
 class AnimationClip;
 class GameObject;
 class Character;
-class GameEngine : public IGameEngine
+class World;
+class ControllerManager;
+class GameManager : public IGameManager
 {
   public:
     static Model *SquareMesh;
@@ -25,6 +27,7 @@ class GameEngine : public IGameEngine
 
     // For Debugging
     UINT m_culledObjectCountForDebug = 0;
+    bool m_isPaused = false;
 
   private:
     static UINT initRefCount;
@@ -40,6 +43,8 @@ class GameEngine : public IGameEngine
     SORT_LINK *m_pGameObjLinkHead = nullptr;
     SORT_LINK *m_pGameObjLinkTail = nullptr;
 
+    World *m_pWorld = nullptr;
+
     // Model
     SORT_LINK *m_pModelLinkHead = nullptr;
     SORT_LINK *m_pModelLinkTail = nullptr;
@@ -50,6 +55,9 @@ class GameEngine : public IGameEngine
 
     // Animation
     HashTable *m_pAnimationHashTable = nullptr;
+
+    // Controller Manager
+    ControllerManager *m_pControllerManager = nullptr;
 
     ILightHandle *m_pLight = nullptr;
 
@@ -109,7 +117,9 @@ class GameEngine : public IGameEngine
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 
-    void LoadResources();
+    void RegisterController(IController *pController) override;
+
+    BOOL LoadResources() override;
 
     void ProcessInput();
 
@@ -132,8 +142,8 @@ class GameEngine : public IGameEngine
     inline CameraController *GetCamera() const { return m_pMainCamera; }
     inline Timer            *GetPerformanceTimer() const { return m_pPerformanceTimer; }
 
-    GameEngine() = default;
-    ~GameEngine();
+    GameManager() = default;
+    ~GameManager();
 };
 
-extern GameEngine *g_pGame;
+extern GameManager *g_pGame;

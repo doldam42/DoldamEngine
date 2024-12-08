@@ -27,6 +27,7 @@
     <ClInclude Include="Sphere.h">
       <Filter>Shape</Filter>
     </ClInclude>
+    <ClInclude Include="Bounds.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -34,5 +35,9 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Bounds.cpp" />
+    <ClCompile Include="Sphere.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

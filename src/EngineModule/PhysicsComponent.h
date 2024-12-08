@@ -22,10 +22,13 @@ class PhysicsComponent : public IPhysicsComponent
     void Initialize(GameObject *pObj, const Shape *pInShape, float mass, float elasticity, float friction);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
-    
-    void    ApplyImpulse(const Vector3& impulsePoint, const Vector3 &impulse);
-    void    ApplyImpulseLinear(const Vector3 &impulse) override;
-    void    ApplyImpulseAngular(const Vector3 &impulse) override;
+    Bounds  GetBounds() const override;
+
+    void ApplyGravityImpulse(const float dt);
+
+    void ApplyImpulse(const Vector3 &impulsePoint, const Vector3 &impulse);
+    void ApplyImpulseLinear(const Vector3 &impulse) override;
+    void ApplyImpulseAngular(const Vector3 &impulse) override;
 
     void Update(float dt);
 

@@ -12,6 +12,9 @@ struct Sphere : public Shape
 
     SHAPE_TYPE GetType() const override { return SHAPE_TYPE_SPHERE; }
 
+    Bounds GetBounds(const Vector3 &pos, const Quaternion &orient) const override;
+    Bounds GetBounds() const override;
+
     Matrix InertiaTensor() const override
     {
         Matrix tensor = Matrix::Identity;

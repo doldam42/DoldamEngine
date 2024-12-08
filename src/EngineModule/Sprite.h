@@ -1,6 +1,6 @@
 #pragma once
 
-class GameEngine;
+class GameManager;
 class Sprite : public IGameSprite
 {
   protected:

@@ -39,6 +39,7 @@ using DirectX::BoundingFrustum;
 using DirectX::BoundingOrientedBox;
 using DirectX::ContainmentType;
 
+#include "Bounds.h"
 #include "ShapeBase.h"
 #include "Sphere.h"
 

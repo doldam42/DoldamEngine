@@ -2,7 +2,7 @@
 
 #include "AnimationClip.h"
 #include "Character.h"
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "Model.h"
 
 void Character::Cleanup()
@@ -22,7 +22,7 @@ void Character::Cleanup()
     }
 }
 
-void Character::Initialize(GameEngine *pGameEngine, UINT maxClipCount)
+void Character::Initialize(GameManager *pGameEngine, UINT maxClipCount)
 {
     GameObject::Initialize(pGameEngine);
     m_maxClipCount = maxClipCount;
@@ -75,6 +75,8 @@ void Character::SetRotationZ(float rotZ) { GameObject::SetRotationZ(rotZ); }
 void Character::SetRotation(const Quaternion *pInQuaternion) { GameObject::SetRotation(pInQuaternion); }
 
 void Character::AddPosition(const Vector3 *pInDeltaPos) { GameObject::AddPosition(pInDeltaPos); }
+
+Bounds Character::GetBounds() const { return GameObject::GetBounds(); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)
 {

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "Model.h"
 #include "PhysicsComponent.h"
 
@@ -20,7 +20,7 @@ void GameObject::Cleanup()
     }
 }
 
-void GameObject::Initialize(GameEngine *pGameEngine)
+void GameObject::Initialize(GameManager *pGameEngine)
 {
     m_pGameEngine = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();
@@ -34,15 +34,6 @@ void GameObject::InitPhysics(const Shape *pInShape, float mass, float elasticity
 
 void GameObject::Update(float dt)
 {
-    static const Vector3 gravity(0.0f, -9.8, 0.0f);
-
-    if (m_pPhysicsComponent)
-    {
-        m_pPhysicsComponent->ApplyImpulseLinear(gravity * dt);
-        m_pPhysicsComponent->Update(dt);
-        m_IsUpdated = true;
-    }
-
     if (m_IsUpdated)
     {
         m_worldMatrix = m_transform.GetMatrix();
@@ -116,6 +107,21 @@ void GameObject::SetRotationZ(float rotZ)
     m_IsUpdated = true;
 }
 
-void GameObject::SetRotation(const Quaternion *pInQuaternion) { m_transform.SetRotation(*pInQuaternion); }
+void GameObject::SetRotation(const Quaternion *pInQuaternion)
+{
+    m_transform.SetRotation(*pInQuaternion);
+    m_IsUpdated = true;
+}
 
-void GameObject::AddPosition(const Vector3 *pInDeltaPos) { m_transform.AddPosition(*pInDeltaPos); }
+void GameObject::AddPosition(const Vector3 *pInDeltaPos)
+{
+    m_transform.AddPosition(*pInDeltaPos);
+    m_IsUpdated = true;
+}
+
+Bounds GameObject::GetBounds() const
+{
+    if (!m_pPhysicsComponent)
+        nullptr;
+    return m_pPhysicsComponent->GetBounds();
+}

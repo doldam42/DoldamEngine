@@ -69,7 +69,10 @@ BOOL Client::Initialize(HWND hWnd)
     m_pFbxExporter->Initialize(m_pGame);
     m_pAssimpExporter->Initialize(m_pGame);
 
+    m_pGame->LoadResources();
     LoadResources();
+
+    m_pGame->RegisterController(this);
 
     return result;
 }
@@ -79,8 +82,6 @@ void Client::LoadResources()
     fs::path p;
 
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
-
-    IGameObject *pSphere = m_pGame->CreateGameObject();
 
     // Create Materials
     Material mat;
@@ -104,13 +105,22 @@ void Client::LoadResources()
     IGameMesh  *pMesh = pModel->GetMeshAt(0);
     pMesh->UpdateMaterial(pWallMaterial, 0);
 
-    pSphere->SetModel(pModel);
-    pSphere->SetPosition(0.0f, 5.0f, 3.0f);
+    IGameObject *pSphere1 = m_pGame->CreateGameObject();
+    IGameObject *pSphere2 = m_pGame->CreateGameObject();
+
+    pSphere1->SetModel(pModel);
+    pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
+
+    pModel->AddRef();
+    pSphere2->SetModel(pModel);
+    pSphere2->SetPosition(0.0f, 6.0f, 3.0f);
 
     Sphere sphere(1.0f);
-    pSphere->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+    pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+    pSphere2->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
 
-    m_pSphere = pSphere;
+    m_pSphere = pSphere1;
+
     // m_pGame->SetCameraFollowTarget(pSphere);
 
     /* IGameObject *pBox = m_pGame->CreateGameObject();
@@ -146,10 +156,10 @@ void Client::LoadResources()
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     // pGround->SetRotationX(XM_PIDIV2);
-    pGround->SetPosition(0.0f, -52.f, 0.f);
-    pGround->SetScale(50.0f);
+    pGround->SetPosition(0.0f, -102.f, 0.f);
+    pGround->SetScale(100.0f);
 
-    sphere.Radius = 50.0f;
+    sphere.Radius = 100.0f;
     pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
     pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
 
@@ -203,6 +213,8 @@ void Client::LoadResources()
      m_pStaticSprite->SetZ(0.5f);*/
 }
 
+void Client::LoadScene() {}
+
 void Client::Process()
 {
     m_frameCount++;
@@ -211,7 +223,6 @@ void Client::Process()
 
     m_pGame->PreUpdate(CurTick);
 
-    Update(CurTick);
     m_pGame->Update(CurTick);
 
     m_pGame->LateUpdate(CurTick);
@@ -226,17 +237,10 @@ void Client::Process()
     }
 }
 
-void Client::Update(ULONGLONG curTick)
+BOOL Client::Start() { return TRUE; }
+
+void Client::Update(float dt)
 {
-    // Update Scene with 60FPS
-    if (curTick - m_prevUpdateTick < 23)
-    {
-        return;
-    }
-
-    float dt = m_prevUpdateTick == 0 ? 0.0f : static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
-    m_prevUpdateTick = curTick;
-
     // Update Texture
     static DWORD g_dwCount = 0;
     static DWORD g_dwTileColorR = 0;
@@ -328,10 +332,6 @@ void Client::Update(ULONGLONG curTick)
         // 텍스트가 변경되지 않은 경우 - 업데이트 할 필요 없다.
         int a = 0;
     }
-
-    /*float speed = 1.0f;
-    Vector3 pos = m_pCharacter->GetPosition();
-    m_pCharacter->SetPosition(pos.x, pos.y, pos.z + speed * dt);*/
 }
 
 void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }

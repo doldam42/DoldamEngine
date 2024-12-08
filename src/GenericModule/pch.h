@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 
+#include "../MathModule/MathHeaders.h"
 #include "GenericHeaders.h"
 
 #endif //PCH_H

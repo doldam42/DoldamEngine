@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GameEngine.h"
+#include "GameManager.h"
 #include "InputManager.h"
 
 void InputManager::Initialize(UINT width, UINT height) { SetWindowSize(width, height); }

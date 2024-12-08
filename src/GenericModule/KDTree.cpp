@@ -1,171 +1,147 @@
 #include "pch.h"
 
+#include "../MathModule/MathHeaders.h"
+
 #include "KDTree.h"
 
-KDNode *KDTree::InsertNodeRecursive(KDNode *pNode, float *point, int depth, void *pItem)
+struct KDNode
 {
-    if (!pNode)
-        return new KDNode(pItem, point);
-
-    int axis = depth % KDNode::DIMENSION;
-
-    if (point[axis] < pNode->point[axis])
+    enum Axis : char
     {
-        pNode->pLeft = InsertNodeRecursive(pNode->pLeft, point, depth + 1, pItem);
-    }
-    else
+        AxisX,
+        AxisY,
+        AxisZ,
+    };
+    struct Interior
     {
-        pNode->pRight = InsertNodeRecursive(pNode->pRight, point, depth + 1, pItem);
-    }
+        Axis    axis;
+        float   split;
+        KDNode *left;
+        KDNode *right;
+    };
+    struct Leaf
+    {
+        std::vector<void *> items;
+    };
+    const static int DIMENSION = 3;
 
-    return pNode;
+    bool isLeaf;
+    union {
+        Interior interior;
+        Leaf     leaf;
+    };
+    KDNode() {}
+    void InitInterior(Axis axis, float split);
+    void InitLeaf(void **objects, BoundEdge *edges, int primitiveCount);
+};
+
+enum class EdgeType
+{
+    Start,
+    End
+};
+struct BoundEdge
+{
+    float    point[3];
+    int      primNum;
+    EdgeType type;
+    BoundEdge() {}
+    BoundEdge(float p[3], int primNum, bool starting) : primNum(primNum)
+    {
+        memcpy(point, p, sizeof(point));
+        type = starting ? EdgeType::Start : EdgeType::End;
+    }
+};
+
+void KDNode::InitInterior(Axis axis, float split)
+{
+    this->isLeaf = false;
+    this->interior.axis = axis;
+    this->interior.split = split;
 }
 
-KDNode *KDTree::FindMin(KDNode *pNode, int axis, int depth)
+void KDNode::InitLeaf(void** objects, BoundEdge* edges, int primitiveCount)
 {
-    if (!pNode)
+    this->isLeaf = true;
+    this->leaf.items = std::vector<void *>(primitiveCount);
+
+    for (int i = 0; i < primitiveCount; i++)
+    {
+        int index = edges[i].primNum;
+        this->leaf.items[i] = objects[index];
+    }
+}
+
+KDNode *KDTree::BuildTree(BoundEdge *edges, void **pObjectArray, int objectCount, int depth)
+{
+    // Initialize leaf node if termination criteria met
+    if (objectCount == 0)
         return nullptr;
-
-    int currAxis = depth % KDNode::DIMENSION;
-
-    if (currAxis == axis)
+    if (depth == 0)
     {
-        if (!pNode->pLeft)
-        {
-            return pNode;
-        }
-        return FindMin(pNode->pLeft, axis, depth + 1);
+        KDNode *pNode = new KDNode;
+        pNode->InitLeaf(pObjectArray, edges, objectCount);
+        return pNode;
     }
-
-    KDNode *leftMin = FindMin(pNode->pLeft, axis, depth + 1);
-    KDNode *rightMin = FindMin(pNode->pRight, axis, depth + 1);
-
-    KDNode *minNode = pNode;
-    if (leftMin && leftMin->point[axis] < minNode->point[axis])
-    {
-        minNode = leftMin;
-    }
-    if (rightMin && rightMin->point[axis] < minNode->point[axis])
-    {
-        minNode = rightMin;
-    }
-    return minNode;
-}
-
-KDNode *KDTree::DeleteNodeRecursive(KDNode *pNode, float *point, int depth, void *pItem)
-{
-    if (!pNode)
-        return nullptr;
-
-    int axis = depth % KDNode::DIMENSION;
-
-    // 점이 일치하는 경우
-    if (memcmp(pNode->point, point, sizeof(float) * KDNode::DIMENSION) == 0)
-    {
-        // 오른쪽 서브트리가 있는경우
-        if (pNode->pRight != nullptr)
-        {
-            KDNode *minNode = FindMin(pNode->pRight, axis, depth + 1);
-            for (int i = 0; i < KDNode::DIMENSION; i++)
-            {
-                pNode->point[i] = minNode->point[i];
-            }
-            pNode->pRight = DeleteNodeRecursive(pNode->pRight, minNode->point, depth + 1, pItem);
-        }
-        // 왼쪽 서브트리가 있는경우
-        else if (pNode->pLeft != nullptr)
-        {
-            KDNode *minNode = FindMin(pNode->pLeft, axis, depth + 1);
-            for (int i = 0; i < KDNode::DIMENSION; i++)
-            {
-                pNode->point[i] = minNode->point[i];
-            }
-            pNode->pRight = DeleteNodeRecursive(pNode->pLeft, minNode->point, depth + 1, pItem);
-            pNode->pLeft = nullptr;
-        }
-        // 리프노드인 경우
-        else
-        {
-            delete pNode;
-            return nullptr;
-        }
-    }
-    else if (point[axis] < pNode->point[axis])
-    {
-        pNode->pLeft = DeleteNodeRecursive(pNode->pLeft, point, depth + 1, pItem);
-    }
-    else
-    {
-        pNode->pRight = DeleteNodeRecursive(pNode->pRight, point, depth + 1, pItem);
-    }
-
-    return pNode;
-}
-
-float KDTree::distance(const float *a, const float *b)
-{
-    float dist = 0.0f;
-    for (UINT i = 0; i < KDNode::DIMENSION; i++)
-    {
-        float diff = a[i] - b[i];
-        dist += diff * diff;
-    }
-    return sqrtf(dist);
-}
-
-KDNode *KDTree::BuildTree(float **points, int pointCount, int depth)
-{
-    if (pointCount == 0)
-        return nullptr;
 
     // 현재 분할 축 계산
     int axis = depth % KDNode::DIMENSION;
 
     // 점들을 분할 축에 따라 정렬
-    std::sort(points, points + pointCount, [axis](const float *a, const float *b) { return a[axis] < b[axis]; });
+    std::sort(&edges[0], &edges[2 * objectCount], [axis](const BoundEdge &e0, const BoundEdge &e1) -> bool {
+        if (e0.point[axis] == e1.point[axis])
+            return (int)e0.type < (int)e1.type;
+        else
+            return e0.point[axis] < e1.point[axis];
+    });
 
     // 중간 점 선택 (균형 이진 트리)
-    size_t  mid = pointCount / 2;
-    KDNode *node = new KDNode(nullptr, points[mid]);
+    size_t  mid = objectCount;
+    KDNode *pNode = new KDNode;
+    pNode->InitInterior((KDNode::Axis)axis, edges[mid].point[axis]);
 
     // 좌/우 서브트리 생성
-    node->pLeft = BuildTree(points, mid, depth + 1);
-    node->pRight = BuildTree(points + mid + 1, mid, depth + 1);
+    pNode->interior.left = BuildTree(edges, pObjectArray, mid / 2, depth - 1);
+    pNode->interior.right = BuildTree(edges + mid + 1, pObjectArray, mid / 2, depth - 1);
 
-    return node;
+    return pNode;
 }
 
-void KDTree::NearestNeighborSearch(KDNode *pNode, const float pTarget[3], int depth, KDNode **pOutNearest,
-                                   float *pOutNearestDist)
+void KDTree::Cleanup() {}
+
+void KDTree::Initialize(Bounds *boundArray, void **objectArray, int objectCount)
 {
-    if (!pNode)
-        return;
-
-    // 현재 노드의 거리 계산
-    float dist = distance(pNode->point, pTarget);
-    if (dist < *pOutNearestDist)
+    // bound 계산
+    std::vector<Bounds> bounds(objectCount);
+    for (int i = 0; i < objectCount; i++)
     {
-        *pOutNearestDist = dist;
-        *pOutNearest = pNode;
+        Bounds b = boundArray[i];
+        m_bounds.Expand(b);
+        bounds[i] = b;
     }
 
-    int   axis = depth % KDNode::DIMENSION;
-    float diff = pTarget[axis] - pNode->point[axis];
-
-    // 분할 하위 트리를 먼저 탐색
-
-    KDNode *nearTree = (diff < 0) ? pNode->pLeft : pNode->pRight;
-    KDNode *farTree = (diff < 0) ? pNode->pRight : pNode->pLeft;
-
-    NearestNeighborSearch(nearTree, pTarget, depth, pOutNearest, pOutNearestDist);
-
-    // 분할 경계를 넘어 다른 트리 탐색
-    if (fabsf(diff) < *pOutNearestDist)
+    // Bounding Edge (min/max) 초기화
+    BoundEdge *pEdges;
+    pEdges = new BoundEdge[2 * objectCount];
+    for (int i = 0; i < objectCount; i++)
     {
-        NearestNeighborSearch(farTree, pTarget, depth + 1, pOutNearest, pOutNearestDist);
+        pEdges[2 * i] = BoundEdge((float *)&bounds[i].mins, i, true);
+        pEdges[2 * i + 1] = BoundEdge((float *)&bounds[i].maxs, i, false);
+    }
+
+    // 최대 깊이 계산
+    int maxDepth = std::round(8 + 1.3f * log2f((float)objectCount));
+    
+    // 트리 생성
+    m_pRoot = BuildTree(pEdges, objectArray, objectCount, maxDepth);
+
+    // 리소스 해제
+    if (pEdges)
+    {
+        delete[] pEdges;
+        pEdges = nullptr;
     }
 }
 
-void KDTree::Insert(void *pItem, float *point) { InsertNodeRecursive(root, point, 0, pItem); }
-
-void KDTree::Delete(void *pItem, float *point) { DeleteNodeRecursive(root, point, 0, pItem); }
+KDTree::~KDTree() 
+{ Cleanup(); }

@@ -27,6 +27,18 @@ void PhysicsComponent::Initialize(GameObject *pObj, const Shape *pInShape, float
     m_pGameObject = pObj;
 }
 
+void PhysicsComponent::ApplyGravityImpulse(const float dt)
+{
+    if (m_invMass == 0)
+        return;
+
+    const Vector3 gravity(0.0f, -9.8f, 0.0f);
+    const float   mass = 1.0f / m_invMass;
+    const Vector3 impulseGravity = gravity * mass * dt;
+
+    ApplyImpulseLinear(impulseGravity);
+}
+
 void PhysicsComponent::ApplyImpulse(const Vector3 &impulsePoint, const Vector3 &impulse)
 {
     if (m_invMass == 0.0f)
@@ -89,7 +101,7 @@ void PhysicsComponent::Update(float dt)
     m_angularVelocity += alpha * dt;
 
     // Update Orientation
-    Vector3 dAngle = m_angularVelocity * dt;
+    Vector3     dAngle = m_angularVelocity * dt;
     const float angleRadians = dAngle.Length();
 
     Quaternion dq = (angleRadians == 0) ? Quaternion::Identity : Quaternion::CreateFromAxisAngle(dAngle, angleRadians);
@@ -148,6 +160,11 @@ Matrix PhysicsComponent::GetInverseInertiaTensorLocalSpace() const
     Matrix inertiaTensor = m_pShape->InertiaTensor();
     Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
     return invInertiaTensor;
+}
+
+Bounds PhysicsComponent::GetBounds() const
+{
+    return m_pShape->GetBounds(m_pGameObject->GetPosition(), m_pGameObject->GetRotation());
 }
 
 PhysicsComponent::~PhysicsComponent() { Cleanup(); }
