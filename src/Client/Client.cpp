@@ -69,10 +69,9 @@ BOOL Client::Initialize(HWND hWnd)
     m_pFbxExporter->Initialize(m_pGame);
     m_pAssimpExporter->Initialize(m_pGame);
 
-    m_pGame->LoadResources();
-    LoadResources();
-
     m_pGame->RegisterController(this);
+
+    m_pGame->Start();
 
     return result;
 }
@@ -121,69 +120,15 @@ void Client::LoadResources()
 
     m_pSphere = pSphere1;
 
-    // m_pGame->SetCameraFollowTarget(pSphere);
-
-    /* IGameObject *pBox = m_pGame->CreateGameObject();
-     pBox->SetModel(m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
-     pBox->SetScale(2.0f);*/
-
-    // p = L"..\\..\\assets\\stages\\Stage38\\Stage38.dom";
-    ////if (!fs::exists(p))
-    //{
-    //    m_pFbxExporter->Load(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.fbx");
-    //    m_pFbxExporter->ExportModel();
-    //}
-    // IGameModel  *pStageModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\stages\\Stage38\\", L"Stage38.dom");
-    // IGameObject *pStage = m_pGame->CreateGameObject();
-    // pStage->SetModel(pStageModel);
-    // pStage->SetScale(10.f);
-
-    // p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
-    // if (!fs::exists(p))
-    //{
-    //     m_pAssimpExporter->Load(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.gltf");
-    //     m_pAssimpExporter->ExportModel();
-    // }
-
-    // IGameModel *pSponzaModel =
-    //     m_pGame->CreateModelFromFile(L"..\\..\\assets\\sponza\\", L"NewSponza_Main_glTF_003.dom");
-    // IGameObject *pSponza = m_pGame->CreateGameObject();
-    // pSponza->SetModel(pSponzaModel);
-    // pSponza->SetScale(30.f);
-
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-
     IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
-    // pGround->SetRotationX(XM_PIDIV2);
     pGround->SetPosition(0.0f, -102.f, 0.f);
     pGround->SetScale(100.0f);
 
     sphere.Radius = 100.0f;
     pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
     pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
-
-    // p = L"..\\..\\assets\\characters\\gura\\gura.dom";
-    // if (!fs::exists(p))
-    //{
-    //     m_pFbxExporter->Load(L"..\\..\\assets\\characters\\gura\\", L"gura.fbx");
-    //     m_pFbxExporter->ExportModel();
-    // }
-    // IGameModel     *pGuraModel = m_pGame->CreateModelFromFile(L"..\\..\\assets\\characters\\gura\\", L"gura.dom");
-    // IGameCharacter *pGura = m_pGame->CreateCharacter();
-
-    // pGura->SetModel(pGuraModel);
-    // pGura->SetRotationX(-XM_PIDIV2);
-    // p.replace_filename(L"Smolgura_seafoamboy_anims.dca");
-    // if (!fs::exists(p))
-    //{
-    //     m_pFbxExporter->LoadAnimation(L"Smolgura_seafoamboy_anims.fbx");
-    //     m_pFbxExporter->ExportAnimation();
-    // }
-    // IGameAnimation *pGuraAnim =
-    //     m_pGame->CreateAnimationFromFile(L"..\\..\\assets\\characters\\gura\\", L"Smolgura_seafoamboy_anims.dca");
-    // pGura->InsertAnimation(pGuraAnim);
-    // m_pCharacter = pGura;
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -208,36 +153,30 @@ void Client::LoadResources()
     m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
     m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
     m_pDynamicSprite->SetPosition(0, 512);
-    /* m_pStaticSprite = m_pGame->CreateSpriteFromFile(L"..\\..\\assets\\textures\\", L"wall.jpg", 512, 512);
-     m_pStaticSprite->SetPosition(256, 256);
-     m_pStaticSprite->SetZ(0.5f);*/
 }
 
-void Client::LoadScene() {}
+void Client::LoadScene() 
+{
+
+}
 
 void Client::Process()
 {
-    m_frameCount++;
-
-    ULONGLONG CurTick = GetTickCount64();
-
-    m_pGame->PreUpdate(CurTick);
-
-    m_pGame->Update(CurTick);
-
-    m_pGame->LateUpdate(CurTick);
+    m_pGame->Update();
 
     m_pGame->Render();
-
-    if (CurTick - m_prevFrameCheckTick > 1000)
-    {
-        m_prevFrameCheckTick = CurTick;
-        m_FPS = m_frameCount;
-        m_frameCount = 0;
-    }
 }
 
-BOOL Client::Start() { return TRUE; }
+BOOL Client::Start() 
+{
+    LoadResources();
+
+    LoadScene();
+    
+    m_pGame->BuildScene();
+
+    return TRUE;
+}
 
 void Client::Update(float dt)
 {
@@ -305,6 +244,7 @@ void Client::Update(float dt)
     m_pDynamicSprite->UpdateTextureWidthImage(m_pImage, 512, 256);
 
     // draw text
+    UINT    fps = m_pGame->FPS();
     Vector3 pos = m_pSphere->GetPosition();
 
     float rotX = m_pSphere->GetRotationX();
@@ -316,8 +256,8 @@ void Client::Update(float dt)
     WCHAR wchTxt[260];
     memset(wchTxt, 0, sizeof(wchTxt));
     DWORD dwTxtLen =
-        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nOrient: (%.3f, %.3f, %.3f)",
-                   m_FPS, pos.x, pos.y, pos.z, rotX, rotY, rotZ);
+        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nOrient: (%.3f, %.3f, %.3f)", fps,
+                   pos.x, pos.y, pos.z, rotX, rotY, rotZ);
 
     if (wcscmp(m_text, wchTxt))
     {

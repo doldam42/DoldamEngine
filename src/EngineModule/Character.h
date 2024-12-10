@@ -47,5 +47,5 @@ class Character : public IGameCharacter, public GameObject
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
 
-    Bounds GetBounds() const override;
+    Bounds GetBounds() const;
 };

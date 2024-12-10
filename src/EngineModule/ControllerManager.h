@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO:
 // 컨트롤러를 중간에 삭제하는 경우가 존재하나?
 // 만약 존재하지 않으면 그냥 동적 배열로 관리하는게 합리적이지 않을까?
 // Controller들을 삭제하는 권한은 Controller Manager에게 없음.

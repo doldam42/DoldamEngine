@@ -4,21 +4,31 @@
 
 #include "World.h"
 
-void World::Initialize(GameObject **pObjectArray, int objectCount)
+void World::Cleanup() 
 { 
-	m_pTree = new KDTree;
-
-	Bounds *pBoundArray = new Bounds[objectCount];
-	for (int i = 0; i < objectCount; i++)
-	{
-        pBoundArray[i] = pObjectArray[i]->GetBounds();
-	}
-
-    m_pTree->Initialize(pBoundArray, reinterpret_cast<void**>(pObjectArray), objectCount);
-
-	if (pBoundArray)
-	{
-        delete[] pBoundArray;
-        pBoundArray = nullptr;
-	}
+    if (m_pTree)
+    {
+        delete m_pTree;
+        m_pTree = nullptr;
+    }
 }
+
+void World::Initialize() { m_pTree = new KDTree; }
+
+void World::BeginCreateWorld(UINT maxObjectCount) { m_pTree->BeginCreateTree(maxObjectCount); }
+
+void World::InsertObject(GameObject *pObject)
+{
+    Bounds b = pObject->GetBounds();
+    m_pTree->InsertObject(&b, &pObject->m_LinkInWorld);
+}
+
+void World::EndCreateWorld()
+{
+    m_pTree->EndCreateTree();
+#ifdef _DEBUG
+    // m_pTree->DebugPrintTree();
+#endif // _DEBUG
+}
+
+World::~World() { Cleanup(); }

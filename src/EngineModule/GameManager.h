@@ -3,7 +3,6 @@
 #include "CameraController.h"
 #include "GameUtils.h"
 #include "InputManager.h"
-#include "Timer.h"
 
 #include "../GenericModule/GenericHeaders.h"
 #include "../MathModule/MathHeaders.h"
@@ -25,19 +24,32 @@ class GameManager : public IGameManager
     static Model *BoxMesh;
     static Model *SphereMesh;
 
+    static const UINT MAX_WORLD_OBJECT_COUNT = 1024;
+
     // For Debugging
     UINT m_culledObjectCountForDebug = 0;
-    bool m_isPaused = false;
+
+    bool  m_isPaused = false;
+    float m_timeSpeed = 1.0f;
 
   private:
     static UINT initRefCount;
+
+    // Timer
+    ULONGLONG m_prevUpdateTick = 0;
+    ULONGLONG m_prevFrameCheckTick = 0;
+
+    UINT m_FPS = 0;
+    UINT m_frameCount = 0;
+
+    float m_deltaTime = 0.0f;
+    // Timer-For Debug
+    float m_loadingTime = 0.0f;
 
     PhysicsManager   *m_pPhysicsManager = nullptr;
     CameraController *m_pMainCamera = nullptr;
     IRenderer        *m_pRenderer = nullptr;
     InputManager     *m_pInputManager = nullptr;
-    Timer            *m_pTimer = nullptr;
-    Timer            *m_pPerformanceTimer = nullptr;
 
     // GameObjects
     SORT_LINK *m_pGameObjLinkHead = nullptr;
@@ -61,11 +73,8 @@ class GameManager : public IGameManager
 
     ILightHandle *m_pLight = nullptr;
 
-    UINT      m_commandListCount = 0;
-    UINT      m_renderThreadCount = 0;
-    ULONGLONG m_prevUpdateTick = 0;
-
-    float m_deltaTime = 0.0f;
+    UINT m_commandListCount = 0;
+    UINT m_renderThreadCount = 0;
 
     Character *m_pMainCharacter = nullptr;
 
@@ -119,15 +128,22 @@ class GameManager : public IGameManager
 
     void RegisterController(IController *pController) override;
 
-    BOOL LoadResources() override;
+    BOOL LoadResources();
 
     void ProcessInput();
+    void UpdatePhysics(float dt);
 
-    void PreUpdate(ULONGLONG curTick) override;
-    void Update(ULONGLONG curTick) override;
-    void LateUpdate(ULONGLONG curTick) override;
+    void PreUpdate(ULONGLONG curTick);
+    void Update(ULONGLONG curTick);
+    void LateUpdate(ULONGLONG curTick);
 
-    float GetDeltaTime() const { return m_deltaTime; }
+    void Start() override;
+    void Update() override;
+
+    void BuildScene() override;
+
+    float DeltaTime() const override { return m_deltaTime; }
+    UINT  FPS() const override { return m_FPS; }
 
     void Render() override;
 
@@ -140,7 +156,6 @@ class GameManager : public IGameManager
     inline IRenderer        *GetRenderer() const { return m_pRenderer; }
     inline IInputManager    *GetInputManager() const { return m_pInputManager; }
     inline CameraController *GetCamera() const { return m_pMainCamera; }
-    inline Timer            *GetPerformanceTimer() const { return m_pPerformanceTimer; }
 
     GameManager() = default;
     ~GameManager();

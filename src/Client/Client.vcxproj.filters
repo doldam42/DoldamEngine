@@ -42,6 +42,9 @@
     <Filter Include="MainEntry">
       <UniqueIdentifier>{21b86737-52b2-4a2e-8ef3-9e7291beee40}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{d98cb3f0-6248-4c08-8953-d0c5bbc80d41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEngine.rc">

@@ -5,9 +5,6 @@
 #include <cmath>
 #include <cstring>
 
-// VolumeÀ» °¡Áø
-interface IBoundable { virtual Bounds GetBounds() const = 0; };
-
 #include "EventListener.h"
 #include "HashTable.h"
 #include "KDTree.h"

@@ -22,7 +22,7 @@ class PhysicsComponent : public IPhysicsComponent
     void Initialize(GameObject *pObj, const Shape *pInShape, float mass, float elasticity, float friction);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
-    Bounds  GetBounds() const override;
+    Bounds  GetBounds() const;
 
     void ApplyGravityImpulse(const float dt);
 

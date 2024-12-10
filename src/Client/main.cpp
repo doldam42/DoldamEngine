@@ -6,6 +6,8 @@
 
 #define MAX_LOADSTRING 100
 
+// #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
+
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")

@@ -90,6 +90,10 @@ GameObject::GameObject()
     m_LinkInGame.pNext = nullptr;
     m_LinkInGame.pPrev = nullptr;
 
+    m_LinkInWorld.pItem = this;
+    m_LinkInWorld.pNext = nullptr;
+    m_LinkInWorld.pPrev = nullptr;
+
     m_worldMatrix = Matrix::Identity;
 }
 

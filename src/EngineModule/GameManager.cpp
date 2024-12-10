@@ -67,6 +67,12 @@ void GameManager::Cleanup()
         m_pShadowMapSprite = nullptr;
     }
 
+    if (m_pWorld)
+    {
+        delete m_pWorld;
+        m_pWorld = nullptr;
+    }
+
     DeleteAllSprite();
 
     DeleteAllGameObject();
@@ -103,20 +109,9 @@ void GameManager::Cleanup()
         delete m_pInputManager;
         m_pInputManager = nullptr;
     }
-    if (m_pTimer)
-    {
-        delete m_pTimer;
-        m_pTimer = nullptr;
-    }
-    if (m_pPerformanceTimer)
-    {
-        delete m_pPerformanceTimer;
-        m_pPerformanceTimer = nullptr;
-    }
 }
 
-static void pauseFun(void *) { g_pGame->m_isPaused = !g_pGame->m_isPaused; }
-BOOL        GameManager::Initialize(HWND hWnd)
+BOOL GameManager::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
 
@@ -129,10 +124,7 @@ BOOL        GameManager::Initialize(HWND hWnd)
 
     m_pInputManager = new InputManager();
     m_pInputManager->Initialize(width, height);
-    m_pInputManager->AddKeyListener('P', pauseFun);
-
-    m_pTimer = new Timer;
-    m_pPerformanceTimer = new Timer;
+    m_pInputManager->AddKeyListener('P', [](void *) { g_pGame->m_isPaused = !g_pGame->m_isPaused; });
 
     if (!CreateD3D12Renderer(hWnd, TRUE, FALSE, &m_pRenderer))
     {
@@ -156,10 +148,11 @@ BOOL        GameManager::Initialize(HWND hWnd)
 
     m_pControllerManager = new ControllerManager;
 
+    m_pWorld = new World;
+    m_pWorld->Initialize();
+
     result = TRUE;
 lb_return:
-    m_pTimer->Tick();
-    m_pPerformanceTimer->Tick();
     return result;
 }
 
@@ -203,40 +196,47 @@ void GameManager::ProcessInput()
     }
 }
 
+void GameManager::Start()
+{
+    ULONGLONG prevTick = GetTickCount64();
+
+    LoadResources();
+
+    m_pControllerManager->StartControllers();
+
+    ULONGLONG curTick = GetTickCount64();
+    m_loadingTime = static_cast<float>(curTick - prevTick) / 1000.f;
+    m_prevUpdateTick = curTick;
+    m_prevFrameCheckTick = curTick;
+}
+
+void GameManager::Update()
+{
+    ULONGLONG curTick = GetTickCount64();
+    PreUpdate(curTick);
+    Update(curTick);
+    LateUpdate(curTick);
+}
+
+void GameManager::BuildScene() 
+{ 
+    m_pWorld->BeginCreateWorld(MAX_WORLD_OBJECT_COUNT);
+
+    SORT_LINK *pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pObj = (GameObject*)pCur->pItem;
+        m_pWorld->InsertObject(pObj);
+        pCur = pCur->pNext;
+    }
+
+    m_pWorld->EndCreateWorld();
+}
+
 void GameManager::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
 
-void GameManager::Update(ULONGLONG curTick)
+void GameManager::UpdatePhysics(float dt)
 {
-    if (m_isPaused)
-    {
-        m_prevUpdateTick = curTick;
-        return;
-    }
-    // Update Scene with 60FPS
-    if (curTick - m_prevUpdateTick < 23)
-    {
-        return;
-    }
-
-    // 만약 현재 Tick과 이전 프레임 Tick간의 차이가 너무 클 경우
-    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
-
-    if (dt > 0.1f)
-    {
-        dt = 0.03f; // 30 FPS
-    }
-    m_prevUpdateTick = curTick;
-    m_deltaTime = dt;
-
-    // camera
-    if (m_activateCamera)
-    {
-        m_pMainCamera->Update(dt);
-    }
-
-    // Update Controller
-    m_pControllerManager->UpdateControllers(dt);
-
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
@@ -261,8 +261,43 @@ void GameManager::Update(ULONGLONG curTick)
     }
 
     m_pPhysicsManager->ResolveContactsAll(dt);
+}
 
-    pCur = m_pGameObjLinkHead;
+void GameManager::Update(ULONGLONG curTick)
+{
+    // Update Scene with 40FPS
+    if (curTick - m_prevUpdateTick < 25)
+    {
+        return;
+    }
+    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
+    // Camera Update
+    if (m_activateCamera)
+    {
+        m_pMainCamera->Update(dt);
+    }
+    if (m_isPaused)
+    {
+        m_prevUpdateTick = curTick;
+        return;
+    }
+    // 만약 현재 Tick과 이전 프레임 Tick간의 차이가 너무 클 경우
+    if (dt > 0.1f)
+    {
+        dt = 0.03f; // 30 FPS
+    }
+    dt *= m_timeSpeed;
+
+    m_prevUpdateTick = curTick;
+    m_deltaTime = dt;
+
+    // Update Controller
+    m_pControllerManager->UpdateControllers(dt);
+
+    UpdatePhysics(dt);
+
+    // Update Game Objects
+    SORT_LINK* pCur = m_pGameObjLinkHead;
     while (pCur)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
@@ -280,6 +315,15 @@ void GameManager::LateUpdate(ULONGLONG curTick)
     //{
     //     m_scene[i]->LateUpdate(dt);
     // }
+
+    // 성능 측정
+    m_frameCount++;
+    if (curTick - m_prevFrameCheckTick > 1000)
+    {
+        m_prevFrameCheckTick = curTick;
+        m_FPS = m_frameCount;
+        m_frameCount = 0;
+    }
 }
 
 void GameManager::Render()
@@ -312,15 +356,6 @@ void GameManager::Render()
     }
     m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
                                      reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));
-
-    //// render dynamic texture sprite
-    // m_pRenderer->RenderSprite(m_pSprite, 512 + 10, 0, 0.5f, 0.5f, 1.0f);
-    // m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 0, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
-    //                                  m_pDynamicTextureHandle);
-
-    //// render dynamic texture as text
-    // m_pRenderer->RenderSpriteWithTex(m_pSpriteCommon, 512 + 5, 256 + 5 + 256 + 5, 1.0f, 1.0f, nullptr, 0.0f,
-    //                                  m_pTextTexHandle);
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 }

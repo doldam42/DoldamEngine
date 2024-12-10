@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PhysicsComponent.h"
-
+class GameObject;
 class World
 {
   private:
@@ -10,5 +9,11 @@ class World
   private:
     void Cleanup();
   public:
-    void Initialize(GameObject **pObjectArray, int objectCount);
+    void Initialize();
+    void BeginCreateWorld(UINT maxObjectCount);
+    void InsertObject(GameObject *pObject);
+    void EndCreateWorld();
+
+    World(){}
+    ~World();
 };

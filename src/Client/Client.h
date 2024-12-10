@@ -12,13 +12,6 @@ class Client : public IController
     IModelExporter *m_pFbxExporter = nullptr;
     IModelExporter *m_pAssimpExporter = nullptr;
 
-    // Timer
-    UINT m_FPS = 0;
-    UINT m_frameCount = 0;
-    UINT m_prevFrameCheckTick = 0;
-
-    ULONGLONG m_prevUpdateTick = 0;
-
     // TMP
     IFontHandle *m_pFontHandle = nullptr;
 
@@ -53,7 +46,6 @@ class Client : public IController
     void OnKeyUp(UINT nChar, UINT uiScanCode);
     void OnMouseMove(int mouseX, int mouseY);
     void OnMouseWheel(float deltaWheel);
-    void OnPauseKeyPressed();
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     Client() = default;

@@ -114,7 +114,7 @@ void CameraController::SetAspectRatio(float aspect) { m_pCamera->SetAspectRatio(
 
 static void Jump(void *)
 {
-    float dt = g_pGame->GetDeltaTime();
+    float dt = g_pGame->DeltaTime();
     GameObject *pTarget = g_pGame->GetCamera()->GetFollowTarget();
 
     // pTarget->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));

@@ -32,7 +32,7 @@ void InputManager::OnMouseMove(int mouseX, int mouseY)
 
 void InputManager::OnMouseWheel(float wheelDelta) 
 { 
-    m_lastWheelTime = g_pGame->GetDeltaTime();
+    m_lastWheelTime = g_pGame->DeltaTime();
     if (m_isWheelStopped)
     {
         m_isWheelStopped = false;

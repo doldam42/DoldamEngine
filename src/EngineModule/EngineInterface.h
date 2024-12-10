@@ -70,7 +70,7 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
-interface IPhysicsComponent : public IBoundable
+interface IPhysicsComponent
 {
     virtual Vector3 GetVelocity() const = 0;
 
@@ -78,7 +78,7 @@ interface IPhysicsComponent : public IBoundable
     virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
-interface IGameObject : public IBoundable
+interface IGameObject
 {
     virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) = 0;
 
@@ -151,13 +151,12 @@ interface IInputManager
 interface IGameManager
 {
     virtual BOOL Initialize(HWND hWnd) = 0;
-    virtual BOOL LoadResources() = 0;
 
-    virtual void PreUpdate(ULONGLONG curTick) = 0;
-    virtual void Update(ULONGLONG curTick) = 0;
-    virtual void LateUpdate(ULONGLONG curTick) = 0;
-
+    virtual void Start() = 0;
+    virtual void Update() = 0;
     virtual void Render() = 0;
+
+    virtual void BuildScene() = 0;
 
     virtual void OnKeyDown(UINT nChar, UINT uiScanCode) = 0;
     virtual void OnKeyUp(UINT nChar, UINT uiScanCode) = 0;
@@ -194,6 +193,9 @@ interface IGameManager
 
     virtual Vector3 GetCameraPos() = 0;
     virtual Vector3 GetCameraLookAt() = 0;
+
+    virtual float DeltaTime() const = 0;
+    virtual UINT FPS() const = 0;
 
     virtual IRenderer     *GetRenderer() const = 0;
     virtual IInputManager *GetInputManager() const = 0;

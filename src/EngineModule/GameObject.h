@@ -20,6 +20,7 @@ class GameObject : public IGameObject
 
   public:
     SORT_LINK m_LinkInGame;
+    SORT_LINK m_LinkInWorld;
 
   private:
     void Cleanup();
@@ -56,7 +57,7 @@ class GameObject : public IGameObject
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
 
-    Bounds GetBounds() const override;
+    Bounds GetBounds() const;
 
     GameObject();
     virtual ~GameObject();
