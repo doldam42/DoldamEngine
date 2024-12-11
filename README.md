@@ -1,7 +1,7 @@
 # D3D12 게임 엔진 제작 프로젝트 
 ## 물리 엔진 데모
 https://github.com/user-attachments/assets/2e3cd5e9-3632-4d61-9e1d-fb8352b35953
-## 캐릭터 애니메이션 및 레이트레이싱 데모
+## 레이트레이싱 데모
 https://github.com/user-attachments/assets/6c05f359-d262-47cf-a9a8-88902ce930d1
 ## 셰도우 매핑 데모
 https://github.com/user-attachments/assets/54a0c54b-6574-489c-8ce7-6e2562770218
