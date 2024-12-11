@@ -31,8 +31,9 @@ class InputManager : public IInputManager
     void SetWindowSize(UINT width, UINT height);
 
     BOOL IsKeyPressed(UINT nChar) const;
-
-    GameEvent *AddKeyListener(UINT nChar, void (*func)(void *), void *arg = nullptr, size_t sizeOfArg = 0);
+    
+    GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
+                              size_t sizeOfArg = 0) override;
     void       DeleteKeyListener(UINT nChar, GameEvent *pEvent);
 
     float GetXAxis() const;

@@ -1,10 +1,13 @@
 #pragma once
+
+#include "TimeController.h"
 class Client : public IController
 {
   private:
     HWND            m_hWnd = nullptr;
     IGameManager   *m_pGame = nullptr;
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
+    // TODO: Reference Count 추가
     IRenderer      *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
     IGameObject    *m_pSphere = nullptr;
@@ -27,10 +30,15 @@ class Client : public IController
 
     WCHAR m_text[260] = {0};
 
+    // Controllers
+    TimeController m_timeController;
+
   private:
     void Cleanup();
 
   public:
+    static Client &GetInstance();
+
     BOOL Initialize(HWND hWnd);
 
     void LoadResources();
@@ -47,6 +55,8 @@ class Client : public IController
     void OnMouseMove(int mouseX, int mouseY);
     void OnMouseWheel(float deltaWheel);
     BOOL OnUpdateWindowSize(UINT width, UINT height);
+
+    IGameManager *GetGameManager() { return m_pGame; }
 
     Client() = default;
     ~Client();

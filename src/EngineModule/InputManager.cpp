@@ -30,15 +30,15 @@ void InputManager::OnMouseMove(int mouseX, int mouseY)
     m_cursorNdcY = std::clamp(m_cursorNdcY, -1.0f, 1.0f);
 }
 
-void InputManager::OnMouseWheel(float wheelDelta) 
-{ 
+void InputManager::OnMouseWheel(float wheelDelta)
+{
     m_lastWheelTime = g_pGame->DeltaTime();
     if (m_isWheelStopped)
     {
         m_isWheelStopped = false;
     }
 
-    m_deltaWheel = wheelDelta; 
+    m_deltaWheel = wheelDelta;
 }
 
 void InputManager::SetWindowSize(UINT width, UINT height)
@@ -53,7 +53,7 @@ BOOL InputManager::IsKeyPressed(UINT nChar) const
     return m_keyPressed[nChar];
 }
 
-GameEvent *InputManager::AddKeyListener(UINT nChar, void (*func)(void *), void *arg, size_t sizeOfArg)
+GameEvent *InputManager::AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg, size_t sizeOfArg)
 {
     return m_eventListeners[nChar].AddCallback(func, arg, sizeOfArg);
 }

@@ -57,7 +57,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     MSG msg;
 
-    g_pClient = new Client;
+    g_pClient = &Client::GetInstance();
     g_pClient->Initialize(g_hMainWindow);
 
     // Main message loop:
@@ -81,12 +81,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         {
             g_pClient->Process();
         }
-    }
-
-    if (g_pClient)
-    {
-        delete g_pClient;
-        g_pClient = nullptr;
     }
 
 #ifdef _DEBUG

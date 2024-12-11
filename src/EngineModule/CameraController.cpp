@@ -2,6 +2,7 @@
 
 #include "GameManager.h"
 #include "GameObject.h"
+#include "PhysicsComponent.h"
 
 #include "Camera.h"
 #include "CameraController.h"
@@ -72,7 +73,7 @@ void CameraController::UpdateMouse(float mouseNdcX, float mouseNdcY)
         // 얼마나 회전할지 계산
         float yaw = mouseNdcX * XM_2PI;      // 좌우 360도
         float pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
-        
+
         m_pCamera->SetYawPitchRoll(yaw, -pitch, 0.0f);
     }
 }
@@ -114,10 +115,10 @@ void CameraController::SetAspectRatio(float aspect) { m_pCamera->SetAspectRatio(
 
 static void Jump(void *)
 {
-    float dt = g_pGame->DeltaTime();
+    float       dt = g_pGame->DeltaTime();
     GameObject *pTarget = g_pGame->GetCamera()->GetFollowTarget();
 
-    // pTarget->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
+    pTarget->GetPhysicsComponent()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
 }
 
 void CameraController::SetFollowTarget(GameObject *pTarget)
@@ -150,7 +151,7 @@ void CameraController::Initialize(float verticalFovRadians, float aspectRatio, f
 
     InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
     pInputManager->AddKeyListener(
-        'G', [](void *) { g_pGame->GetCamera()->ToggleProjectionSetting(); }, nullptr);
+        'G', [this](void *) { this->ToggleProjectionSetting(); }, nullptr);
     pInputManager->AddKeyListener(
-        'F', [](void *) { g_pGame->ToggleCamera(); }, nullptr);
+        'F', [this](void *) { g_pGame->ToggleCamera(); }, nullptr);
 }

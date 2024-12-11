@@ -5,6 +5,8 @@
 #include "../EngineModule/EngineInterface.h"
 #include "../RenderModule/RendererInterface.h"
 
+#include "TimeController.h"
+
 #include "Client.h"
 
 namespace fs = std::filesystem;
@@ -58,6 +60,12 @@ void Client::Cleanup()
     }
 }
 
+Client &Client::GetInstance()
+{ 
+    static Client instance;
+    return instance;
+}
+
 BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
@@ -70,6 +78,7 @@ BOOL Client::Initialize(HWND hWnd)
     m_pAssimpExporter->Initialize(m_pGame);
 
     m_pGame->RegisterController(this);
+    m_pGame->RegisterController(&m_timeController);
 
     m_pGame->Start();
 

@@ -16,7 +16,7 @@ void EventListener::Run()
 }
 
 // event의 경우 argumet에 대한 size를 가지고 있어야 될거 같음...
-GameEvent *EventListener::AddCallback(void (*func)(void *), void *arg, size_t sizeOfArg)
+GameEvent *EventListener::AddCallback(const std::function<void(void *)> func, void *arg, size_t sizeOfArg)
 {
     GameEvent *pEvent = new GameEvent;
     pEvent->func = func;

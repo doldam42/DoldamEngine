@@ -144,6 +144,7 @@ class GameManager : public IGameManager
 
     float DeltaTime() const override { return m_deltaTime; }
     UINT  FPS() const override { return m_FPS; }
+    void  SetTimeSpeed(float speed) override { m_timeSpeed = speed; }
 
     void Render() override;
 

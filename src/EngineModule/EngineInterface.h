@@ -146,6 +146,8 @@ interface IInputManager
     virtual float GetCursorNDCY() const = 0;
 
     virtual BOOL IsKeyPressed(UINT nChar) const = 0;
+    virtual GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
+                                      size_t sizeOfArg = 0) = 0;
 };
 
 interface IGameManager
@@ -196,6 +198,8 @@ interface IGameManager
 
     virtual float DeltaTime() const = 0;
     virtual UINT FPS() const = 0;
+
+    virtual void SetTimeSpeed(float speed) = 0;
 
     virtual IRenderer     *GetRenderer() const = 0;
     virtual IInputManager *GetInputManager() const = 0;

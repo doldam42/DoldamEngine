@@ -8,6 +8,7 @@
     <ClCompile Include="main.cpp">
       <Filter>MainEntry</Filter>
     </ClCompile>
+    <ClCompile Include="TimeController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -20,6 +21,7 @@
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
+    <ClInclude Include="TimeController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

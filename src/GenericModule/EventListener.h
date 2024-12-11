@@ -4,7 +4,7 @@
 
 struct GameEvent
 {
-    void  (*func)(void *);
+    std::function<void(void *)> func;
     void *arg = nullptr;
 
     SORT_LINK link;
@@ -18,7 +18,7 @@ class EventListener
   public:
     void Run();
 
-    GameEvent *AddCallback(void (*func)(void *), void *arg, size_t sizeOfArg);
+    GameEvent *AddCallback(const std::function<void(void*)> func , void *arg, size_t sizeOfArg);
 
     void DeleteCallback(GameEvent *pEvent);
     void DeleteAllCallback();
