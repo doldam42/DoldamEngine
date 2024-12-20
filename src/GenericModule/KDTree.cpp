@@ -21,14 +21,14 @@ struct KDNode
         KDNode *left;
         KDNode *right;
     };
-    bool      isLeaf;
-    Axis      axis;
-    float     split;
-    
-    union
-    {
+
+    bool  isLeaf;
+    Axis  axis;
+    float split;
+
+    union {
         LeafItems leafItems;
-        Child child;
+        Child     child;
     };
 
     void InitLeaf(SORT_LINK **objects, BoundEdge *edges, int itemCount);
@@ -58,7 +58,7 @@ void KDNode::InitLeaf(SORT_LINK **objects, BoundEdge *edges, int itemCount)
     this->isLeaf = true;
     for (int i = 0; i < itemCount; i++)
     {
-        int        index = edges[i].primNum;
+        int         index = edges[i].primNum;
         SORT_LINK **ppLinkHead = &this->leafItems.pItemLinkHead;
         SORT_LINK **ppLinkTail = &this->leafItems.pItemLinkTail;
         LinkToLinkedListFIFO(ppLinkHead, ppLinkTail, objects[index]);
@@ -111,6 +111,54 @@ KDNode *KDTree::BuildTreeRecursive(BoundEdge *edges, SORT_LINK **pObjectArray, i
     pNode->child.right = BuildTreeRecursive(edges + mid + 1, pObjectArray, rightObjectCount, depth - 1);
 
     return pNode;
+}
+
+void KDTree::InsertDynamicObjectRecursive(KDNode *pNode, const Vector3 &pos, SORT_LINK *pNew, int depth)
+{
+    if (depth == 0 || !pNode)
+        return;
+    
+    if (pNode->isLeaf)
+    {
+        LinkToLinkedListFIFO(&pNode->leafItems.pItemLinkHead, &pNode->leafItems.pItemLinkTail, pNew);
+        return;
+    }
+
+    size_t axis = (size_t)pNode->axis;
+
+    const float *pPos = (const float *)&pos;
+    if (pPos[axis] <= pNode->split)
+    {
+        InsertDynamicObjectRecursive(pNode->child.left, pos, pNew, depth - 1);
+    }
+    else
+    {
+        InsertDynamicObjectRecursive(pNode->child.right, pos, pNew, depth - 1);
+    }
+}
+
+void KDTree::DeleteDynamicObjectRecursive(KDNode *pNode, const Vector3 &pos, SORT_LINK *pDel, int depth) 
+{
+    if (depth == 0 || !pNode)
+        return;
+
+    if (pNode->isLeaf)
+    {
+        UnLinkFromLinkedList(&pNode->leafItems.pItemLinkHead, &pNode->leafItems.pItemLinkTail, pDel);
+        return;
+    }
+
+    size_t axis = (size_t)pNode->axis;
+
+    const float *pPos = (const float *)&pos;
+    if (pPos[axis] <= pNode->split)
+    {
+        DeleteDynamicObjectRecursive(pNode->child.left, pos, pDel, depth - 1);
+    }
+    else
+    {
+        DeleteDynamicObjectRecursive(pNode->child.right, pos, pDel, depth - 1);
+    }
 }
 
 void KDTree::Cleanup()
@@ -172,8 +220,8 @@ void KDTree::DebugPrintTreeRecursive(KDNode *pNode)
 
 void KDTree::BeginCreateTree(int maxObjectCount)
 {
-    m_depth = std::round(8 + 1.3f * log2f((float)maxObjectCount));
-    m_maxInteriorNodeCount = pow(2, m_depth) - 1;
+    int maxDepth = std::round(8 + 1.3f * log2f((float)maxObjectCount));
+    m_maxInteriorNodeCount = pow(2, maxDepth) - 1;
     m_maxLeafNodeCount = maxObjectCount;
     m_maxObjectCount = maxObjectCount;
 
@@ -188,7 +236,7 @@ void KDTree::BeginCreateTree(int maxObjectCount)
 }
 
 void KDTree::InsertObject(const Bounds *pBounds, SORT_LINK *pNew)
-{
+{   
     if (m_curObjectCount > m_maxObjectCount)
     {
 #ifdef _DEBUG
@@ -232,6 +280,22 @@ void KDTree::EndCreateTree()
         delete[] pEdges;
         pEdges = nullptr;
     }
+}
+
+void KDTree::InsertDynamicObject(const Vector3 &pos, SORT_LINK *pNew) 
+{
+    InsertDynamicObjectRecursive(m_pRoot, pos, pNew, m_depth);
+}
+
+void KDTree::DeleteDynamicObject(const Vector3 &pos, SORT_LINK *pDel) 
+{
+    DeleteDynamicObjectRecursive(m_pRoot, pos, pDel, m_depth);
+}
+
+void KDTree::UpdateDynamicObject(const Vector3 &pos, SORT_LINK *pObj) 
+{
+    DeleteDynamicObjectRecursive(m_pRoot, pos, pObj, m_depth);
+    InsertDynamicObjectRecursive(m_pRoot, pos, pObj, m_depth);
 }
 
 void KDTree::DebugPrintTree() { DebugPrintTreeRecursive(m_pRoot); }

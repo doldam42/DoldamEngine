@@ -586,7 +586,7 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
 }
 
 void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX,
-                                        float fScaleY, const RECT *pRect, float Z, void *pTexHandle)
+                                        float fScaleY, const RECT *pRect, float Z, ITextureHandle *pTexHandle)
 {
     // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
 
@@ -608,7 +608,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
         item.spriteParam.isUseRect = FALSE;
         item.spriteParam.rect = {};
     }
-    item.spriteParam.pTexHandle = reinterpret_cast<ITextureHandle *>(pTexHandle);
+    item.spriteParam.pTexHandle = pTexHandle;
     item.spriteParam.Z = Z;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))

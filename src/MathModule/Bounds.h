@@ -22,6 +22,8 @@ class Bounds
         maxs = Vector3(-1e6);
     }
     bool DoesIntersect(const Bounds &rhs) const;
+    bool IntersectP(const Ray &ray, float *hitt0, float *hitt1);
+
     void Expand(const Vector3 *pts, const int num);
     void Expand(const Vector3 &rhs);
     void Expand(const Bounds &rhs);

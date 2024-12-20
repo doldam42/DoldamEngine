@@ -175,7 +175,7 @@ class D3D12Renderer : public IRenderer
     void RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
                                bool isWired = false) override;
     void RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
-                             const RECT *pRect, float Z, void *pTexHandle) override;
+                             const RECT *pRect, float Z, ITextureHandle *pTexHandle) override;
     void RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                       float Z) override;
 

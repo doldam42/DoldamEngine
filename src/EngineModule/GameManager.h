@@ -1,22 +1,18 @@
 #pragma once
 
+#include "EngineInterface.h"
+
 #include "CameraController.h"
 #include "GameUtils.h"
 #include "InputManager.h"
 
-#include "../GenericModule/GenericHeaders.h"
-#include "../MathModule/MathHeaders.h"
-#include "../RenderModule/RendererInterface.h"
-
-#include "EngineInterface.h"
-
-class PhysicsManager;
-class Model;
 class AnimationClip;
-class GameObject;
 class Character;
-class World;
 class ControllerManager;
+class GameObject;
+class Model;
+class PhysicsManager;
+class World;
 class GameManager : public IGameManager
 {
   public:
@@ -28,10 +24,7 @@ class GameManager : public IGameManager
 
     // For Debugging
     UINT m_culledObjectCountForDebug = 0;
-
-    bool  m_isPaused = false;
-    float m_timeSpeed = 1.0f;
-
+    
   private:
     static UINT initRefCount;
 
@@ -45,6 +38,8 @@ class GameManager : public IGameManager
     float m_deltaTime = 0.0f;
     // Timer-For Debug
     float m_loadingTime = 0.0f;
+    bool  m_isPaused = false;
+    float m_timeSpeed = 1.0f;
 
     PhysicsManager   *m_pPhysicsManager = nullptr;
     CameraController *m_pMainCamera = nullptr;
@@ -126,7 +121,7 @@ class GameManager : public IGameManager
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 
-    void RegisterController(IController *pController) override;
+    void Register(IController *pController) override;
 
     BOOL LoadResources();
 
@@ -144,7 +139,9 @@ class GameManager : public IGameManager
 
     float DeltaTime() const override { return m_deltaTime; }
     UINT  FPS() const override { return m_FPS; }
+
     void  SetTimeSpeed(float speed) override { m_timeSpeed = speed; }
+    void TogglePause() override { m_isPaused = !m_isPaused; }
 
     void Render() override;
 

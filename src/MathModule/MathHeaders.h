@@ -39,6 +39,14 @@ using DirectX::BoundingFrustum;
 using DirectX::BoundingOrientedBox;
 using DirectX::ContainmentType;
 
+#ifdef _MSC_VER
+#define MachineEpsilon (std::numeric_limits<float>::epsilon() * 0.5)
+#else
+static float MachineEpsilon = std::numeric_limits<float>::epsilon() * 0.5;
+#endif
+inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilon); }
+
+#include "Ray.h"
 #include "Bounds.h"
 #include "ShapeBase.h"
 #include "Sphere.h"

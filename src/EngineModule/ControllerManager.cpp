@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "ControllerManager.h"
 
-void ControllerManager::RegisterController(IController *pController) { m_controllers.push_back(pController); }
+void ControllerManager::Register(IController *pController) { m_controllers.push_back(pController); }
 
-void ControllerManager::UpdateControllers(float dt)
+void ControllerManager::Update(float dt)
 {
     for (int i = 0; i < m_controllers.size(); i++)
     {
@@ -11,7 +11,7 @@ void ControllerManager::UpdateControllers(float dt)
     }
 }
 
-void ControllerManager::StartControllers()
+void ControllerManager::Start()
 {
     for (int i = 0; i < m_controllers.size(); i++)
     {

@@ -15,10 +15,10 @@ class ControllerManager
     SORT_LINK *m_pControllerLinkTail = nullptr;*/
 
   public:
-    void RegisterController(IController *pController);
+    void Register(IController *pController);
 
-    void UpdateControllers(float dt);
-    void StartControllers();
+    void Update(float dt);
+    void Start();
 
     ControllerManager() { m_controllers.reserve(DEFAULT_SCRIPT_COUNT); };
     ~ControllerManager();

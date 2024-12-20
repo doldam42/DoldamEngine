@@ -124,7 +124,6 @@ BOOL GameManager::Initialize(HWND hWnd)
 
     m_pInputManager = new InputManager();
     m_pInputManager->Initialize(width, height);
-    m_pInputManager->AddKeyListener('P', [](void *) { g_pGame->m_isPaused = !g_pGame->m_isPaused; });
 
     if (!CreateD3D12Renderer(hWnd, TRUE, FALSE, &m_pRenderer))
     {
@@ -158,8 +157,6 @@ lb_return:
 
 BOOL GameManager::LoadResources()
 {
-    LoadPrimitiveMeshes();
-
     // Create Shadow Map Sprite
     m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
@@ -200,9 +197,11 @@ void GameManager::Start()
 {
     ULONGLONG prevTick = GetTickCount64();
 
+    LoadPrimitiveMeshes();
+
     LoadResources();
 
-    m_pControllerManager->StartControllers();
+    m_pControllerManager->Start();
 
     ULONGLONG curTick = GetTickCount64();
     m_loadingTime = static_cast<float>(curTick - prevTick) / 1000.f;
@@ -218,14 +217,14 @@ void GameManager::Update()
     LateUpdate(curTick);
 }
 
-void GameManager::BuildScene() 
-{ 
+void GameManager::BuildScene()
+{
     m_pWorld->BeginCreateWorld(MAX_WORLD_OBJECT_COUNT);
 
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
-        GameObject *pObj = (GameObject*)pCur->pItem;
+        GameObject *pObj = (GameObject *)pCur->pItem;
         m_pWorld->InsertObject(pObj);
         pCur = pCur->pNext;
     }
@@ -271,33 +270,34 @@ void GameManager::Update(ULONGLONG curTick)
         return;
     }
     float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
+    m_prevUpdateTick = curTick;
+    // FPS가 너무 낮은 경우 30 FPS로 고정
+    if (dt > 0.1f) // 10 FPS
+    {
+        dt = 0.03f; // 30 FPS
+    }
+    
     // Camera Update
     if (m_activateCamera)
     {
         m_pMainCamera->Update(dt);
     }
+
     if (m_isPaused)
     {
-        m_prevUpdateTick = curTick;
         return;
-    }
-    // 만약 현재 Tick과 이전 프레임 Tick간의 차이가 너무 클 경우
-    if (dt > 0.1f)
-    {
-        dt = 0.03f; // 30 FPS
     }
     dt *= m_timeSpeed;
 
-    m_prevUpdateTick = curTick;
     m_deltaTime = dt;
 
     // Update Controller
-    m_pControllerManager->UpdateControllers(dt);
+    m_pControllerManager->Update(dt);
 
     UpdatePhysics(dt);
 
     // Update Game Objects
-    SORT_LINK* pCur = m_pGameObjLinkHead;
+    SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
@@ -355,7 +355,7 @@ void GameManager::Render()
         spriteCount++;
     }
     m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
-                                     reinterpret_cast<void *>(m_pRenderer->GetShadowMapTexture(0)));
+                                     m_pRenderer->GetShadowMapTexture(0));
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 }
@@ -576,10 +576,7 @@ void GameManager::DeleteAllAnimation()
     }
 }
 
-void GameManager::RegisterController(IController *pController)
-{
-    m_pControllerManager->RegisterController(pController);
-}
+void GameManager::Register(IController *pController) { m_pControllerManager->Register(pController); }
 
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 

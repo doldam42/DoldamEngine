@@ -35,6 +35,40 @@ bool Bounds::DoesIntersect(const Bounds &rhs) const
     return true;
 }
 
+bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) 
+{
+    float t0 = 0, t1 = FLT_MAX;
+
+    float *pMin = (float *)&mins;
+    float *pMax = (float *)&maxs;
+    float *pRayPos = (float *)&ray.pos;
+    float *pRayDir = (float *)&ray.dir;
+    for (int i = 0; i < 3; i++)
+    {
+        // Update interval for _i_th bounding box slab
+        float invRayDir = 1 / pRayDir[i];
+        float tNear = (pMin[i] - pRayPos[i]) * invRayDir;
+        float tFar = (pMax[i] - pRayPos[i]) * invRayDir;
+
+        // Update parametric interval from slab intersection $t$ values
+        if (tNear > tFar)
+            std::swap(tNear, tFar);
+
+        // Update _tFar_ to ensure robust ray--bounds intersection
+        tFar *= 1 + 2 * gamma(3);
+        t0 = tNear > t0 ? tNear : t0;
+        t1 = tFar < t1 ? tFar : t1;
+        if (t0 > t1)
+            return false;
+        
+    }
+    if (hitt0)
+        *hitt0 = t0;
+    if (hitt1)
+        *hitt1 = t1;
+    return true;
+}
+
 /*
 ====================================================
 Bounds::Expand

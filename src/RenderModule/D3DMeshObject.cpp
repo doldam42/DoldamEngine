@@ -253,8 +253,7 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
         pGeometry->materialIndex = pMatHandle->index;
         pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
-        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle,
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(m_descriptorSize);
 
         pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
@@ -355,11 +354,13 @@ BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UIN
     m_pFaceGroups = new INDEXED_FACE_GROUP[m_maxFaceGroupCount];
     memset(m_pFaceGroups, 0, sizeof(INDEXED_FACE_GROUP) * m_maxFaceGroupCount);
 
+#ifdef USE_RAYTRACING
     // #DXR
     m_pBLASGeometries = new D3D12_RAYTRACING_GEOMETRY_DESC[m_maxFaceGroupCount];
     memset(m_pBLASGeometries, 0, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC) * m_maxFaceGroupCount);
     m_pRootArgPerGeometries = new Graphics::LOCAL_ROOT_ARG[m_maxFaceGroupCount];
     memset(m_pRootArgPerGeometries, 0, sizeof(Graphics::LOCAL_ROOT_ARG) * m_maxFaceGroupCount);
+#endif
 
     m_descriptorCountPerDraw =
         (m_type == RENDER_ITEM_TYPE_MESH_OBJ) ? DESCRIPTOR_COUNT_PER_STATIC_OBJ : DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ;
@@ -380,7 +381,7 @@ void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInM
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }
 
-void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace) 
+void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
 {
     if (pFace->pMaterialHandle)
     {
@@ -402,7 +403,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
 
     Material mat = *pInMaterial;
     wcscpy_s(mat.basePath, wcslen(path) + 1, path);
-    
+
     if (m_faceGroupCount >= m_maxFaceGroupCount)
     {
         __debugbreak();
@@ -421,6 +422,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
 
     InitMaterial(pFaceGroup, &mat);
 
+#ifdef USE_RAYTRACING
     // root arg per geometry
     {
         m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture = wcslen(pInMaterial->albedoTextureName) == 0 ? 1 : 0;
@@ -430,6 +432,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
     AddBLASGeometry(m_faceGroupCount, pVertices, 0, m_vertexCount, sizeof(BasicVertex), pIndexBuffer, 0,
                     numTriangles * 3, 0, 0);
+#endif // USE_RAYTRACING
 
     m_faceGroupCount++;
     result = TRUE;
@@ -442,7 +445,7 @@ void D3DMeshObject::EndCreateMesh() {}
 BOOL D3DMeshObject::UpdateMaterial(IMaterialHandle *pInMaterial, UINT faceGroupIndex)
 {
     INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
-    MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE*)pInMaterial;
+    MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE *)pInMaterial;
 
     CleanupMaterial(pFace);
 

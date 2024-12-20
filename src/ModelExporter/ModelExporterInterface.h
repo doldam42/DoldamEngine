@@ -16,7 +16,7 @@ interface IModelExporter
 
 	virtual BOOL Load(const WCHAR *basePath, const WCHAR *filename) = 0;
     virtual BOOL LoadAnimation(const WCHAR *filename) = 0;
-
+	
 	virtual IGameModel *GetModel() = 0;
     virtual IGameAnimation *GetAnimation() = 0;
 

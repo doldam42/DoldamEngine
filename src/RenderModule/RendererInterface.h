@@ -56,7 +56,7 @@ interface IRenderer
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                               float Z) = 0;
     virtual void RenderSpriteWithTex(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
-                                     const RECT *pRect, float Z, void *pTexHandle) = 0;
+                                     const RECT *pRect, float Z, ITextureHandle *pTexHandle) = 0;
 
     virtual IFontHandle *CreateFontObject(const WCHAR *fontFamilyName, float fontSize) = 0;
     virtual void         DeleteFontObject(IFontHandle * pFontHandle) = 0;

@@ -6,12 +6,11 @@
 #define ENGINEMODULE_API __declspec(dllimport)
 #endif
 
-#include "../MathModule/MathHeaders.h"
-#include "../GenericModule/GenericHeaders.h"
 #include <combaseapi.h>
 
-interface IRenderer;
-interface IMaterialHandle;
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
+#include "../RenderModule/RendererInterface.h"
 
 struct Material;
 struct Joint;
@@ -189,7 +188,7 @@ interface IGameManager
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
-    virtual void RegisterController(IController * pController) = 0;
+    virtual void Register(IController * pController) = 0;
 
     virtual void SetCameraFollowTarget(IGameObject * pObj) = 0;
 
@@ -200,6 +199,7 @@ interface IGameManager
     virtual UINT FPS() const = 0;
 
     virtual void SetTimeSpeed(float speed) = 0;
+    virtual void TogglePause() = 0;
 
     virtual IRenderer     *GetRenderer() const = 0;
     virtual IInputManager *GetInputManager() const = 0;

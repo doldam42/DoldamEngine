@@ -77,8 +77,9 @@ BOOL Client::Initialize(HWND hWnd)
     m_pFbxExporter->Initialize(m_pGame);
     m_pAssimpExporter->Initialize(m_pGame);
 
-    m_pGame->RegisterController(this);
-    m_pGame->RegisterController(&m_timeController);
+    // Register Controllers Before Start Game Manager.
+    m_pGame->Register(this);
+    m_pGame->Register(&m_timeController);
 
     m_pGame->Start();
 
@@ -104,9 +105,9 @@ void Client::LoadResources()
     mat = Material();
     mat.roughnessFactor = 0.1f;
     mat.metallicFactor = 0.8f;
-    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
     wcscpy_s(mat.name, L"ground");
-    wcscpy_s(mat.albedoTextureName, L"..\\..\\assets\\textures\\blender_uv_grid_2k.png");
+    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
     IMaterialHandle *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
     IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);

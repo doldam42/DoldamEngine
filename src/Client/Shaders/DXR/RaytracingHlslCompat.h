@@ -92,11 +92,11 @@ using namespace DirectX;
 typedef UINT Index;
 #endif
 
-struct Ray
-{
-    XMFLOAT3 origin;
-    XMFLOAT3 direction;
-};
+//struct Ray
+//{
+//    XMFLOAT3 origin;
+//    XMFLOAT3 direction;
+//};
 
 // GBuffer data collected during pathtracing
 // for subsequent Ambient Occlusion ray trace pass and denoising.
