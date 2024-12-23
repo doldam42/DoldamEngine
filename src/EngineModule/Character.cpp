@@ -76,6 +76,11 @@ void Character::SetRotation(const Quaternion *pInQuaternion) { GameObject::SetRo
 
 void Character::AddPosition(const Vector3 *pInDeltaPos) { GameObject::AddPosition(pInDeltaPos); }
 
+void Character::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials)
+{
+    GameObject::SetMaterials(ppMaterials, numMaterials);
+}
+
 Bounds Character::GetBounds() const { return GameObject::GetBounds(); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)

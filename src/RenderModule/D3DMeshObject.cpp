@@ -12,6 +12,8 @@
 #include "D3D12ResourceManager.h"
 #include "DescriptorPool.h"
 
+#include "MaterialManager.h"
+
 #include "ShaderTable.h"
 
 #include "D3DMeshObject.h"
@@ -91,8 +93,9 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 }
 
 void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                         ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV,
-                         const Matrix *pBoneMats, UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
+                         IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
+                         ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
+                         UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -105,7 +108,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
 
     if (passType != DRAW_PASS_TYPE_SHADOW)
     {
-        UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex);
+        UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex, ppMaterials, numMaterials);
     }
 
     // set RootSignature
@@ -229,7 +232,8 @@ void D3DMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE desc
  *  Descriptor Table Per FaceGroup - Offset : 0
  *  | Material | Textures |
  */
-void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex)
+void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                                      IRenderMaterial **ppMaterials, UINT numMaterial)
 {
     CB_CONTAINER       *pGeomCBs;
     ConstantBufferPool *pGeometryConstantBufferPool =
@@ -246,18 +250,34 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
     {
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
-
-        MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
-
         GeometryConstants *pGeometry = (GeometryConstants *)pGeomCB->pSystemMemAddr;
-        pGeometry->materialIndex = pMatHandle->index;
-        pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
-        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(m_descriptorSize);
+        if (i < numMaterial) 
+        {
+            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
 
-        pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-        dest.Offset(m_descriptorSize, MATERIAL_HANDLE::MATERIAL_DESCRIPTOR_SIZE);
+            pGeometry->materialIndex = pMatHandle->index;
+            pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            dest.Offset(m_descriptorSize);
+
+            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
+        }
+        else
+        {
+            MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
+
+            pGeometry->materialIndex = pMatHandle->index;
+            pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            dest.Offset(m_descriptorSize);
+
+            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
+        }
     }
 }
 
@@ -385,7 +405,7 @@ void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
 {
     if (pFace->pMaterialHandle)
     {
-        m_pRenderer->DeleteMaterialHandle(pFace->pMaterialHandle);
+        pFace->pMaterialHandle->Release();
         pFace->pMaterialHandle = nullptr;
     }
 }
@@ -442,7 +462,7 @@ lb_return:
 
 void D3DMeshObject::EndCreateMesh() {}
 
-BOOL D3DMeshObject::UpdateMaterial(IMaterialHandle *pInMaterial, UINT faceGroupIndex)
+BOOL D3DMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
 {
     INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
     MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE *)pInMaterial;
@@ -784,11 +804,7 @@ void D3DMeshObject::CleanupMesh()
                 m_pFaceGroups[i].pIndexBuffer->Release();
                 m_pFaceGroups[i].pIndexBuffer = nullptr;
             }
-            if (m_pFaceGroups[i].pMaterialHandle)
-            {
-                m_pRenderer->DeleteMaterialHandle(m_pFaceGroups[i].pMaterialHandle);
-                m_pFaceGroups[i].pMaterialHandle = nullptr;
-            }
+            CleanupMaterial(m_pFaceGroups + i);
         }
         delete[] m_pFaceGroups;
         m_pFaceGroups = nullptr;

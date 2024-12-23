@@ -125,7 +125,6 @@ void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
 MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
 {
     MATERIAL_HANDLE *pMatHandle = new MATERIAL_HANDLE;
-    memset(pMatHandle, 0, sizeof(MATERIAL_HANDLE));
 
     UINT8 *sysMemAddr = (UINT8 *)m_pMemoryPool->Alloc();
     if (!sysMemAddr)
@@ -160,20 +159,6 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     InitMaterialTextures(pMatHandle, pMaterial);
 
     return pMatHandle;
-}
-
-UINT MaterialManager::DeallocMaterialHandle(MATERIAL_HANDLE *pMatHandle)
-{
-    if (!pMatHandle->refCount)
-        __debugbreak();
-
-    UINT refCount = --pMatHandle->refCount;
-    if (!refCount)
-    {
-        CleanupMaterial(pMatHandle);
-        delete pMatHandle;
-    }
-    return refCount;
 }
 
 void MaterialManager::Cleanup()
@@ -269,6 +254,7 @@ bool MaterialManager::Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT
 
     result = true;
 lb_return:
+
     return result;
 }
 
@@ -293,7 +279,15 @@ MATERIAL_HANDLE *MaterialManager::CreateMaterial(const void *pInMaterial, const 
     return pMatHandle;
 }
 
-void MaterialManager::DeleteMaterial(MATERIAL_HANDLE *pMatHandle) { DeallocMaterialHandle(pMatHandle); }
+void MaterialManager::DeleteMaterial(MATERIAL_HANDLE *pMatHandle)
+{
+    if (pMatHandle)
+    {
+        CleanupMaterial(pMatHandle);
+        delete pMatHandle;
+    }
+    m_isUpdated = true;
+}
 
 BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial)
 {
@@ -317,3 +311,19 @@ void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 }
 
 MaterialManager::~MaterialManager() { Cleanup(); }
+
+HRESULT __stdcall MATERIAL_HANDLE::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+
+ULONG __stdcall MATERIAL_HANDLE::AddRef(void) { return ++refCount; }
+
+ULONG __stdcall MATERIAL_HANDLE::Release(void)
+{
+    ULONG newRefCount = --refCount;
+    if (newRefCount == 0)
+    {
+        g_pRenderer->WaitForGPU();
+        g_pRenderer->DeleteMaterialHandle(this);
+        return 0;
+    }
+    return newRefCount;
+}

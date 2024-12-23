@@ -16,6 +16,8 @@ BOOL CreateD3D12Renderer(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, IRe
     }
 
     *ppRenderer = pD3DRenderer;
+    g_pRenderer = pD3DRenderer;
+
     result = TRUE;
 lb_return:
     return result;
@@ -23,9 +25,13 @@ lb_return:
 
 void DeleteD3D12Renderer(IRenderer *pRenderer)
 {
-    D3D12Renderer *pRnd = dynamic_cast<D3D12Renderer *>(pRenderer);
-    delete pRnd;
-
+    if (pRenderer)
+    {
+        D3D12Renderer *pRnd = dynamic_cast<D3D12Renderer *>(pRenderer);
+        delete pRnd;
+        g_pRenderer = nullptr;
+    }
+    
 #ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());
 #endif

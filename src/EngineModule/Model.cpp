@@ -223,10 +223,20 @@ void Model::UpdateAnimation(AnimationClip *pClip, int frameCount)
 
 void Model::Render(GameObject *pGameObj)
 {
-    const Matrix worldMat = pGameObj->GetWorldMatrix();
+    const Matrix& worldMat = pGameObj->GetWorldMatrix();
     for (UINT i = 0; i < m_objectCount; i++)
     {
         m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount);
+    }
+}
+
+void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT numMaterials) 
+{
+    const Matrix& worldMat = pGameObj->GetWorldMatrix();
+    for (UINT i = 0; i < m_objectCount; i++)
+    {
+        m_ppMeshObjects[i]->RenderWithMaterials(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, ppMaterials,
+                                                numMaterials);
     }
 }
 

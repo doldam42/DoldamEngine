@@ -46,6 +46,8 @@ class Character : public IGameCharacter, public GameObject
     void    SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
+    
+    void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
     Bounds GetBounds() const;
 };

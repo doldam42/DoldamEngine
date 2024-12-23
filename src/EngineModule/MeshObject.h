@@ -42,13 +42,15 @@ class MeshObject : public IGameMesh, public BaseObject
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
     void EndCreateMesh() override;
 
-    BOOL UpdateMaterial(IMaterialHandle *pMaterial, UINT faceGroupIndex) override;
+    BOOL UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex) override;
 
 
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;
 
     void Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices, const UINT numJoints);
+    void RenderWithMaterials(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
+                             const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial);
 
     inline BOOL IsSkinned() const { return m_meshType == MESH_TYPE_SKINNED; }
 

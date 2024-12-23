@@ -23,6 +23,8 @@
 
 #include "D3D12Renderer.h"
 
+D3D12Renderer *g_pRenderer = nullptr;
+
 BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV)
 {
     BOOL result = FALSE;
@@ -515,6 +517,56 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.pObjHandle = pMeshObj;
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
+    item.meshObjParam.ppMaterials = nullptr;
+    item.meshObjParam.numMaterials = 0;
+
+    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
+    {
+        if (!m_pNonOpaqueRenderQueue->Add(&item))
+            __debugbreak();
+    }
+    else
+    {
+        if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+            __debugbreak();
+    }
+
+    /*if (!m_pShadowMapRenderQueue->Add(&item))
+        __debugbreak();*/
+
+    if (!m_pShadowManager->Add(&item))
+    {
+        __debugbreak();
+    }
+
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
+    // Shadow Map
+}
+
+void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat,
+                                                  IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired,
+                                                  UINT numInstance)
+{
+    // CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    // ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
+#ifdef USE_RAYTRACING
+
+    UINT numGeometry = pMeshObject->GetGeometryCount();
+
+    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
+
+    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+#else
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
+    item.pObjHandle = pMeshObj;
+    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.meshObjParam.worldTM = (*pWorldMat);
+    item.meshObjParam.ppMaterials = ppMaterials;
+    item.meshObjParam.numMaterials = numMaterial;
 
     if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
     {
@@ -568,6 +620,55 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     item.charObjParam.worldTM = (*pWorldMat);
     item.charObjParam.pBones = pBoneMats;
     item.charObjParam.numBones = numBones;
+    item.charObjParam.ppMaterials = nullptr;
+    item.charObjParam.numMaterials = 0;
+
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+
+    /*if (!m_pShadowMapRenderQueue->Add(&item))
+        __debugbreak();*/
+
+    if (!m_pShadowManager->Add(&item))
+    {
+        __debugbreak();
+    }
+
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
+}
+
+void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat,
+                                                       const Matrix *pBoneMats, UINT numBones,
+                                                       IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
+{
+    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
+#ifdef USE_RAYTRACING
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    MeshObject                 *pMeshObject = (MeshObject *)pCharObj;
+
+    pMeshObject->UpdateSkinnedBLAS(pCommandList, pBoneMats, numBones);
+    // pCommadListPool->CloseAndExecute(m_pCommandQueue);
+    UINT numGeometry = pMeshObject->GetGeometryCount();
+
+    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
+
+    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+#else
+    D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
+
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
+    item.pObjHandle = pCharObj;
+    item.charObjParam = {};
+    item.charObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.charObjParam.worldTM = (*pWorldMat);
+    item.charObjParam.pBones = pBoneMats;
+    item.charObjParam.numBones = numBones;
+    item.charObjParam.ppMaterials = ppMaterials;
+    item.charObjParam.numMaterials = numMaterial;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
@@ -989,19 +1090,19 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
     pLight->type = LIGHT_TYPE_OFF;
 }
 
-IMaterialHandle *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
+IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
 {
     MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial, pInMaterial->name);
     return pMatHandle;
 }
 
-void D3D12Renderer::DeleteMaterialHandle(IMaterialHandle *pInMaterial)
+void D3D12Renderer::DeleteMaterialHandle(IRenderMaterial *pInMaterial)
 {
     MATERIAL_HANDLE *pHandle = static_cast<MATERIAL_HANDLE *>(pInMaterial);
     m_pMaterialManager->DeleteMaterial(pHandle);
 }
 
-void D3D12Renderer::UpdateMaterialHandle(IMaterialHandle *pInMaterial, const Material *pMaterial)
+void D3D12Renderer::UpdateMaterialHandle(IRenderMaterial *pInMaterial, const Material *pMaterial)
 {
     m_pMaterialManager->UpdateMaterial(static_cast<MATERIAL_HANDLE *>(pInMaterial), pMaterial);
 }

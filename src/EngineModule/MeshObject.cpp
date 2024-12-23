@@ -111,7 +111,7 @@ void MeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int ma
 
 void MeshObject::EndCreateMesh() {}
 
-BOOL MeshObject::UpdateMaterial(IMaterialHandle *pMaterial, UINT faceGroupIndex)
+BOOL MeshObject::UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex)
 {
     return m_pMeshHandle->UpdateMaterial(pMaterial, faceGroupIndex);
 }
@@ -185,6 +185,27 @@ void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *
         break;
     case MESH_TYPE_SKINNED:
         pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints);
+        break;
+    default:
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        break;
+    }
+}
+
+void MeshObject::RenderWithMaterials(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
+                                     const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
+{
+    Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
+    switch (m_meshType)
+    {
+    case MESH_TYPE_DEFAULT:
+        pRnd->RenderMeshObjectWithMaterials(m_pMeshHandle, &finalMatrix, ppMaterials, numMaterial);
+        break;
+    case MESH_TYPE_SKINNED:
+        pRnd->RenderCharacterObjectWithMaterials(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
+                                                 numMaterial);
         break;
     default:
 #ifdef _DEBUG

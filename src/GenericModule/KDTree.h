@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../MathModule/Bounds.h"
 struct KDNode;
 struct BoundEdge;
 class KDTree

@@ -8,6 +8,15 @@
 
 void GameObject::Cleanup()
 {
+    if (m_ppMaterials)
+    {
+        for (int i = 0; i < m_materialCount; i++)
+        {
+            m_ppMaterials[i]->Release();
+            m_ppMaterials[i] = nullptr;
+        }
+        delete[] m_ppMaterials;
+    }
     if (m_pModel)
     {
         m_pModel->Release();
@@ -45,7 +54,14 @@ void GameObject::Render()
 {
     if (m_pModel)
     {
-        m_pModel->Render(this);
+        if (!m_ppMaterials)
+        {
+            m_pModel->Render(this);
+        }
+        else
+        {
+            m_pModel->RenderWithMaterials(this, m_ppMaterials, m_materialCount);
+        }
     }
 }
 
@@ -123,9 +139,45 @@ void GameObject::AddPosition(const Vector3 *pInDeltaPos)
     m_IsUpdated = true;
 }
 
+// TODO: IMaterialHandle에 IUnknown 붙이기
+void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials)
+{
+    if (!m_ppMaterials)
+    {
+        m_ppMaterials = new IRenderMaterial *[numMaterials];
+        m_materialCount = numMaterials;
+        for (UINT i = 0; i < numMaterials; i++)
+        {
+            m_ppMaterials[i] = nullptr;
+        }
+    }
+    if (m_materialCount != numMaterials)
+    {
+#ifdef _DEBUG
+        __debugbreak();
+#endif
+        return;
+    }
+    for (UINT i = 0; i < numMaterials; i++)
+    {
+        if (m_ppMaterials[i])
+        {
+            m_ppMaterials[i]->Release();
+            m_ppMaterials[i] = nullptr;
+        }
+        m_ppMaterials[i] = ppMaterials[i];
+    }
+}
+
 Bounds GameObject::GetBounds() const
 {
     if (!m_pPhysicsComponent)
-        nullptr;
+    {
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        return Bounds();
+    }
+
     return m_pPhysicsComponent->GetBounds();
 }

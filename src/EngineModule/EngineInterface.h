@@ -58,7 +58,7 @@ interface IGameMesh : public IBaseObject
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
 
-    virtual BOOL UpdateMaterial(IMaterialHandle * pMaterial, UINT faceGroupIndex) = 0;
+    virtual BOOL UpdateMaterial(IRenderMaterial * pMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IGameModel : public IUnknown, public ISerializable
@@ -99,6 +99,8 @@ interface IGameObject
     virtual void SetRotation(const Quaternion *pInQuaternion) = 0;
 
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
+
+    virtual void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) = 0;
 };
 
 interface IGameAnimation : public IUnknown, public ISerializable
@@ -144,7 +146,7 @@ interface IInputManager
     virtual float GetCursorNDCX() const = 0;
     virtual float GetCursorNDCY() const = 0;
 
-    virtual BOOL IsKeyPressed(UINT nChar) const = 0;
+    virtual BOOL       IsKeyPressed(UINT nChar) const = 0;
     virtual GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
                                       size_t sizeOfArg = 0) = 0;
 };
@@ -196,7 +198,7 @@ interface IGameManager
     virtual Vector3 GetCameraLookAt() = 0;
 
     virtual float DeltaTime() const = 0;
-    virtual UINT FPS() const = 0;
+    virtual UINT  FPS() const = 0;
 
     virtual void SetTimeSpeed(float speed) = 0;
     virtual void TogglePause() = 0;

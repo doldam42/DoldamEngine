@@ -10,8 +10,9 @@
 
 interface IFontHandle{};
 interface ITextureHandle{};
-interface IMaterialHandle{};
 interface ILightHandle{};
+
+interface IRenderMaterial : public IUnknown{};
 
 interface IRenderableObject : public IUnknown{};
 interface IRenderSprite : public IRenderableObject{};
@@ -22,7 +23,7 @@ interface IRenderMesh : public IRenderableObject
                                  const wchar_t *path) = 0;
     virtual void EndCreateMesh() = 0;
 
-    virtual BOOL UpdateMaterial(IMaterialHandle * pInMaterial, UINT faceGroupIndex) = 0;
+    virtual BOOL UpdateMaterial(IRenderMaterial * pInMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IRenderer
@@ -50,8 +51,14 @@ interface IRenderer
 
     virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                                   UINT numInstance = 1) = 0;
+    virtual void RenderMeshObjectWithMaterials(IRenderMesh * pMeshObj, const Matrix *pWorldMat,
+                                               IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false,
+                                               UINT numInstance = 1) = 0;
     virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
                                        UINT numBones, bool isWired = false) = 0;
+    virtual void RenderCharacterObjectWithMaterials(
+        IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
+        IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false) = 0;
 
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                               float Z) = 0;
@@ -73,13 +80,13 @@ interface IRenderer
                                                    UINT srcHeight) = 0;
     virtual void UpdateTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth, UINT srcHeight) = 0;
 
-    virtual IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
-    virtual void             DeleteMaterialHandle(IMaterialHandle * pInMaterial) = 0;
-    virtual void             UpdateMaterialHandle(IMaterialHandle * pInMaterial, const Material *pMaterial) = 0;
+    virtual IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
+    virtual void             DeleteMaterialHandle(IRenderMaterial * pInMaterial) = 0;
+    virtual void             UpdateMaterialHandle(IRenderMaterial * pInMaterial, const Material *pMaterial) = 0;
 
     // return nullptr if lights are full
-    virtual ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection, const Vector3* pPosition,
-                                                 BOOL hasShadow = true) = 0;
+    virtual ILightHandle *CreateDirectionalLight(const Vector3 *pRadiance, const Vector3 *pDirection,
+                                                 const Vector3 *pPosition, BOOL hasShadow = true) = 0;
     virtual ILightHandle *CreatePointLight(const Vector3 *pRadiance, const Vector3 *pDirection,
                                            const Vector3 *pPosition, float radius, float fallOffStart = 0.0f,
                                            float fallOffEnd = 20.0f, BOOL hasShadow = true) = 0;

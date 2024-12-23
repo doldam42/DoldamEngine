@@ -11,10 +11,12 @@ class GameObject : public IGameObject
     Matrix    m_worldMatrix;
 
     GameManager *m_pGameEngine = nullptr;
-    IRenderer  *m_pRenderer = nullptr;
-    Model      *m_pModel = nullptr;
+    IRenderer   *m_pRenderer = nullptr;
+    Model       *m_pModel = nullptr;
 
     PhysicsComponent *m_pPhysicsComponent = nullptr;
+    IRenderMaterial **m_ppMaterials = nullptr;
+    UINT              m_materialCount = 0;
 
     bool m_IsUpdated = false;
 
@@ -56,6 +58,8 @@ class GameObject : public IGameObject
     void SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
+
+    void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
     Bounds GetBounds() const;
 

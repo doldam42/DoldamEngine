@@ -87,15 +87,16 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(
-                threadIndex, pCommandList, &pItem->meshObjParam.worldTM, Graphics::GetRS(pItem->type, passType),
-                Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0, passType, 1);
+            pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
+                           pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
+                           Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0,
+                           passType, 1);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
             D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
-                           Graphics::GetRS(pItem->type, passType),
+            pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM, pItem->meshObjParam.ppMaterials,
+                           pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
                            Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global,
                            pItem->charObjParam.pBones, pItem->charObjParam.numBones, passType, 1);
         }

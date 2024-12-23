@@ -157,6 +157,7 @@ class D3D12Renderer : public IRenderer
     void CleanupRenderThreadPool();
 
   public:
+
     // Inherited via IRenderer
     BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV) override;
     void BeginRender() override;
@@ -172,8 +173,13 @@ class D3D12Renderer : public IRenderer
 
     void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                           UINT numInstance = 1) override;
+    void RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                       UINT numMaterial, bool isWired = false, UINT numInstance = 1) override;
     void RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
                                bool isWired = false) override;
+    void RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
+                                            UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
+                                            bool isWired = false) override;
     void RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                              const RECT *pRect, float Z, ITextureHandle *pTexHandle) override;
     void RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
@@ -184,7 +190,8 @@ class D3D12Renderer : public IRenderer
     BOOL         WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT destHeight, UINT destPitch, int *pOutWidth,
                                    int *pOutHeight, IFontHandle *pFontObjHandle, const WCHAR *inStr, UINT len) override;
 
-    BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
+    BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
+                         UINT numFaceGroup) override;
     BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
                          const Material *pInMaterial, const wchar_t *path) override;
     void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
@@ -214,9 +221,9 @@ class D3D12Renderer : public IRenderer
                                   BOOL hasShadow = true) override;
     void          DeleteLight(ILightHandle *pLightHandle);
 
-    IMaterialHandle *CreateMaterialHandle(const Material *pInMaterial) override;
-    void             DeleteMaterialHandle(IMaterialHandle *pInMaterial) override;
-    void             UpdateMaterialHandle(IMaterialHandle *pInMaterial, const Material *pMaterial) override;
+    IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial) override;
+    void             DeleteMaterialHandle(IRenderMaterial *pInMaterial) override;
+    void             UpdateMaterialHandle(IRenderMaterial *pInMaterial, const Material *pMaterial) override;
 
     void InitCubemaps(const WCHAR *envFilename, const WCHAR *specularFilename, const WCHAR *irradianceFilename,
                       const WCHAR *brdfFilename) override;
@@ -244,7 +251,7 @@ class D3D12Renderer : public IRenderer
         return m_ppDescriptorPool[m_dwCurContextIndex][threadIndex];
     }
 
-    CommandListPool *INL_GetCommandListPool(UINT threadIndex) const 
+    CommandListPool *INL_GetCommandListPool(UINT threadIndex) const
     {
         return m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
     }
@@ -272,3 +279,5 @@ class D3D12Renderer : public IRenderer
     D3D12Renderer() = default;
     ~D3D12Renderer();
 };
+
+extern D3D12Renderer *g_pRenderer;

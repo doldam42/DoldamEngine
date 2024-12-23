@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <algorithm>
+#include <functional>
 #include <cmath>
 #include <cstring>
 

@@ -46,6 +46,7 @@ class Model : public IGameModel
 
     void UpdateAnimation(AnimationClip *pClip, int frameCount);
     void Render(GameObject *pGameObj);
+    void RenderWithMaterials(GameObject* pGameObj, IRenderMaterial** ppMaterials, UINT numMaterials);
 
     // Getter
     inline UINT        GetObjectCount() const { return m_objectCount; }

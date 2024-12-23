@@ -100,7 +100,7 @@ void Client::LoadResources()
     mat.roughnessFactor = 0.2f;
     mat.metallicFactor = 0.8f;
     mat.opacityFactor = 1.0f;
-    IMaterialHandle *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+    IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
     mat = Material();
     mat.roughnessFactor = 0.1f;
@@ -108,21 +108,22 @@ void Client::LoadResources()
     wcscpy_s(mat.name, L"ground");
     wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
     wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
-    IMaterialHandle *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
     IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    IGameMesh  *pMesh = pModel->GetMeshAt(0);
-    pMesh->UpdateMaterial(pWallMaterial, 0);
 
     IGameObject *pSphere1 = m_pGame->CreateGameObject();
     IGameObject *pSphere2 = m_pGame->CreateGameObject();
 
     pSphere1->SetModel(pModel);
     pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
+    pSphere1->SetMaterials(&pWallMaterial, 1);
 
     pModel->AddRef();
     pSphere2->SetModel(pModel);
     pSphere2->SetPosition(0.0f, 6.0f, 3.0f);
+    pWallMaterial->AddRef();
+    pSphere2->SetMaterials(&pWallMaterial, 1);
 
     Sphere sphere(1.0f);
     pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
@@ -135,10 +136,10 @@ void Client::LoadResources()
     pGround->SetModel(pGroundModel);
     pGround->SetPosition(0.0f, -102.f, 0.f);
     pGround->SetScale(100.0f);
+    pGround->SetMaterials(&pGroundMaterial, 1);
 
     sphere.Radius = 100.0f;
     pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
-    pGroundModel->GetMeshAt(0)->UpdateMaterial(pGroundMaterial, 0);
 
     // Create texture from draw Text
     m_textImageWidth = 712;

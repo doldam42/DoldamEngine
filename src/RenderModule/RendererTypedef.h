@@ -89,40 +89,6 @@ struct TEXTURE_HANDLE : public ITextureHandle
     SORT_LINK         link;
 };
 
-struct MATERIAL_HANDLE : IMaterialHandle
-{
-    static const UINT MATERIAL_DESCRIPTOR_SIZE = 5;
-
-    UINT  index;
-    UINT  refCount;
-    void *pSysMemAddr;
-    void *pSearchHandle;
-
-    TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
-    TEXTURE_HANDLE *pNormalTexHandle = nullptr;
-    TEXTURE_HANDLE *pAOTexHandle = nullptr;
-    TEXTURE_HANDLE *pEmissiveTexHandle = nullptr;
-    TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
-
-    inline void CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT descriptorSize)
-    {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
-        pDevice->CopyDescriptorsSimple(1, dest, pAlbedoTexHandle->srv.cpuHandle,
-                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(descriptorSize);
-        pDevice->CopyDescriptorsSimple(1, dest, pNormalTexHandle->srv.cpuHandle,
-                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(descriptorSize);
-        pDevice->CopyDescriptorsSimple(1, dest, pAOTexHandle->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(descriptorSize);
-        pDevice->CopyDescriptorsSimple(1, dest, pMetallicRoughnessTexHandle->srv.cpuHandle,
-                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        dest.Offset(descriptorSize);
-        pDevice->CopyDescriptorsSimple(1, dest, pEmissiveTexHandle->srv.cpuHandle,
-                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
-};
-
 // #DXR
 struct AccelerationStructureBuffers
 {
