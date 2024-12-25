@@ -9,6 +9,10 @@ class TextureManager
     D3D12ResourceManager *m_pResourceManager = nullptr;
     HashTable            *m_pHashTable = nullptr;
 
+    TEXTURE_HANDLE **m_ppUpdatedTextures = nullptr;
+    UINT             m_updatedTextureCount = 0;
+    UINT             m_maxTextureCount = 0;
+
     SORT_LINK *m_pTexLinkHead = nullptr;
     SORT_LINK *m_pTexLinkTail = nullptr;
 
@@ -25,6 +29,11 @@ class TextureManager
     TEXTURE_HANDLE *CreateRenderableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format);
 
     void            DeleteTexture(TEXTURE_HANDLE *pTexHandle);
+
+    void UpdateTextureWithTexture(TEXTURE_HANDLE *pDestTex, TEXTURE_HANDLE *pSrcTex, UINT srcWidth, UINT srcHeight);
+    void UpdateTextureWithImage(TEXTURE_HANDLE *pTexHandle, const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight);
+    void Update(ID3D12GraphicsCommandList *pCommandList);
+
     TextureManager() = default;
     ~TextureManager();
 };

@@ -4,6 +4,11 @@
 
 void MemoryPool::Cleanup()
 {
+    if (m_hasBaseMemory && m_pBaseAddress)
+    {
+        delete[] m_pBaseAddress;
+        m_pBaseAddress = nullptr;
+    }
     if (m_pIndexTable)
     {
         delete[] m_pIndexTable;
@@ -11,10 +16,11 @@ void MemoryPool::Cleanup()
     }
 }
 
-void MemoryPool::Initialize(UINT sizeInBytes, UINT maxItemNum) \
+void MemoryPool::Initialize(UINT sizeInBytes, UINT maxItemNum) 
 {
     uint8_t* pBaseAddress = new uint8_t[sizeInBytes * maxItemNum];
     Initialize(pBaseAddress, sizeInBytes, maxItemNum);
+    m_hasBaseMemory = TRUE;
 }
 
 void MemoryPool::Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum)
@@ -29,6 +35,7 @@ void MemoryPool::Initialize(void *pBaseAddr, UINT sizeInBytes, UINT maxItemNum)
     {
         m_pIndexTable[i] = i;
     }
+    m_hasBaseMemory = FALSE;
 }
 
 BOOL MemoryPool::Has(void *pInAddr) 

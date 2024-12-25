@@ -8,11 +8,24 @@
 
 #include <combaseapi.h>
 
+enum TEXTURE_TYPE
+{
+    TEXTURE_TYPE_ALBEDO = 0,
+    TEXTURE_TYPE_NORMAL,
+    TEXTURE_TYPE_AO,
+    TEXTURE_TYPE_EMISSIVE,
+    TEXTURE_TYPE_METALLIC_ROUGHNESS,
+    TEXTURE_TYPE_COUNT
+};
+
 interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
 
-interface IRenderMaterial : public IUnknown{};
+interface IRenderMaterial : public IUnknown
+{
+    virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
+};
 
 interface IRenderableObject : public IUnknown{};
 interface IRenderSprite : public IRenderableObject{};
@@ -78,9 +91,10 @@ interface IRenderer
     virtual void            DeleteTexture(ITextureHandle * pTexHandle) = 0;
     virtual void            UpdateTextureWithImage(ITextureHandle * pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                                    UINT srcHeight) = 0;
-    virtual void UpdateTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth, UINT srcHeight) = 0;
+    virtual void UpdateTextureWithTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth, UINT srcHeight) = 0;
 
     virtual IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
+    virtual IRenderMaterial *CreateDynamicMaterial(const WCHAR* name) = 0;
     virtual void             DeleteMaterialHandle(IRenderMaterial * pInMaterial) = 0;
     virtual void             UpdateMaterialHandle(IRenderMaterial * pInMaterial, const Material *pMaterial) = 0;
 

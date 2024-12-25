@@ -157,7 +157,6 @@ class D3D12Renderer : public IRenderer
     void CleanupRenderThreadPool();
 
   public:
-
     // Inherited via IRenderer
     BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV) override;
     void BeginRender() override;
@@ -199,7 +198,7 @@ class D3D12Renderer : public IRenderer
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
     void UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                 UINT srcHeight) override;
-    void UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) override;
+    void UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) override;
 
     void UpdateGlobal();
     void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
@@ -222,6 +221,7 @@ class D3D12Renderer : public IRenderer
     void          DeleteLight(ILightHandle *pLightHandle);
 
     IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial) override;
+    IRenderMaterial *CreateDynamicMaterial(const WCHAR *name) override;
     void             DeleteMaterialHandle(IRenderMaterial *pInMaterial) override;
     void             UpdateMaterialHandle(IRenderMaterial *pInMaterial, const Material *pMaterial) override;
 
@@ -264,6 +264,7 @@ class D3D12Renderer : public IRenderer
     D3D12ResourceManager *INL_GetResourceManager() const { return m_pResourceManager; }
     DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
     TextureManager       *INL_GetTextureManager() const { return m_pTextureManager; }
+    MaterialManager      *INL_GetMaterialManager() const { return m_pMaterialManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
 

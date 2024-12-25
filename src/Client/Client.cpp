@@ -11,6 +11,8 @@
 
 namespace fs = std::filesystem;
 
+Client *g_pClient = nullptr;
+
 void Client::Cleanup()
 {
     if (m_pFbxExporter)
@@ -48,6 +50,11 @@ void Client::Cleanup()
         m_pGame->DeleteSprite(m_pDynamicSprite);
         m_pDynamicSprite = nullptr;
     }
+    if (m_pDynamicTexture)
+    {
+        m_pRenderer->DeleteTexture(m_pDynamicTexture);
+        m_pDynamicTexture = nullptr;
+    }
     if (m_pTextSprite)
     {
         m_pGame->DeleteSprite(m_pTextSprite);
@@ -60,12 +67,6 @@ void Client::Cleanup()
     }
 }
 
-Client &Client::GetInstance()
-{ 
-    static Client instance;
-    return instance;
-}
-
 BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
@@ -74,8 +75,8 @@ BOOL Client::Initialize(HWND hWnd)
     m_pRenderer = m_pGame->GetRenderer();
     result = CreateFbxExporter(&m_pFbxExporter);
     result = CreateAssimpExporter(&m_pAssimpExporter);
-    m_pFbxExporter->Initialize(m_pGame);
-    m_pAssimpExporter->Initialize(m_pGame);
+    result = m_pFbxExporter->Initialize(m_pGame);
+    result = m_pAssimpExporter->Initialize(m_pGame);
 
     // Register Controllers Before Start Game Manager.
     m_pGame->Register(this);
@@ -91,55 +92,6 @@ void Client::LoadResources()
     fs::path p;
 
     m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
-
-    // Create Materials
-    Material mat;
-    wcscpy_s(mat.name, L"wall");
-    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(mat.albedoTextureName, L"wall.jpg");
-    mat.roughnessFactor = 0.2f;
-    mat.metallicFactor = 0.8f;
-    mat.opacityFactor = 1.0f;
-    IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
-
-    mat = Material();
-    mat.roughnessFactor = 0.1f;
-    mat.metallicFactor = 0.8f;
-    wcscpy_s(mat.name, L"ground");
-    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
-    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
-
-    IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-
-    IGameObject *pSphere1 = m_pGame->CreateGameObject();
-    IGameObject *pSphere2 = m_pGame->CreateGameObject();
-
-    pSphere1->SetModel(pModel);
-    pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
-    pSphere1->SetMaterials(&pWallMaterial, 1);
-
-    pModel->AddRef();
-    pSphere2->SetModel(pModel);
-    pSphere2->SetPosition(0.0f, 6.0f, 3.0f);
-    pWallMaterial->AddRef();
-    pSphere2->SetMaterials(&pWallMaterial, 1);
-
-    Sphere sphere(1.0f);
-    pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
-    pSphere2->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
-
-    m_pSphere = pSphere1;
-
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    IGameObject *pGround = m_pGame->CreateGameObject();
-    pGround->SetModel(pGroundModel);
-    pGround->SetPosition(0.0f, -102.f, 0.f);
-    pGround->SetScale(100.0f);
-    pGround->SetMaterials(&pGroundMaterial, 1);
-
-    sphere.Radius = 100.0f;
-    pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
 
     // Create texture from draw Text
     m_textImageWidth = 712;
@@ -160,6 +112,61 @@ void Client::LoadResources()
     }
     m_pImage = pImage;
 
+    // Create Textures
+    m_pDynamicTexture = m_pRenderer->CreateDynamicTexture(imageWidth, imageHeight);
+
+    // Create Materials
+    Material mat;
+    wcscpy_s(mat.name, L"wall");
+    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(mat.albedoTextureName, L"wall.jpg");
+    mat.roughnessFactor = 0.2f;
+    mat.metallicFactor = 0.8f;
+    mat.opacityFactor = 1.0f;
+    IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+
+    mat = Material();
+    mat.roughnessFactor = 0.1f;
+    mat.metallicFactor = 0.8f;
+    wcscpy_s(mat.name, L"ground");
+    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
+    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+
+    IRenderMaterial *pDynamicMaterial = m_pRenderer->CreateDynamicMaterial(L"dynamic");
+    pDynamicMaterial->UpdateTextureWithTexture(m_pDynamicTexture, TEXTURE_TYPE_ALBEDO);
+
+    IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+
+    IGameObject *pSphere1 = m_pGame->CreateGameObject();
+    IGameObject *pSphere2 = m_pGame->CreateGameObject();
+
+    pSphere1->SetModel(pModel);
+    pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
+    pSphere1->SetMaterials(&pWallMaterial, 1);
+
+    pModel->AddRef();
+    pSphere2->SetModel(pModel);
+    pSphere2->SetPosition(0.0f, 6.0f, 3.0f);
+    pSphere2->SetMaterials(&pDynamicMaterial, 1);
+
+    Sphere sphere(1.0f);
+    pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+    pSphere2->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+
+    m_pSphere = pSphere1;
+
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    IGameObject *pGround = m_pGame->CreateGameObject();
+    pGround->SetModel(pGroundModel);
+    pGround->SetPosition(0.0f, -102.f, 0.f);
+    pGround->SetScale(100.0f);
+    pGround->SetMaterials(&pGroundMaterial, 1);
+
+    sphere.Radius = 100.0f;
+    pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
+
+    // Create Sprite
     m_pTextSprite = m_pGame->CreateDynamicSprite(m_textImageWidth, m_textImageHeight);
     m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
     m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
@@ -253,6 +260,8 @@ void Client::Update(float dt)
     }
 
     m_pDynamicSprite->UpdateTextureWidthImage(m_pImage, 512, 256);
+
+    m_pRenderer->UpdateTextureWithImage(m_pDynamicTexture, m_pImage, 512, 256);
 
     // draw text
     UINT    fps = m_pGame->FPS();

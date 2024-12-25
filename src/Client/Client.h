@@ -28,6 +28,8 @@ class Client : public IController
     IGameSprite *m_pDynamicSprite = nullptr;
     IGameSprite *m_pTextSprite = nullptr;
 
+    ITextureHandle *m_pDynamicTexture = nullptr;
+
     WCHAR m_text[260] = {0};
 
     // Controllers
@@ -37,8 +39,6 @@ class Client : public IController
     void Cleanup();
 
   public:
-    static Client &GetInstance();
-
     BOOL Initialize(HWND hWnd);
 
     void LoadResources();
@@ -61,3 +61,5 @@ class Client : public IController
     Client() = default;
     ~Client();
 };
+
+extern Client *g_pClient;

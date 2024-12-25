@@ -266,6 +266,7 @@ void D3D12Renderer::BeginRender()
     CommandListPool           *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
+    m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
@@ -288,8 +289,8 @@ void D3D12Renderer::EndRender()
 {
     // RenderShadowMaps();
 
-    CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
-    
+    CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -799,53 +800,12 @@ void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow,
 void D3D12Renderer::UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                            UINT srcHeight)
 {
-    TEXTURE_HANDLE *pTextureHandle = static_cast<TEXTURE_HANDLE *>(pTexHandle);
-    ID3D12Resource *pDestTexResource = pTextureHandle->pTexture;
-    ID3D12Resource *pUploadBuffer = pTextureHandle->pUploadBuffer;
-
-    D3D12_RESOURCE_DESC desc = pDestTexResource->GetDesc();
-    if (srcWidth > desc.Width)
-    {
-        __debugbreak();
-    }
-    if (srcHeight > desc.Height)
-    {
-        __debugbreak();
-    }
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT Footprint;
-    UINT                               Rows = 0;
-    UINT64                             RowSize = 0;
-    UINT64                             TotalBytes = 0;
-
-    m_pD3DDevice->GetCopyableFootprints(&desc, 0, 1, 0, &Footprint, &Rows, &RowSize, &TotalBytes);
-
-    BYTE         *pMappedPtr = nullptr;
-    CD3DX12_RANGE writeRange(0, 0);
-
-    HRESULT hr = pUploadBuffer->Map(0, &writeRange, reinterpret_cast<void **>(&pMappedPtr));
-    if (FAILED(hr))
-        __debugbreak();
-
-    const BYTE *pSrc = pSrcBits;
-    BYTE       *pDest = pMappedPtr;
-    for (UINT y = 0; y < srcHeight; y++)
-    {
-        memcpy(pDest, pSrc, srcWidth * 4);
-        pSrc += (srcWidth * 4);
-        pDest += Footprint.Footprint.RowPitch;
-    }
-    // Unmap
-    pUploadBuffer->Unmap(0, nullptr);
-
-    pTextureHandle->IsUpdated = TRUE;
+    m_pTextureManager->UpdateTextureWithImage((TEXTURE_HANDLE *)pTexHandle, pSrcBits, srcWidth, srcHeight);
 }
 
-void D3D12Renderer::UpdateTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight)
+void D3D12Renderer::UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight)
 {
-    TEXTURE_HANDLE *pDest = (TEXTURE_HANDLE *)pDestTex;
-    TEXTURE_HANDLE *pSrc = (TEXTURE_HANDLE *)pSrcTex;
-    m_pResourceManager->UpdateTextureForWrite(pDest->pTexture, pSrc->pTexture);
-    pDest->IsUpdated = TRUE;
+    m_pTextureManager->UpdateTextureWithTexture((TEXTURE_HANDLE *)pDestTex, (TEXTURE_HANDLE *)pSrcTex, srcWidth, srcHeight);
 }
 
 void D3D12Renderer::UpdateGlobal()
@@ -1096,6 +1056,14 @@ IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial
     return pMatHandle;
 }
 
+IRenderMaterial *D3D12Renderer::CreateDynamicMaterial(const WCHAR *name)
+{
+    Material mat;
+    wcscpy_s(mat.name, name);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat, name);
+    return pMatHandle;
+}
+
 void D3D12Renderer::DeleteMaterialHandle(IRenderMaterial *pInMaterial)
 {
     MATERIAL_HANDLE *pHandle = static_cast<MATERIAL_HANDLE *>(pInMaterial);
@@ -1156,10 +1124,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
 }
 
 // ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
-ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex)
-{
-    return m_pShadowManager->GetShadowMapTexture();
-}
+ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowManager->GetShadowMapTexture(); }
 //
 // void D3D12Renderer::UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex)
 //{

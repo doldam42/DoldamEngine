@@ -7,6 +7,7 @@ class MemoryPool
     UINT m_maxItemNum = 0;
     UINT m_allocatedItemCount = 0;
     UINT m_sizeInBytes = 0;
+    BOOL m_hasBaseMemory = TRUE;
 
     void Cleanup();
 
@@ -21,6 +22,8 @@ class MemoryPool
 
     UINT  GetIndexOf(void *pInAddr);
     void *GetAddressOf(UINT index);
+
+    void *Data() { return m_pBaseAddress; };
 
     MemoryPool() = default;
     ~MemoryPool();

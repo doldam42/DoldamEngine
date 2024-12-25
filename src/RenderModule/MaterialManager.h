@@ -10,8 +10,8 @@ struct MATERIAL_HANDLE : IRenderMaterial
 
     UINT  index;
     ULONG  refCount;
-    void *pSysMemAddr;
-    void *pSearchHandle;
+    void *pSysMemAddr = nullptr;
+    void *pSearchHandle = nullptr;
 
     TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
     TEXTURE_HANDLE *pNormalTexHandle = nullptr;
@@ -38,6 +38,8 @@ struct MATERIAL_HANDLE : IRenderMaterial
     }
 
     // Inherited via IRenderMaterial
+    BOOL UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type) override;
+
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
@@ -49,7 +51,8 @@ class MaterialManager
     D3D12ResourceManager *m_pResourceManager = nullptr;
 
     HashTable  *m_pHashTable = nullptr;
-    MemoryPool *m_pMemoryPool = nullptr;
+    MemoryPool *m_pMaterialCBPool = nullptr;
+    MemoryPool *m_pMaterialHandlePool = nullptr;
 
     ID3D12Resource *m_pMatResource = nullptr;
     ID3D12Resource *m_pUploadBuffer = nullptr;
@@ -76,6 +79,7 @@ class MaterialManager
     void             DeleteMaterial(MATERIAL_HANDLE *pMatHandle);
 
     BOOL UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial);
+    BOOL UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE_HANDLE* pTexHandle, TEXTURE_TYPE type);
 
     void Update(ID3D12GraphicsCommandList *pCommandList);
 

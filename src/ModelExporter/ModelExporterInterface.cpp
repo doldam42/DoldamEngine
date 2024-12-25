@@ -19,7 +19,10 @@ MODELEXPORTER_API BOOL CreateAssimpExporter(IModelExporter **ppOutExporter)
     return TRUE;
 }
 
-MODELEXPORTER_API void DeleteFbxExporter(IModelExporter *pExporter) { delete dynamic_cast<FBXLoader *>(pExporter); }
+MODELEXPORTER_API void DeleteFbxExporter(IModelExporter *pExporter) 
+{ 
+    delete dynamic_cast<FBXLoader *>(pExporter); 
+}
 
 MODELEXPORTER_API void DeleteAssimpExporter(IModelExporter *pExporter)
 {

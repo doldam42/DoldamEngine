@@ -115,12 +115,11 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                 {
                     pRect = &pItem->spriteParam.rect;
                 }
-
-                if (pTextureHandle->pUploadBuffer)
+                /*if (pTextureHandle->pUploadBuffer)
                 {
                     if (pTextureHandle->IsUpdated)
                     {
-                        UpdateTexture(pD3DDevice, pCommandList, pTextureHandle->pTexture,
+                        UpdateTextureWithTexture(pD3DDevice, pCommandList, pTextureHandle->pTexture,
                                       pTextureHandle->pUploadBuffer);
                     }
                     else
@@ -128,7 +127,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                         int a = 0;
                     }
                     pTextureHandle->IsUpdated = FALSE;
-                }
+                }*/
                 pSpriteObj->DrawWithTex(threadIndex, pCommandList, &Pos, &Scale, pRect, Z, pTextureHandle);
             }
             else

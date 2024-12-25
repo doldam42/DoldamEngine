@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BaseObject.h"
 #include "EngineInterface.h"
+#include "BaseObject.h"
 
 interface IRenderer;
 interface IGameManager;
@@ -43,7 +43,6 @@ class MeshObject : public IGameMesh, public BaseObject
     void EndCreateMesh() override;
 
     BOOL UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex) override;
-
 
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;

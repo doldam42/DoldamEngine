@@ -6,9 +6,7 @@
 
 BOOL TimeController::Start() 
 {
-    Client &c = Client::GetInstance();
-
-    IGameManager  *pG = c.GetGameManager();
+    IGameManager  *pG = g_pClient->GetGameManager();
     IInputManager *pI = pG->GetInputManager();
 
     pI->AddKeyListener(VK_SPACE, [pG](void *) { pG->TogglePause(); });

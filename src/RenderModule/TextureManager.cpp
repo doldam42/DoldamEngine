@@ -57,6 +57,11 @@ UINT TextureManager::DeallocTextureHandle(TEXTURE_HANDLE *pTexHandle)
 
 void TextureManager::Cleanup()
 {
+    if (m_ppUpdatedTextures)
+    {
+        delete[] m_ppUpdatedTextures;
+        m_ppUpdatedTextures = nullptr;
+    }
     if (m_pTexLinkHead)
     {
         // texture resource leak!!!
@@ -76,6 +81,9 @@ BOOL TextureManager::Initialize(D3D12Renderer *pRenderer, UINT maxBucketNum, UIN
 
     m_pHashTable = new HashTable();
     m_pHashTable->Initialize(maxBucketNum, MAX_PATH * sizeof(WCHAR), maxFileNum);
+
+    m_ppUpdatedTextures = new TEXTURE_HANDLE *[maxFileNum];
+    m_maxTextureCount = maxFileNum;
 
     return TRUE;
 }
@@ -231,14 +239,14 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
     }
     else
     {
-        int        mWidth = 0, mHeight = 0;
-        int        rWidth = 0, rHeight = 0;
+        int         mWidth = 0, mHeight = 0;
+        int         rWidth = 0, rHeight = 0;
         const BYTE *mImage = nullptr;
         const BYTE *rImage = nullptr;
 
         BYTE *combinedImage = nullptr;
         BOOL  result = FALSE;
-        
+
         if (!wcscmp(metallicFilename, roughneessFilename))
         {
             if (wcsstr(metallicFilename, L".dds") != NULL || wcsstr(metallicFilename, L".DDS"))
@@ -291,7 +299,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
             result = m_pResourceManager->CreateTextureFromMemory(&pTexResource, (UINT)mWidth, (UINT)mHeight,
                                                                  DXGI_FORMAT_R8G8B8A8_UNORM, combinedImage);
         }
-        
+
         if (result)
         {
             D3D12_RESOURCE_DESC             desc = pTexResource->GetDesc();
@@ -300,7 +308,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
             SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             SRVDesc.Texture2D.MipLevels = desc.MipLevels;
-            
+
             if (m_pResourceManager->AllocDescriptorTable(&srv, 1))
             {
                 pD3DDevice->CreateShaderResourceView(pTexResource, &SRVDesc, srv.cpuHandle);
@@ -376,12 +384,77 @@ TEXTURE_HANDLE *TextureManager::CreateRenderableTexture(UINT texWidth, UINT texH
     return pTexHandle;
 }
 
-void TextureManager::DeleteTexture(TEXTURE_HANDLE *pTexHandle)
+void TextureManager::DeleteTexture(TEXTURE_HANDLE *pTexHandle) { DeallocTextureHandle(pTexHandle); }
+
+void TextureManager::UpdateTextureWithTexture(TEXTURE_HANDLE *pDestTex, TEXTURE_HANDLE *pSrcTex, UINT srcWidth,
+                                              UINT srcHeight)
 {
-    DeallocTextureHandle(pTexHandle);
+    m_pResourceManager->UpdateTextureForWrite(pDestTex->pTexture, pSrcTex->pTexture);
+
+    m_ppUpdatedTextures[m_updatedTextureCount] = pDestTex;
+    m_updatedTextureCount++;
+    pDestTex->IsUpdated = TRUE;
 }
 
-TextureManager::~TextureManager()
+void TextureManager::UpdateTextureWithImage(TEXTURE_HANDLE *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
+                                            UINT srcHeight)
 {
-    Cleanup();
+    ID3D12Device5  *pDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Resource *pDestTexResource = pTexHandle->pTexture;
+    ID3D12Resource *pUploadBuffer = pTexHandle->pUploadBuffer;
+
+    D3D12_RESOURCE_DESC desc = pDestTexResource->GetDesc();
+    if (srcWidth > desc.Width)
+    {
+        __debugbreak();
+    }
+    if (srcHeight > desc.Height)
+    {
+        __debugbreak();
+    }
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT Footprint;
+    UINT                               Rows = 0;
+    UINT64                             RowSize = 0;
+    UINT64                             TotalBytes = 0;
+
+    pDevice->GetCopyableFootprints(&desc, 0, 1, 0, &Footprint, &Rows, &RowSize, &TotalBytes);
+
+    BYTE         *pMappedPtr = nullptr;
+    CD3DX12_RANGE writeRange(0, 0);
+
+    HRESULT hr = pUploadBuffer->Map(0, &writeRange, reinterpret_cast<void **>(&pMappedPtr));
+    if (FAILED(hr))
+        __debugbreak();
+
+    const BYTE *pSrc = pSrcBits;
+    BYTE       *pDest = pMappedPtr;
+    for (UINT y = 0; y < srcHeight; y++)
+    {
+        memcpy(pDest, pSrc, srcWidth * 4);
+        pSrc += (srcWidth * 4);
+        pDest += Footprint.Footprint.RowPitch;
+    }
+    // Unmap
+    pUploadBuffer->Unmap(0, nullptr);
+
+    m_ppUpdatedTextures[m_updatedTextureCount] = pTexHandle;
+    m_updatedTextureCount++;
+    pTexHandle->IsUpdated = TRUE;
 }
+
+void TextureManager::Update(ID3D12GraphicsCommandList *pCommandList)
+{
+    ID3D12Device *pDevice = m_pRenderer->INL_GetD3DDevice();
+    for (UINT i = 0; i < m_updatedTextureCount; i++)
+    {
+        TEXTURE_HANDLE *pTex = m_ppUpdatedTextures[i];
+        if (pTex->IsUpdated)
+        {
+            UpdateTexture(pDevice, pCommandList, pTex->pTexture, pTex->pUploadBuffer);
+            pTex->IsUpdated = FALSE;
+        }
+    }
+    m_updatedTextureCount = 0;
+}
+
+TextureManager::~TextureManager() { Cleanup(); }

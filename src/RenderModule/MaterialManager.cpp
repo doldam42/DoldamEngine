@@ -83,10 +83,10 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
 
 void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
 {
-    void *pAddr = m_pMemoryPool->GetAddressOf(pMaterial->index);
+    void *pAddr = m_pMaterialCBPool->GetAddressOf(pMaterial->index);
     if (pAddr)
     {
-        m_pMemoryPool->Dealloc(pAddr);
+        m_pMaterialCBPool->Dealloc(pAddr);
         pMaterial->index = UINT_MAX; // invalid index
     }
 
@@ -124,9 +124,12 @@ void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
 
 MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
 {
-    MATERIAL_HANDLE *pMatHandle = new MATERIAL_HANDLE;
+    MATERIAL_HANDLE tmp;
+    void            *pMemory = m_pMaterialHandlePool->Alloc();
+    MATERIAL_HANDLE *pMatHandle = reinterpret_cast<MATERIAL_HANDLE *>(pMemory);
+    memcpy(pMatHandle, &tmp, sizeof(MATERIAL_HANDLE)); // 함수 테이블 카피용
 
-    UINT8 *sysMemAddr = (UINT8 *)m_pMemoryPool->Alloc();
+    UINT8 *sysMemAddr = (UINT8 *)m_pMaterialCBPool->Alloc();
     if (!sysMemAddr)
     {
         __debugbreak();
@@ -134,7 +137,7 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     }
 
     pMatHandle->refCount = 1;
-    pMatHandle->index = m_pMemoryPool->GetIndexOf(sysMemAddr);
+    pMatHandle->index = m_pMaterialCBPool->GetIndexOf(sysMemAddr);
 
     MaterialConstants materialCB;
 
@@ -192,10 +195,16 @@ void MaterialManager::Cleanup()
         m_pHashTable = nullptr;
     }
 
-    if (m_pMemoryPool)
+    if (m_pMaterialCBPool)
     {
-        delete m_pMemoryPool;
-        m_pMemoryPool = nullptr;
+        delete m_pMaterialCBPool;
+        m_pMaterialCBPool = nullptr;
+    }
+
+    if (m_pMaterialHandlePool)
+    {
+        delete m_pMaterialHandlePool;
+        m_pMaterialHandlePool = nullptr;
     }
 }
 
@@ -242,8 +251,11 @@ bool MaterialManager::Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT
     m_pHashTable = new HashTable();
     m_pHashTable->Initialize(13, sizePerMat, maxMatNum); // TODO: 최적의 버킷 개수 정하기
 
-    m_pMemoryPool = new MemoryPool;
-    m_pMemoryPool->Initialize(m_pSystemMemAddr, sizePerMat, maxMatNum);
+    m_pMaterialCBPool = new MemoryPool;
+    m_pMaterialCBPool->Initialize(m_pSystemMemAddr, sizePerMat, maxMatNum);
+
+    m_pMaterialHandlePool = new MemoryPool;
+    m_pMaterialHandlePool->Initialize(sizeof(MATERIAL_HANDLE), maxMatNum);
 
     m_pRenderer = pRenderer;
     m_pResourceManager = pRenderer->INL_GetResourceManager();
@@ -284,15 +296,84 @@ void MaterialManager::DeleteMaterial(MATERIAL_HANDLE *pMatHandle)
     if (pMatHandle)
     {
         CleanupMaterial(pMatHandle);
-        delete pMatHandle;
+        m_pMaterialHandlePool->Dealloc(pMatHandle);
     }
     m_isUpdated = true;
 }
 
 BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial)
 {
-    memcpy(pMatHandle->pSysMemAddr, pInMaterial, m_sizePerMat);
+    if (!pMatHandle)
+        return FALSE;
+
+    CleanupMaterial(pMatHandle);
+    MATERIAL_HANDLE *pNew = CreateMaterial(pInMaterial, pInMaterial->name);
+    *pMatHandle = *pNew;
+    m_pMaterialHandlePool->Dealloc(pNew);
+
     m_isUpdated = true;
+    return TRUE;
+}
+
+BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE_HANDLE *pTexHandle, TEXTURE_TYPE type)
+{
+    MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
+    switch (type)
+    {
+    case TEXTURE_TYPE_ALBEDO:
+        if (pMatHandle->pAlbedoTexHandle)
+        {
+            m_pRenderer->DeleteTexture(pMatHandle->pAlbedoTexHandle);
+            pMatHandle->pAlbedoTexHandle = nullptr;
+        }
+        pMatHandle->pAlbedoTexHandle = pTexHandle;
+        pMatConst->useAlbedoMap = TRUE;
+        break;
+    case TEXTURE_TYPE_NORMAL:
+        if (pMatHandle->pNormalTexHandle)
+        {
+            m_pRenderer->DeleteTexture(pMatHandle->pNormalTexHandle);
+            pMatHandle->pNormalTexHandle = nullptr;
+        }
+        pMatHandle->pNormalTexHandle = pTexHandle;
+        pMatConst->useNormalMap = TRUE;
+        break;
+    case TEXTURE_TYPE_AO:
+        if (pMatHandle->pAOTexHandle)
+        {
+            m_pRenderer->DeleteTexture(pMatHandle->pAOTexHandle);
+            pMatHandle->pAOTexHandle = nullptr;
+        }
+        pMatHandle->pAOTexHandle = pTexHandle;
+        pMatConst->useAOMap = TRUE;
+        break;
+    case TEXTURE_TYPE_EMISSIVE:
+        if (pMatHandle->pEmissiveTexHandle)
+        {
+            m_pRenderer->DeleteTexture(pMatHandle->pEmissiveTexHandle);
+            pMatHandle->pEmissiveTexHandle = nullptr;
+        }
+        pMatHandle->pEmissiveTexHandle = pTexHandle;
+        pMatConst->useEmissiveMap = TRUE;
+        break;
+    case TEXTURE_TYPE_METALLIC_ROUGHNESS:
+        if (pMatHandle->pMetallicRoughnessTexHandle)
+        {
+            m_pRenderer->DeleteTexture(pMatHandle->pMetallicRoughnessTexHandle);
+            pMatHandle->pMetallicRoughnessTexHandle = nullptr;
+        }
+        pMatHandle->pMetallicRoughnessTexHandle = pTexHandle;
+        pMatConst->useMetallicMap = TRUE;
+        pMatConst->useRoughnessMap = TRUE;
+        break;
+    default:
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        return FALSE;
+    }
+
+    m_isUpdated = TRUE;
     return TRUE;
 }
 
@@ -311,6 +392,13 @@ void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 }
 
 MaterialManager::~MaterialManager() { Cleanup(); }
+
+BOOL MATERIAL_HANDLE::UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type)
+{
+    MaterialManager *pMaterialManager = g_pRenderer->INL_GetMaterialManager();
+    BOOL             result = pMaterialManager->UpdateMaterialTexture(this, (TEXTURE_HANDLE *)pTexture, type);
+    return result;
+}
 
 HRESULT __stdcall MATERIAL_HANDLE::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
