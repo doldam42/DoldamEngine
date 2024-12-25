@@ -215,7 +215,7 @@ HRESULT D3D12ResourceManager::CreateIndexBuffer(ID3D12Resource         **ppOutBu
     D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
     ID3D12Resource         *pIndexBuffer = nullptr;
     ID3D12Resource         *pUploadBuffer = nullptr;
-    UINT                    indexBufferSize = sizeof(uint32_t) * numIndices;
+    UINT                    indexBufferSize = sizeof(UINT) * numIndices;
 
     // create vertexbuffer for rendering
     hr = m_pD3DDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,

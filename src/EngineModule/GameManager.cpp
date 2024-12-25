@@ -35,7 +35,7 @@ void GameManager::LoadPrimitiveMeshes()
     }
     if (!SphereMesh)
     {
-        SphereMesh = GeometryGenerator::MakeSphere(1.0f, 64, 64);
+        SphereMesh = GeometryGenerator::MakeSphere(1.0f, 32, 32);
         SphereMesh->InitRenderComponents(m_pRenderer);
     }
 }

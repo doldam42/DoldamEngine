@@ -395,7 +395,7 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     // 버텍스가 중복) stack은 y 위쪽 방향으로 쌓아가는 방식
 
     const float dtheta = -XM_2PI / float(numslices);
-    const float dphi = -XM_2PI / float(numstacks);
+    const float dphi = -XM_PI / float(numstacks);
 
     vector<BasicVertex> vertices;
     vertices.reserve(numstacks * numslices);
@@ -404,10 +404,11 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     {
 
         // 스택에 쌓일 수록 시작점을 x-y 평면에서 회전 시켜서 위로 올리는 구조
-        Vector3 stackstartpoint = Vector3::Transform(Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dphi * j));
-
+        Vector3 stackstartpoint = Vector3::Transform(Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dphi * float(j)));
+        // 하층 (0, 1) - (1, 1)
+        // 상층 (0, 0) - (1, 0)
         for (int i = 0; i <= numslices; i++)
-        {
+        {           
             BasicVertex v;
 
             // 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조
@@ -416,7 +417,7 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
             v.normal = v.position; // 원점이 구의 중심
             v.normal.Normalize();
             v.texcoord = Vector2(float(i) / numslices, 1.0f - float(j) / numstacks);
-
+            
             const Vector3 biTangent = Vector3(0.0f, 1.0f, 0.0f);
             Vector3 normalOrth = v.normal - biTangent.Dot(v.normal) * v.normal;
             normalOrth.Normalize();
@@ -424,6 +425,8 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
             v.tangent = biTangent.Cross(normalOrth);
             v.tangent.Normalize();
 
+            /*if (vertices.size() == 2135)
+                __debugbreak();*/
             vertices.push_back(v);
         }
     }
@@ -431,21 +434,26 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     // cout << vertices.size() << endl;
 
     vector<uint32_t> indices;
-    indices.reserve(numstacks * numslices * 3);
+    indices.reserve((numstacks + 1) * (numslices + 1) * 6);
     for (int j = 0; j < numstacks; j++)
     {
-
         const int offset = (numslices + 1) * j;
 
         for (int i = 0; i < numslices; i++)
         {
-
-            indices.push_back(offset + i);
+            /*indices.push_back(offset + i);
             indices.push_back(offset + i + numslices + 1);
             indices.push_back(offset + i + 1 + numslices + 1);
 
             indices.push_back(offset + i);
             indices.push_back(offset + i + 1 + numslices + 1);
+            indices.push_back(offset + i + 1);*/
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + numstacks + 1);
+            indices.push_back(offset + i + numstacks + 2);
+
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + numstacks + 2);
             indices.push_back(offset + i + 1);
         }
     }

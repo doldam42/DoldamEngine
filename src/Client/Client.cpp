@@ -119,7 +119,7 @@ void Client::LoadResources()
     Material mat;
     wcscpy_s(mat.name, L"wall");
     wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(mat.albedoTextureName, L"wall.jpg");
+    wcscpy_s(mat.albedoTextureName, L"earth.jpg");
     mat.roughnessFactor = 0.2f;
     mat.metallicFactor = 0.8f;
     mat.opacityFactor = 1.0f;
@@ -147,12 +147,12 @@ void Client::LoadResources()
 
     pModel->AddRef();
     pSphere2->SetModel(pModel);
-    pSphere2->SetPosition(0.0f, 6.0f, 3.0f);
+    pSphere2->SetPosition(0.0f, 7.05f, 3.0f);
     pSphere2->SetMaterials(&pDynamicMaterial, 1);
 
     Sphere sphere(1.0f);
     pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
-    pSphere2->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+    pSphere2->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
 
     m_pSphere = pSphere1;
 
