@@ -81,7 +81,7 @@ class GameManager : public IGameManager
     bool m_activateCamera = true;
 
     // For Debugging
-    IRenderSprite *m_pShadowMapSprite = nullptr;
+    //IRenderSprite *m_pShadowMapSprite = nullptr;
 
   private:
     void LoadPrimitiveMeshes();

@@ -9,6 +9,12 @@
       <Filter>MainEntry</Filter>
     </ClCompile>
     <ClCompile Include="TimeController.cpp" />
+    <ClCompile Include="VideoManager.cpp">
+      <Filter>VideoManager</Filter>
+    </ClCompile>
+    <ClCompile Include="BadAppleController.cpp">
+      <Filter>BadAppleDemoController</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -22,6 +28,12 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="TimeController.h" />
+    <ClInclude Include="VideoManager.h">
+      <Filter>VideoManager</Filter>
+    </ClInclude>
+    <ClInclude Include="BadAppleController.h">
+      <Filter>BadAppleDemoController</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -46,6 +58,12 @@
     </Filter>
     <Filter Include="GUI">
       <UniqueIdentifier>{d98cb3f0-6248-4c08-8953-d0c5bbc80d41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VideoManager">
+      <UniqueIdentifier>{b68427e8-01ac-4754-998c-6f4ea3b3874b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BadAppleDemoController">
+      <UniqueIdentifier>{d6d7ee05-be9f-48c4-997b-473ca28aa889}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

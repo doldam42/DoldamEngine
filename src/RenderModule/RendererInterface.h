@@ -24,6 +24,7 @@ interface ILightHandle{};
 
 interface IRenderMaterial : public IUnknown
 {
+    virtual BOOL UpdateMetallicRoughness(float metallic, float roughness) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
 };
 

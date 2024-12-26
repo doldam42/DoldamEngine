@@ -156,6 +156,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BadAppleController.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
@@ -163,13 +164,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TimeController.cpp" />
+    <ClCompile Include="VideoManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BadAppleController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TimeController.h" />
+    <ClInclude Include="VideoManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEngine.rc" />

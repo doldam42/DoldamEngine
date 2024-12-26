@@ -5,6 +5,7 @@
 #include "../EngineModule/EngineInterface.h"
 #include "../RenderModule/RendererInterface.h"
 
+#include "VideoManager.h"
 #include "TimeController.h"
 
 #include "Client.h"
@@ -81,6 +82,7 @@ BOOL Client::Initialize(HWND hWnd)
     // Register Controllers Before Start Game Manager.
     m_pGame->Register(this);
     m_pGame->Register(&m_timeController);
+    m_pGame->Register(&m_demoController);
 
     m_pGame->Start();
 
@@ -151,7 +153,7 @@ void Client::LoadResources()
     pSphere2->SetMaterials(&pDynamicMaterial, 1);
 
     Sphere sphere(1.0f);
-    pSphere1->InitPhysics(&sphere, 1.0f, 0.8f, 0.5f);
+    pSphere1->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
     pSphere2->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
 
     m_pSphere = pSphere1;

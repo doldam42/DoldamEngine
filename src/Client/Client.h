@@ -1,6 +1,8 @@
 #pragma once
 
+#include "BadAppleController.h"
 #include "TimeController.h"
+
 class Client : public IController
 {
   private:
@@ -34,6 +36,7 @@ class Client : public IController
 
     // Controllers
     TimeController m_timeController;
+    BadAppleController m_demoController;
 
   private:
     void Cleanup();

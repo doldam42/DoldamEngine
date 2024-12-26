@@ -8,6 +8,14 @@
 
 // #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 
+#pragma comment(lib, "avcodec.lib")
+#pragma comment(lib, "avdevice.lib")
+#pragma comment(lib, "avfilter.lib")
+#pragma comment(lib, "avformat.lib")
+#pragma comment(lib, "avutil.lib")
+#pragma comment(lib, "swresample.lib")
+#pragma comment(lib, "swscale.lib")
+
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")

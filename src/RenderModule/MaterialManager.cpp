@@ -315,6 +315,17 @@ BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material
     return TRUE;
 }
 
+BOOL MaterialManager::UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandle, float metallic, float roughness)
+{
+    MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
+
+    pMatConst->metallicFactor = metallic;
+    pMatConst->roughnessFactor = roughness;
+    
+    m_isUpdated = TRUE;
+    return TRUE;
+}
+
 BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE_HANDLE *pTexHandle, TEXTURE_TYPE type)
 {
     MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
@@ -392,6 +403,13 @@ void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 }
 
 MaterialManager::~MaterialManager() { Cleanup(); }
+
+BOOL MATERIAL_HANDLE::UpdateMetallicRoughness(float metallic, float roughness)
+{
+    MaterialManager *pMaterialManager = g_pRenderer->INL_GetMaterialManager();
+    BOOL             result = pMaterialManager->UpdateMaterialMetallicRoughness(this, metallic, roughness);
+    return result;
+}
 
 BOOL MATERIAL_HANDLE::UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type)
 {

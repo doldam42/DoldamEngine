@@ -61,11 +61,11 @@ void GameManager::DeletePrimitiveMeshes()
 
 void GameManager::Cleanup()
 {
-    if (m_pShadowMapSprite)
+    /*if (m_pShadowMapSprite)
     {
         m_pShadowMapSprite->Release();
         m_pShadowMapSprite = nullptr;
-    }
+    }*/
 
     if (m_pWorld)
     {
@@ -158,7 +158,7 @@ lb_return:
 BOOL GameManager::LoadResources()
 {
     // Create Shadow Map Sprite
-    m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
+    //m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
     // Create Cubemap
     m_pRenderer->InitCubemaps(L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesEnvHDR.dds",
@@ -254,7 +254,10 @@ void GameManager::UpdatePhysics(float dt)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
 
-        m_pPhysicsManager->CollisionTest(pGameObj, dt);
+        if (pGameObj->GetPhysicsComponent())
+        {
+            m_pPhysicsManager->CollisionTest(pGameObj, dt);
+        }
 
         pCur = pCur->pNext;
     }
@@ -354,8 +357,8 @@ void GameManager::Render()
         pCur = pCur->pNext;
         spriteCount++;
     }
-    m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
-                                     m_pRenderer->GetShadowMapTexture(0));
+    /*m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
+                                     m_pRenderer->GetShadowMapTexture(0));*/
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 }
