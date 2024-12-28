@@ -28,7 +28,7 @@ class Sprite : public IGameSprite
 
     virtual void Render();
 
-    BOOL UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) override;
+    BOOL UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) override;
 
     // Getter
     UINT GetWidth() override { return m_width; }
@@ -76,7 +76,7 @@ class DynamicSprite : public Sprite
     BOOL Initialize(IRenderer *pRnd, UINT width, UINT height);
     virtual void Render() override;
 
-    BOOL UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) override;
+    BOOL UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) override;
 
     DynamicSprite() = default;
     ~DynamicSprite();

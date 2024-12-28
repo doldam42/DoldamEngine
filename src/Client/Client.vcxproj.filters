@@ -15,6 +15,9 @@
     <ClCompile Include="BadAppleController.cpp">
       <Filter>BadAppleDemoController</Filter>
     </ClCompile>
+    <ClCompile Include="AudioManager.cpp">
+      <Filter>AudioManager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -33,6 +36,9 @@
     </ClInclude>
     <ClInclude Include="BadAppleController.h">
       <Filter>BadAppleDemoController</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioManager.h">
+      <Filter>AudioManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -64,6 +70,9 @@
     </Filter>
     <Filter Include="BadAppleDemoController">
       <UniqueIdentifier>{d6d7ee05-be9f-48c4-997b-473ca28aa889}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AudioManager">
+      <UniqueIdentifier>{bd5370f9-3946-477b-9aba-eaa1ed05725d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

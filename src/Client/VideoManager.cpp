@@ -112,6 +112,9 @@ BOOL CreateVideoHandle(VIDEO_HANDLE **ppOutVideo, const WCHAR *wpath)
 
     pVideo->elapsedTime = 0.0f;
     pVideo->timeBase = timeBase;
+
+    pVideo->isUpdated = FALSE;
+
     *ppOutVideo = pVideo;
 
     return TRUE;
@@ -220,26 +223,9 @@ BOOL VideoPlay(VIDEO_HANDLE *pVideo, float dt)
                 // 프레임 처리
                 sws_scale(swsContext, pFrame->data, pFrame->linesize, 0, height, rgba, rgba_stride);
 
-                return TRUE;
-                //if (frameTime > elapsedTime)
-                //{
-                //    // 프레임 표시까지 대기
-                //    return TRUE;
-                //}
+                pVideo->isUpdated = TRUE;
 
-                // 여기서 프레임 데이터를 메모리로 복사
-                // int           width = pFrame->width;
-                // int           height = pFrame->height;
-                // AVPixelFormat format = (AVPixelFormat)pFrame->format;
-                //// 프레임 데이터 메모리 할당
-                // int      numBytes = av_image_get_buffer_size(format, width, height, 1);
-                // uint8_t *frameBuffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
-                // av_image_copy_to_buffer(frameBuffer, numBytes, pFrame->data, pFrame->linesize, format, width,
-                //                         height, 1);
-                //  메모리에 매핑된 데이터를 사용 (예: 렌더링, 저장 등)
-                // save_gray_frame(pFrame->data[0], pFrame->linesize[0], width, height, "img.pgm");
-                //  메모리 해제
-                // av_free(frameBuffer);
+                return TRUE;
             }
             return TRUE;
         }

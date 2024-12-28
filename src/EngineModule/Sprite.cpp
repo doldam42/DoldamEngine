@@ -36,7 +36,7 @@ void Sprite::Render()
     m_pRenderer->RenderSprite(m_pSprite, m_posX, m_posY, m_scaleX, m_scaleY, m_Z); 
 }
 
-BOOL Sprite::UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) { return FALSE; }
+BOOL Sprite::UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) { return FALSE; }
 
 Sprite::~Sprite() { Cleanup(); }
 
@@ -73,7 +73,7 @@ void DynamicSprite::Render()
     m_pRenderer->RenderSpriteWithTex(m_pSprite, m_posX, m_posY, m_scaleX, m_scaleY, nullptr, m_Z, m_pTexHandle);
 }
 
-BOOL DynamicSprite::UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth,
+BOOL DynamicSprite::UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth,
                                             UINT srcHeight)
 {
     UINT width = (srcWidth < m_width) ? srcWidth : m_width;

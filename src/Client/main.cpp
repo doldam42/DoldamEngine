@@ -16,6 +16,9 @@
 #pragma comment(lib, "swresample.lib")
 #pragma comment(lib, "swscale.lib")
 
+#pragma comment(lib, "fmodL_vc.lib")
+#pragma comment(lib, "fmodstudioL_vc.lib")
+
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")

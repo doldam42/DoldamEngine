@@ -1,32 +1,59 @@
 #include "pch.h"
 
 #include "Client.h"
+
+#include "AudioManager.h"
 #include "VideoManager.h"
 
 #include "BadAppleController.h"
 
 void BadAppleController::Cleanup()
 {
+    AudioManager *pAudio = g_pClient->GetAudioManager();
     IGameManager *pGame = g_pClient->GetGameManager();
+    IRenderer    *pRnd = pGame->GetRenderer();
     if (m_pBadAppleVideo)
     {
         DeleteVideoHandle(m_pBadAppleVideo);
         m_pBadAppleVideo = nullptr;
     }
-    /*if (m_pSprite)
+    if (m_pBadAppleAudio)
+    {
+        pAudio->DeleteAudioHandle(m_pBadAppleAudio);
+        m_pBadAppleAudio = nullptr;
+    }
+    if (m_pSprite)
     {
         pGame->DeleteSprite(m_pSprite);
         m_pSprite = nullptr;
-    }*/
+    }
+    if (m_pSphere)
+    {
+        pGame->DeleteGameObject(m_pSphere);
+        m_pSphere = nullptr;
+    }
+    if (m_pTex)
+    {
+        pRnd->DeleteTexture(m_pTex);
+        m_pTex = nullptr;
+    }
 }
 
 BOOL BadAppleController::Start()
 {
     BOOL result = TRUE;
 
+    AudioManager *pAudio = g_pClient->GetAudioManager();
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRnd = pGame->GetRenderer();
+    
     result = CreateVideoHandle(&m_pBadAppleVideo, L"bad_apple.mp4");
+    
+    m_pBadAppleAudio = pAudio->CreateAudioHandle(L"bad_apple.mp3");
+    if (!m_pBadAppleAudio)
+    {
+        __debugbreak();
+    }
 
     // Create Textures
     m_pTex = pRnd->CreateDynamicTexture(2 * m_pBadAppleVideo->width, m_pBadAppleVideo->height);
@@ -54,13 +81,22 @@ BOOL BadAppleController::Start()
 
 void BadAppleController::Update(float dt) 
 { 
+    AudioManager *pAudio = g_pClient->GetAudioManager();
     IRenderer *pRnd = g_pClient->GetGameManager()->GetRenderer();
-    VideoPlay(m_pBadAppleVideo, dt);
-    m_pSprite->UpdateTextureWidthImage(m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
-                                       m_pBadAppleVideo->height);
 
-    pRnd->UpdateTextureWithImage(m_pTex, m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
-                                 m_pBadAppleVideo->height);
+    pAudio->SoundPlay(m_pBadAppleAudio, true);
+    VideoPlay(m_pBadAppleVideo, dt);
+
+    if (m_pBadAppleVideo->isUpdated)
+    {
+        m_pSprite->UpdateTextureWithImage(m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
+                                           m_pBadAppleVideo->height);
+
+        pRnd->UpdateTextureWithImage(m_pTex, m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
+                                     m_pBadAppleVideo->height);
+
+        m_pBadAppleVideo->isUpdated = FALSE;
+    }
 }
 
 BadAppleController::~BadAppleController() { Cleanup(); }

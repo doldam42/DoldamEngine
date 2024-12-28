@@ -115,7 +115,7 @@ interface IGameCharacter : public IGameObject { virtual void InsertAnimation(IGa
 
 interface IGameSprite
 {
-    virtual BOOL UpdateTextureWidthImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) = 0;
+    virtual BOOL UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) = 0;
 
     // Getter
     virtual UINT GetWidth() = 0;

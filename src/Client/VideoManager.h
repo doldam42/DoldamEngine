@@ -27,6 +27,8 @@ struct VIDEO_HANDLE
 
     int width = 0;
     int height = 0;
+
+    BOOL isUpdated = FALSE;
 };
 
 BOOL CreateVideoHandle(VIDEO_HANDLE **ppOutVideo, const WCHAR *wpath);

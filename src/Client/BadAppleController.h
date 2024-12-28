@@ -8,6 +8,7 @@ class BadAppleController : public IController
     IGameObject *m_pSphere = nullptr;
     ITextureHandle *m_pTex = nullptr;
     
+    AUDIO_HANDLE *m_pBadAppleAudio = nullptr;
     VIDEO_HANDLE *m_pBadAppleVideo = nullptr;
 
   private:

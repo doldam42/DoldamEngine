@@ -5,7 +5,10 @@
 #include "../EngineModule/EngineInterface.h"
 #include "../RenderModule/RendererInterface.h"
 
+#include "AudioManager.h"
 #include "VideoManager.h"
+
+#include "BadAppleController.h"
 #include "TimeController.h"
 
 #include "Client.h"
@@ -14,8 +17,23 @@ namespace fs = std::filesystem;
 
 Client *g_pClient = nullptr;
 
+void Client::CleanupControllers()
+{
+    if (m_pTimeController)
+    {
+        delete m_pTimeController;
+        m_pTimeController = nullptr;
+    }
+    if (m_pDemoController)
+    {
+        delete m_pDemoController;
+        m_pDemoController = nullptr;
+    }
+}
+
 void Client::Cleanup()
 {
+    CleanupControllers();
     if (m_pFbxExporter)
     {
         DeleteFbxExporter(m_pFbxExporter);
@@ -66,6 +84,11 @@ void Client::Cleanup()
         DeleteGameEngine(m_pGame);
         m_pGame = nullptr;
     }
+    if (m_pAudio)
+    {
+        delete m_pAudio;
+        m_pAudio = nullptr;
+    }
 }
 
 BOOL Client::Initialize(HWND hWnd)
@@ -79,11 +102,18 @@ BOOL Client::Initialize(HWND hWnd)
     result = m_pFbxExporter->Initialize(m_pGame);
     result = m_pAssimpExporter->Initialize(m_pGame);
 
-    // Register Controllers Before Start Game Manager.
-    m_pGame->Register(this);
-    m_pGame->Register(&m_timeController);
-    m_pGame->Register(&m_demoController);
+    m_pAudio = new AudioManager;
+    m_pAudio->Initialize();
 
+    // Register Controllers Before Start Game Manager.
+    m_pTimeController = new TimeController;
+    m_pDemoController = new BadAppleController;
+
+    m_pGame->Register(this);
+    m_pGame->Register(m_pAudio);
+    m_pGame->Register(m_pTimeController);
+    m_pGame->Register(m_pDemoController);
+    
     m_pGame->Start();
 
     return result;
@@ -261,7 +291,7 @@ void Client::Update(float dt)
         g_dwTileColorB = 0;
     }
 
-    m_pDynamicSprite->UpdateTextureWidthImage(m_pImage, 512, 256);
+    m_pDynamicSprite->UpdateTextureWithImage(m_pImage, 512, 256);
 
     m_pRenderer->UpdateTextureWithImage(m_pDynamicTexture, m_pImage, 512, 256);
 
@@ -286,7 +316,7 @@ void Client::Update(float dt)
         // 텍스트가 변경된 경우
         m_pRenderer->WriteTextToBitmap(m_pTextImage, m_textImageWidth, m_textImageHeight, m_textImageWidth * 4,
                                        &iTextWidth, &iTextHeight, m_pFontHandle, wchTxt, dwTxtLen);
-        m_pTextSprite->UpdateTextureWidthImage(m_pTextImage, m_textImageWidth, m_textImageHeight);
+        m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_textImageWidth, m_textImageHeight);
         wcscpy_s(m_text, wchTxt);
     }
     else

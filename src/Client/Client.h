@@ -1,13 +1,15 @@
 #pragma once
 
-#include "BadAppleController.h"
-#include "TimeController.h"
-
+class TimeController;
+class BadAppleController;
+class AudioManager;
 class Client : public IController
 {
   private:
     HWND            m_hWnd = nullptr;
     IGameManager   *m_pGame = nullptr;
+    AudioManager   *m_pAudio = nullptr;
+
     // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
     // TODO: Reference Count 추가
     IRenderer      *m_pRenderer = nullptr;
@@ -35,10 +37,11 @@ class Client : public IController
     WCHAR m_text[260] = {0};
 
     // Controllers
-    TimeController m_timeController;
-    BadAppleController m_demoController;
+    TimeController* m_pTimeController;
+    BadAppleController* m_pDemoController;
 
   private:
+    void CleanupControllers();
     void Cleanup();
 
   public:
@@ -60,6 +63,7 @@ class Client : public IController
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     IGameManager *GetGameManager() { return m_pGame; }
+    AudioManager *GetAudioManager() { return m_pAudio; }
 
     Client() = default;
     ~Client();
