@@ -256,16 +256,18 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\Client\Shaders\BasicPS.hlsl">
+    <FxCompile Include="..\Client\Shaders\BasicPS.hlsl">
       <FileType>Document</FileType>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\BasicVS.hlsl">
       <FileType>Document</FileType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
-    </CustomBuild>
+    </FxCompile>
     <CustomBuild Include="..\Client\Shaders\ComputeShader.hlsl">
       <FileType>Document</FileType>
     </CustomBuild>

@@ -224,9 +224,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\Client\Shaders\BasicPS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
       <Filter>Shaders</Filter>
     </CustomBuild>
@@ -299,11 +296,16 @@
     <CustomBuild Include="..\Client\Shaders\D32ToRgbaPS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\BasicVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\DrawNormal.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Client\Shaders\BasicPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\BasicVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

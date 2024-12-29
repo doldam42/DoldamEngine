@@ -56,7 +56,7 @@ BOOL BadAppleController::Start()
     }
 
     // Create Textures
-    m_pTex = pRnd->CreateDynamicTexture(2 * m_pBadAppleVideo->width, m_pBadAppleVideo->height);
+    m_pTex = pRnd->CreateDynamicTexture(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
 
     IRenderMaterial *pDynamicMaterial = pRnd->CreateDynamicMaterial(L"bad_apple");
     pDynamicMaterial->UpdateTextureWithTexture(m_pTex, TEXTURE_TYPE_ALBEDO);
