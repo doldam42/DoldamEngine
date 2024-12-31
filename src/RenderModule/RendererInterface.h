@@ -110,6 +110,10 @@ interface IRenderer
                                           float fallOffEnd = 20.0f, BOOL hasShadow = true) = 0;
     virtual void          DeleteLight(ILightHandle * pLightHandle) = 0;
 
+    // 텍스쳐 투영
+    virtual void SetProjectionTexture(ITextureHandle * pTex) = 0;
+    virtual void SetProjectionTextureViewProj(const Matrix *pViewRow, const Matrix *pProjRow) = 0;
+
     // For Debugging
     // virtual void UpdateTextureWithShadowMap(ITextureHandle * pTexHandle, UINT lightIndex) = 0;
     virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;

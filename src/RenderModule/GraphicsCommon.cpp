@@ -386,12 +386,15 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     }
 
     // Ranges Per Global
-    // | Global Consts(b0) | Materials (t5) | EnvIBL(t10) | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) |
+    // | Global Consts(b0) | 
+    // | Materials (t5)    |
+    // | EnvIBL(t10)       | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) | ProjectionTex(t14) |
+    // | ShadowMap1(t15)   | ShadowMap2(t16)  | ShadowMap3(t15) |
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[4];
     rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);           // b0 : globalConsts
     rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);           // t5 : materials
-    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10);          // t10~13 : IBL Textures
-    rangesPerGlobal[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_LIGHTS, 15); // t10~t10+MAX_LIGHT : shadow maps
+    rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 10);          // t10~13 : IBL Textures, t14 : ProjectionTex
+    rangesPerGlobal[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_LIGHTS, 15); // t15~t15+MAX_LIGHT : shadow maps
     // Init Basic Root Signature
     {
         CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1];
@@ -410,7 +413,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5,
                               0); // textures
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
-                                                D3D12_SHADER_VISIBILITY_ALL); // t5 : Materials
+                                                D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1].InitAsDescriptorTable(_countof(rangesPerObj), &rangesPerObj[0], D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMesh), &rangesPerMesh[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);

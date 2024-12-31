@@ -17,12 +17,12 @@ void AudioManager::Initialize()
     m_pSystem->init(4, FMOD_INIT_NORMAL, NULL);
 }
 
-AUDIO_HANDLE *AudioManager::CreateAudioHandle(const WCHAR *wpath)
+SOUND_HANDLE *AudioManager::CreateAudioHandle(const WCHAR *wpath)
 {
     char path[MAX_PATH] = {'\0'};
     ws2s(wpath, path);
 
-    AUDIO_HANDLE *pNew = new AUDIO_HANDLE;
+    SOUND_HANDLE *pNew = new SOUND_HANDLE;
     if (m_pSystem->createSound(path, FMOD_DEFAULT, 0, &pNew->pSound) != FMOD_OK)
     {
         return nullptr;
@@ -31,7 +31,7 @@ AUDIO_HANDLE *AudioManager::CreateAudioHandle(const WCHAR *wpath)
     return pNew;
 }
 
-void AudioManager::DeleteAudioHandle(AUDIO_HANDLE *pDel)
+void AudioManager::DeleteAudioHandle(SOUND_HANDLE *pDel)
 {
     if (pDel->pSound)
     {
@@ -41,7 +41,7 @@ void AudioManager::DeleteAudioHandle(AUDIO_HANDLE *pDel)
     delete pDel;
 }
 
-void AudioManager::SoundPlay(AUDIO_HANDLE *pAudio, bool isLoop)
+void AudioManager::SoundPlay(SOUND_HANDLE *pAudio, bool isLoop)
 {
     if (pAudio->pChannel)
     {
@@ -49,7 +49,7 @@ void AudioManager::SoundPlay(AUDIO_HANDLE *pAudio, bool isLoop)
     }
     if (!pAudio->isPlay)
     {
-        FMOD_RESULT ret = m_pSystem->playSound(pAudio->pSound, nullptr, false, &pAudio->pChannel);
+        FMOD_RESULT ret = m_pSystem->playSound(pAudio->pSound, nullptr, pAudio->isPaused, &pAudio->pChannel);
         if (ret == FMOD_OK)
         {
             if (isLoop)

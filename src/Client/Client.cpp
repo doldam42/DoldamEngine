@@ -19,15 +19,15 @@ Client *g_pClient = nullptr;
 
 void Client::CleanupControllers()
 {
-    if (m_pTimeController)
-    {
-        delete m_pTimeController;
-        m_pTimeController = nullptr;
-    }
     if (m_pDemoController)
     {
         delete m_pDemoController;
         m_pDemoController = nullptr;
+    }
+    if (m_pTimeController)
+    {
+        delete m_pTimeController;
+        m_pTimeController = nullptr;
     }
 }
 
@@ -147,15 +147,15 @@ void Client::LoadResources()
     // Create Textures
     m_pDynamicTexture = m_pRenderer->CreateDynamicTexture(imageWidth, imageHeight);
 
-    // Create Materials
+    //// Create Materials
     Material mat;
-    wcscpy_s(mat.name, L"wall");
-    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(mat.albedoTextureName, L"earth.jpg");
-    mat.roughnessFactor = 0.2f;
-    mat.metallicFactor = 0.8f;
-    mat.opacityFactor = 1.0f;
-    IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
+    //wcscpy_s(mat.name, L"wall");
+    //wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
+    //wcscpy_s(mat.albedoTextureName, L"earth.jpg");
+    //mat.roughnessFactor = 0.2f;
+    //mat.metallicFactor = 0.8f;
+    //mat.opacityFactor = 1.0f;
+    //IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
     mat = Material();
     mat.roughnessFactor = 0.1f;
@@ -165,28 +165,28 @@ void Client::LoadResources()
     wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
 
-    IRenderMaterial *pDynamicMaterial = m_pRenderer->CreateDynamicMaterial(L"dynamic");
-    pDynamicMaterial->UpdateTextureWithTexture(m_pDynamicTexture, TEXTURE_TYPE_ALBEDO);
+    //IRenderMaterial *pDynamicMaterial = m_pRenderer->CreateDynamicMaterial(L"dynamic");
+    //pDynamicMaterial->UpdateTextureWithTexture(m_pDynamicTexture, TEXTURE_TYPE_ALBEDO);
 
-    IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    //IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
-    IGameObject *pSphere1 = m_pGame->CreateGameObject();
-    IGameObject *pSphere2 = m_pGame->CreateGameObject();
+    //IGameObject *pSphere1 = m_pGame->CreateGameObject();
+    //IGameObject *pSphere2 = m_pGame->CreateGameObject();
 
-    pSphere1->SetModel(pModel);
-    pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
-    pSphere1->SetMaterials(&pWallMaterial, 1);
+    //pSphere1->SetModel(pModel);
+    //pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
+    //pSphere1->SetMaterials(&pWallMaterial, 1);
 
-    pModel->AddRef();
-    pSphere2->SetModel(pModel);
-    pSphere2->SetPosition(0.0f, 7.05f, 3.0f);
-    pSphere2->SetMaterials(&pDynamicMaterial, 1);
+    //pModel->AddRef();
+    //pSphere2->SetModel(pModel);
+    //pSphere2->SetPosition(0.0f, 7.05f, 3.0f);
+    //pSphere2->SetMaterials(&pDynamicMaterial, 1);
 
     Sphere sphere(1.0f);
-    pSphere1->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
-    pSphere2->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
+    //pSphere1->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
+    //pSphere2->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
 
-    m_pSphere = pSphere1;
+    //m_pSphere = pSphere1;
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
     IGameObject *pGround = m_pGame->CreateGameObject();
@@ -297,19 +297,18 @@ void Client::Update(float dt)
 
     // draw text
     UINT    fps = m_pGame->FPS();
-    Vector3 pos = m_pSphere->GetPosition();
+    // Vector3 pos = m_pSphere->GetPosition();
 
-    float rotX = m_pSphere->GetRotationX();
+    /*float rotX = m_pSphere->GetRotationX();
     float rotY = m_pSphere->GetRotationY();
-    float rotZ = m_pSphere->GetRotationZ();
+    float rotZ = m_pSphere->GetRotationZ();*/
 
     int   iTextWidth = 0;
     int   iTextHeight = 0;
     WCHAR wchTxt[260];
     memset(wchTxt, 0, sizeof(wchTxt));
     DWORD dwTxtLen =
-        swprintf_s(wchTxt, L"Current FrameRate: %u\nCur Position: (%.3f, %.3f, %.3f)\nOrient: (%.3f, %.3f, %.3f)", fps,
-                   pos.x, pos.y, pos.z, rotX, rotY, rotZ);
+        swprintf_s(wchTxt, L"Current FrameRate: %u\n", fps);
 
     if (wcscmp(m_text, wchTxt))
     {

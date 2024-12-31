@@ -148,6 +148,7 @@ CameraController::~CameraController() { Cleanup(); }
 void CameraController::Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
 {
     m_pCamera->Initialize(verticalFovRadians, aspectRatio, nearZ, farZ);
+    m_pCamera->SetPosition(Vector3(0.0f, 16.f, -2.0f));
 
     InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
     pInputManager->AddKeyListener(

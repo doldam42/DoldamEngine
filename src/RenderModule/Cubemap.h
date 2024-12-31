@@ -37,8 +37,23 @@ class Cubemap
     D3D12_CPU_DESCRIPTOR_HANDLE GetIrradianceSRV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetBrdfSRV();
 
+    inline void CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
+                                UINT descriptorSize) const;
+
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList);
 
     Cubemap() = default;
     ~Cubemap();
 };
+
+void Cubemap::CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT descriptorSize) const
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
+    pDevice->CopyDescriptorsSimple(1, dest, m_pEnv->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    dest.Offset(descriptorSize);
+    pDevice->CopyDescriptorsSimple(1, dest, m_pSpecular->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    dest.Offset(descriptorSize);
+    pDevice->CopyDescriptorsSimple(1, dest, m_pIrradiance->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    dest.Offset(descriptorSize);
+    pDevice->CopyDescriptorsSimple(1, dest, m_pBrdf->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}

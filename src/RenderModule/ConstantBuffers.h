@@ -67,11 +67,16 @@ struct GlobalConstants
     Matrix  invProj; // 역프로젝션행렬
     Matrix  viewProj;
     Matrix  invViewProj; // Proj -> World
+    
+    Matrix  projectionViewProj; // 텍스쳐 투영
+
     Vector3 eyeWorld;
     float   strengthIBL;
 
     Light lights[MAX_LIGHTS];
-    DWORD dummys[12];
+    BOOL  useTextureProjection;
+    
+    DWORD dummys[59];
 };
 
 static_assert((sizeof(GlobalConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");

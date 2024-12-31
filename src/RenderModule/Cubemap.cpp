@@ -157,7 +157,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE Cubemap::GetIrradianceSRV()
 
 D3D12_CPU_DESCRIPTOR_HANDLE Cubemap::GetBrdfSRV()
 {
-    return m_pBrdf->srv.cpuHandle;
+    return m_pBrdf->srv.cpuHandle; 
 }
 
 void Cubemap::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)

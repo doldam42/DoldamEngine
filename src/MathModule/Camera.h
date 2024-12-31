@@ -31,7 +31,7 @@ class Camera
 
     void Update();
 
-    void SetEyeAtUp(Vector3 eye, Vector3 at, Vector3 up);
+    void SetEyeAtUp(Vector3 eye, Vector3 lookAt, Vector3 up);
     void SetLookDirection(Vector3 forward, Vector3 up);
     void SetPosition(Vector3 worldPos);
 

@@ -3,11 +3,13 @@
 #include <fmod/fmod.hpp>
 #include <fmod/fmod_errors.h>
 
-struct AUDIO_HANDLE
+struct SOUND_HANDLE
 {
     FMOD::Sound   *pSound = nullptr;
     FMOD::Channel *pChannel = nullptr;
-    bool           isPlay = false;
+
+    bool isPlay = false;
+    bool isPaused = false;
 };
 
 class AudioManager : public IController
@@ -22,10 +24,10 @@ class AudioManager : public IController
     void Initialize();
     BOOL Start() override;
     void Update(float dt) override;
-    
-    AUDIO_HANDLE *CreateAudioHandle(const WCHAR *wpath);
-    void          DeleteAudioHandle(AUDIO_HANDLE *pDel);
-    void          SoundPlay(AUDIO_HANDLE *pAudio, bool isLoop);
+
+    SOUND_HANDLE *CreateAudioHandle(const WCHAR *wpath);
+    void          DeleteAudioHandle(SOUND_HANDLE *pDel);
+    void          SoundPlay(SOUND_HANDLE *pAudio, bool isLoop);
 
     AudioManager() = default;
     ~AudioManager();

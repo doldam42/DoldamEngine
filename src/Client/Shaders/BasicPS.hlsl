@@ -175,10 +175,10 @@ float4 main(PixelShaderInput input) : SV_TARGET
         material.useAlbedoMap ? albedoTex.Sample(linearWrapSampler, input.texcoord) : float4(material.albedo, 1.0);
 
     float2 projTexcoord = input.projTexcoord.xy;
-    if ((saturate(projTexcoord.x) == projTexcoord.x) && (saturate(projTexcoord.y) == projTexcoord.y))
+    if (useTextureProjection && (saturate(projTexcoord.x) == projTexcoord.x) &&
+        (saturate(projTexcoord.y) == projTexcoord.y))
     {
-        texColor =
-            material.useAlbedoMap ? albedoTex.Sample(linearWrapSampler, projTexcoord) : float4(material.albedo, 1.0); 
+        texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
     }
     
     float3 albedo = texColor.rbg;

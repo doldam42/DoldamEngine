@@ -20,6 +20,7 @@ TextureCube envIBLTex : register(t10);
 TextureCube specularIBLTex : register(t11);
 TextureCube irradianceIBLTex : register(t12);
 Texture2D brdfTex : register(t13);
+Texture2D projectionTex : register(t14);
 
 Texture2D shadowMaps[MAX_LIGHTS] : register(t15);
 
@@ -77,11 +78,14 @@ cbuffer GlobalConstants : register(b0)
     float4x4 invProj;
     float4x4 viewProj;
     float4x4 invViewProj; // Proj -> World
+    float4x4 projectionViewProj; // texture projection 
+    
     float3 eyeWorld;
-    float gcDummy1;
+    float strengthIBL;
     
     Light lights[MAX_LIGHTS];
-    float gcDummy2[56];
+    uint useTextureProjection;
+    float gcDummy2[59];
 };
 
 struct VertexShaderInput

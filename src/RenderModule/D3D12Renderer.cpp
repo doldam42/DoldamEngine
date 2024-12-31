@@ -803,9 +803,11 @@ void D3D12Renderer::UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYT
     m_pTextureManager->UpdateTextureWithImage((TEXTURE_HANDLE *)pTexHandle, pSrcBits, srcWidth, srcHeight);
 }
 
-void D3D12Renderer::UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight)
+void D3D12Renderer::UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth,
+                                             UINT srcHeight)
 {
-    m_pTextureManager->UpdateTextureWithTexture((TEXTURE_HANDLE *)pDestTex, (TEXTURE_HANDLE *)pSrcTex, srcWidth, srcHeight);
+    m_pTextureManager->UpdateTextureWithTexture((TEXTURE_HANDLE *)pDestTex, (TEXTURE_HANDLE *)pSrcTex, srcWidth,
+                                                srcHeight);
 }
 
 void D3D12Renderer::UpdateGlobal()
@@ -834,12 +836,9 @@ void D3D12Renderer::UpdateGlobal()
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cbHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_CB, m_srvDescriptorSize);
         CD3DX12_CPU_DESCRIPTOR_HANDLE matHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_MATERIALS, m_srvDescriptorSize);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE envHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_ENV, m_srvDescriptorSize);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE specularHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_SPECULAR,
-                                                     m_srvDescriptorSize);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE irradianceHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_IRRADIANCE,
-                                                       m_srvDescriptorSize);
-        CD3DX12_CPU_DESCRIPTOR_HANDLE brdfHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_IBL_BRDF, m_srvDescriptorSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cubemapHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP1, m_srvDescriptorSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE projectionHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_PROJECTION_TEX,
+                                                          m_srvDescriptorSize);
         CD3DX12_CPU_DESCRIPTOR_HANDLE shadowMapHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP1,
                                                       m_srvDescriptorSize);
 
@@ -848,20 +847,18 @@ void D3D12Renderer::UpdateGlobal()
 
         m_pD3DDevice->CopyDescriptorsSimple(1, matHandle, m_pMaterialManager->GetSRV(),
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_pD3DDevice->CopyDescriptorsSimple(1, envHandle, m_pCubemap->GetEnvSRV(),
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_pD3DDevice->CopyDescriptorsSimple(1, specularHandle, m_pCubemap->GetSpecularSRV(),
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_pD3DDevice->CopyDescriptorsSimple(1, irradianceHandle, m_pCubemap->GetIrradianceSRV(),
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_pD3DDevice->CopyDescriptorsSimple(1, brdfHandle, m_pCubemap->GetBrdfSRV(),
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+        m_pCubemap->CopyDescriptors(m_pD3DDevice, cubemapHandle, m_srvDescriptorSize);
+
+        if (m_pProjectionTexHandle)
+        {
+            m_pD3DDevice->CopyDescriptorsSimple(1, projectionHandle, m_pProjectionTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        }
 
         m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle,
                                             m_pShadowManager->GetShadowMapDescriptorHandle(),
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        /*m_pD3DDevice->CopyDescriptorsSimple(MAX_LIGHTS, shadowMapHandle, m_pShadowMapTextures[0]->srv.cpuHandle,
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
 
         m_globalGpuDescriptorHandle[i] = gpuHandle;
     }
@@ -878,8 +875,14 @@ void D3D12Renderer::UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix 
     m_globalConsts.invView = viewRow.Invert().Transpose();
     m_globalConsts.invProj = projRow.Invert().Transpose();
     m_globalConsts.viewProj = (viewRow * projRow).Transpose();
-    m_globalConsts.invViewProj = m_globalConsts.viewProj.Invert();
+    m_globalConsts.invViewProj = (viewRow * projRow).Invert().Transpose();
     m_globalConsts.strengthIBL = STRENGTH_IBL;
+
+    if (m_pProjectionTexHandle)
+    {
+        m_globalConsts.projectionViewProj = m_projectionViewProjRow.Transpose();
+        m_globalConsts.useTextureProjection = TRUE;
+    }
 
     memcpy(&m_globalConsts.lights, m_pLights, sizeof(Light) * MAX_LIGHTS);
     memcpy(m_pGlobalCB->pSystemMemAddr, &m_globalConsts, sizeof(GlobalConstants));
@@ -1081,6 +1084,13 @@ void D3D12Renderer::InitCubemaps(const WCHAR *envFilename, const WCHAR *specular
     m_pCubemap = new Cubemap;
 
     m_pCubemap->Initialize(this, envFilename, specularFilename, irradianceFilename, brdfFilename);
+}
+
+void D3D12Renderer::SetProjectionTexture(ITextureHandle *pTex) { m_pProjectionTexHandle = (TEXTURE_HANDLE *)pTex; }
+
+void D3D12Renderer::SetProjectionTextureViewProj(const Matrix *pViewRow, const Matrix *pProjRow)
+{
+    m_projectionViewProjRow = (*pViewRow) * (*pProjRow);
 }
 
 UINT D3D12Renderer::GetCommandListCount()

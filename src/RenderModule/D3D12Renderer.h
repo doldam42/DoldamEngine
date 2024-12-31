@@ -30,26 +30,27 @@ class DXRSceneManager;
 #define USE_MULTI_THREAD
 // #define USE_MULTILPE_COMMAND_LIST
 
+enum GLOBAL_DESCRIPTOR_INDEX
+{
+    GLOBAL_DESCRIPTOR_INDEX_CB = 0,
+    GLOBAL_DESCRIPTOR_INDEX_MATERIALS,
+    GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP1,
+    GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP2,
+    GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP3,
+    GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP4,
+    GLOBAL_DESCRIPTOR_INDEX_PROJECTION_TEX,
+    GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP1,
+    GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP2,
+    GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP3,
+    GLOBAL_DESCRIPTOR_INDEX_COUNT
+};
+
 class D3D12Renderer : public IRenderer
 {
     enum DSV_DESCRIPTOR_INDEX
     {
         DSV_DESCRIPTOR_INDEX_COMMON = 0,
         DSV_DESCRIPTOR_INDEX_SHADOW,
-    };
-
-    enum GLOBAL_DESCRIPTOR_INDEX
-    {
-        GLOBAL_DESCRIPTOR_INDEX_CB = 0,
-        GLOBAL_DESCRIPTOR_INDEX_MATERIALS,
-        GLOBAL_DESCRIPTOR_INDEX_IBL_ENV,
-        GLOBAL_DESCRIPTOR_INDEX_IBL_SPECULAR,
-        GLOBAL_DESCRIPTOR_INDEX_IBL_IRRADIANCE,
-        GLOBAL_DESCRIPTOR_INDEX_IBL_BRDF,
-        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP1,
-        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP2,
-        GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP3,
-        GLOBAL_DESCRIPTOR_INDEX_COUNT
     };
 
     static const UINT MAX_DRAW_COUNT_PER_FRAME = 4096;
@@ -117,6 +118,8 @@ class D3D12Renderer : public IRenderer
     Matrix  m_camProjRow;
     Vector3 m_camPosition;
 
+    Matrix m_projectionViewProjRow;
+
     CB_CONTAINER               *m_pGlobalCB = nullptr;
     GlobalConstants             m_globalConsts = {};
     D3D12_GPU_DESCRIPTOR_HANDLE m_globalGpuDescriptorHandle[MAX_RENDER_THREAD_COUNT];
@@ -124,6 +127,7 @@ class D3D12Renderer : public IRenderer
     Light m_pLights[MAX_LIGHTS];
 
     TEXTURE_HANDLE *m_pDefaultTexHandle = nullptr;
+    TEXTURE_HANDLE *m_pProjectionTexHandle = nullptr;
 
     // CubeMap
     Cubemap *m_pCubemap = nullptr;
@@ -138,6 +142,7 @@ class D3D12Renderer : public IRenderer
 
     UINT m_dwCurContextIndex = 0;
 
+  private:
     void CreateDefaultTex();
 
     void CreateFence();
@@ -155,6 +160,9 @@ class D3D12Renderer : public IRenderer
     // For multi-hThreads
     BOOL InitRenderThreadPool(UINT threadCount);
     void CleanupRenderThreadPool();
+
+    void UpdateGlobal();
+    void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
 
   public:
     // Inherited via IRenderer
@@ -198,10 +206,8 @@ class D3D12Renderer : public IRenderer
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
     void UpdateTextureWithImage(ITextureHandle *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                 UINT srcHeight) override;
-    void UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth, UINT srcHeight) override;
-
-    void UpdateGlobal();
-    void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
+    void UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth,
+                                  UINT srcHeight) override;
 
     ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b);
     ITextureHandle *CreateDynamicTexture(UINT texWidth, UINT texHeight);
@@ -227,6 +233,10 @@ class D3D12Renderer : public IRenderer
 
     void InitCubemaps(const WCHAR *envFilename, const WCHAR *specularFilename, const WCHAR *irradianceFilename,
                       const WCHAR *brdfFilename) override;
+
+    // Texture Åõ¿µ
+    void SetProjectionTexture(ITextureHandle *pTex) override;
+    void SetProjectionTextureViewProj(const Matrix *pViewRow, const Matrix *pProjRow) override;
 
     const Cubemap *GetCubemap() { return m_pCubemap; }
 

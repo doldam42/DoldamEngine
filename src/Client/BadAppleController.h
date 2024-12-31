@@ -5,10 +5,12 @@ class BadAppleController : public IController
 {
   private:
     IGameSprite  *m_pSprite = nullptr;
-    IGameObject *m_pSphere = nullptr;
+    IGameObject  **m_ppSpheres = nullptr;
     ITextureHandle *m_pTex = nullptr;
     
-    AUDIO_HANDLE *m_pBadAppleAudio = nullptr;
+    UINT m_numSpheres = 0;
+
+    SOUND_HANDLE *m_pBadAppleAudio = nullptr;
     VIDEO_HANDLE *m_pBadAppleVideo = nullptr;
 
   private:

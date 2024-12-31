@@ -27,10 +27,15 @@ void BadAppleController::Cleanup()
         pGame->DeleteSprite(m_pSprite);
         m_pSprite = nullptr;
     }
-    if (m_pSphere)
+
+    if (m_ppSpheres)
     {
-        pGame->DeleteGameObject(m_pSphere);
-        m_pSphere = nullptr;
+        for (UINT i = 0; i < m_numSpheres; i++)
+        {
+            pGame->DeleteGameObject(m_ppSpheres[i]);
+            m_ppSpheres[i] = nullptr;
+        }
+        delete[] m_ppSpheres;
     }
     if (m_pTex)
     {
@@ -46,43 +51,79 @@ BOOL BadAppleController::Start()
     AudioManager *pAudio = g_pClient->GetAudioManager();
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRnd = pGame->GetRenderer();
-    
+
     result = CreateVideoHandle(&m_pBadAppleVideo, L"bad_apple.mp4");
-    
-    m_pBadAppleAudio = pAudio->CreateAudioHandle(L"bad_apple.mp3");
-    if (!m_pBadAppleAudio)
+
+    SOUND_HANDLE *pBadAppleAudio = pAudio->CreateAudioHandle(L"bad_apple.mp3");
+    if (!pBadAppleAudio)
     {
         __debugbreak();
     }
-
+    pGame->GetInputManager()->AddKeyListener(VK_SPACE, [pBadAppleAudio](void *) {
+        pBadAppleAudio->isPaused = !pBadAppleAudio->isPaused;
+        pBadAppleAudio->pChannel->setPaused(pBadAppleAudio->isPaused);
+    });
+    m_pBadAppleAudio = pBadAppleAudio;
+    
     // Create Textures
     m_pTex = pRnd->CreateDynamicTexture(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
 
-    IRenderMaterial *pDynamicMaterial = pRnd->CreateDynamicMaterial(L"bad_apple");
+    /*IRenderMaterial *pDynamicMaterial = pRnd->CreateDynamicMaterial(L"bad_apple");
     pDynamicMaterial->UpdateTextureWithTexture(m_pTex, TEXTURE_TYPE_ALBEDO);
-    pDynamicMaterial->UpdateMetallicRoughness(0.8f, 0.8f);
+    pDynamicMaterial->UpdateMetallicRoughness(0.8f, 0.8f);*/
 
     m_pSprite = pGame->CreateDynamicSprite(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
     m_pSprite->SetPosition(0, 0);
+    m_pSprite->SetScale(0.5f);
 
     IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
-    m_pSphere = pGame->CreateGameObject();
-    m_pSphere->SetModel(pModel);
-    m_pSphere->SetPosition(5.0f, 5.05f, 5.0f);
-    m_pSphere->SetScale(4.0f);
-    m_pSphere->SetMaterials(&pDynamicMaterial, 1);
-    /*
-    Sphere sphere(2.0f);
-    m_pSphere->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);*/
+    UINT numRows = m_pBadAppleVideo->height / 120;
+    UINT numCols = m_pBadAppleVideo->width / 120;
+
+    m_numSpheres = (numRows + 2) * (numCols + 1);
+    m_ppSpheres = new IGameObject *[m_numSpheres];
+    memset(m_ppSpheres, 0, sizeof(IGameObject *) * m_numSpheres);
+    
+    // width(480), height(360)
+    // numCols(4), numRows(3)
+    // [-16, 0, 2] ~ [16, 32, 2]
+    UINT offset = 8;
+
+    float x = -16.0f;
+    float y = 1e-3f;
+    
+    int i = 0;
+    for (UINT row = 0; row < numRows + 2; row++)
+    {
+        for (UINT col = 0; col < numCols + 1; col++)
+        {
+            IGameObject* pObj = pGame->CreateGameObject();
+            pModel->AddRef();
+            pObj->SetModel(pModel);
+            pObj->SetPosition(x + col * offset, y + row * offset, 20);
+            pObj->SetScale(3.9f);
+            m_ppSpheres[i] = pObj;
+            i++;
+        }
+    }
+
+    float  aspect = m_pBadAppleVideo->width / m_pBadAppleVideo->height;
+    Camera projectorCam;
+    projectorCam.Initialize(XMConvertToRadians(90.0f), aspect, 0.1f, 10.f);
+    projectorCam.SetEyeAtUp(Vector3(0.f, 16.f, -2.f), Vector3(0.0f, 16.f, 1.0f), Vector3(0.f, 1.0f, 0.0f));
+    projectorCam.Update();
+
+    pRnd->SetProjectionTexture(m_pTex);
+    pRnd->SetProjectionTextureViewProj(&projectorCam.GetViewMatrix(), &projectorCam.GetProjMatrix());
 
     return result;
 }
 
-void BadAppleController::Update(float dt) 
-{ 
+void BadAppleController::Update(float dt)
+{
     AudioManager *pAudio = g_pClient->GetAudioManager();
-    IRenderer *pRnd = g_pClient->GetGameManager()->GetRenderer();
+    IRenderer    *pRnd = g_pClient->GetGameManager()->GetRenderer();
 
     pAudio->SoundPlay(m_pBadAppleAudio, true);
     VideoPlay(m_pBadAppleVideo, dt);
@@ -90,7 +131,7 @@ void BadAppleController::Update(float dt)
     if (m_pBadAppleVideo->isUpdated)
     {
         m_pSprite->UpdateTextureWithImage(m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
-                                           m_pBadAppleVideo->height);
+                                          m_pBadAppleVideo->height);
 
         pRnd->UpdateTextureWithImage(m_pTex, m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,
                                      m_pBadAppleVideo->height);

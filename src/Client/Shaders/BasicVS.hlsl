@@ -58,9 +58,9 @@ PixelShaderInput main(VertexShaderInput input)
 
     output.texcoord = input.texcoord;
 
-    output.projTexcoord = posProj;
-    output.projTexcoord.x = posProj.x / posProj.w * 0.5 + 0.5;
-    output.projTexcoord.y = -posProj.y / posProj.w * 0.5 + 0.5;
+    output.projTexcoord = mul(float4(output.posWorld, 1.0), projectionViewProj);
+    output.projTexcoord.x = output.projTexcoord.x / output.projTexcoord.w * 0.5 + 0.5;
+    output.projTexcoord.y = -output.projTexcoord.y / output.projTexcoord.w * 0.5 + 0.5;
 
     output.normalWorld = mul(float4(input.normalModel, 0.0f), meshConst.world).xyz;
     output.normalWorld = normalize(output.normalWorld);
