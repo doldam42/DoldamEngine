@@ -199,10 +199,10 @@ void Client::LoadResources()
     pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
 
     // Create Sprite
-    m_pTextSprite = m_pGame->CreateDynamicSprite(m_textImageWidth, m_textImageHeight);
+    /*m_pTextSprite = m_pGame->CreateDynamicSprite(m_textImageWidth, m_textImageHeight);
     m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
     m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
-    m_pDynamicSprite->SetPosition(0, 512);
+    m_pDynamicSprite->SetPosition(0, 512);*/
 }
 
 void Client::LoadScene() 
@@ -230,99 +230,99 @@ BOOL Client::Start()
 
 void Client::Update(float dt)
 {
-    // Update Texture
-    static DWORD g_dwCount = 0;
-    static DWORD g_dwTileColorR = 0;
-    static DWORD g_dwTileColorG = 0;
-    static DWORD g_dwTileColorB = 0;
+    //// Update Texture
+    //static DWORD g_dwCount = 0;
+    //static DWORD g_dwTileColorR = 0;
+    //static DWORD g_dwTileColorG = 0;
+    //static DWORD g_dwTileColorB = 0;
 
-    const DWORD TILE_WIDTH = 16;
-    const DWORD TILE_HEIGHT = 16;
+    //const DWORD TILE_WIDTH = 16;
+    //const DWORD TILE_HEIGHT = 16;
 
-    DWORD TILE_WIDTH_COUNT = 512 / TILE_WIDTH;
-    DWORD TILE_HEIGHT_COUNT = 256 / TILE_HEIGHT;
+    //DWORD TILE_WIDTH_COUNT = 512 / TILE_WIDTH;
+    //DWORD TILE_HEIGHT_COUNT = 256 / TILE_HEIGHT;
 
-    if (g_dwCount >= TILE_WIDTH_COUNT * TILE_HEIGHT_COUNT)
-    {
-        g_dwCount = 0;
-    }
-    DWORD TileY = g_dwCount / TILE_WIDTH_COUNT;
-    DWORD TileX = g_dwCount % TILE_WIDTH_COUNT;
+    //if (g_dwCount >= TILE_WIDTH_COUNT * TILE_HEIGHT_COUNT)
+    //{
+    //    g_dwCount = 0;
+    //}
+    //DWORD TileY = g_dwCount / TILE_WIDTH_COUNT;
+    //DWORD TileX = g_dwCount % TILE_WIDTH_COUNT;
 
-    DWORD StartX = TileX * TILE_WIDTH;
-    DWORD StartY = TileY * TILE_HEIGHT;
+    //DWORD StartX = TileX * TILE_WIDTH;
+    //DWORD StartY = TileY * TILE_HEIGHT;
 
-    // DWORD r = rand() % 256;
-    // DWORD g = rand() % 256;
-    // DWORD b = rand() % 256;
+    //// DWORD r = rand() % 256;
+    //// DWORD g = rand() % 256;
+    //// DWORD b = rand() % 256;
 
-    DWORD r = g_dwTileColorR;
-    DWORD g = g_dwTileColorG;
-    DWORD b = g_dwTileColorB;
+    //DWORD r = g_dwTileColorR;
+    //DWORD g = g_dwTileColorG;
+    //DWORD b = g_dwTileColorB;
 
-    DWORD *pDest = (DWORD *)m_pImage;
-    for (DWORD y = 0; y < 16; y++)
-    {
-        for (DWORD x = 0; x < 16; x++)
-        {
-            if (StartX + x >= 512)
-                __debugbreak();
+    //DWORD *pDest = (DWORD *)m_pImage;
+    //for (DWORD y = 0; y < 16; y++)
+    //{
+    //    for (DWORD x = 0; x < 16; x++)
+    //    {
+    //        if (StartX + x >= 512)
+    //            __debugbreak();
 
-            if (StartY + y >= 256)
-                __debugbreak();
+    //        if (StartY + y >= 256)
+    //            __debugbreak();
 
-            pDest[(StartX + x) + (StartY + y) * 512] = 0xff000000 | (b << 16) | (g << 8) | r;
-        }
-    }
-    g_dwCount++;
-    g_dwTileColorR += 8;
-    if (g_dwTileColorR > 255)
-    {
-        g_dwTileColorR = 0;
-        g_dwTileColorG += 8;
-    }
-    if (g_dwTileColorG > 255)
-    {
-        g_dwTileColorG = 0;
-        g_dwTileColorB += 8;
-    }
-    if (g_dwTileColorB > 255)
-    {
-        g_dwTileColorB = 0;
-    }
+    //        pDest[(StartX + x) + (StartY + y) * 512] = 0xff000000 | (b << 16) | (g << 8) | r;
+    //    }
+    //}
+    //g_dwCount++;
+    //g_dwTileColorR += 8;
+    //if (g_dwTileColorR > 255)
+    //{
+    //    g_dwTileColorR = 0;
+    //    g_dwTileColorG += 8;
+    //}
+    //if (g_dwTileColorG > 255)
+    //{
+    //    g_dwTileColorG = 0;
+    //    g_dwTileColorB += 8;
+    //}
+    //if (g_dwTileColorB > 255)
+    //{
+    //    g_dwTileColorB = 0;
+    //}
 
-    m_pDynamicSprite->UpdateTextureWithImage(m_pImage, 512, 256);
+    //m_pDynamicSprite->UpdateTextureWithImage(m_pImage, 512, 256);
 
-    m_pRenderer->UpdateTextureWithImage(m_pDynamicTexture, m_pImage, 512, 256);
+    //m_pRenderer->UpdateTextureWithImage(m_pDynamicTexture, m_pImage, 512, 256);
 
     // draw text
-    UINT    fps = m_pGame->FPS();
+    // UINT    fps = m_pGame->FPS();
     // Vector3 pos = m_pSphere->GetPosition();
 
     /*float rotX = m_pSphere->GetRotationX();
     float rotY = m_pSphere->GetRotationY();
     float rotZ = m_pSphere->GetRotationZ();*/
 
-    int   iTextWidth = 0;
-    int   iTextHeight = 0;
-    WCHAR wchTxt[260];
-    memset(wchTxt, 0, sizeof(wchTxt));
-    DWORD dwTxtLen =
-        swprintf_s(wchTxt, L"Current FrameRate: %u\n", fps);
+    //int   iTextWidth = 0;
+    //int   iTextHeight = 0;
+    //WCHAR wchTxt[260];
+    //memset(wchTxt, 0, sizeof(wchTxt));
+    //DWORD dwTxtLen =
+    //    swprintf_s(wchTxt, L"Current FrameRate: %u\n", fps);
 
-    if (wcscmp(m_text, wchTxt))
-    {
-        // 텍스트가 변경된 경우
-        m_pRenderer->WriteTextToBitmap(m_pTextImage, m_textImageWidth, m_textImageHeight, m_textImageWidth * 4,
-                                       &iTextWidth, &iTextHeight, m_pFontHandle, wchTxt, dwTxtLen);
-        m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_textImageWidth, m_textImageHeight);
-        wcscpy_s(m_text, wchTxt);
-    }
-    else
-    {
-        // 텍스트가 변경되지 않은 경우 - 업데이트 할 필요 없다.
-        int a = 0;
-    }
+    //if (wcscmp(m_text, wchTxt))
+    //{
+    //    // 텍스트가 변경된 경우
+    //    m_pRenderer->WriteTextToBitmap(m_pTextImage, m_textImageWidth, m_textImageHeight, m_textImageWidth * 4,
+    //                                   &iTextWidth, &iTextHeight, m_pFontHandle, wchTxt, dwTxtLen);
+    //    m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_textImageWidth, m_textImageHeight);
+    //    wcscpy_s(m_text, wchTxt);
+    //}
+    //else
+    //{
+    //    // 텍스트가 변경되지 않은 경우 - 업데이트 할 필요 없다.
+    //    int a = 0;
+    //}
 }
 
 void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }

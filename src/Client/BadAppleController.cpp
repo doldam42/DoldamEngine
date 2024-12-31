@@ -52,9 +52,9 @@ BOOL BadAppleController::Start()
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRnd = pGame->GetRenderer();
 
-    result = CreateVideoHandle(&m_pBadAppleVideo, L"bad_apple.mp4");
+    result = CreateVideoHandle(&m_pBadAppleVideo, L"new_bad_apple.mp4");
 
-    SOUND_HANDLE *pBadAppleAudio = pAudio->CreateAudioHandle(L"bad_apple.mp3");
+    SOUND_HANDLE *pBadAppleAudio = pAudio->CreateAudioHandle(L"new_bad_apple.mp3");
     if (!pBadAppleAudio)
     {
         __debugbreak();
@@ -74,7 +74,7 @@ BOOL BadAppleController::Start()
 
     m_pSprite = pGame->CreateDynamicSprite(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
     m_pSprite->SetPosition(0, 0);
-    m_pSprite->SetScale(0.5f);
+    m_pSprite->SetScale(0.7f);
 
     IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
@@ -117,6 +117,8 @@ BOOL BadAppleController::Start()
     pRnd->SetProjectionTexture(m_pTex);
     pRnd->SetProjectionTextureViewProj(&projectorCam.GetViewMatrix(), &projectorCam.GetProjMatrix());
 
+    pAudio->SoundPlay(m_pBadAppleAudio, true);
+
     return result;
 }
 
@@ -124,10 +126,8 @@ void BadAppleController::Update(float dt)
 {
     AudioManager *pAudio = g_pClient->GetAudioManager();
     IRenderer    *pRnd = g_pClient->GetGameManager()->GetRenderer();
-
-    pAudio->SoundPlay(m_pBadAppleAudio, true);
+    
     VideoPlay(m_pBadAppleVideo, dt);
-
     if (m_pBadAppleVideo->isUpdated)
     {
         m_pSprite->UpdateTextureWithImage(m_pBadAppleVideo->pRGBAImage, m_pBadAppleVideo->width,

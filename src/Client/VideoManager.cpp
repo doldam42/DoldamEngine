@@ -179,7 +179,6 @@ BOOL VideoPlay(VIDEO_HANDLE *pVideo, float dt)
     int rgba_stride[1] = {linesize};
 
     // 현재 재생 시간 계산
-    pVideo->elapsedTime += dt;
     float elapsedTime = pVideo->elapsedTime;
 
     // 디코딩 루프
@@ -224,9 +223,10 @@ BOOL VideoPlay(VIDEO_HANDLE *pVideo, float dt)
                 sws_scale(swsContext, pFrame->data, pFrame->linesize, 0, height, rgba, rgba_stride);
 
                 pVideo->isUpdated = TRUE;
-
+                pVideo->elapsedTime += dt;
                 return TRUE;
             }
+            pVideo->elapsedTime += dt;
             return TRUE;
         }
     lb_continue:

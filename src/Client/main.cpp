@@ -144,8 +144,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Store instance handle in our global variable
-
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr,
+    
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                              CW_USEDEFAULT,
+                              nullptr,
                               nullptr, hInstance, nullptr);
 
     if (!hWnd)
