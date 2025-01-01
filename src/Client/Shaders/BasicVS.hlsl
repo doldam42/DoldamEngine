@@ -49,18 +49,21 @@ PixelShaderInput main(VertexShaderInput input)
     input.tangentModel = tangentModel;
 #endif
 
-    float4 posWorld = mul(float4(input.posModel, 1.0f), meshConst.world);
+    float4 posWorld = mul(float4(input.posModel, 1.0), meshConst.world);
 
     output.posWorld = posWorld.xyz;
 
-    float4 posProj = mul(float4(output.posWorld, 1.0), viewProj);
+    float4 posProj = mul(posWorld, viewProj);
     output.posProj = posProj;
 
     output.texcoord = input.texcoord;
 
-    output.projTexcoord = mul(float4(output.posWorld, 1.0), projectionViewProj);
-    output.projTexcoord.x = output.projTexcoord.x / output.projTexcoord.w * 0.5 + 0.5;
-    output.projTexcoord.y = -output.projTexcoord.y / output.projTexcoord.w * 0.5 + 0.5;
+    //float4 projTexcoord = mul(float4(output.posWorld, 1.0), projectionViewProj);
+    //output.projTexcoord = projTexcoord;
+    //output.projTexcoord.x = projTexcoord.x / projTexcoord.w * 0.5 + 0.5;
+    //output.projTexcoord.y = -projTexcoord.y / projTexcoord.w * 0.5 + 0.5;
+
+    output.projTexcoord = mul(posWorld, projectionViewProj);
 
     output.normalWorld = mul(float4(input.normalModel, 0.0f), meshConst.world).xyz;
     output.normalWorld = normalize(output.normalWorld);
