@@ -23,8 +23,8 @@ struct Triangle
 
 void ShadowManager::Cleanup()
 {
-    D3D12ResourceManager *pResourceManager = m_pRenderer->INL_GetResourceManager();
-    TextureManager       *pTexManager = m_pRenderer->INL_GetTextureManager();
+    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
+    TextureManager       *pTexManager = m_pRenderer->GetTextureManager();
 
     pResourceManager->DeallocDescriptorTable(&m_shadowMapSRV);
     pResourceManager->DeallocRTVDescriptorTable(&m_shadowMapRTV);
@@ -351,9 +351,9 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
 {
     BOOL result = FALSE;
 
-    ID3D12Device         *pD3DDevice = pRnd->INL_GetD3DDevice();
-    D3D12ResourceManager *pResourceManager = pRnd->INL_GetResourceManager();
-    TextureManager       *pTextureManager = pRnd->INL_GetTextureManager();
+    ID3D12Device         *pD3DDevice = pRnd->GetD3DDevice();
+    D3D12ResourceManager *pResourceManager = pRnd->GetResourceManager();
+    TextureManager       *pTextureManager = pRnd->GetTextureManager();
 
     UINT srvDescriptorSize = pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -563,9 +563,9 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
 {
     const UINT threadIndex = 0;
 
-    ID3D12Device              *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
-    CommandListPool           *pCommandListPool = m_pRenderer->INL_GetCommandListPool(threadIndex);
-    DescriptorPool            *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    ID3D12Device              *pD3DDevice = m_pRenderer->GetD3DDevice();
+    CommandListPool           *pCommandListPool = m_pRenderer->GetCommandListPool(threadIndex);
+    DescriptorPool            *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
     ID3D12DescriptorHeap      *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 

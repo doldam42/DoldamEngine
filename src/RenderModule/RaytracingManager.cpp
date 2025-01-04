@@ -11,7 +11,7 @@
 
 void RaytracingManager::Cleanup()
 {
-    m_pRenderer->INL_GetResourceManager()->DeallocDescriptorTable(&m_TLASHandle);
+    m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_TLASHandle);
     if (m_pInstanceDescsCPU)
     {
         m_topLevelASBuffers.pInstanceDesc->Unmap(0, nullptr);
@@ -59,7 +59,7 @@ BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandLis
 
     m_pRenderer = pRnd;
 
-    ID3D12Device5 *pD3DDevice = pRnd->INL_GetD3DDevice();
+    ID3D12Device5 *pD3DDevice = pRnd->GetD3DDevice();
 
     InitializeCriticalSection(&m_cs);
     InitializeConditionVariable(&m_cv);
@@ -130,7 +130,7 @@ BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandLis
     m_topLevelASBuffers.pScratch = pScratch;
 
     // Create SRV
-    m_pRenderer->INL_GetResourceManager()->AllocDescriptorTable(&m_TLASHandle, 1);
+    m_pRenderer->GetResourceManager()->AllocDescriptorTable(&m_TLASHandle, 1);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -170,7 +170,7 @@ void RaytracingManager::CreateTopLevelAS(ID3D12GraphicsCommandList4 *pCommandLis
 
 void RaytracingManager::CreateShaderTables()
 {
-    ID3D12Device5 *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device5 *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     void *rayGenShaderIdentifier = nullptr;
     void *missShaderIdentifier = nullptr;
@@ -213,8 +213,8 @@ void RaytracingManager::CreateShaderTables()
 
 }
 
-void RaytracingManager::InsertInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
-                                     Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numGeometry)
+void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
+                                     Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup)
 {
     // EnterCriticalSection(&m_cs);
 
@@ -227,7 +227,7 @@ void RaytracingManager::InsertInstance(ID3D12Resource *pBLAS, const Matrix *pTM,
     UINT  shaderIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     UINT  shaderRecordOffset = m_pHitShaderTable->GetAllocatedRecordCount();
 
-    for (UINT i = 0; i < numGeometry; i++)
+    for (UINT i = 0; i < numFaceGroup; i++)
     {
         Graphics::LOCAL_ROOT_ARG *pRootArgPerGeometry = pRootArgs + i;
 
@@ -266,8 +266,8 @@ RaytracingManager::~RaytracingManager()
 void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                                   D3D12_CPU_DESCRIPTOR_HANDLE srv)
 {
-    ID3D12Device5        *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(0);
+    ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     UINT descriptorSize = pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

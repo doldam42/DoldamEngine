@@ -214,7 +214,7 @@ bool MaterialManager::Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT
     ID3D12Resource *pMatResource = nullptr;
     ID3D12Resource *pUploadBuffer = nullptr;
 
-    ID3D12Device *pD3DDevice = pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pD3DDevice = pRenderer->GetD3DDevice();
 
     // Create Material Resource
     if (FAILED(pD3DDevice->CreateCommittedResource(
@@ -237,7 +237,7 @@ bool MaterialManager::Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT
 
     pUploadBuffer->Map(0, nullptr, reinterpret_cast<void **>(&m_pSystemMemAddr));
 
-    pRenderer->INL_GetResourceManager()->AllocDescriptorTable(&m_srv, 1);
+    pRenderer->GetResourceManager()->AllocDescriptorTable(&m_srv, 1);
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -258,7 +258,7 @@ bool MaterialManager::Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT
     m_pMaterialHandlePool->Initialize(sizeof(MATERIAL_HANDLE), maxMatNum);
 
     m_pRenderer = pRenderer;
-    m_pResourceManager = pRenderer->INL_GetResourceManager();
+    m_pResourceManager = pRenderer->GetResourceManager();
     m_maxMatNum = maxMatNum;
     m_sizePerMat = sizePerMat;
     m_pMatResource = pMatResource;
@@ -406,14 +406,14 @@ MaterialManager::~MaterialManager() { Cleanup(); }
 
 BOOL MATERIAL_HANDLE::UpdateMetallicRoughness(float metallic, float roughness)
 {
-    MaterialManager *pMaterialManager = g_pRenderer->INL_GetMaterialManager();
+    MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
     BOOL             result = pMaterialManager->UpdateMaterialMetallicRoughness(this, metallic, roughness);
     return result;
 }
 
 BOOL MATERIAL_HANDLE::UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type)
 {
-    MaterialManager *pMaterialManager = g_pRenderer->INL_GetMaterialManager();
+    MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
     BOOL             result = pMaterialManager->UpdateMaterialTexture(this, (TEXTURE_HANDLE *)pTexture, type);
     return result;
 }

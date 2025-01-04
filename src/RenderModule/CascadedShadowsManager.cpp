@@ -9,8 +9,8 @@
 
 void CascadedShadowsManager::Cleanup()
 {
-    D3D12ResourceManager *pResourceManager = m_pRenderer->INL_GetResourceManager();
-    TextureManager       *pTexManager = m_pRenderer->INL_GetTextureManager();
+    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
+    TextureManager       *pTexManager = m_pRenderer->GetTextureManager();
 
     pResourceManager->DeallocDescriptorTable(&m_CascadedShadowMapSRV);
     pResourceManager->DeallocRTVDescriptorTable(&m_CascadedShadowMapRTV);
@@ -51,9 +51,9 @@ BOOL CascadedShadowsManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth, U
 {
     BOOL result = FALSE;
 
-    ID3D12Device         *pD3DDevice = pRnd->INL_GetD3DDevice();
-    D3D12ResourceManager *pResourceManager = pRnd->INL_GetResourceManager();
-    TextureManager       *pTextureManager = pRnd->INL_GetTextureManager();
+    ID3D12Device         *pD3DDevice = pRnd->GetD3DDevice();
+    D3D12ResourceManager *pResourceManager = pRnd->GetResourceManager();
+    TextureManager       *pTextureManager = pRnd->GetTextureManager();
 
     m_shadowWidth = shadowWidth;
     m_cascadedLevels = cascadedLevel;
@@ -329,7 +329,7 @@ BOOL CascadedShadowsManager::Update(const BoundingBox *pSceneBox, const Matrix &
 void CascadedShadowsManager::RenderShadowForAllCascades(UINT threadIndex, CommandListPool *pCommandListPool,
                                                         ID3D12CommandQueue *pCommandQueue)
 {
-    DescriptorPool            *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    DescriptorPool            *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
     ID3D12DescriptorHeap      *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 

@@ -76,12 +76,6 @@ class D3DMeshObject : public IRenderMesh
     static const UINT MAX_DESCRIPTOR_COUNT_PER_DRAW_DYNAMIC =
         DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ + (DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT * MAX_FACE_GROUP_COUNT_PER_OBJ);
 
-    // #DXR
-    static const UINT DESCRIPTOR_COUNT_PER_BLAS = 1;         // | VertexBuffer |
-    static const UINT DESCRIPTOR_COUNT_PER_RAY_GEOMETRY = 2; // | IndexBuffer | DiffuseTex |
-    static const UINT MAX_DESCRIPTOR_COUNT_PER_BLAS =
-        DESCRIPTOR_COUNT_PER_BLAS + 2 * MAX_FACE_GROUP_COUNT_PER_OBJ; // TODO
-
   private:
     D3D12Renderer *m_pRenderer = nullptr;
     ID3D12Device  *m_pD3DDevice = nullptr;
@@ -105,40 +99,7 @@ class D3DMeshObject : public IRenderMesh
 
     Bounds m_bounds;
 
-    // #DXR
-    ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
-    DESCRIPTOR_HANDLE m_skinningDescriptors = {}; // Vertex Buffer (SRV) | Vertex Buffer (UAV)
-
-    AccelerationStructureBuffers    m_bottomLevelAS;
-    D3D12_RAYTRACING_GEOMETRY_DESC *m_pBLASGeometries = nullptr;
-    Graphics::LOCAL_ROOT_ARG       *m_pRootArgPerGeometries = nullptr;
-    DESCRIPTOR_HANDLE               m_rootArgDescriptorTable = {};
-    UINT64                          m_BLASScratchSizeInBytes = 0;
-    UINT64                          m_BLASResultSizeInBytes = 0;
-
-    // 정적 객체: Update(X)
-    // 동적 객체: Update(O)
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
-
   private:
-    BOOL CreateDescriptorTable();
-
-    void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
-                         uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
-                         UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
-                         UINT64 transformOffsetInBytes, bool isOpaque = true);
-
-    BOOL BuildBottomLevelAS(ID3D12GraphicsCommandList4 *commandList, ID3D12Resource *scratchBuffer,
-                            ID3D12Resource *resultBuffer, bool isUpdate = false,
-                            ID3D12Resource *previousResult = nullptr);
-
-    void CreateSkinningBufferSRVs();
-    void CreateRootArgsSRV();
-
-    // 현재는 Prebuild한 resource크기의 2배를 미리 잡아놓는다.
-    BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
-    void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
-
     void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
                       const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
                       UINT numInstance = 1);
@@ -161,13 +122,7 @@ class D3DMeshObject : public IRenderMesh
               ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones,
               DRAW_PASS_TYPE passType, UINT numInstance = 1);
 
-    void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
-    Graphics::LOCAL_ROOT_ARG *GetRootArgs();
-
     void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
-
-    ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
-    UINT            GetGeometryCount() const { return m_faceGroupCount; }
 
     RENDER_ITEM_TYPE GetType() const { return m_type; }
     DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }

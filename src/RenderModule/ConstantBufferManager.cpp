@@ -10,7 +10,7 @@ CONSTANT_BUFFER_PROPERTY g_pConstantBufferPropList[] = {
     {CONSTANT_BUFFER_TYPE_MESH, sizeof(MeshConstants)},
     {CONSTANT_BUFFER_TYPE_SKINNED, sizeof(SkinnedConstants)},
     {CONSTANT_BUFFER_TYPE_SPRITE, sizeof(SpriteConstants)},
-    {CONSTANT_BUFFER_TYPE_GEOMETRY, sizeof(GeometryConstants)},
+    {CONSTANT_BUFFER_TYPE_GEOMETRY, sizeof(FaceGroupConstants)},
 };
 
 BOOL ConstantBufferManager::Initialize(ID3D12Device *pD3DDevice, UINT maxCBVNum)

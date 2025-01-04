@@ -9,12 +9,12 @@
 #include "Cubemap.h"
 #include "D3D12ResourceManager.h"
 #include "D3DMeshObject.h"
-#include "DXRSceneManager.h"
 #include "DescriptorPool.h"
 #include "FontManager.h"
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
 #include "RenderThread.h"
+#include "RaytracingManager.h"
 #include "ShadowManager.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
@@ -828,7 +828,7 @@ void D3D12Renderer::UpdateGlobal()
     // | Global Constants(b0) | Materials(t5) | IBL Textures(t10~14) |
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
-        DescriptorPool *pDescriptorPool = INL_GetDescriptorPool(i);
+        DescriptorPool *pDescriptorPool = GetDescriptorPool(i);
 
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
         D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;

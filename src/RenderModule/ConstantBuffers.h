@@ -116,11 +116,11 @@ struct SpriteConstants
 
 static_assert((sizeof(SpriteConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
-struct GeometryConstants
+struct FaceGroupConstants
 {
     UINT  useTexture;
     UINT  materialIndex;
     DWORD dummy[62];
 };
 
-static_assert((sizeof(GeometryConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+static_assert((sizeof(FaceGroupConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");

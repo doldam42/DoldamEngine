@@ -143,10 +143,7 @@ class RaytracingMeshObject : public IRenderMesh
     BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
-    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
-    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                           IRenderMaterial **ppMaterials, UINT numMaterial);
+    void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
     void InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial);
     void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
@@ -157,19 +154,11 @@ class RaytracingMeshObject : public IRenderMesh
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
-    void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
-    Graphics::LOCAL_ROOT_ARG *GetRootArgs();
-
-    void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
+    void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
+              IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);
 
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
     UINT            GetGeometryCount() const { return m_faceGroupCount; }
-
-    RENDER_ITEM_TYPE GetType() const { return m_type; }
-    DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }
-
-    RaytracingMeshObject() = default;
-    ~RaytracingMeshObject();
 
     // Inherited via IDIMeshObject
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
@@ -180,6 +169,10 @@ class RaytracingMeshObject : public IRenderMesh
     BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
                          const wchar_t *path) override;
     void EndCreateMesh() override;
+    void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
 
     BOOL UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex) override;
+
+    RaytracingMeshObject() = default;
+    ~RaytracingMeshObject();
 };

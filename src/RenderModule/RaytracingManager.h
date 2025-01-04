@@ -36,7 +36,7 @@ class RaytracingManager
     void CreateTopLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     
     // Hit Group의 index를 반환함
-    void InsertInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID, Graphics::LOCAL_ROOT_ARG* pRootArgs, UINT numGeometry);
+    void InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID, Graphics::LOCAL_ROOT_ARG* pRootArgs, UINT numFaceGroup);
 
     void DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewSrv);

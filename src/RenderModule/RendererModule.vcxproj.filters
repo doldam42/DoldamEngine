@@ -56,9 +56,6 @@
     <Filter Include="DescriptorPool">
       <UniqueIdentifier>{1e50e0be-c373-4e2f-9b0c-0f8cfe0d6b08}</UniqueIdentifier>
     </Filter>
-    <Filter Include="DXRSceneManager">
-      <UniqueIdentifier>{5f548d57-2750-4ce0-bf9b-25b7b065f75f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MaterialManager">
       <UniqueIdentifier>{ba3f981f-ed06-43c0-ae4d-5c5eda916d60}</UniqueIdentifier>
     </Filter>
@@ -79,6 +76,9 @@
     </Filter>
     <Filter Include="NewFilter1">
       <UniqueIdentifier>{e4a6b6c3-e107-469f-a776-23bb5462349b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RaytracingManager">
+      <UniqueIdentifier>{5f548d57-2750-4ce0-bf9b-25b7b065f75f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -127,8 +127,8 @@
     <ClInclude Include="RenderThread.h">
       <Filter>RenderThread</Filter>
     </ClInclude>
-    <ClInclude Include="DXRSceneManager.h">
-      <Filter>DXRSceneManager</Filter>
+    <ClInclude Include="RaytracingManager.h">
+      <Filter>RaytracingManager</Filter>
     </ClInclude>
     <ClInclude Include="ShaderTable.h">
       <Filter>DXRUtils</Filter>
@@ -203,8 +203,8 @@
     <ClCompile Include="RenderThread.cpp">
       <Filter>RenderThread</Filter>
     </ClCompile>
-    <ClCompile Include="DXRSceneManager.cpp">
-      <Filter>DXRSceneManager</Filter>
+    <ClCompile Include="RaytracingManager.cpp">
+      <Filter>RaytracingManager</Filter>
     </ClCompile>
     <ClCompile Include="ShaderTable.cpp">
       <Filter>DXRUtils</Filter>

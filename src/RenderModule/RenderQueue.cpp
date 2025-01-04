@@ -3,10 +3,10 @@
 #include "CommandListPool.h"
 #include "D3D12Renderer.h"
 #include "D3DMeshObject.h"
-#include "DXRSceneManager.h"
+#include "RaytracingManager.h"
 #include "SpriteObject.h"
 
-#include "RenderQueue.h"
+#include "RenderQueue.h"`
 
 const RENDER_ITEM *RenderQueue::Dispatch()
 {
@@ -66,8 +66,8 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                           const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
                           DRAW_PASS_TYPE passType)
 {
-    ID3D12Device5   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
-    DXRSceneManager *pDXRSceneManager = m_pRenderer->INL_GetDXRSceneManager();
+    ID3D12Device5   *pD3DDevice = m_pRenderer->GetD3DDevice();
+    RaytracingManager *pDXRSceneManager = m_pRenderer->GetRaytracingManager();
 
     ID3D12GraphicsCommandList *ppCommandList[64] = {};
     UINT                       commandListCount = 0;
@@ -115,19 +115,6 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                 {
                     pRect = &pItem->spriteParam.rect;
                 }
-                /*if (pTextureHandle->pUploadBuffer)
-                {
-                    if (pTextureHandle->IsUpdated)
-                    {
-                        UpdateTextureWithTexture(pD3DDevice, pCommandList, pTextureHandle->pTexture,
-                                      pTextureHandle->pUploadBuffer);
-                    }
-                    else
-                    {
-                        int a = 0;
-                    }
-                    pTextureHandle->IsUpdated = FALSE;
-                }*/
                 pSpriteObj->DrawWithTex(threadIndex, pCommandList, &Pos, &Scale, pRect, Z, pTextureHandle);
             }
             else

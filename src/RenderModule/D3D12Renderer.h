@@ -23,7 +23,7 @@ class TextureManager;
 class MaterialManager;
 class CommandListPool;
 class Cubemap;
-class DXRSceneManager;
+class RaytracingManager;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
 // #define USE_RAYTRACING
@@ -68,7 +68,7 @@ class D3D12Renderer : public IRenderer
     FontManager          *m_pFontManager = nullptr;
 
     // #DXR
-    DXRSceneManager *m_pDXRSceneManager = nullptr;
+    RaytracingManager *m_pDXRSceneManager = nullptr;
 
     /* ID3D12CommandAllocator    *m_ppCommandAllocator[MAX_PENDING_FRAME_COUNT] = {};
      ID3D12GraphicsCommandList *m_ppCommandList[MAX_PENDING_FRAME_COUNT] = {};*/
@@ -256,12 +256,12 @@ class D3D12Renderer : public IRenderer
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
 
-    DescriptorPool *INL_GetDescriptorPool(UINT threadIndex) const
+    DescriptorPool *GetDescriptorPool(UINT threadIndex) const
     {
         return m_ppDescriptorPool[m_dwCurContextIndex][threadIndex];
     }
 
-    CommandListPool *INL_GetCommandListPool(UINT threadIndex) const
+    CommandListPool *GetCommandListPool(UINT threadIndex) const
     {
         return m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
     }
@@ -270,11 +270,11 @@ class D3D12Renderer : public IRenderer
 
     UINT GetSRVDescriptorSize() const { return m_srvDescriptorSize; }
 
-    ID3D12Device5        *INL_GetD3DDevice() const { return m_pD3DDevice; }
-    D3D12ResourceManager *INL_GetResourceManager() const { return m_pResourceManager; }
-    DXRSceneManager      *INL_GetDXRSceneManager() const { return m_pDXRSceneManager; }
-    TextureManager       *INL_GetTextureManager() const { return m_pTextureManager; }
-    MaterialManager      *INL_GetMaterialManager() const { return m_pMaterialManager; }
+    ID3D12Device5        *GetD3DDevice() const { return m_pD3DDevice; }
+    D3D12ResourceManager *GetResourceManager() const { return m_pResourceManager; }
+    RaytracingManager    *GetRaytracingManager() const { return m_pDXRSceneManager; }
+    TextureManager       *GetTextureManager() const { return m_pTextureManager; }
+    MaterialManager      *GetMaterialManager() const { return m_pMaterialManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
 

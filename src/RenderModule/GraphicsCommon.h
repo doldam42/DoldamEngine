@@ -36,7 +36,7 @@ enum SKINNING_ROOT_PARAM_INDEX
 
 struct LOCAL_ROOT_ARG
 {
-    GeometryConstants           cb;
+    FaceGroupConstants           cb;
     D3D12_GPU_DESCRIPTOR_HANDLE vertices;
     D3D12_GPU_DESCRIPTOR_HANDLE indices;
     D3D12_GPU_DESCRIPTOR_HANDLE diffuseTex;

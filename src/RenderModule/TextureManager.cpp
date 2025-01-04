@@ -20,7 +20,7 @@ TEXTURE_HANDLE *TextureManager::AllocTextureHandle()
 
 UINT TextureManager::DeallocTextureHandle(TEXTURE_HANDLE *pTexHandle)
 {
-    ID3D12Device *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     if (!pTexHandle->refCount)
         __debugbreak();
@@ -77,7 +77,7 @@ void TextureManager::Cleanup()
 BOOL TextureManager::Initialize(D3D12Renderer *pRenderer, UINT maxBucketNum, UINT maxFileNum)
 {
     m_pRenderer = pRenderer;
-    m_pResourceManager = pRenderer->INL_GetResourceManager();
+    m_pResourceManager = pRenderer->GetResourceManager();
 
     m_pHashTable = new HashTable();
     m_pHashTable->Initialize(maxBucketNum, MAX_PATH * sizeof(WCHAR), maxFileNum);
@@ -90,7 +90,7 @@ BOOL TextureManager::Initialize(D3D12Renderer *pRenderer, UINT maxBucketNum, UIN
 
 TEXTURE_HANDLE *TextureManager::CreateTextureFromFile(const WCHAR *filename, BOOL isCubemap)
 {
-    ID3D12Device *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12Resource     *pTexResource = nullptr;
     DESCRIPTOR_HANDLE   srv = {};
@@ -146,7 +146,7 @@ TEXTURE_HANDLE *TextureManager::CreateTextureFromFile(const WCHAR *filename, BOO
 
 TEXTURE_HANDLE *TextureManager::CreateDynamicTexture(UINT texWidth, UINT texHeight)
 {
-    ID3D12Device   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device   *pD3DDevice = m_pRenderer->GetD3DDevice();
     TEXTURE_HANDLE *pTexHandle = nullptr;
 
     ID3D12Resource   *pTexResource = nullptr;
@@ -188,7 +188,7 @@ TEXTURE_HANDLE *TextureManager::CreateDynamicTexture(UINT texWidth, UINT texHeig
 TEXTURE_HANDLE *TextureManager::CreateImmutableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format,
                                                        const BYTE *pInitImage)
 {
-    ID3D12Device   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device   *pD3DDevice = m_pRenderer->GetD3DDevice();
     TEXTURE_HANDLE *pTexHandle = nullptr;
 
     ID3D12Resource   *pTexResource = nullptr;
@@ -223,7 +223,7 @@ TEXTURE_HANDLE *TextureManager::CreateImmutableTexture(UINT texWidth, UINT texHe
 TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *metallicFilename,
                                                                const WCHAR *roughneessFilename)
 {
-    ID3D12Device *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12Resource   *pTexResource = nullptr;
     DESCRIPTOR_HANDLE srv = {};
@@ -351,7 +351,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
 
 TEXTURE_HANDLE *TextureManager::CreateRenderableTexture(UINT texWidth, UINT texHeight, DXGI_FORMAT format)
 {
-    ID3D12Device   *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device   *pD3DDevice = m_pRenderer->GetD3DDevice();
     TEXTURE_HANDLE *pTexHandle = nullptr;
 
     ID3D12Resource   *pTexResource = nullptr;
@@ -399,7 +399,7 @@ void TextureManager::UpdateTextureWithTexture(TEXTURE_HANDLE *pDestTex, TEXTURE_
 void TextureManager::UpdateTextureWithImage(TEXTURE_HANDLE *pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                             UINT srcHeight)
 {
-    ID3D12Device5  *pDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device5  *pDevice = m_pRenderer->GetD3DDevice();
     ID3D12Resource *pDestTexResource = pTexHandle->pTexture;
     ID3D12Resource *pUploadBuffer = pTexHandle->pUploadBuffer;
 
@@ -444,7 +444,7 @@ void TextureManager::UpdateTextureWithImage(TEXTURE_HANDLE *pTexHandle, const BY
 
 void TextureManager::Update(ID3D12GraphicsCommandList *pCommandList)
 {
-    ID3D12Device *pDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pDevice = m_pRenderer->GetD3DDevice();
     for (UINT i = 0; i < m_updatedTextureCount; i++)
     {
         TEXTURE_HANDLE *pTex = m_ppUpdatedTextures[i];

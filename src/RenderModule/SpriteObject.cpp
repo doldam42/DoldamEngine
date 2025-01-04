@@ -52,9 +52,9 @@ BOOL SpriteObject::InitMesh()
 {
     BOOL result = FALSE;
 
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
-    UINT                  srvDescriptorSize = m_pRenderer->INL_GetResourceManager()->GetDescriptorSize();
-    D3D12ResourceManager *pResourceManager = m_pRenderer->INL_GetResourceManager();
+    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
+    UINT                  srvDescriptorSize = m_pRenderer->GetResourceManager()->GetDescriptorSize();
+    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
     // Create the vertex buffer.
     // Define the geometry for a triangle.
@@ -147,9 +147,9 @@ void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCom
                                const Vector2 *pScale,
                                const RECT *pRect, float Z, TEXTURE_HANDLE *pTexHandle)
 {
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
-    UINT                  srvDescriptorSize = m_pRenderer->INL_GetResourceManager()->GetDescriptorSize();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
+    UINT                  srvDescriptorSize = m_pRenderer->GetResourceManager()->GetDescriptorSize();
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
     ConstantBufferPool   *pConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SPRITE, threadIndex);
 

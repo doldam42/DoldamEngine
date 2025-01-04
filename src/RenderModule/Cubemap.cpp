@@ -12,9 +12,9 @@ BOOL Cubemap::InitMesh()
 {
     BOOL result = FALSE;
 
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
     UINT                  srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
-    D3D12ResourceManager *pResourceManager = m_pRenderer->INL_GetResourceManager();
+    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
     SimpleVertex Vertices[] = {
         // À­¸é
@@ -162,9 +162,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE Cubemap::GetBrdfSRV()
 
 void Cubemap::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
 {
-    ID3D12Device5        *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
+    ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
     UINT                  srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;

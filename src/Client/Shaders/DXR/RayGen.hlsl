@@ -3,8 +3,8 @@
 
 #define HLSL
 #include "Common.hlsli"
-#include "RaytracingHlslCompat.h"
-#include "BxDF.hlsli"
+//#include "RaytracingHlslCompat.h"
+//#include "BxDF.hlsli"
 
 HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMin = 0, float tMax = 100000, float bounceContribution = 1, bool cullNonOpaque = false)
 {

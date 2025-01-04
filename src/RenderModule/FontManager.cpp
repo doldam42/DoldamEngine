@@ -228,7 +228,7 @@ void FontManager::Cleanup()
 BOOL FontManager::Initialize(D3D12Renderer *pRenderer, ID3D12CommandQueue *pCommandQueue, UINT width, UINT height,
                              BOOL bEnableDebugLayer)
 {
-    ID3D12Device *pD3DDevice = pRenderer->INL_GetD3DDevice();
+    ID3D12Device *pD3DDevice = pRenderer->GetD3DDevice();
     CreateD2D(pD3DDevice, pCommandQueue, bEnableDebugLayer);
 
     float DPI = pRenderer->GetDPI();
