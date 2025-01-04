@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include <d3d12.h>
 #include <d3dx12.h>
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
@@ -17,11 +16,11 @@
 
 #include "ShaderTable.h"
 
-#include "D3DMeshObject.h"
+#include "RaytracingMeshObject.h"
 
 // 레이트레이싱 SRV 디스크립터 구조
 // | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
-BOOL D3DMeshObject::CreateDescriptorTable()
+BOOL RaytracingMeshObject::CreateDescriptorTable()
 {
     BOOL                  result = FALSE;
     ID3D12Device         *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
@@ -38,7 +37,7 @@ lb_return:
     return result;
 }
 
-BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
+BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
     ID3D12Device *pDevice = pRenderer->INL_GetD3DDevice();
     m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -53,102 +52,12 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
     return TRUE;
 }
 
-void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                         IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
-                         ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
-                         UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
-{
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
-    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
-
-    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
-
-    if (passType != DRAW_PASS_TYPE_SHADOW)
-    {
-        UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex, ppMaterials, numMaterials);
-    }
-
-    // set RootSignature
-    ID3D12RootSignature *pSignature = pRS;
-    ID3D12PipelineState *pPipelineState = pPSO;
-    pCommandList->SetGraphicsRootSignature(pSignature);
-    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
-    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->SetPipelineState(pPipelineState);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, globalCBV);
-    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-    {
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
-    }
-    else
-    {
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
-    }
-
-    for (UINT i = 0; i < m_faceGroupCount; i++)
-    {
-        if (passType != DRAW_PASS_TYPE_SHADOW)
-        {
-            pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
-            _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
-        }
-
-        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
-    }
-}
-
-void D3DMeshObject::RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                                 const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode, UINT numInstance)
-{
-    DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(threadIndex);
-    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
-
-    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
-
-    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
-    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-    {
-        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlyBasicRS);
-        pCommandList->SetPipelineState(Graphics::drawNormalPSO);
-    }
-    else
-    {
-        pCommandList->SetGraphicsRootSignature(Graphics::depthOnlySkinnedRS);
-        pCommandList->SetPipelineState(Graphics::drawSkinnedNormalPSO);
-    }
-
-    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
-    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
-
-    pCommandList->DrawInstanced(m_vertexCount, numInstance, 0, 0);
-}
-
 /*
  *  Descriptor Table Per Obj - Offset : 0
  *  Basic Mesh :   | World TM |
  *  Skinned Mesh:  | World TM | Bone Matrices |
  */
-void D3DMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                                 const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats,
                                                 UINT numBones)
 {
@@ -193,7 +102,7 @@ void D3DMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE desc
  *  Descriptor Table Per FaceGroup - Offset : 0
  *  | Material | Textures |
  */
-void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                                       IRenderMaterial **ppMaterials, UINT numMaterial)
 {
     CB_CONTAINER       *pGeomCBs;
@@ -211,9 +120,9 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
     {
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
-        GeometryConstants *pGeometry = (GeometryConstants *)pGeomCB->pSystemMemAddr;
+        FaceGroupConstants  *pGeometry = (FaceGroupConstants *)pGeomCB->pSystemMemAddr;
 
-        if (i < numMaterial) 
+        if (i < numMaterial)
         {
             MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
 
@@ -242,13 +151,13 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
     }
 }
 
-void D3DMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
+void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
 {
     DeformingVerticesUAV(pCommandList, pBoneMats, numBones);
     BuildBottomLevelAS(pCommandList, m_bottomLevelAS.pScratch, m_bottomLevelAS.pResult, true, m_bottomLevelAS.pResult);
 }
 
-Graphics::LOCAL_ROOT_ARG *D3DMeshObject::GetRootArgs()
+Graphics::LOCAL_ROOT_ARG *RaytracingMeshObject::GetRootArgs()
 {
     ID3D12Device5        *pDevice = m_pRenderer->INL_GetD3DDevice();
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(0);
@@ -282,7 +191,7 @@ Graphics::LOCAL_ROOT_ARG *D3DMeshObject::GetRootArgs()
     return m_pRootArgPerGeometries;
 }
 
-BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup)
+BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->INL_GetD3DDevice();
@@ -333,13 +242,11 @@ BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UIN
     m_pFaceGroups = new INDEXED_FACE_GROUP[m_maxFaceGroupCount];
     memset(m_pFaceGroups, 0, sizeof(INDEXED_FACE_GROUP) * m_maxFaceGroupCount);
 
-#ifdef USE_RAYTRACING
     // #DXR
     m_pBLASGeometries = new D3D12_RAYTRACING_GEOMETRY_DESC[m_maxFaceGroupCount];
     memset(m_pBLASGeometries, 0, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC) * m_maxFaceGroupCount);
     m_pRootArgPerGeometries = new Graphics::LOCAL_ROOT_ARG[m_maxFaceGroupCount];
     memset(m_pRootArgPerGeometries, 0, sizeof(Graphics::LOCAL_ROOT_ARG) * m_maxFaceGroupCount);
-#endif
 
     m_descriptorCountPerDraw =
         (m_type == RENDER_ITEM_TYPE_MESH_OBJ) ? DESCRIPTOR_COUNT_PER_STATIC_OBJ : DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ;
@@ -350,7 +257,7 @@ lb_return:
     return result;
 }
 
-void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
+void RaytracingMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
 {
     Material mat;
     memcpy(&mat, pInMaterial, sizeof(Material));
@@ -360,7 +267,7 @@ void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInM
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }
 
-void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
+void RaytracingMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
 {
     if (pFace->pMaterialHandle)
     {
@@ -369,7 +276,7 @@ void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
     }
 }
 
-BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
+BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
                                     const wchar_t *path)
 {
     BOOL                  result = FALSE;
@@ -401,17 +308,13 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
 
     InitMaterial(pFaceGroup, &mat);
 
-#ifdef USE_RAYTRACING
     // root arg per geometry
-    {
-        m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture = wcslen(pInMaterial->albedoTextureName) == 0 ? 1 : 0;
-        m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index;
-    }
+    m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture = wcslen(pInMaterial->albedoTextureName) == 0 ? 1 : 0;
+    m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index; 
 
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
     AddBLASGeometry(m_faceGroupCount, pVertices, 0, m_vertexCount, sizeof(BasicVertex), pIndexBuffer, 0,
                     numTriangles * 3, 0, 0);
-#endif // USE_RAYTRACING
 
     m_faceGroupCount++;
     result = TRUE;
@@ -419,9 +322,9 @@ lb_return:
     return result;
 }
 
-void D3DMeshObject::EndCreateMesh() {}
+void RaytracingMeshObject::EndCreateMesh() {}
 
-BOOL D3DMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
+BOOL RaytracingMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
 {
     INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
     MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE *)pInMaterial;
@@ -433,16 +336,14 @@ BOOL D3DMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupI
     return TRUE;
 }
 
-void D3DMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
+void RaytracingMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 {
-#ifdef USE_RAYTRACING
     CreateSkinningBufferSRVs();
     CreateRootArgsSRV();
     CreateBottomLevelAS(pCommandList);
-#endif
 }
 
-void D3DMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
+void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                                     uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
                                     UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
                                     UINT64 transformOffsetInBytes, bool isOpaque)
@@ -463,7 +364,7 @@ void D3DMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexB
     descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
-void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
+void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
                                          UINT numBones)
 {
     if (m_type != RENDER_ITEM_TYPE_CHAR_OBJ)
@@ -472,12 +373,10 @@ void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandLis
         return;
     }
 
-    ID3D12Device5      *pDevice = m_pRenderer->INL_GetD3DDevice();
     ConstantBufferPool *pSkinnedConstantBufferPool =
         m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, 0);
     DescriptorPool       *pDescriptorPool = m_pRenderer->INL_GetDescriptorPool(0);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-    UINT descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // CB Data Binding
     CB_CONTAINER *pSkinnedCB = nullptr;
@@ -496,10 +395,10 @@ void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandLis
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 3);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
-    pDevice->CopyDescriptorsSimple(SKINNING_DESCRIPTOR_INDEX_COUNT, dest, m_skinningDescriptors.cpuHandle,
+    m_pD3DDevice->CopyDescriptorsSimple(SKINNING_DESCRIPTOR_INDEX_COUNT, dest, m_skinningDescriptors.cpuHandle,
                                    D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     dest.Offset(m_descriptorSize, SKINNING_DESCRIPTOR_INDEX_COUNT);
-    pDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     pCommandList->ResourceBarrier(
         1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
@@ -527,7 +426,7 @@ void D3DMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandLis
                                                                            D3D12_RESOURCE_STATE_COMMON));
 }
 
-BOOL D3DMeshObject::CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList)
+BOOL RaytracingMeshObject::CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList)
 {
     BOOL result = FALSE;
 
@@ -588,7 +487,7 @@ lb_return:
     return result;
 }
 
-BOOL D3DMeshObject::BuildBottomLevelAS(
+BOOL RaytracingMeshObject::BuildBottomLevelAS(
     ID3D12GraphicsCommandList4 *commandList,   /// Command list on which the build will be enqueued
     ID3D12Resource             *scratchBuffer, /// Scratch buffer used by the builder to
                                                /// store temporary data
@@ -645,12 +544,11 @@ BOOL D3DMeshObject::BuildBottomLevelAS(
     return TRUE;
 }
 
-void D3DMeshObject::CreateSkinningBufferSRVs()
+void RaytracingMeshObject::CreateSkinningBufferSRVs()
 {
     if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
         return;
 
-    ID3D12Device         *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     D3D12ResourceManager *resourceManager = m_pRenderer->INL_GetResourceManager();
 
     // | VertexBuffer(t0) | DeformedVertexBuffer(u0) |
@@ -665,7 +563,7 @@ void D3DMeshObject::CreateSkinningBufferSRVs()
     srvDesc.Buffer.NumElements = m_vertexCount;
     srvDesc.Buffer.StructureByteStride = sizeof(SkinnedVertex);
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    pD3DDevice->CreateShaderResourceView(m_pVertexBuffer, &srvDesc, cpuHandle);
+    m_pD3DDevice->CreateShaderResourceView(m_pVertexBuffer, &srvDesc, cpuHandle);
     cpuHandle.Offset(m_descriptorSize);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -676,12 +574,11 @@ void D3DMeshObject::CreateSkinningBufferSRVs()
     uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
     uavDesc.Buffer.NumElements = m_vertexCount;
     uavDesc.Buffer.StructureByteStride = sizeof(BasicVertex);
-    pD3DDevice->CreateUnorderedAccessView(m_pDeformedVertexBuffer, nullptr, &uavDesc, cpuHandle);
+    m_pD3DDevice->CreateUnorderedAccessView(m_pDeformedVertexBuffer, nullptr, &uavDesc, cpuHandle);
 }
 
-void D3DMeshObject::CreateRootArgsSRV()
+void RaytracingMeshObject::CreateRootArgsSRV()
 {
-    ID3D12Device                 *pD3DDevice = m_pRenderer->INL_GetD3DDevice();
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_rootArgDescriptorTable.cpuHandle);
 
     // Create Vertex Buffer SRV
@@ -694,7 +591,7 @@ void D3DMeshObject::CreateRootArgsSRV()
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.Buffer.StructureByteStride = sizeof(BasicVertex);
     ID3D12Resource *pResource = (m_type == RENDER_ITEM_TYPE_MESH_OBJ) ? m_pVertexBuffer : m_pDeformedVertexBuffer;
-    pD3DDevice->CreateShaderResourceView(pResource, &srvDesc, cpuHandle);
+    m_pD3DDevice->CreateShaderResourceView(pResource, &srvDesc, cpuHandle);
     cpuHandle.Offset(ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT, m_descriptorSize);
 
     for (UINT i = 0; i < m_faceGroupCount; i++)
@@ -710,18 +607,18 @@ void D3DMeshObject::CreateRootArgsSRV()
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = sizeof(UINT);
         srvDesc.Buffer.NumElements = pFace->numTriangles * 3;
-        pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
+        m_pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
         cpuHandle.Offset(m_descriptorSize);
 
         D3D12_CPU_DESCRIPTOR_HANDLE diffuseTexHandle = !pFace->pMaterialHandle->pAlbedoTexHandle
                                                            ? m_pRenderer->GetDefaultTex()->srv.cpuHandle
                                                            : pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle;
-        pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, diffuseTexHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, diffuseTexHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         cpuHandle.Offset(m_descriptorSize);
     }
 }
 
-void D3DMeshObject::CleanupMesh()
+void RaytracingMeshObject::CleanupMesh()
 {
     // Cleanup BLAS
     {
@@ -788,15 +685,15 @@ void D3DMeshObject::CleanupMesh()
     }
 }
 
-void D3DMeshObject::Cleanup() { CleanupMesh(); }
+void RaytracingMeshObject::Cleanup() { CleanupMesh(); }
 
-D3DMeshObject::~D3DMeshObject() { Cleanup(); }
+RaytracingMeshObject::~RaytracingMeshObject() { Cleanup(); }
 
-HRESULT __stdcall D3DMeshObject::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+HRESULT __stdcall RaytracingMeshObject::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
-ULONG __stdcall D3DMeshObject::AddRef(void) { return ++m_refCount; }
+ULONG __stdcall RaytracingMeshObject::AddRef(void) { return ++m_refCount; }
 
-ULONG __stdcall D3DMeshObject::Release(void)
+ULONG __stdcall RaytracingMeshObject::Release(void)
 {
     ULONG newRefCount = --m_refCount;
     if (newRefCount == 0)

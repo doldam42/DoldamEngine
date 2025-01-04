@@ -447,16 +447,12 @@ BOOL ShadowManager::Add(const RENDER_ITEM *pItem)
     }
 
     D3DMeshObject     *pMeshObject = (D3DMeshObject *)pItem->pObjHandle;
-    const BoundingBox &box = pMeshObject->GetBoundingBox();
+    const Bounds  &box = pMeshObject->GetBounds();
 
-    BoundingBox worldBox;
-    box.Transform(worldBox, worldTM);
-    Vector3 center = worldBox.Center;
-    Vector3 minCorner = center - worldBox.Extents;
-    Vector3 maxCorner = center + worldBox.Extents;
+    Bounds boundInWorld;
+    box.Transform(&boundInWorld, worldTM);
 
-    m_sceneMinCorner = Vector3::Min(m_sceneMinCorner, minCorner);
-    m_sceneMaxCorner = Vector3::Max(m_sceneMaxCorner, maxCorner);
+    m_worldBounds.Expand(boundInWorld);
 
     return m_pRenderQueue->Add(pItem);
 }
@@ -464,8 +460,8 @@ BOOL ShadowManager::Add(const RENDER_ITEM *pItem)
 BOOL ShadowManager::Update(const Matrix &lightCameraView, const Matrix &viewerCameraView,
                            const Matrix &viewerCameraProjection, float nearZ, float farZ)
 {
-    Vector3 center = (m_sceneMaxCorner + m_sceneMinCorner) * 0.5f;
-    Vector3 extends = (m_sceneMaxCorner - m_sceneMinCorner) * 0.5f;
+    Vector3 center = m_worldBounds.Center();
+    Vector3 extends = m_worldBounds.Extends();
 
     Matrix viewerCameraViewInverse = viewerCameraView.Invert();
 
@@ -612,8 +608,7 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
 void ShadowManager::Reset()
 {
     m_pRenderQueue->Reset();
-    m_sceneMaxCorner = Vector3(FLT_MIN);
-    m_sceneMinCorner = Vector3(FLT_MAX);
+    m_worldBounds.Clear();
 }
 
 ShadowManager::~ShadowManager() { Cleanup(); }

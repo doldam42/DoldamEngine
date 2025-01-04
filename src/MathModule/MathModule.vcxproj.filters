@@ -40,5 +40,6 @@
     <ClCompile Include="Sphere.cpp">
       <Filter>Shape</Filter>
     </ClCompile>
+    <ClCompile Include="MathUtils.cpp" />
   </ItemGroup>
 </Project>

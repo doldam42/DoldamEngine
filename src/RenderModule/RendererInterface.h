@@ -92,10 +92,11 @@ interface IRenderer
     virtual void            DeleteTexture(ITextureHandle * pTexHandle) = 0;
     virtual void            UpdateTextureWithImage(ITextureHandle * pTexHandle, const BYTE *pSrcBits, UINT srcWidth,
                                                    UINT srcHeight) = 0;
-    virtual void UpdateTextureWithTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth, UINT srcHeight) = 0;
+    virtual void            UpdateTextureWithTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth,
+                                                     UINT srcHeight) = 0;
 
     virtual IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
-    virtual IRenderMaterial *CreateDynamicMaterial(const WCHAR* name) = 0;
+    virtual IRenderMaterial *CreateDynamicMaterial(const WCHAR *name) = 0;
     virtual void             DeleteMaterialHandle(IRenderMaterial * pInMaterial) = 0;
     virtual void             UpdateMaterialHandle(IRenderMaterial * pInMaterial, const Material *pMaterial) = 0;
 

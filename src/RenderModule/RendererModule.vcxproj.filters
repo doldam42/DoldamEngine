@@ -153,6 +153,9 @@
     <ClInclude Include="RendererInterface.h" />
     <ClInclude Include="CascadedShadowsManager.h" />
     <ClInclude Include="ShadowManager.h" />
+    <ClInclude Include="RaytracingMeshObject.h">
+      <Filter>MeshObject</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -219,6 +222,9 @@
     <ClCompile Include="RendererInterface.cpp" />
     <ClCompile Include="CascadedShadowsManager.cpp" />
     <ClCompile Include="ShadowManager.cpp" />
+    <ClCompile Include="RaytracingMeshObject.cpp">
+      <Filter>MeshObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -11,15 +11,18 @@ Bounds
 class Bounds
 {
   public:
+    static constexpr size_t CORNER_COUNT = 8;
+
     Bounds() { Clear(); }
     Bounds(const Bounds &rhs) : mins(rhs.mins), maxs(rhs.maxs) {}
+    Bounds(const Vector3 &minCorner, const Vector3 &maxCorner) : mins(minCorner), maxs(maxCorner) {}
     const Bounds &operator=(const Bounds &rhs);
     ~Bounds() {}
 
     void Clear()
     {
-        mins = Vector3(1e6);
-        maxs = Vector3(-1e6);
+        mins = Vector3(FLT_MAX);
+        maxs = Vector3(FLT_MIN);
     }
     bool DoesIntersect(const Bounds &rhs) const;
     bool IntersectP(const Ray &ray, float *hitt0, float *hitt1);
@@ -35,6 +38,11 @@ class Bounds
     Vector3 Diagonal() const;
     float   SurfaceArea() const;
     int     MaximumExtent() const;
+
+    Vector3 Center() const;
+    Vector3 Extends() const;
+
+    void Transform(Bounds *pOutBounds, const Matrix m) const;
 
   public:
     Vector3 mins;

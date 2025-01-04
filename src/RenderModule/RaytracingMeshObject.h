@@ -1,5 +1,11 @@
 #pragma once
 
+#include <d3d12.h>
+
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
+
+#include "RendererInterface.h"
 #include "GraphicsCommon.h"
 
 struct MATERIAL_HANDLE;
@@ -65,7 +71,7 @@ class D3D12Renderer;
 class ShaderRecord;
 struct DESCRIPTOR_HANDLE;
 
-class D3DMeshObject : public IRenderMesh
+class RaytracingMeshObject : public IRenderMesh
 {
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
@@ -103,8 +109,6 @@ class D3DMeshObject : public IRenderMesh
 
     RENDER_ITEM_TYPE m_type;
 
-    Bounds m_bounds;
-
     // #DXR
     ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
     DESCRIPTOR_HANDLE m_skinningDescriptors = {}; // Vertex Buffer (SRV) | Vertex Buffer (UAV)
@@ -139,13 +143,10 @@ class D3DMeshObject : public IRenderMesh
     BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
-    void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                      const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
-                      UINT numInstance = 1);
-
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                      const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
-    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex, IRenderMaterial** ppMaterials, UINT numMaterial);
+    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                           IRenderMaterial **ppMaterials, UINT numMaterial);
 
     void InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial);
     void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
@@ -155,11 +156,6 @@ class D3DMeshObject : public IRenderMesh
 
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
-
-    void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
-              ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones,
-              DRAW_PASS_TYPE passType, UINT numInstance = 1);
 
     void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
     Graphics::LOCAL_ROOT_ARG *GetRootArgs();
@@ -172,10 +168,8 @@ class D3DMeshObject : public IRenderMesh
     RENDER_ITEM_TYPE GetType() const { return m_type; }
     DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }
 
-    const Bounds &GetBounds() { return m_bounds; }
-
-    D3DMeshObject() = default;
-    ~D3DMeshObject();
+    RaytracingMeshObject() = default;
+    ~RaytracingMeshObject();
 
     // Inherited via IDIMeshObject
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
