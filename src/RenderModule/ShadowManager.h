@@ -23,8 +23,7 @@ class ShadowManager
     DESCRIPTOR_HANDLE m_shadowMapDSV;
 
     // Rendering 해야할 전체 Object의 AABB를 구하기 위해 사용
-    Vector3     m_sceneMinCorner = Vector3(FLT_MAX);
-    Vector3     m_sceneMaxCorner = Vector3(FLT_MIN);
+    Bounds m_worldBounds;
 
     // Render Queue for draw shadow
     RenderQueue *m_pRenderQueue = nullptr;

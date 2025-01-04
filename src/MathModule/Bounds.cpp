@@ -145,3 +145,42 @@ int Bounds::MaximumExtent() const
     else
         return 2;
 }
+
+Vector3 Bounds::Center() const 
+{ 
+    using namespace DirectX;
+    return XMVectorScale(XMVectorAdd(mins, maxs), 0.5f); 
+}
+
+Vector3 Bounds::Extends() const 
+{
+    using namespace DirectX;
+    return XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
+}
+
+void Bounds::Transform(Bounds *pOutBounds, const Matrix m) const 
+{
+    using namespace DirectX;
+    // Load center and extents.
+    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(mins, maxs), 0.5f);
+    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
+
+    // Compute and transform the corners and find new min/max bounds.
+    XMVECTOR Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0], vCenter);
+    Corner = XMVector3Transform(Corner, m);
+
+    XMVECTOR Min, Max;
+    Min = Max = Corner;
+
+    for (size_t i = 1; i < CORNER_COUNT; ++i)
+    {
+        Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], vCenter);
+        Corner = XMVector3Transform(Corner, m);
+
+        Min = XMVectorMin(Min, Corner);
+        Max = XMVectorMax(Max, Corner);
+    }
+
+    XMStoreFloat3(&pOutBounds->mins, Min);
+    XMStoreFloat3(&pOutBounds->maxs, Max);
+}
