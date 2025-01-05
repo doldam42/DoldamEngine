@@ -1,88 +1,95 @@
 #include "pch.h"
 
-#include <stdexcept>
+#include <d3d12.h>
+#include <d3dx12.h>
+#include <d3dcompiler.h>
+
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 #include "D3DUtil.h"
 
-void GetHardwareAdapter(IDXGIFactory2 *pFactory, IDXGIAdapter1 **ppAdapter) {
-  IDXGIAdapter1 *adapter = nullptr;
-  *ppAdapter = nullptr;
+void GetHardwareAdapter(IDXGIFactory2 *pFactory, IDXGIAdapter1 **ppAdapter)
+{
+    IDXGIAdapter1 *adapter = nullptr;
+    *ppAdapter = nullptr;
 
-  for (UINT adapterIndex = 0;
-       DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter);
-       ++adapterIndex) {
-    DXGI_ADAPTER_DESC1 desc;
-    adapter->GetDesc1(&desc);
+    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter); ++adapterIndex)
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        adapter->GetDesc1(&desc);
 
-    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
-      // Don't select the Basic Render Driver adapter.
-      continue;
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+        {
+            // Don't select the Basic Render Driver adapter.
+            continue;
+        }
+
+        // Check to see if the adapter supports Direct3D 12, but don't create the
+        // actual device yet.
+        if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+        {
+            break;
+        }
     }
 
-    // Check to see if the adapter supports Direct3D 12, but don't create the
-    // actual device yet.
-    if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0,
-                                    _uuidof(ID3D12Device), nullptr))) {
-      break;
-    }
-  }
-
-  *ppAdapter = adapter;
+    *ppAdapter = adapter;
 }
-void GetSoftwareAdapter(IDXGIFactory2 *pFactory, IDXGIAdapter1 **ppAdapter) {
-  IDXGIAdapter1 *adapter = nullptr;
-  *ppAdapter = nullptr;
+void GetSoftwareAdapter(IDXGIFactory2 *pFactory, IDXGIAdapter1 **ppAdapter)
+{
+    IDXGIAdapter1 *adapter = nullptr;
+    *ppAdapter = nullptr;
 
-  for (UINT adapterIndex = 0;
-       DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter);
-       ++adapterIndex) {
-    DXGI_ADAPTER_DESC1 desc;
-    adapter->GetDesc1(&desc);
+    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter); ++adapterIndex)
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        adapter->GetDesc1(&desc);
 
-    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
-      // Check to see if the adapter supports Direct3D 12, but don't create the
-      // actual device yet.
-      if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1,
-                                      _uuidof(ID3D12Device), nullptr))) {
-        *ppAdapter = adapter;
-        break;
-      }
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+        {
+            // Check to see if the adapter supports Direct3D 12, but don't create the
+            // actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, _uuidof(ID3D12Device), nullptr)))
+            {
+                *ppAdapter = adapter;
+                break;
+            }
+        }
     }
-  }
 }
-void SetDebugLayerInfo(ID3D12Device *pD3DDevice) {
-  ID3D12InfoQueue *pInfoQueue = nullptr;
-  pD3DDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
-  if (pInfoQueue) {
-    pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-    pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+void SetDebugLayerInfo(ID3D12Device *pD3DDevice)
+{
+    ID3D12InfoQueue *pInfoQueue = nullptr;
+    pD3DDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
+    if (pInfoQueue)
+    {
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
 
-    D3D12_MESSAGE_ID hide[] = {
-        D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-        D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
-        // Workarounds for debug layer issues on hybrid-graphics systems
-        D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE,
-        D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE};
-    D3D12_INFO_QUEUE_FILTER filter = {};
-    filter.DenyList.NumIDs = (UINT)_countof(hide);
-    filter.DenyList.pIDList = hide;
-    pInfoQueue->AddStorageFilterEntries(&filter);
+        D3D12_MESSAGE_ID hide[] = {D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE, D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
+                                   // Workarounds for debug layer issues on hybrid-graphics systems
+                                   D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE,
+                                   D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE};
+        D3D12_INFO_QUEUE_FILTER filter = {};
+        filter.DenyList.NumIDs = (UINT)_countof(hide);
+        filter.DenyList.pIDList = hide;
+        pInfoQueue->AddStorageFilterEntries(&filter);
 
-    pInfoQueue->Release();
-    pInfoQueue = nullptr;
-  }
+        pInfoQueue->Release();
+        pInfoQueue = nullptr;
+    }
 }
 
 void UpdateTexture(ID3D12Device *pD3DDevice, ID3D12GraphicsCommandList *pCommandList, ID3D12Resource *pDestTexResource,
                    ID3D12Resource *pSrcTexResource)
 {
-    const UINT MAX_SUB_RESOURCE_NUM = 32;
+    const UINT                         MAX_SUB_RESOURCE_NUM = 32;
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT FootPrint[MAX_SUB_RESOURCE_NUM] = {};
     UINT                               Rows[MAX_SUB_RESOURCE_NUM] = {};
     UINT64                             RowSize[MAX_SUB_RESOURCE_NUM] = {};
@@ -117,61 +124,79 @@ void UpdateTexture(ID3D12Device *pD3DDevice, ID3D12GraphicsCommandList *pCommand
                                                                            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 }
 
-const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
-                                int *pHeight) {
-  // whar -> char
-  size_t convertedChars = 0;
-    char path[MAX_FILE_STRING];
-  
-  wcstombs_s(&convertedChars, path, filePath, std::wcslen(filePath) * 4 + 1);
-  int         width, height, channels;
-  const BYTE *img = stbi_load(path, &width, &height, &channels, 0);
+const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth, int *pHeight)
+{
+    // whar -> char
+    size_t convertedChars = 0;
+    char   path[MAX_FILE_STRING];
 
-  if (!img) {
-    //__debugbreak();
-    return nullptr;
-  }
+    wcstombs_s(&convertedChars, path, filePath, std::wcslen(filePath) * 4 + 1);
+    int         width, height, channels;
+    const BYTE *img = stbi_load(path, &width, &height, &channels, 0);
 
-  BYTE *image = new BYTE[width * height * 4];
-
-  if (channels == 1) {
-    for (size_t i = 0; i < width * height; i++) {
-      uint8_t g = img[i * channels + 0];
-      for (size_t c = 0; c < 4; c++) {
-        image[4 * i + c] = g;
-      }
+    if (!img)
+    {
+        //__debugbreak();
+        return nullptr;
     }
-  } else if (channels == 2) {
-    for (size_t i = 0; i < width * height; i++) {
-      for (size_t c = 0; c < 2; c++) {
-        image[4 * i + c] = img[i * channels + c];
-      }
-      image[4 * i + 2] = 255;
-      image[4 * i + 3] = 255;
-    }
-  } else if (channels == 3) {
-    for (size_t i = 0; i < width * height; i++) {
-      for (size_t c = 0; c < 3; c++) {
-        image[4 * i + c] = img[i * channels + c];
-      }
-      image[4 * i + 3] = 255;
-    }
-  } else if (channels == 4) {
-    for (size_t i = 0; i < width * height; i++) {
-      for (size_t c = 0; c < 4; c++) {
-        image[4 * i + c] = img[i * channels + c];
-      }
-    }
-  } else {
-    __debugbreak();
-  }
 
-  *pWidth = width;
-  *pHeight = height;
+    BYTE *image = new BYTE[width * height * 4];
 
-  delete[] img;
+    if (channels == 1)
+    {
+        for (size_t i = 0; i < width * height; i++)
+        {
+            uint8_t g = img[i * channels + 0];
+            for (size_t c = 0; c < 4; c++)
+            {
+                image[4 * i + c] = g;
+            }
+        }
+    }
+    else if (channels == 2)
+    {
+        for (size_t i = 0; i < width * height; i++)
+        {
+            for (size_t c = 0; c < 2; c++)
+            {
+                image[4 * i + c] = img[i * channels + c];
+            }
+            image[4 * i + 2] = 255;
+            image[4 * i + 3] = 255;
+        }
+    }
+    else if (channels == 3)
+    {
+        for (size_t i = 0; i < width * height; i++)
+        {
+            for (size_t c = 0; c < 3; c++)
+            {
+                image[4 * i + c] = img[i * channels + c];
+            }
+            image[4 * i + 3] = 255;
+        }
+    }
+    else if (channels == 4)
+    {
+        for (size_t i = 0; i < width * height; i++)
+        {
+            for (size_t c = 0; c < 4; c++)
+            {
+                image[4 * i + c] = img[i * channels + c];
+            }
+        }
+    }
+    else
+    {
+        __debugbreak();
+    }
 
-  return image;
+    *pWidth = width;
+    *pHeight = height;
+
+    delete[] img;
+
+    return image;
 }
 
 constexpr void ThrowIfFailed(HRESULT hr)
@@ -182,7 +207,7 @@ constexpr void ThrowIfFailed(HRESULT hr)
     }
 }
 
-IDxcBlob *CompileShaderLibrary(LPCWSTR fileName)
+IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
 {
     static IDxcCompiler       *pCompiler = nullptr;
     static IDxcLibrary        *pLibrary = nullptr;
@@ -212,14 +237,26 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName)
     ThrowIfFailed(
         pLibrary->CreateBlobWithEncodingFromPinned((LPBYTE)sShader.c_str(), (uint32_t)sShader.size(), 0, &pTextBlob));
 
-    // UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-
-    // WCHAR* compileFlags[1] = {L"/Zi"};
-
+    LPCWSTR pArg[16] = {};
+    DWORD   dwArgCount = 0;
+    if (disableOptimize)
+    {
+        pArg[dwArgCount] = L"-Zi";
+        dwArgCount++;
+        pArg[dwArgCount] = L"-Qembed_debug";
+        dwArgCount++;
+        pArg[dwArgCount] = L"-Od";
+        dwArgCount++;
+    }
+    else
+    {
+        pArg[dwArgCount] = L"-O3"; // Optimization level 3
+        dwArgCount++;
+    }
     // Compile
     IDxcOperationResult *pResult;
-    ThrowIfFailed(
-        pCompiler->Compile(pTextBlob, fileName, L"", L"lib_6_5", nullptr, 0, nullptr, 0, dxcIncludeHandler, &pResult));
+    ThrowIfFailed(pCompiler->Compile(pTextBlob, fileName, L"", L"lib_6_5", pArg, dwArgCount, nullptr, 0,
+                                     dxcIncludeHandler, &pResult));
 
     // Verify the result
     HRESULT resultCode;

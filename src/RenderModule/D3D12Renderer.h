@@ -26,8 +26,8 @@ class Cubemap;
 class RaytracingManager;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
-// #define USE_RAYTRACING
-#define USE_MULTI_THREAD
+ #define USE_RAYTRACING
+ //#define USE_MULTI_THREAD
 // #define USE_MULTILPE_COMMAND_LIST
 
 enum GLOBAL_DESCRIPTOR_INDEX
@@ -68,7 +68,7 @@ class D3D12Renderer : public IRenderer
     FontManager          *m_pFontManager = nullptr;
 
     // #DXR
-    RaytracingManager *m_pDXRSceneManager = nullptr;
+    RaytracingManager *m_pRaytracingManager = nullptr;
 
     /* ID3D12CommandAllocator    *m_ppCommandAllocator[MAX_PENDING_FRAME_COUNT] = {};
      ID3D12GraphicsCommandList *m_ppCommandList[MAX_PENDING_FRAME_COUNT] = {};*/
@@ -272,7 +272,7 @@ class D3D12Renderer : public IRenderer
 
     ID3D12Device5        *GetD3DDevice() const { return m_pD3DDevice; }
     D3D12ResourceManager *GetResourceManager() const { return m_pResourceManager; }
-    RaytracingManager    *GetRaytracingManager() const { return m_pDXRSceneManager; }
+    RaytracingManager    *GetRaytracingManager() const { return m_pRaytracingManager; }
     TextureManager       *GetTextureManager() const { return m_pTextureManager; }
     MaterialManager      *GetMaterialManager() const { return m_pMaterialManager; }
 

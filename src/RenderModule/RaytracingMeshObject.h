@@ -10,30 +10,6 @@
 
 struct MATERIAL_HANDLE;
 
-enum BASIC_MESH_DESCRIPTOR_INDEX_PER_OBJ
-{
-    BASIC_DESCRIPTOR_INDEX_PER_OBJ_TM = 0,
-    BASIC_DESCRIPTOR_INDEX_PER_OBJ_COUNT
-};
-
-enum SKINNED_MESH_DESCRIPTOR_INDEX_PER_OBJ
-{
-    SKINNED_DESCRIPTOR_INDEX_PER_OBJ_TM = 0,
-    SKINNED_DESCRIPTOR_INDEX_PER_OBJ_BONES,
-    SKINNED_DESCRIPTOR_INDEX_PER_OBJ_COUNT
-};
-
-enum DESCRIPTOR_INDEX_PER_FACE_GROUP
-{
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_MATERIAL = 0,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_ALBEDO,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_NORMAL,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_AO,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_METALLIC_ROUGHNESS,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_EMISSIVE,
-    DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT
-};
-
 enum ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS
 {
     ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_VERTEX = 0,
@@ -58,39 +34,33 @@ enum SKINNING_DESCRIPTOR_INDEX
     SKINNING_DESCRIPTOR_INDEX_COUNT
 };
 
-struct INDEXED_FACE_GROUP
-{
-    DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
-    ID3D12Resource         *pIndexBuffer = nullptr;
-    D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
-    UINT                    numTriangles = 0;
-    MATERIAL_HANDLE        *pMaterialHandle = nullptr;
-};
-
 class D3D12Renderer;
 class ShaderRecord;
 struct DESCRIPTOR_HANDLE;
 
 class RaytracingMeshObject : public IRenderMesh
 {
+    struct INDEXED_FACE_GROUP
+    {
+        DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
+        ID3D12Resource         *pIndexBuffer = nullptr;
+        D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
+        UINT                    numTriangles = 0;
+        MATERIAL_HANDLE        *pMaterialHandle = nullptr;
+    };
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
     static const UINT DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ = 2; // | World TM | Bone Matrices |
     static const UINT MAX_FACE_GROUP_COUNT_PER_OBJ = 12;
-    static const UINT MAX_DESCRIPTOR_COUNT_PER_DRAW_STATIC =
-        DESCRIPTOR_COUNT_PER_STATIC_OBJ + (DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT * MAX_FACE_GROUP_COUNT_PER_OBJ);
-    static const UINT MAX_DESCRIPTOR_COUNT_PER_DRAW_DYNAMIC =
-        DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ + (DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT * MAX_FACE_GROUP_COUNT_PER_OBJ);
-
-    // #DXR
+    
     static const UINT DESCRIPTOR_COUNT_PER_BLAS = 1;         // | VertexBuffer |
-    static const UINT DESCRIPTOR_COUNT_PER_RAY_GEOMETRY = 2; // | IndexBuffer | DiffuseTex |
+    static const UINT DESCRIPTOR_COUNT_PER_RAY_FACEGROUP = 2; // | IndexBuffer | DiffuseTex |
     static const UINT MAX_DESCRIPTOR_COUNT_PER_BLAS =
-        DESCRIPTOR_COUNT_PER_BLAS + 2 * MAX_FACE_GROUP_COUNT_PER_OBJ; // TODO
+        DESCRIPTOR_COUNT_PER_BLAS + DESCRIPTOR_COUNT_PER_RAY_FACEGROUP * MAX_FACE_GROUP_COUNT_PER_OBJ; // TODO
 
   private:
     D3D12Renderer *m_pRenderer = nullptr;
-    ID3D12Device  *m_pD3DDevice = nullptr;
+    ID3D12Device5 *m_pD3DDevice = nullptr;
 
     ID3D12Resource          *m_pVertexBuffer = nullptr;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = {};
@@ -109,7 +79,6 @@ class RaytracingMeshObject : public IRenderMesh
 
     RENDER_ITEM_TYPE m_type;
 
-    // #DXR
     ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
     DESCRIPTOR_HANDLE m_skinningDescriptors = {}; // Vertex Buffer (SRV) | Vertex Buffer (UAV)
 
@@ -120,12 +89,13 @@ class RaytracingMeshObject : public IRenderMesh
     UINT64                          m_BLASScratchSizeInBytes = 0;
     UINT64                          m_BLASResultSizeInBytes = 0;
 
-    // 沥利 按眉: Update(X)
-    // 悼利 按眉: Update(O)
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
 
   private:
-    BOOL CreateDescriptorTable();
+    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
+    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                           IRenderMaterial **ppMaterials, UINT numMaterial);
 
     void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                          uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
@@ -158,7 +128,7 @@ class RaytracingMeshObject : public IRenderMesh
               IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);
 
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
-    UINT            GetGeometryCount() const { return m_faceGroupCount; }
+    UINT            GetFaceGroupCount() const { return m_faceGroupCount; }
 
     // Inherited via IDIMeshObject
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

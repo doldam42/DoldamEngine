@@ -13,4 +13,4 @@ const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
                                 int *pHeight); // 4채널 이미지를 반환하는 함수
 
 // Reference: NVIDIA RAYTRACING SAMPLE CODE
-IDxcBlob *CompileShaderLibrary(LPCWSTR fileName);
+IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize);

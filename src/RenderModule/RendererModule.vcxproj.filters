@@ -74,9 +74,6 @@
     <Filter Include="LightObject">
       <UniqueIdentifier>{0437eff0-29c1-4e1b-bce5-43f7f8e100d9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NewFilter1">
-      <UniqueIdentifier>{e4a6b6c3-e107-469f-a776-23bb5462349b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="RaytracingManager">
       <UniqueIdentifier>{5f548d57-2750-4ce0-bf9b-25b7b065f75f}</UniqueIdentifier>
     </Filter>

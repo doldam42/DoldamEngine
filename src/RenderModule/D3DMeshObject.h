@@ -28,45 +28,21 @@ enum DESCRIPTOR_INDEX_PER_FACE_GROUP
     DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT
 };
 
-enum ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS
-{
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_VERTEX = 0,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT
-};
-
-enum ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY
-{
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_INDEX = 0,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_TEX_ALBEDO,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_TEX_NORMAL,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_TEX_AO,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_TEX_METALLIC_ROUGHNESS,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_TEX_EMISSIVE,
-    ROOT_ARG_DESCRIPTOR_INDEX_PER_GEOMETRY_COUNT
-};
-
-enum SKINNING_DESCRIPTOR_INDEX
-{
-    SKINNING_DESCRIPTOR_INDEX_SRV = 0,
-    SKINNING_DESCRIPTOR_INDEX_UAV,
-    SKINNING_DESCRIPTOR_INDEX_COUNT
-};
-
-struct INDEXED_FACE_GROUP
-{
-    DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
-    ID3D12Resource         *pIndexBuffer = nullptr;
-    D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
-    UINT                    numTriangles = 0;
-    MATERIAL_HANDLE        *pMaterialHandle = nullptr;
-};
-
 class D3D12Renderer;
 class ShaderRecord;
 struct DESCRIPTOR_HANDLE;
 
 class D3DMeshObject : public IRenderMesh
 {
+    struct INDEXED_FACE_GROUP
+    {
+        DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
+        ID3D12Resource         *pIndexBuffer = nullptr;
+        D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
+        UINT                    numTriangles = 0;
+        MATERIAL_HANDLE        *pMaterialHandle = nullptr;
+    };
+
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
     static const UINT DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ = 2; // | World TM | Bone Matrices |
@@ -121,8 +97,6 @@ class D3DMeshObject : public IRenderMesh
               IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
               ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones,
               DRAW_PASS_TYPE passType, UINT numInstance = 1);
-
-    void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
 
     RENDER_ITEM_TYPE GetType() const { return m_type; }
     DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }

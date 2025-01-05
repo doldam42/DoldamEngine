@@ -13,8 +13,9 @@
 #include "FontManager.h"
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
-#include "RenderThread.h"
 #include "RaytracingManager.h"
+#include "RaytracingMeshObject.h"
+#include "RenderThread.h"
 #include "ShadowManager.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
@@ -232,11 +233,12 @@ lb_exit:
 
 // #DXR
 #ifdef USE_RAYTRACING
-    m_pDXRSceneManager = new DXRSceneManager;
+    m_pRaytracingManager = new RaytracingManager;
     ID3D12GraphicsCommandList4 *pCommandList = m_ppCommandListPool[m_dwCurContextIndex][0]->GetCurrentCommandList();
-    m_pDXRSceneManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
+    m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
     m_ppCommandListPool[m_dwCurContextIndex][0]->CloseAndExecute(m_pCommandQueue);
 #endif
+
     CreateDefaultTex();
 
     result = TRUE;
@@ -293,9 +295,7 @@ void D3D12Renderer::EndRender()
 
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                           m_uiFrameIndex, m_rtvDescriptorSize);
-
+    
     UpdateGlobal();
 
     m_pShadowManager->Render(m_pCommandQueue);
@@ -325,12 +325,16 @@ void D3D12Renderer::EndRender()
                                      DRAW_PASS_TYPE_NON_OPAQUE);
 
 #elif defined(USE_RAYTRACING)
-    m_pDXRSceneManager->CreateTopLevelAS(pCommandList);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+                                           m_uiFrameIndex, m_rtvDescriptorSize);
+
+    pCommandList = pCommandListPool->GetCurrentCommandList();
+    m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
     ID3D12Resource *pOutputView = m_pRTOutputBuffers[m_uiFrameIndex];
     const float     clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f};
     pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-    m_pDXRSceneManager->DispatchRay(pCommandList, pOutputView, rtOutputHandle);
+    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtHandle);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_COPY_DEST));
@@ -339,6 +343,7 @@ void D3D12Renderer::EndRender()
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_COPY_DEST,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 #else
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -354,17 +359,29 @@ void D3D12Renderer::EndRender()
                                                                            D3D12_RESOURCE_STATE_PRESENT));
 
     // TODO: HDR
-    D3D12_CPU_DESCRIPTOR_HANDLE   backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+    D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+
+#ifdef USE_RAYTRACING
+
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetGPUDescriptorHandleForHeapStart(),
+                                            m_uiFrameIndex,
+                                            m_srvDescriptorSize);
+    pCommandList->SetDescriptorHeaps(1, &m_pRaytracingOutputHeap);
+    pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+#else
     CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetGPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
                                             m_srvDescriptorSize);
-
+    pCommandList->SetDescriptorHeaps(1, &m_pSRVHeap);
+    pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+#endif
+    
     pCommandList->RSSetViewports(1, &m_Viewport);
     pCommandList->RSSetScissorRects(1, &m_ScissorRect);
     pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
 
     pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
-    pCommandList->SetDescriptorHeaps(1, &m_pSRVHeap);
-    pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+    
     pCommandList->SetPipelineState(Graphics::presentPSO);
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCommandList->IASetVertexBuffers(0, 1, &SpriteObject::GetVertexBufferView());
@@ -382,7 +399,7 @@ void D3D12Renderer::EndRender()
     m_pNonOpaqueRenderQueue->Reset();
     m_pShadowMapRenderQueue->Reset();
 #ifdef USE_RAYTRACING
-    m_pDXRSceneManager->Reset();
+    m_pRaytracingManager->Reset();
 #endif
 }
 
@@ -462,19 +479,40 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
 
 IRenderMesh *D3D12Renderer::CreateSkinnedObject()
 {
+    IRenderMesh *pObj = nullptr;
+#ifdef USE_RAYTRACING
+    RaytracingMeshObject *pMeshObj = new RaytracingMeshObject;
+
+    pMeshObj->Initialize(this, RENDER_ITEM_TYPE_CHAR_OBJ);
+    pMeshObj->AddRef();
+    pObj = pMeshObj;
+#else
     D3DMeshObject *pMeshObj = new D3DMeshObject;
 
     pMeshObj->Initialize(this, RENDER_ITEM_TYPE_CHAR_OBJ);
     pMeshObj->AddRef();
+    pObj = pMeshObj;
+#endif
+
     return pMeshObj;
 }
 
 IRenderMesh *D3D12Renderer::CreateMeshObject()
 {
+    IRenderMesh *pObj = nullptr;
+#ifdef USE_RAYTRACING
+    RaytracingMeshObject *pMeshObj = new RaytracingMeshObject;
+
+    pMeshObj->Initialize(this, RENDER_ITEM_TYPE_MESH_OBJ);
+    pMeshObj->AddRef();
+    pObj = pMeshObj;
+#else
     D3DMeshObject *pMeshObj = new D3DMeshObject;
 
     pMeshObj->Initialize(this, RENDER_ITEM_TYPE_MESH_OBJ);
     pMeshObj->AddRef();
+    pObj = pMeshObj;
+#endif
     return pMeshObj;
 }
 
@@ -502,17 +540,15 @@ IRenderSprite *D3D12Renderer::CreateSpriteObject(const WCHAR *texFileName, int P
 
 void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
 {
-    // CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
-    // ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
 #ifdef USE_RAYTRACING
-
-    UINT numGeometry = pMeshObject->GetGeometryCount();
-
-    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
-
-    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
+    // TODO: ADD Material
+    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
 #else
+    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
+
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_MESH_OBJ;
     item.pObjHandle = pMeshObj;
@@ -550,18 +586,14 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
                                                   IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired,
                                                   UINT numInstance)
 {
-    // CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
-    // ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
 #ifdef USE_RAYTRACING
-
-    UINT numGeometry = pMeshObject->GetGeometryCount();
-
-    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
-
-    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
+    pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, nullptr, 0);
 #else
-    RENDER_ITEM item = {};
+    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
+    RENDER_ITEM    item = {};
     item.type = RENDER_ITEM_TYPE_MESH_OBJ;
     item.pObjHandle = pMeshObj;
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
@@ -601,15 +633,8 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
 #ifdef USE_RAYTRACING
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    MeshObject                 *pMeshObject = (MeshObject *)pCharObj;
-
-    pMeshObject->UpdateSkinnedBLAS(pCommandList, pBoneMats, numBones);
-    // pCommadListPool->CloseAndExecute(m_pCommandQueue);
-    UINT numGeometry = pMeshObject->GetGeometryCount();
-
-    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
-
-    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
+    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 #else
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
 
@@ -644,19 +669,11 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
                                                        const Matrix *pBoneMats, UINT numBones,
                                                        IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
 #ifdef USE_RAYTRACING
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    MeshObject                 *pMeshObject = (MeshObject *)pCharObj;
-
-    pMeshObject->UpdateSkinnedBLAS(pCommandList, pBoneMats, numBones);
-    // pCommadListPool->CloseAndExecute(m_pCommandQueue);
-    UINT numGeometry = pMeshObject->GetGeometryCount();
-
-    Graphics::LOCAL_ROOT_ARG *pRootArgs = pMeshObject->GetRootArgs();
-
-    m_pDXRSceneManager->InsertInstance(pMeshObject->GetBottomLevelAS(), pWorldMat, 0, pRootArgs, numGeometry);
+    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
+    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 #else
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
 
@@ -783,11 +800,17 @@ BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIn
 
 void D3D12Renderer::EndCreateMesh(IRenderMesh *pMeshObjHandle)
 {
+#ifdef USE_RAYTRACING
     CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
-    D3DMeshObject              *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
+
+    RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pMeshObjHandle;
     pMeshObj->EndCreateMesh(pCommandList);
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
+#else
+    D3DMeshObject *pMeshObj = (D3DMeshObject *)pMeshObjHandle;
+    pMeshObj->EndCreateMesh();
+#endif // USE_RAYTRACING
 }
 
 void D3D12Renderer::UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow)
@@ -838,7 +861,7 @@ void D3D12Renderer::UpdateGlobal()
         CD3DX12_CPU_DESCRIPTOR_HANDLE matHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_MATERIALS, m_srvDescriptorSize);
         CD3DX12_CPU_DESCRIPTOR_HANDLE cubemapHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_CUBE_MAP1, m_srvDescriptorSize);
         CD3DX12_CPU_DESCRIPTOR_HANDLE projectionHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_PROJECTION_TEX,
-                                                          m_srvDescriptorSize);
+                                                       m_srvDescriptorSize);
         CD3DX12_CPU_DESCRIPTOR_HANDLE shadowMapHandle(cpuHandle, GLOBAL_DESCRIPTOR_INDEX_SHADOW_MAP1,
                                                       m_srvDescriptorSize);
 
@@ -1260,7 +1283,7 @@ BOOL D3D12Renderer::CreateDescriptorHeap()
     D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc = {};
     rtHeapDesc.NumDescriptors = SWAP_CHAIN_FRAME_COUNT;
     rtHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    rtHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_pRaytracingOutputHeap))))
     {
         __debugbreak();
@@ -1456,10 +1479,10 @@ void D3D12Renderer::Cleanup()
         m_pCubemap = nullptr;
     }
 
-    if (m_pDXRSceneManager)
+    if (m_pRaytracingManager)
     {
-        delete m_pDXRSceneManager;
-        m_pDXRSceneManager = nullptr;
+        delete m_pRaytracingManager;
+        m_pRaytracingManager = nullptr;
     }
 
     Graphics::DeleteCommonStates();

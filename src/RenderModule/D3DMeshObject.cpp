@@ -25,9 +25,6 @@ BOOL D3DMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
     m_pD3DDevice = pDevice;
     m_type = type;
 
-#ifdef USE_RAYTRACING
-    CreateDescriptorTable();
-#endif
     return TRUE;
 }
 
@@ -339,15 +336,6 @@ BOOL D3DMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupI
     pFace->pMaterialHandle = pMaterial;
 
     return TRUE;
-}
-
-void D3DMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
-{
-#ifdef USE_RAYTRACING
-    CreateSkinningBufferSRVs();
-    CreateRootArgsSRV();
-    CreateBottomLevelAS(pCommandList);
-#endif
 }
 
 void D3DMeshObject::CleanupMesh()

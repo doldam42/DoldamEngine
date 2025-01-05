@@ -3,6 +3,8 @@
 #include <DirectXTK/CommonStates.h>
 #include <d3dcompiler.h>
 
+#include "D3D12Renderer.h"
+
 #include "GraphicsCommon.h"
 
 #define SizeOfInUint32(obj) ((sizeof(obj) - 1) / sizeof(UINT32) + 1)
@@ -834,19 +836,24 @@ lb_return:
 
 void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeline)
 {
-    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl");
+    BOOL disableDebug = FALSE;
+#ifdef _DEBUG
+    disableDebug = TRUE;
+#endif // _DEBUG
+
+    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableDebug);
     auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
 
-    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl");
+    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableDebug);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(missLibrary->GetBufferPointer(), missLibrary->GetBufferSize()));
 
-    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl");
+    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl", disableDebug);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(hitLibrary->GetBufferPointer(), hitLibrary->GetBufferSize()));
 
-    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl");
+    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl", disableDebug);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(shadowLibrary->GetBufferPointer(), shadowLibrary->GetBufferSize()));
 }

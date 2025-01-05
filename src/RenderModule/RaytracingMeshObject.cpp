@@ -1,13 +1,12 @@
 #include "pch.h"
 
-#include <d3dx12.h>
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
+#include <d3dx12.h>
 
 #include "ConstantBuffers.h"
 
 #include "ConstantBufferPool.h"
-#include "Cubemap.h"
 #include "D3D12Renderer.h"
 #include "D3D12ResourceManager.h"
 #include "DescriptorPool.h"
@@ -22,35 +21,16 @@
 
 // 레이트레이싱 SRV 디스크립터 구조
 // | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
-BOOL RaytracingMeshObject::CreateDescriptorTable()
-{
-    BOOL                  result = FALSE;
-    ID3D12Device         *pD3DDevice = m_pRenderer->GetD3DDevice();
-    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
-
-    if (!pResourceManager->AllocDescriptorTable(&m_rootArgDescriptorTable, MAX_DESCRIPTOR_COUNT_PER_BLAS))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-
-    result = TRUE;
-lb_return:
-    return result;
-}
 
 BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
-    ID3D12Device *pDevice = pRenderer->GetD3DDevice();
+    ID3D12Device5 *pDevice = pRenderer->GetD3DDevice();
     m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_pRenderer = pRenderer;
     m_pD3DDevice = pDevice;
     m_type = type;
 
-#ifdef USE_RAYTRACING
-    CreateDescriptorTable();
-#endif
     return TRUE;
 }
 
@@ -68,7 +48,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     }
 
     UINT descriptorCount =
-        ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT + DESCRIPTOR_COUNT_PER_RAY_GEOMETRY * m_faceGroupCount;
+        ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT + DESCRIPTOR_COUNT_PER_RAY_FACEGROUP * m_faceGroupCount;
 
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
@@ -78,10 +58,11 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     CD3DX12_CPU_DESCRIPTOR_HANDLE src(m_rootArgDescriptorTable.cpuHandle);
 
     m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
+    
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,
                                                    m_descriptorSize);
+
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
         Graphics::LOCAL_ROOT_ARG *rootArg = m_pRootArgPerGeometries + i;
@@ -95,7 +76,8 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
                                              m_faceGroupCount);
 }
 
-void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones)
+void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
+                                             UINT numBones)
 {
     DeformingVerticesUAV(pCommandList, pBoneMats, numBones);
     BuildBottomLevelAS(pCommandList, m_bottomLevelAS.pScratch, m_bottomLevelAS.pResult, true, m_bottomLevelAS.pResult);
@@ -105,16 +87,27 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
-    D3D12ResourceManager *resourceManager = m_pRenderer->GetResourceManager();
+    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
     if (numFaceGroup > MAX_FACE_GROUP_COUNT_PER_OBJ)
+    {
         __debugbreak();
+        goto lb_return;
+    }
+
+    // Alloc Descriptor Table
+    m_descriptorCountPerDraw = DESCRIPTOR_COUNT_PER_BLAS + numFaceGroup * DESCRIPTOR_COUNT_PER_RAY_FACEGROUP;
+    if (!pResourceManager->AllocDescriptorTable(&m_rootArgDescriptorTable, m_descriptorCountPerDraw))
+    {
+        __debugbreak();
+        goto lb_return;
+    }
 
     switch (m_type)
     {
     case RENDER_ITEM_TYPE_MESH_OBJ: {
-        if (FAILED(resourceManager->CreateVertexBuffer(&m_pVertexBuffer, &m_vertexBufferView, sizeof(BasicVertex),
-                                                       numVertices, pVertices)))
+        if (FAILED(pResourceManager->CreateVertexBuffer(&m_pVertexBuffer, &m_vertexBufferView, sizeof(BasicVertex),
+                                                        numVertices, pVertices)))
         {
             __debugbreak();
             goto lb_return;
@@ -122,8 +115,8 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
     }
     break;
     case RENDER_ITEM_TYPE_CHAR_OBJ: {
-        if (FAILED(resourceManager->CreateVertexBuffer(&m_pVertexBuffer, &m_vertexBufferView, sizeof(SkinnedVertex),
-                                                       numVertices, pVertices)))
+        if (FAILED(pResourceManager->CreateVertexBuffer(&m_pVertexBuffer, &m_vertexBufferView, sizeof(SkinnedVertex),
+                                                        numVertices, pVertices)))
         {
             __debugbreak();
             goto lb_return;
@@ -149,18 +142,15 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
 
     m_vertexCount = numVertices;
     m_maxFaceGroupCount = numFaceGroup;
+
     m_pFaceGroups = new INDEXED_FACE_GROUP[m_maxFaceGroupCount];
     memset(m_pFaceGroups, 0, sizeof(INDEXED_FACE_GROUP) * m_maxFaceGroupCount);
 
-    // #DXR
     m_pBLASGeometries = new D3D12_RAYTRACING_GEOMETRY_DESC[m_maxFaceGroupCount];
     memset(m_pBLASGeometries, 0, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC) * m_maxFaceGroupCount);
+
     m_pRootArgPerGeometries = new Graphics::LOCAL_ROOT_ARG[m_maxFaceGroupCount];
     memset(m_pRootArgPerGeometries, 0, sizeof(Graphics::LOCAL_ROOT_ARG) * m_maxFaceGroupCount);
-
-    m_descriptorCountPerDraw =
-        (m_type == RENDER_ITEM_TYPE_MESH_OBJ) ? DESCRIPTOR_COUNT_PER_STATIC_OBJ : DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ;
-    m_descriptorCountPerDraw += numFaceGroup * DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT;
 
     result = TRUE;
 lb_return:
@@ -187,7 +177,7 @@ void RaytracingMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
 }
 
 BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
-                                    const wchar_t *path)
+                                           const wchar_t *path)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -219,8 +209,9 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
     InitMaterial(pFaceGroup, &mat);
 
     // root arg per geometry
-    m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture = wcslen(pInMaterial->albedoTextureName) == 0 ? 1 : 0;
-    m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index; 
+    m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture =
+        wcslen(pInMaterial->albedoTextureName) == 0 ? TRUE : FALSE;
+    m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index;
 
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
     AddBLASGeometry(m_faceGroupCount, pVertices, 0, m_vertexCount, sizeof(BasicVertex), pIndexBuffer, 0,
@@ -232,7 +223,7 @@ lb_return:
     return result;
 }
 
-void RaytracingMeshObject::EndCreateMesh() {}
+void RaytracingMeshObject::EndCreateMesh() { m_pRenderer->EndCreateMesh(this); }
 
 BOOL RaytracingMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
 {
@@ -253,10 +244,11 @@ void RaytracingMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandLis
     CreateBottomLevelAS(pCommandList);
 }
 
-void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
-                                    uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
-                                    UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
-                                    UINT64 transformOffsetInBytes, bool isOpaque)
+void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer,
+                                           UINT64 vertexOffsetInBytes, uint32_t vertexCount, UINT vertexSizeInBytes,
+                                           ID3D12Resource *indexBuffer, UINT64 indexOffsetInBytes, uint32_t indexCount,
+                                           ID3D12Resource *transformBuffer, UINT64 transformOffsetInBytes,
+                                           bool isOpaque)
 {
     // Create the DX12 descriptor representing the input data, assumed to be
     // opaque triangles, with 3xf32 vertex coordinates and 32-bit indices
@@ -275,7 +267,7 @@ void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *
 }
 
 void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
-                                         UINT numBones)
+                                                UINT numBones)
 {
     if (m_type != RENDER_ITEM_TYPE_CHAR_OBJ)
     {
@@ -306,7 +298,7 @@ void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCom
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
     m_pD3DDevice->CopyDescriptorsSimple(SKINNING_DESCRIPTOR_INDEX_COUNT, dest, m_skinningDescriptors.cpuHandle,
-                                   D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     dest.Offset(m_descriptorSize, SKINNING_DESCRIPTOR_INDEX_COUNT);
     m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -340,7 +332,7 @@ BOOL RaytracingMeshObject::CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pComm
 {
     BOOL result = FALSE;
 
-    ID3D12Device5  *pDevice = m_pRenderer->GetD3DDevice();
+    ID3D12Device5  *pDevice = m_pD3DDevice;
     ID3D12Resource *pScratch = nullptr;
     ID3D12Resource *pResult = nullptr;
 
