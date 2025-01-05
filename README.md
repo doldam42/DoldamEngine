@@ -1,6 +1,6 @@
 # D3D12 게임 엔진 제작 프로젝트 
 ## Video/Audio 재생 데모
-https://github.com/user-attachments/assets/6cdeec57-7e43-4821-8a11-ff6e10a2b521
+[https://github.com/user-attachments/assets/6cdeec57-7e43-4821-8a11-ff6e10a2b521](https://www.youtube.com/watch?v=qR48mV8VB3A)
 ## 물리 엔진 데모
 https://github.com/user-attachments/assets/2e3cd5e9-3632-4d61-9e1d-fb8352b35953
 ## 레이트레이싱 데모
