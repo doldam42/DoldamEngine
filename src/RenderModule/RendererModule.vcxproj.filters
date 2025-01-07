@@ -225,6 +225,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\Client\Shaders\DXR\PhongLighting.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">

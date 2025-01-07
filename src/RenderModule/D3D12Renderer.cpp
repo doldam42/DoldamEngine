@@ -228,9 +228,6 @@ lb_exit:
     m_pNonOpaqueRenderQueue = new RenderQueue;
     m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
 
-    m_pShadowMapRenderQueue = new RenderQueue;
-    m_pShadowMapRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
-
 // #DXR
 #ifdef USE_RAYTRACING
     m_pRaytracingManager = new RaytracingManager;
@@ -271,6 +268,7 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
+    
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -289,17 +287,14 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    // RenderShadowMaps();
-
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
 
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
-    
+
     UpdateGlobal();
 
     m_pShadowManager->Render(m_pCommandQueue);
-    // m_pCascadedShadowManager->RenderShadowForAllCascades(0, pCommadListPool, m_pCommandQueue);
 
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
@@ -352,37 +347,44 @@ void D3D12Renderer::EndRender()
                                     &m_ScissorRect);
     }
 #endif
+    // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
 
-    // TODO: HDR
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+    pCommandList->RSSetViewports(1, &m_Viewport);
+    pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+    pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
+    pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
+    pCommandList->SetPipelineState(Graphics::presentPSO);
 
 #ifdef USE_RAYTRACING
+    DescriptorPool       *pDescriptorPool = GetDescriptorPool(0);
+    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+                                            m_uiFrameIndex, m_srvDescriptorSize);
 
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetGPUDescriptorHandleForHeapStart(),
-                                            m_uiFrameIndex,
-                                            m_srvDescriptorSize);
-    pCommandList->SetDescriptorHeaps(1, &m_pRaytracingOutputHeap);
-    pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
+
+    m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
+    pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
 #else
+    
     CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetGPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
                                             m_srvDescriptorSize);
     pCommandList->SetDescriptorHeaps(1, &m_pSRVHeap);
     pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
 #endif
-    
-    pCommandList->RSSetViewports(1, &m_Viewport);
-    pCommandList->RSSetScissorRects(1, &m_ScissorRect);
-    pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
 
-    pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
-    
-    pCommandList->SetPipelineState(Graphics::presentPSO);
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCommandList->IASetVertexBuffers(0, 1, &SpriteObject::GetVertexBufferView());
     pCommandList->IASetIndexBuffer(&SpriteObject::GetIndexBufferView());
@@ -392,14 +394,15 @@ void D3D12Renderer::EndRender()
                                                                            D3D12_RESOURCE_STATE_PRESENT));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
+#ifdef USE_RAYTRACING
+    m_pRaytracingManager->Reset();
+#else
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         m_ppRenderQueue[i]->Reset();
     }
     m_pNonOpaqueRenderQueue->Reset();
-    m_pShadowMapRenderQueue->Reset();
-#ifdef USE_RAYTRACING
-    m_pRaytracingManager->Reset();
+    m_pShadowManager->Reset();
 #endif
 }
 
@@ -442,9 +445,6 @@ void D3D12Renderer::Present()
         m_ppDescriptorPool[dwNextContextIndex][i]->Reset();
         m_ppCommandListPool[dwNextContextIndex][i]->Reset();
     }
-
-    m_pShadowManager->Reset();
-    //    m_pCascadedShadowManager->Reset();
 
     m_dwCurContextIndex = dwNextContextIndex;
 }
@@ -568,9 +568,6 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
             __debugbreak();
     }
 
-    /*if (!m_pShadowMapRenderQueue->Add(&item))
-        __debugbreak();*/
-
     if (!m_pShadowManager->Add(&item))
     {
         __debugbreak();
@@ -612,9 +609,6 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
             __debugbreak();
     }
 
-    /*if (!m_pShadowMapRenderQueue->Add(&item))
-        __debugbreak();*/
-
     if (!m_pShadowManager->Add(&item))
     {
         __debugbreak();
@@ -652,9 +646,6 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
-    /*if (!m_pShadowMapRenderQueue->Add(&item))
-        __debugbreak();*/
-
     if (!m_pShadowManager->Add(&item))
     {
         __debugbreak();
@@ -690,9 +681,6 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
-
-    /*if (!m_pShadowMapRenderQueue->Add(&item))
-        __debugbreak();*/
 
     if (!m_pShadowManager->Add(&item))
     {
@@ -1494,11 +1482,6 @@ void D3D12Renderer::Cleanup()
             delete m_ppRenderQueue[i];
             m_ppRenderQueue[i] = nullptr;
         }
-    }
-    if (m_pShadowMapRenderQueue)
-    {
-        delete m_pShadowMapRenderQueue;
-        m_pShadowMapRenderQueue = nullptr;
     }
     if (m_pNonOpaqueRenderQueue)
     {

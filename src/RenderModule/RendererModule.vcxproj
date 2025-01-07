@@ -259,6 +259,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <CustomBuild Include="..\Client\Shaders\Phong.hlsli">
       <FileType>Document</FileType>
     </CustomBuild>
+    <None Include="..\Client\Shaders\DXR\PhongLighting.hlsli" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

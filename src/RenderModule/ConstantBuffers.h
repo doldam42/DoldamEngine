@@ -123,4 +123,9 @@ struct FaceGroupConstants
     DWORD dummy[62];
 };
 
+struct RaytracingFaceGroupCB
+{
+    UINT materialIndex;
+};
+
 static_assert((sizeof(FaceGroupConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");

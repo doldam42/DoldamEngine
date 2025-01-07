@@ -3,6 +3,13 @@
 // Note that the payload should be kept as small as possible,
 // and that its size must be declared in the corresponding
 // D3D12_RAYTRACING_SHADER_CONFIG pipeline subobjet.
+
+#ifndef COMMON_HLSL
+#define COMMON_HLSL
+
+#define TRUE 1
+#define FALSE 0
+
 #define MAX_RAY_RECURSION_DEPTH 2
 #define MAX_SHADOW_RAY_RECURSION_DEPTH 1
 
@@ -42,18 +49,16 @@ struct MaterialConstant
     float roughnessFactor;
     float metallicFactor;
     float3 emissive;
-    float3 tansparancy;
-    float dummy1;
-    float3 reflection;
-    float dummy2;
-
+    
+    float opacityFactor;
+    float reflectionFactor;
+    
     uint useAlbedoMap;
     uint useNormalMap;
     uint useAOMap;
     uint useMetallicMap;
     uint useRoughnessMap;
     uint useEmissiveMap;
-    float dummy[2];
 };
 
 // Attributes output by the raytracing when hitting a surface,
@@ -69,7 +74,7 @@ struct Ray
     float3 direction;
 };
 
-inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4x4 invViewProj)
+inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4x4 cameraToWorld)
 {
     float2 xy = index + 0.5f;
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
@@ -77,12 +82,13 @@ inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4
     // Invert Y for DirectX-style coordinate
     screenPos.y = -screenPos.y;
     
-    float4 world = mul(float4(screenPos, 0, 1), invViewProj);
+    float4 unprojected = mul(float4(screenPos, 0, 1), cameraToWorld);
+    float3 world = unprojected.xyz / unprojected.w;
     
     Ray ray;
     ray.origin = cameraPosition;
     
-    ray.direction = normalize(world.xyz);
+    ray.direction = normalize(world - cameraPosition);
     
     return ray;
 }
@@ -126,11 +132,14 @@ cbuffer g_cb : register(b0)
     float4x4 invProj;
     float4x4 viewProj;
     float4x4 invViewProj; // Proj -> World
+    float4x4 projectionViewProj; // texture projection 
+    
     float3 eyeWorld;
-    float gcDummy1;
+    float strengthIBL;
     
     Light lights[MAX_LIGHTS];
-    float gcDummy2[56];
+    uint useTextureProjection;
+    float gcDummy2[59];
 }
 // Raytracing output texture, accessed as a UAV
 RWTexture2D<float4> gOutput : register(u0);
@@ -138,3 +147,5 @@ RWTexture2D<float4> gOutput : register(u0);
 RaytracingAccelerationStructure g_scene : register(t0);
 SamplerState g_sampler : register(s0);
 StructuredBuffer<MaterialConstant> g_materials : register(t5);
+
+#endif  // COMMON_HLSL

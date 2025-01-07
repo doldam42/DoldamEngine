@@ -9,8 +9,9 @@ class D3D12Renderer;
 class ShaderTable;
 class RaytracingManager
 {
-    CRITICAL_SECTION   m_cs= {};
+    CRITICAL_SECTION   m_cs = {};
     CONDITION_VARIABLE m_cv= {};
+
 
     D3D12Renderer *m_pRenderer = nullptr;
 

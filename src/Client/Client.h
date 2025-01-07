@@ -37,8 +37,8 @@ class Client : public IController
     WCHAR m_text[260] = {0};
 
     // Controllers
-    TimeController* m_pTimeController;
-    BadAppleController* m_pDemoController;
+    TimeController* m_pTimeController = nullptr;
+    BadAppleController* m_pDemoController = nullptr;
 
   private:
     void CleanupControllers();

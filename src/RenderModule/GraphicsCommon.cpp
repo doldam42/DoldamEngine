@@ -861,7 +861,7 @@ void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeli
 void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
 {
     // Init Global Root Signature
-    // |     OUTPUT_VIEW     | ACCELERATION_STRUCTURE(t0) |
+    // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0) |
     // | GlobalConstants(b0) |       Materials(t5)        |
     {
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2];
@@ -893,7 +893,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
         ranges[LOCAL_ROOT_PARAM_INDEX_DIFFUSE_TEX].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 1);
 
         CD3DX12_ROOT_PARAMETER rootParameters[LOCAL_ROOT_PARAM_INDEX_COUNT];
-        rootParameters[LOCAL_ROOT_PARAM_INDEX_CB].InitAsConstants(SizeOfInUint32(FaceGroupConstants), 0, 1);
+        rootParameters[LOCAL_ROOT_PARAM_INDEX_CB].InitAsConstants(SizeOfInUint32(RaytracingFaceGroupCB), 0, 1);
         rootParameters[LOCAL_ROOT_PARAM_INDEX_VERTICES].InitAsDescriptorTable(1,
                                                                               &ranges[LOCAL_ROOT_PARAM_INDEX_VERTICES]);
         rootParameters[LOCAL_ROOT_PARAM_INDEX_INDICES].InitAsDescriptorTable(1,

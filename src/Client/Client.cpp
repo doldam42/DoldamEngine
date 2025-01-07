@@ -107,12 +107,12 @@ BOOL Client::Initialize(HWND hWnd)
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
-    m_pDemoController = new BadAppleController;
+    //m_pDemoController = new BadAppleController;
 
     m_pGame->Register(this);
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
-    m_pGame->Register(m_pDemoController);
+    //m_pGame->Register(m_pDemoController);
     
     m_pGame->Start();
 

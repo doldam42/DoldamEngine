@@ -92,11 +92,6 @@ class RaytracingMeshObject : public IRenderMesh
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
 
   private:
-    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
-    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                           IRenderMaterial **ppMaterials, UINT numMaterial);
-
     void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                          uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
                          UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,

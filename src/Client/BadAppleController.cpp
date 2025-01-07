@@ -68,9 +68,9 @@ BOOL BadAppleController::Start()
     // Create Textures
     m_pTex = pRnd->CreateDynamicTexture(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
 
-    /*IRenderMaterial *pDynamicMaterial = pRnd->CreateDynamicMaterial(L"bad_apple");
+    IRenderMaterial *pDynamicMaterial = pRnd->CreateDynamicMaterial(L"bad_apple");
     pDynamicMaterial->UpdateTextureWithTexture(m_pTex, TEXTURE_TYPE_ALBEDO);
-    pDynamicMaterial->UpdateMetallicRoughness(0.8f, 0.8f);*/
+    pDynamicMaterial->UpdateMetallicRoughness(0.8f, 0.8f);
 
     m_pSprite = pGame->CreateDynamicSprite(m_pBadAppleVideo->width, m_pBadAppleVideo->height);
     m_pSprite->SetPosition(0, 0);
@@ -101,6 +101,7 @@ BOOL BadAppleController::Start()
             IGameObject* pObj = pGame->CreateGameObject();
             pModel->AddRef();
             pObj->SetModel(pModel);
+            pObj->SetMaterials(&pDynamicMaterial, 1);
             pObj->SetPosition(x + col * offset, y + row * offset, 20);
             pObj->SetScale(3.9f);
             m_ppSpheres[i] = pObj;

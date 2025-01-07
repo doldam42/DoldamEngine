@@ -57,12 +57,37 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
     CD3DX12_CPU_DESCRIPTOR_HANDLE src(m_rootArgDescriptorTable.cpuHandle);
 
-    m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    
+    m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    dest.Offset(m_descriptorSize, 1);
+    src.Offset(m_descriptorSize, 1);
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        INDEXED_FACE_GROUP *pFace = m_pFaceGroups + i;
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dest.Offset(m_descriptorSize);
+
+        if (!ppMaterials)
+        {
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        }
+        else
+        {
+            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pMatHandle->pAlbedoTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+            m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
+        }
+
+        dest.Offset(m_descriptorSize);
+        src.Offset(m_descriptorSize, 2);
+    }
+    /*m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
+
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,
                                                    m_descriptorSize);
-
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
         Graphics::LOCAL_ROOT_ARG *rootArg = m_pRootArgPerGeometries + i;
@@ -209,8 +234,6 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
     InitMaterial(pFaceGroup, &mat);
 
     // root arg per geometry
-    m_pRootArgPerGeometries[m_faceGroupCount].cb.useTexture =
-        wcslen(pInMaterial->albedoTextureName) == 0 ? TRUE : FALSE;
     m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index;
 
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
