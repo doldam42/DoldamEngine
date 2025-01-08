@@ -23,6 +23,11 @@
 #define HITGROUP_INDEX_SHADOW 1
 #define HITGROUP_INDEX_COUNT 2
 
+#define NEAR_PLANE 0.01
+#define FAR_PLANE 1000.0
+
+#define HitDistanceOnMiss 0
+
 // TODO: Add recursion Depth
 struct HitInfo
 {
@@ -74,6 +79,11 @@ struct Ray
     float3 direction;
 };
 
+bool IsBlack(float3 color)
+{
+    return !any(color);
+}
+
 inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4x4 cameraToWorld)
 {
     float2 xy = index + 0.5f;
@@ -93,14 +103,14 @@ inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4
     return ray;
 }
 
-float2 HitAttribute(float2 vertexAttribute[3], Attributes attr)
+float2 HitAttribute(in float2 vertexAttribute[3], Attributes attr)
 {
     return vertexAttribute[0] +
         attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +
         attr.bary.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
-float3 HitAttribute(float3 vertexAttribute[3], Attributes attr)
+float3 HitAttribute(in float3 vertexAttribute[3], Attributes attr)
 {
     return vertexAttribute[0] +
         attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +

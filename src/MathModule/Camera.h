@@ -5,7 +5,7 @@ class Camera
 {
     float m_verticalFOV = XMConvertToRadians(120);
     float m_nearZ = 0.01f;
-    float m_farZ = 100.0f;
+    float m_farZ = 1000.0f;
     float m_aspect = 16.0f / 9.0f;
 
     Vector3 m_position = Vector3::Zero;

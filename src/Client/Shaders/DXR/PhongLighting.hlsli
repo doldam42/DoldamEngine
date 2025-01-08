@@ -3,7 +3,7 @@
 
 #include "common.hlsli"
 
-float4 CalculateDiffuseLighting(float4 albedo, float3 hitPosition, float3 normal, Light light)
+float3 CalculateDiffuseLighting(float3 albedo, float3 hitPosition, float3 normal, Light light)
 {
     float3 pixelToLight = normalize(light.position - hitPosition);
     

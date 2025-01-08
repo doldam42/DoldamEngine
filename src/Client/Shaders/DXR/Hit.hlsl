@@ -12,9 +12,72 @@ StructuredBuffer<uint>           l_IB : register(t1, space1);
 Texture2D<float4>                l_diffuseTex : register(t2, space1);
 // Texture2D<float4> l_normalTex : register(t3, space1);
 
+HitInfo TraceRadianceRay(Ray ray, in uint currentRayRecursionDepth, float tMin = NEAR_PLANE, float tMax = FAR_PLANE, float bounceContribution = 1, bool cullNonOpaque = false)
+{
+    HitInfo rayPayload;
+    rayPayload.colorAndDistance = 0;
+    rayPayload.rayRecursionDepth = currentRayRecursionDepth + 1;
+    
+    if (currentRayRecursionDepth >= MAX_RAY_RECURSION_DEPTH)
+    {
+        rayPayload.colorAndDistance = float4(133/255.0, 161/255.0, 179/255.0, 0);
+        return rayPayload;
+    }
+
+    // Set the ray's extents.
+    RayDesc rayDesc;
+    rayDesc.Origin = ray.origin;
+    rayDesc.Direction = ray.direction;
+    rayDesc.TMin = tMin;
+    rayDesc.TMax = tMax;
+
+    uint rayFlags = (cullNonOpaque ? RAY_FLAG_CULL_NON_OPAQUE : 0);
+
+    TraceRay(g_scene,
+        rayFlags,
+		INSTANCE_MASK, HITGROUP_INDEX_RADIENT, GEOMETRY_STRIDE, MISS_INDEX_RADIENT,
+		rayDesc, rayPayload);
+
+    return rayPayload;
+}
+
+float3 TraceReflectiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal, inout HitInfo rayPayload, in float TMax = 10000)
+{
+    // Here we offset ray start along the ray direction instead of surface normal 
+    // so that the reflected ray projects to the same screen pixel. 
+    // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer. 
+    float tOffset = 0.001f;
+    float3 offsetAlongRay = tOffset * wt;
+
+    float3 adjustedHitPosition = hitPosition + offsetAlongRay;
+
+    Ray ray = { adjustedHitPosition, wt };
+
+    float tMin = 0;
+    float tMax = TMax;
+
+    // TRADEOFF: Performance vs visual quality
+    // Cull transparent surfaces when casting a transmission ray for a transparent surface.
+    // Spaceship in particular has multiple layer glass causing a substantial perf hit 
+    // with multiple bounces along the way.
+    // This can cause visual pop ins however, such as in a case of looking at the spaceship's
+    // glass cockpit through a window in the house. The cockpit will be skipped in this case.
+    bool cullNonOpaque = true;
+
+    rayPayload = TraceRadianceRay(ray, rayPayload.rayRecursionDepth, tMin, tMax, 0, cullNonOpaque);
+    
+    if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
+    {
+        // Add current thit and the added offset to the thit of the traced ray.
+        rayPayload.colorAndDistance.w += RayTCurrent() + tOffset;
+    }
+
+    return rayPayload.colorAndDistance.xyz;
+}
+
 // Trace a shadow ray and return true if it hits any geometry.
 bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRayRecursionDepth,
-                                  in bool retrieveTHit = true, in float TMax = 10000)
+                                  in bool retrieveTHit = true, in float TMax = FAR_PLANE)
 {
     if (currentRayRecursionDepth >= 3)
     {
@@ -49,7 +112,7 @@ bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRay
     {
         rayFlags |= RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
     }
-
+    
     TraceRay(g_scene, rayFlags, INSTANCE_MASK, HITGROUP_INDEX_SHADOW, GEOMETRY_STRIDE, MISS_INDEX_SHADOW, rayDesc,
              shadowPayload);
 
@@ -80,6 +143,28 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
                                         TMax); // TODO ASSERT
 }
 
+float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition, in MaterialConstant material)
+{
+    bool isReflective = material.reflectionFactor < 1e-3 ? false : true;
+    
+    // Shadowing
+    const Light L = lights[0];
+    const float3 lightPos = L.position;
+    
+    const float3 albedo = material.albedo;
+    
+    float3 lightDir = normalize(lightPos - hitPosition);
+    float len = length(lightPos - hitPosition);
+    
+    float3 color = CalculateDiffuseLighting(albedo, hitPosition, N, L).xyz;
+
+    bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, N, rayPayload, len);
+    float shadowFactor = isInShadow ? 0.3 : 1.0;
+
+    color *= shadowFactor;
+    return color;
+}
+
 [shader("closesthit")] 
 void ClosestHit(inout HitInfo payload, Attributes attrib) {
     uint        startIndex = PrimitiveIndex() * 3;
@@ -95,28 +180,16 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     float  orientation = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE ? 1 : -1;
     objectNormal *= orientation;
     float3 normal = normalize(mul((float3x3)ObjectToWorld3x4(), objectNormal));
-
+    
     MaterialConstant material = g_materials[materialId];
-
-    // Shadowing
-    Light  L = lights[0];
-    float3 lightPos = L.position;
-
+    
+    material.albedo =
+        (material.useAlbedoMap == TRUE) ? l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz : material.albedo;
+    
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
-
-    float3 lightDir = normalize(lightPos - hitPosition);
-    float  len = length(lightPos - hitPosition);
-
-    float4 albedo =
-        (material.useAlbedoMap == TRUE) ? l_diffuseTex.SampleLevel(g_sampler, texcoord, 0) : float4(1, 1, 1, 1);
     
-    float3 color = CalculateDiffuseLighting(albedo, hitPosition, normal, L).xyz;
-
-    bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, normal, payload, len);
-    float shadowFactor = isInShadow ? 0.3 : 1.0;
-
-    color *= shadowFactor;
+    float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
 
     payload.colorAndDistance = float4(color, RayTCurrent());
 }
