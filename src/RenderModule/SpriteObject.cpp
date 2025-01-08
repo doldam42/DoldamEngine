@@ -8,10 +8,10 @@
 
 #include "SpriteObject.h"
 
-ID3D12Resource *SpriteObject::m_pVertexBuffer = nullptr;
+ID3D12Resource          *SpriteObject::m_pVertexBuffer = nullptr;
 D3D12_VERTEX_BUFFER_VIEW SpriteObject::m_vertexBufferView = {};
 
-ID3D12Resource *SpriteObject::m_pIndexBuffer = nullptr;
+ID3D12Resource         *SpriteObject::m_pIndexBuffer = nullptr;
 D3D12_INDEX_BUFFER_VIEW SpriteObject::m_indexBufferView = {};
 
 ULONG SpriteObject::m_initRefCount = 0;
@@ -53,8 +53,9 @@ BOOL SpriteObject::InitMesh()
     BOOL result = FALSE;
 
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
-    UINT                  srvDescriptorSize = m_pRenderer->GetResourceManager()->GetDescriptorSize();
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
+
+    UINT srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
 
     // Create the vertex buffer.
     // Define the geometry for a triangle.
@@ -144,14 +145,15 @@ BOOL SpriteObject::Initialize(D3D12Renderer *pRenderer, const WCHAR *texFileName
 }
 
 void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Vector2 *pPos,
-                               const Vector2 *pScale,
-                               const RECT *pRect, float Z, TEXTURE_HANDLE *pTexHandle)
+                               const Vector2 *pScale, const RECT *pRect, float Z, TEXTURE_HANDLE *pTexHandle)
 {
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
-    UINT                  srvDescriptorSize = m_pRenderer->GetResourceManager()->GetDescriptorSize();
+    ID3D12Device5 *pD3DDeivce = m_pRenderer->GetD3DDevice();
+
+    UINT                  srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-    ConstantBufferPool   *pConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SPRITE, threadIndex);
+    ConstantBufferPool   *pConstantBufferPool =
+        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SPRITE, threadIndex);
 
     UINT TexWidth = 0;
     UINT TexHeight = 0;
@@ -193,8 +195,8 @@ void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCom
     SpriteConstants *pConstantBufferSprite = (SpriteConstants *)pCB->pSystemMemAddr;
 
     // constant buffer�� ������ ����
-    pConstantBufferSprite->screenRes.x = (float)m_pRenderer->INL_GetScreenWidth();
-    pConstantBufferSprite->screenRes.y = (float)m_pRenderer->INL_GetScreenHeight();
+    pConstantBufferSprite->screenRes.x = (float)m_pRenderer->GetScreenWidth();
+    pConstantBufferSprite->screenRes.y = (float)m_pRenderer->GetScreenHeight();
     pConstantBufferSprite->pos = *pPos;
     pConstantBufferSprite->scale = *pScale;
     pConstantBufferSprite->texSize.x = (float)TexWidth;
@@ -237,20 +239,11 @@ void SpriteObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLis
     DrawWithTex(threadIndex, pCommandList, pPos, &scale, &m_Rect, Z, m_pTexHandle);
 }
 
-SpriteObject::~SpriteObject()
-{
-    Cleanup();
-}
+SpriteObject::~SpriteObject() { Cleanup(); }
 
-HRESULT __stdcall SpriteObject::QueryInterface(REFIID riid, void **ppvObject)
-{
-    return E_NOTIMPL;
-}
+HRESULT __stdcall SpriteObject::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
-ULONG __stdcall SpriteObject::AddRef(void)
-{
-    return ++m_refCount;
-}
+ULONG __stdcall SpriteObject::AddRef(void) { return ++m_refCount; }
 
 ULONG __stdcall SpriteObject::Release(void)
 {

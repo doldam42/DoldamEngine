@@ -25,6 +25,8 @@ class CommandListPool;
 class Cubemap;
 class RaytracingManager;
 
+class PostProcessor;
+
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
  #define USE_RAYTRACING
  //#define USE_MULTI_THREAD
@@ -69,6 +71,8 @@ class D3D12Renderer : public IRenderer
 
     // #DXR
     RaytracingManager *m_pRaytracingManager = nullptr;
+
+    PostProcessor *m_pPostProcessor = nullptr;
 
     /* ID3D12CommandAllocator    *m_ppCommandAllocator[MAX_PENDING_FRAME_COUNT] = {};
      ID3D12GraphicsCommandList *m_ppCommandList[MAX_PENDING_FRAME_COUNT] = {};*/
@@ -243,9 +247,12 @@ class D3D12Renderer : public IRenderer
 
     float GetDPI() const { return m_DPI; }
 
-    float INL_GetScreenWidth() const { return m_Viewport.Width; }
-    float INL_GetScreenHeight() const { return m_Viewport.Height; }
+    float GetScreenWidth() const { return m_Viewport.Width; }
+    float GetScreenHeight() const { return m_Viewport.Height; }
     float GetAspectRatio() const { return float(m_Viewport.Width) / m_Viewport.Height; }
+
+    D3D12_VIEWPORT GetViewport() const { return m_Viewport; }
+    D3D12_RECT     GetScissorRect() const { return m_ScissorRect; }
 
     // 함수 호출시 TEXTURE_HANDLE의 REF_COUNT를 1 올림
 

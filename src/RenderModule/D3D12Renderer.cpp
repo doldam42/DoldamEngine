@@ -20,6 +20,8 @@
 #include "SpriteObject.h"
 #include "TextureManager.h"
 
+#include "PostProcessor.h"
+
 #include <process.h>
 
 #include "D3D12Renderer.h"
@@ -184,6 +186,9 @@ lb_exit:
     m_pShadowManager = new ShadowManager;
     m_pShadowManager->Initialize(this, m_shadowWidth);
 
+    m_pPostProcessor = new PostProcessor;
+    m_pPostProcessor->Initialize(this);
+
     CreateDescriptorHeap();
 
     CreateBuffers();
@@ -268,7 +273,6 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
-    
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -288,15 +292,16 @@ void D3D12Renderer::BeginRender()
 void D3D12Renderer::EndRender()
 {
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
-
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    
+    UpdateGlobal();
+#if defined(USE_MULTI_THREAD)
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
 
-    UpdateGlobal();
-
     m_pShadowManager->Render(m_pCommandQueue);
 
-    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
     {
         pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -304,10 +309,8 @@ void D3D12Renderer::EndRender()
         pCommandList->RSSetScissorRects(1, &m_ScissorRect);
         m_pCubemap->Draw(0, pCommandList);
     }
-
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
-#if defined(USE_MULTI_THREAD)
     m_activeThreadCount = m_renderThreadCount;
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -320,24 +323,13 @@ void D3D12Renderer::EndRender()
                                      DRAW_PASS_TYPE_NON_OPAQUE);
 
 #elif defined(USE_RAYTRACING)
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                           m_uiFrameIndex, m_rtvDescriptorSize);
-
-    pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
     ID3D12Resource *pOutputView = m_pRTOutputBuffers[m_uiFrameIndex];
-    const float     clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+                                           m_uiFrameIndex, m_srvDescriptorSize);
     m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtHandle);
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                                           D3D12_RESOURCE_STATE_COPY_DEST));
-    pCommandList->CopyResource(m_pRenderTargets[m_uiFrameIndex], pOutputView);
 
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 #else
     for (UINT i = 0; i < m_renderThreadCount; i++)
@@ -347,48 +339,23 @@ void D3D12Renderer::EndRender()
                                     &m_ScissorRect);
     }
 #endif
+
     // PostProcessing
+    D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+#ifdef USE_RAYTRACING
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+                                            m_uiFrameIndex, m_srvDescriptorSize);
+#else
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
+                                            m_srvDescriptorSize);
+#endif
+    
     pCommandList = pCommandListPool->GetCurrentCommandList();
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
-
-    D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
-    pCommandList->RSSetViewports(1, &m_Viewport);
-    pCommandList->RSSetScissorRects(1, &m_ScissorRect);
-    pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
-    pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
-    pCommandList->SetPipelineState(Graphics::presentPSO);
-
-#ifdef USE_RAYTRACING
-    DescriptorPool       *pDescriptorPool = GetDescriptorPool(0);
-    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                            m_uiFrameIndex, m_srvDescriptorSize);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
-
-    m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
-    pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-#else
-    
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetGPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
-                                            m_srvDescriptorSize);
-    pCommandList->SetDescriptorHeaps(1, &m_pSRVHeap);
-    pCommandList->SetGraphicsRootDescriptorTable(0, srvHandle);
-#endif
-
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetVertexBuffers(0, 1, &SpriteObject::GetVertexBufferView());
-    pCommandList->IASetIndexBuffer(&SpriteObject::GetIndexBufferView());
-    pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    m_pPostProcessor->Draw(0, pCommandList, srvHandle, backBufferRTV);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
@@ -823,8 +790,8 @@ void D3D12Renderer::UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureH
 
 void D3D12Renderer::UpdateGlobal()
 {
-    Vector3 lightPosition = m_pLights[0].position;
-    Vector3 lightDirection = m_pLights[0].direction;
+    const Vector3 lightPosition = m_pLights[0].position;
+    const Vector3 lightDirection = m_pLights[0].direction;
 
     Matrix lightViewRow = XMMatrixLookToLH(lightPosition, lightDirection, Vector3::UnitY);
     m_pShadowManager->Update(lightViewRow, m_camViewRow, m_camProjRow, 0.01f, 100.0f);
@@ -864,6 +831,11 @@ void D3D12Renderer::UpdateGlobal()
         if (m_pProjectionTexHandle)
         {
             m_pD3DDevice->CopyDescriptorsSimple(1, projectionHandle, m_pProjectionTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        }
+        else
+        {
+            m_pD3DDevice->CopyDescriptorsSimple(1, projectionHandle, m_pDefaultTexHandle->srv.cpuHandle,
                                                 D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         }
 
@@ -1251,7 +1223,7 @@ BOOL D3D12Renderer::CreateDescriptorHeap()
     D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
     srvHeapDesc.NumDescriptors = SWAP_CHAIN_FRAME_COUNT; // SwapChain Buffers * render target type
     srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_pSRVHeap))))
     {
         __debugbreak();
@@ -1375,8 +1347,8 @@ void D3D12Renderer::CreateBuffers()
         ID3D12Resource *pOutBuffer = nullptr;
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_Viewport.Width, m_Viewport.Height, 1, 1, 1,
-                                              0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
+                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&pOutBuffer))))
         {
             __debugbreak();
@@ -1528,6 +1500,12 @@ void D3D12Renderer::Cleanup()
     CleanupFence();
     CleanupDescriptorHeap();
     CleanupBuffers();
+
+    if (m_pPostProcessor)
+    {
+        delete m_pPostProcessor;
+        m_pPostProcessor = nullptr;
+    }
 
     if (m_pShadowManager)
     {

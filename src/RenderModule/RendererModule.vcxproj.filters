@@ -77,6 +77,9 @@
     <Filter Include="RaytracingManager">
       <UniqueIdentifier>{5f548d57-2750-4ce0-bf9b-25b7b065f75f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PostProcessor">
+      <UniqueIdentifier>{30b89509-4661-4a9e-9741-59540a513d60}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -153,6 +156,9 @@
     <ClInclude Include="RaytracingMeshObject.h">
       <Filter>MeshObject</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessor.h">
+      <Filter>PostProcessor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -221,6 +227,9 @@
     <ClCompile Include="ShadowManager.cpp" />
     <ClCompile Include="RaytracingMeshObject.cpp">
       <Filter>MeshObject</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessor.cpp">
+      <Filter>PostProcessor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

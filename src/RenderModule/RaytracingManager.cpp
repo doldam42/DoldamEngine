@@ -208,13 +208,14 @@ void RaytracingManager::CreateShaderTables()
         UINT shaderRecordSize = shaderIdentifierSize + sizeof(Graphics::LOCAL_ROOT_ARG);
 
         m_pHitShaderTable = new ShaderTable;
-        m_pHitShaderTable->Initialize(pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize, L"HitGroupShaderTable");  // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
+        m_pHitShaderTable->Initialize(
+            pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
+            L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
     }
-
 }
 
 void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
-                                     Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup)
+                                           Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup)
 {
     // EnterCriticalSection(&m_cs);
 
@@ -231,7 +232,8 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
     {
         Graphics::LOCAL_ROOT_ARG *pRootArgPerGeometry = pRootArgs + i;
 
-        m_pHitShaderTable->InsertRecord(hitGroupShaderIdentifier, shaderIdentifierSize, pRootArgPerGeometry, sizeof(Graphics::LOCAL_ROOT_ARG));
+        m_pHitShaderTable->InsertRecord(hitGroupShaderIdentifier, shaderIdentifierSize, pRootArgPerGeometry,
+                                        sizeof(Graphics::LOCAL_ROOT_ARG));
         m_pHitShaderTable->InsertRecord(shadowHitGroupShaderIdentifier, shaderIdentifierSize, pRootArgPerGeometry,
                                         sizeof(Graphics::LOCAL_ROOT_ARG));
     }
@@ -245,7 +247,7 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
     pInstanceDesc->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     pInstanceDesc->InstanceMask = ~0;
     m_AllocatedInstanceCount++;
-    
+
     /*LeaveCriticalSection(&m_cs);
     WakeConditionVariable(&m_cv);*/
 }
@@ -258,13 +260,10 @@ void RaytracingManager::Reset()
     m_pRayGenShaderTable->Reset();*/
 }
 
-RaytracingManager::~RaytracingManager()
-{
-    Cleanup();
-}
+RaytracingManager::~RaytracingManager() { Cleanup(); }
 
 void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
-                                  D3D12_CPU_DESCRIPTOR_HANDLE srv)
+                                    D3D12_CPU_DESCRIPTOR_HANDLE srv)
 {
     ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);

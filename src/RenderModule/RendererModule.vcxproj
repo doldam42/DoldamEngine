@@ -181,6 +181,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="D3DUtil.h" />
     <ClInclude Include="DescriptorAllocator.h" />
     <ClInclude Include="DescriptorPool.h" />
+    <ClInclude Include="PostProcessor.h" />
     <ClInclude Include="RaytracingManager.h" />
     <ClInclude Include="FontManager.h" />
     <ClInclude Include="framework.h" />
@@ -212,6 +213,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClCompile Include="DescriptorAllocator.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="DescriptorPool.cpp" />
+    <ClCompile Include="PostProcessor.cpp" />
     <ClCompile Include="RaytracingManager.cpp" />
     <ClCompile Include="FontManager.cpp" />
     <ClCompile Include="GraphicsCommon.cpp" />

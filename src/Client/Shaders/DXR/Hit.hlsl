@@ -1,3 +1,6 @@
+#ifndef HIT_HLSL
+#define HIT_HLSL
+
 #include "Common.hlsli"
 #include "PhongLighting.hlsli"
 //#include "RaytracingTypedef.h"
@@ -15,7 +18,7 @@ Texture2D<float4>                l_diffuseTex : register(t2, space1);
 HitInfo TraceRadianceRay(Ray ray, in uint currentRayRecursionDepth, float tMin = NEAR_PLANE, float tMax = FAR_PLANE, float bounceContribution = 1, bool cullNonOpaque = false)
 {
     HitInfo rayPayload;
-    rayPayload.colorAndDistance = 0;
+    rayPayload.colorAndDistance = float4(0, 0, 0, 0);
     rayPayload.rayRecursionDepth = currentRayRecursionDepth + 1;
     
     if (currentRayRecursionDepth >= MAX_RAY_RECURSION_DEPTH)
@@ -145,7 +148,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition, in MaterialConstant material)
 {
-    bool isReflective = material.reflectionFactor < 1e-3 ? false : true;
+    bool isReflective = (material.reflectionFactor > 1e-3);
     
     // Shadowing
     const Light L = lights[0];
@@ -193,3 +196,5 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
 
     payload.colorAndDistance = float4(color, RayTCurrent());
 }
+
+#endif // HIT_HLSL
