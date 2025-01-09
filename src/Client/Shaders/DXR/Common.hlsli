@@ -10,7 +10,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MAX_RAY_RECURSION_DEPTH 2
+#define MAX_RADIENT_RAY_RECURSION_DEPTH 3
 #define MAX_SHADOW_RAY_RECURSION_DEPTH 1
 
 #define INSTANCE_MASK ~0
@@ -31,8 +31,8 @@
 // TODO: Add recursion Depth
 struct HitInfo
 {
-    uint rayRecursionDepth;
     float4 colorAndDistance;
+    uint rayRecursionDepth;
 };
 
 struct ShadowHitInfo
@@ -103,14 +103,14 @@ inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4
     return ray;
 }
 
-float2 HitAttribute(in float2 vertexAttribute[3], Attributes attr)
+float2 HitAttribute(float2 vertexAttribute[3], Attributes attr)
 {
     return vertexAttribute[0] +
         attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +
         attr.bary.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
-float3 HitAttribute(in float3 vertexAttribute[3], Attributes attr)
+float3 HitAttribute(float3 vertexAttribute[3], Attributes attr)
 {
     return vertexAttribute[0] +
         attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +
@@ -142,7 +142,7 @@ cbuffer g_cb : register(b0)
     float4x4 invProj;
     float4x4 viewProj;
     float4x4 invViewProj; // Proj -> World
-    float4x4 projectionViewProj; // texture projection 
+    float4x4 projectionViewProj;
     
     float3 eyeWorld;
     float strengthIBL;

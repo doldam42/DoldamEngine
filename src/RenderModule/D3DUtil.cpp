@@ -283,6 +283,7 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
     }
 
     IDxcBlob *pBlob;
+
     ThrowIfFailed(pResult->GetResult(&pBlob));
     return pBlob;
 }

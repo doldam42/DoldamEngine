@@ -310,7 +310,7 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     desc.RayGenerationShaderRecord.SizeInBytes = pRayGenShaderTable->GetDesc().Width;
     desc.Width = pOutputView->GetDesc().Width;
     desc.Height = pOutputView->GetDesc().Height;
-    desc.Depth = 1;
+    desc.Depth = 3;
 
     pCommandList->SetPipelineState1(Graphics::rtStateObject);
     pCommandList->DispatchRays(&desc);

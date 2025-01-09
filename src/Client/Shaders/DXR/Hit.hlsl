@@ -3,27 +3,25 @@
 
 #include "Common.hlsli"
 #include "PhongLighting.hlsli"
-//#include "RaytracingTypedef.h"
+// #include "RaytracingTypedef.h"
 
-cbuffer l_RayFaceGroupConstants : register(b0, space1)
-{
-    uint  materialId;
-};
+cbuffer l_RayFaceGroupConstants : register(b0, space1) { uint materialId; };
 
-StructuredBuffer<Vertex>         l_VB : register(t0, space1);
-StructuredBuffer<uint>           l_IB : register(t1, space1);
-Texture2D<float4>                l_diffuseTex : register(t2, space1);
+StructuredBuffer<Vertex> l_VB : register(t0, space1);
+StructuredBuffer<uint>   l_IB : register(t1, space1);
+
+Texture2D<float4> l_diffuseTex : register(t2, space1);
 // Texture2D<float4> l_normalTex : register(t3, space1);
 
-HitInfo TraceRadianceRay(Ray ray, in uint currentRayRecursionDepth, float tMin = NEAR_PLANE, float tMax = FAR_PLANE, float bounceContribution = 1, bool cullNonOpaque = false)
+HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMin = 0, float tMax = 100000,
+                         float bounceContribution = 1, bool cullNonOpaque = false)
 {
     HitInfo rayPayload;
-    rayPayload.colorAndDistance = float4(0, 0, 0, 0);
     rayPayload.rayRecursionDepth = currentRayRecursionDepth + 1;
-    
-    if (currentRayRecursionDepth >= MAX_RAY_RECURSION_DEPTH)
+
+    if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
-        rayPayload.colorAndDistance = float4(133/255.0, 161/255.0, 179/255.0, 0);
+        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
         return rayPayload;
     }
 
@@ -36,39 +34,87 @@ HitInfo TraceRadianceRay(Ray ray, in uint currentRayRecursionDepth, float tMin =
 
     uint rayFlags = (cullNonOpaque ? RAY_FLAG_CULL_NON_OPAQUE : 0);
 
-    TraceRay(g_scene,
+    TraceRay(
+        // Parameter name: AccelerationStructure
+        // Acceleration structure
+        g_scene,
+
+        // Parameter name: RayFlags
+        // Flags can be used to specify the behavior upon hitting a surface
         rayFlags,
-		INSTANCE_MASK, HITGROUP_INDEX_RADIENT, GEOMETRY_STRIDE, MISS_INDEX_RADIENT,
-		rayDesc, rayPayload);
+
+        // Parameter name: InstanceInclusionMask
+        // Instance inclusion mask, which can be used to mask out some geometry to
+        // this ray by and-ing the mask with a geometry mask. The 0xFF flag then
+        // indicates no geometry will be masked
+        INSTANCE_MASK,
+
+        // Parameter name: RayContributionToHitGroupIndex
+        // Depending on the type of ray, a given object can have several hit
+        // groups attached (ie. what to do when hitting to compute regular
+        // shading, and what to do when hitting to compute shadows). Those hit
+        // groups are specified sequentially in the SBT, so the value below
+        // indicates which offset (on 4 bits) to apply to the hit groups for this
+        // ray. In this sample we only have one hit group per object, hence an
+        // offset of 0.
+        HITGROUP_INDEX_RADIENT,
+
+        // Parameter name: MultiplierForGeometryContributionToHitGroupIndex
+        // The offsets in the SBT can be computed from the object ID, its instance
+        // ID, but also simply by the order the objects have been pushed in the
+        // acceleration structure. This allows the application to group shaders in
+        // the SBT in the same order as they are added in the AS, in which case
+        // the value below represents the stride (4 bits representing the number
+        // of hit groups) between two consecutive objects.
+        GEOMETRY_STRIDE,
+
+        // Parameter name: MissShaderIndex
+        // Index of the miss shader to use in case several consecutive miss
+        // shaders are present in the SBT. This allows to change the behavior of
+        // the program when no geometry have been hit, for example one to return a
+        // sky color for regular rendering, and another returning a full
+        // visibility value for shadow rays. This sample has only one miss shader,
+        // hence an index 0
+        MISS_INDEX_RADIENT,
+
+        // Parameter name: Ray
+        // Ray information to trace
+        rayDesc,
+
+        // Parameter name: Payload
+        // Payload associated to the ray, which will be used to communicate
+        // between the hit/miss shaders and the raygen
+        rayPayload);
 
     return rayPayload;
 }
 
-float3 TraceReflectiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal, inout HitInfo rayPayload, in float TMax = 10000)
+float3 TraceReflectiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal,
+                          inout HitInfo rayPayload, in float TMax = 10000)
 {
-    // Here we offset ray start along the ray direction instead of surface normal 
-    // so that the reflected ray projects to the same screen pixel. 
-    // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer. 
-    float tOffset = 0.001f;
+    // Here we offset ray start along the ray direction instead of surface normal
+    // so that the reflected ray projects to the same screen pixel.
+    // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
+    float  tOffset = 0.001f;
     float3 offsetAlongRay = tOffset * wt;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 
-    Ray ray = { adjustedHitPosition, wt };
+    Ray ray = {adjustedHitPosition, wt};
 
     float tMin = 0;
     float tMax = TMax;
 
     // TRADEOFF: Performance vs visual quality
     // Cull transparent surfaces when casting a transmission ray for a transparent surface.
-    // Spaceship in particular has multiple layer glass causing a substantial perf hit 
+    // Spaceship in particular has multiple layer glass causing a substantial perf hit
     // with multiple bounces along the way.
     // This can cause visual pop ins however, such as in a case of looking at the spaceship's
     // glass cockpit through a window in the house. The cockpit will be skipped in this case.
     bool cullNonOpaque = true;
 
     rayPayload = TraceRadianceRay(ray, rayPayload.rayRecursionDepth, tMin, tMax, 0, cullNonOpaque);
-    
+
     if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
     {
         // Add current thit and the added offset to the thit of the traced ray.
@@ -115,7 +161,7 @@ bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRay
     {
         rayFlags |= RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
     }
-    
+
     TraceRay(g_scene, rayFlags, INSTANCE_MASK, HITGROUP_INDEX_SHADOW, GEOMETRY_STRIDE, MISS_INDEX_SHADOW, rayDesc,
              shadowPayload);
 
@@ -146,22 +192,23 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
                                         TMax); // TODO ASSERT
 }
 
-float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition, in MaterialConstant material)
+float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition,
+             in MaterialConstant material)
 {
     bool isReflective = (material.reflectionFactor > 1e-3);
-    
+
     // Shadowing
-    const Light L = lights[0];
+    const Light  L = lights[0];
     const float3 lightPos = L.position;
-    
+
     const float3 albedo = material.albedo;
-    
+
     float3 lightDir = normalize(lightPos - hitPosition);
-    float len = length(lightPos - hitPosition);
-    
+    float  len = length(lightPos - hitPosition);
+
     float3 color = CalculateDiffuseLighting(albedo, hitPosition, N, L).xyz;
 
-    bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, N, rayPayload, len);
+    bool  isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, N, rayPayload, len);
     float shadowFactor = isInShadow ? 0.3 : 1.0;
 
     color *= shadowFactor;
@@ -172,7 +219,6 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
 void ClosestHit(inout HitInfo payload, Attributes attrib) {
     uint        startIndex = PrimitiveIndex() * 3;
     const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
-
     Vertex v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
 
     float2 vertexTexCoords[3] = {v[0].texcoord, v[1].texcoord, v[2].texcoord};
@@ -183,17 +229,17 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     float  orientation = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE ? 1 : -1;
     objectNormal *= orientation;
     float3 normal = normalize(mul((float3x3)ObjectToWorld3x4(), objectNormal));
-    
+
     MaterialConstant material = g_materials[materialId];
-    
+
     material.albedo =
         (material.useAlbedoMap == TRUE) ? l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz : material.albedo;
-    
+
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
-    
-    float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
 
+    // float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
+    float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());
 }
 
