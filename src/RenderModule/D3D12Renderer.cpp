@@ -236,9 +236,9 @@ lb_exit:
 // #DXR
 #ifdef USE_RAYTRACING
     m_pRaytracingManager = new RaytracingManager;
-    ID3D12GraphicsCommandList4 *pCommandList = m_ppCommandListPool[m_dwCurContextIndex][0]->GetCurrentCommandList();
+    ID3D12GraphicsCommandList4 *pCommandList = m_ppCommandListPool[m_curContextIndex][0]->GetCurrentCommandList();
     m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
-    m_ppCommandListPool[m_dwCurContextIndex][0]->CloseAndExecute(m_pCommandQueue);
+    m_ppCommandListPool[m_curContextIndex][0]->CloseAndExecute(m_pCommandQueue);
 #endif
 
     CreateDefaultTex();
@@ -267,7 +267,7 @@ lb_return:
 void D3D12Renderer::BeginRender()
 {
 
-    CommandListPool           *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool           *pCommandListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     m_pTextureManager->Update(pCommandList);
@@ -291,7 +291,7 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     
     UpdateGlobal();
@@ -325,10 +325,10 @@ void D3D12Renderer::EndRender()
 #elif defined(USE_RAYTRACING)
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
-    ID3D12Resource *pOutputView = m_pRTOutputBuffers[m_uiFrameIndex];
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
+    ID3D12Resource *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtOutputSrv(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
                                            m_uiFrameIndex, m_srvDescriptorSize);
-    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtHandle);
+    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtOutputSrv);
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 #else
@@ -361,6 +361,8 @@ void D3D12Renderer::EndRender()
                                                                            D3D12_RESOURCE_STATE_PRESENT));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
+    //Fence();
+    //WaitForFenceValue(m_pui64LastFenceValue[m_curContextIndex]);
 #ifdef USE_RAYTRACING
     m_pRaytracingManager->Reset();
 #else
@@ -402,7 +404,7 @@ void D3D12Renderer::Present()
     m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
     // prepare next frame
-    UINT dwNextContextIndex = (m_dwCurContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
+    UINT dwNextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     WaitForFenceValue(m_pui64LastFenceValue[dwNextContextIndex]);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
@@ -413,7 +415,7 @@ void D3D12Renderer::Present()
         m_ppCommandListPool[dwNextContextIndex][i]->Reset();
     }
 
-    m_dwCurContextIndex = dwNextContextIndex;
+    m_curContextIndex = dwNextContextIndex;
 }
 
 void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
@@ -508,7 +510,7 @@ IRenderSprite *D3D12Renderer::CreateSpriteObject(const WCHAR *texFileName, int P
 void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
 {
 #ifdef USE_RAYTRACING
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
     // TODO: ADD Material
@@ -551,7 +553,7 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
                                                   UINT numInstance)
 {
 #ifdef USE_RAYTRACING
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
     pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, nullptr, 0);
@@ -590,9 +592,9 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
                                           UINT numBones, bool isWired)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
+    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_curContextIndex];
 #ifdef USE_RAYTRACING
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
     pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
@@ -628,7 +630,7 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
                                                        IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
 {
 #ifdef USE_RAYTRACING
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
     pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
@@ -662,7 +664,7 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
 void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX,
                                         float fScaleY, const RECT *pRect, float Z, ITextureHandle *pTexHandle)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
+    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_curContextIndex];
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_SPRITE;
@@ -695,7 +697,7 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
 void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                                  float Z)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_dwCurContextIndex];
+    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_curContextIndex];
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_SPRITE;
@@ -756,7 +758,7 @@ BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIn
 void D3D12Renderer::EndCreateMesh(IRenderMesh *pMeshObjHandle)
 {
 #ifdef USE_RAYTRACING
-    CommandListPool            *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][0];
+    CommandListPool            *pCommandListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pMeshObjHandle;
@@ -1102,7 +1104,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT thread
 
 ConstantBufferPool *D3D12Renderer::GetConstantBufferPool(CONSTANT_BUFFER_TYPE type, UINT threadIndex)
 {
-    return m_ppConstantBufferManager[m_dwCurContextIndex][threadIndex]->GetConstantBufferPool(type);
+    return m_ppConstantBufferManager[m_curContextIndex][threadIndex]->GetConstantBufferPool(type);
 }
 
 // RTV handle
@@ -1131,7 +1133,7 @@ ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_p
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex)
 {
-    CommandListPool *pCommandListPool = m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
+    CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
@@ -1287,7 +1289,7 @@ UINT64 D3D12Renderer::Fence()
 {
     m_ui64FenceValue++;
     m_pCommandQueue->Signal(m_pFence, m_ui64FenceValue);
-    m_pui64LastFenceValue[m_dwCurContextIndex] = m_ui64FenceValue;
+    m_pui64LastFenceValue[m_curContextIndex] = m_ui64FenceValue;
     return m_ui64FenceValue;
 }
 
@@ -1358,7 +1360,7 @@ void D3D12Renderer::CreateBuffers()
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
         m_pD3DDevice->CreateUnorderedAccessView(pOutBuffer, nullptr, &uavDesc, rtHandle);
 
-        m_pRTOutputBuffers[n] = pOutBuffer;
+        m_pRaytracingOutputBuffers[n] = pOutBuffer;
         rtHandle.Offset(1, m_srvDescriptorSize);
     }
 
@@ -1405,10 +1407,10 @@ void D3D12Renderer::CleanupBuffers()
             m_pIntermediateRenderTargets[i] = nullptr;
         }
 
-        if (m_pRTOutputBuffers[i])
+        if (m_pRaytracingOutputBuffers[i])
         {
-            m_pRTOutputBuffers[i]->Release();
-            m_pRTOutputBuffers[i] = nullptr;
+            m_pRaytracingOutputBuffers[i]->Release();
+            m_pRaytracingOutputBuffers[i] = nullptr;
         }
     }
 

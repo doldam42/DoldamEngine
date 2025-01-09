@@ -42,10 +42,13 @@ void RaytracingManager::Cleanup()
         delete m_pMissShaderTable;
         m_pMissShaderTable = nullptr;
     }
-    if (m_pHitShaderTable)
+    for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
-        delete m_pHitShaderTable;
-        m_pHitShaderTable = nullptr;
+        if (m_pHitShaderTables[i])
+        {
+            delete m_pHitShaderTables[i];
+            m_pHitShaderTables[i] = nullptr;
+        }
     }
 }
 
@@ -203,14 +206,17 @@ void RaytracingManager::CreateShaderTables()
         m_pMissShaderTable->InsertRecord(missShaderIdentifier, shaderIdentifierSize);
         m_pMissShaderTable->InsertRecord(shadowMissShaderIdentifier, shaderIdentifierSize);
     }
-    // Hit Shader Table
+    for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
-        UINT shaderRecordSize = shaderIdentifierSize + sizeof(Graphics::LOCAL_ROOT_ARG);
+        // Hit Shader Table
+        {
+            UINT shaderRecordSize = shaderIdentifierSize + sizeof(Graphics::LOCAL_ROOT_ARG);
 
-        m_pHitShaderTable = new ShaderTable;
-        m_pHitShaderTable->Initialize(
-            pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
-            L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
+            m_pHitShaderTables[i] = new ShaderTable;
+            m_pHitShaderTables[i]->Initialize(
+                pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
+                L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
+        }
     }
 }
 
@@ -226,16 +232,16 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
     void *hitGroupShaderIdentifier = Graphics::rtStateObjectProps->GetShaderIdentifier(L"HitGroup");
     void *shadowHitGroupShaderIdentifier = Graphics::rtStateObjectProps->GetShaderIdentifier(L"ShadowHitGroup");
     UINT  shaderIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    UINT  shaderRecordOffset = m_pHitShaderTable->GetAllocatedRecordCount();
+    UINT  shaderRecordOffset = m_pHitShaderTables[m_curContextIndex]->GetAllocatedRecordCount();
 
     for (UINT i = 0; i < numFaceGroup; i++)
     {
         Graphics::LOCAL_ROOT_ARG *pRootArgPerGeometry = pRootArgs + i;
 
-        m_pHitShaderTable->InsertRecord(hitGroupShaderIdentifier, shaderIdentifierSize, pRootArgPerGeometry,
-                                        sizeof(Graphics::LOCAL_ROOT_ARG));
-        m_pHitShaderTable->InsertRecord(shadowHitGroupShaderIdentifier, shaderIdentifierSize, pRootArgPerGeometry,
-                                        sizeof(Graphics::LOCAL_ROOT_ARG));
+        m_pHitShaderTables[m_curContextIndex]->InsertRecord(hitGroupShaderIdentifier, shaderIdentifierSize,
+                                                            pRootArgPerGeometry, sizeof(Graphics::LOCAL_ROOT_ARG));
+        m_pHitShaderTables[m_curContextIndex]->InsertRecord(shadowHitGroupShaderIdentifier, shaderIdentifierSize,
+                                                            pRootArgPerGeometry, sizeof(Graphics::LOCAL_ROOT_ARG));
     }
 
     D3D12_RAYTRACING_INSTANCE_DESC *pInstanceDesc = m_pInstanceDescsCPU + m_AllocatedInstanceCount;
@@ -255,7 +261,9 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
 void RaytracingManager::Reset()
 {
     m_AllocatedInstanceCount = 0;
-    m_pHitShaderTable->Reset();
+    m_pHitShaderTables[m_curContextIndex]->Reset();
+    
+    m_curContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     /*m_pMissShaderTable->Reset();
     m_pRayGenShaderTable->Reset();*/
 }
@@ -295,14 +303,14 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     pCommandList->SetComputeRootDescriptorTable(0, gpuHandles);
     pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(0));
 
-    ID3D12Resource *pHitShaderTable = m_pHitShaderTable->GetResource();
+    ID3D12Resource *pHitShaderTable = m_pHitShaderTables[m_curContextIndex]->GetResource();
     ID3D12Resource *pMissShaderTable = m_pMissShaderTable->GetResource();
     ID3D12Resource *pRayGenShaderTable = m_pRayGenShaderTable->GetResource();
 
     D3D12_DISPATCH_RAYS_DESC desc = {};
     desc.HitGroupTable.StartAddress = pHitShaderTable->GetGPUVirtualAddress();
-    desc.HitGroupTable.SizeInBytes = m_pHitShaderTable->GetSizeInBytes();
-    desc.HitGroupTable.StrideInBytes = m_pHitShaderTable->GetShaderRecordSize();
+    desc.HitGroupTable.SizeInBytes = m_pHitShaderTables[m_curContextIndex]->GetSizeInBytes();
+    desc.HitGroupTable.StrideInBytes = m_pHitShaderTables[m_curContextIndex]->GetShaderRecordSize();
     desc.MissShaderTable.StartAddress = pMissShaderTable->GetGPUVirtualAddress();
     desc.MissShaderTable.SizeInBytes = m_pMissShaderTable->GetSizeInBytes();
     desc.MissShaderTable.StrideInBytes = m_pMissShaderTable->GetShaderRecordSize();
@@ -310,7 +318,7 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     desc.RayGenerationShaderRecord.SizeInBytes = pRayGenShaderTable->GetDesc().Width;
     desc.Width = pOutputView->GetDesc().Width;
     desc.Height = pOutputView->GetDesc().Height;
-    desc.Depth = 3;
+    desc.Depth = 5;
 
     pCommandList->SetPipelineState1(Graphics::rtStateObject);
     pCommandList->DispatchRays(&desc);

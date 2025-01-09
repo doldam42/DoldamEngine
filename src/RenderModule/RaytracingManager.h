@@ -1,17 +1,16 @@
 #pragma once
 
+#include <d3d12.h>
 #include "RendererTypedef.h"
-#include "../Client/Shaders/DXR/RaytracingHlslCompat.h"
+#include "D3D12Renderer.h"
 #include "GraphicsCommon.h"
 
 struct DESCRIPTOR_HANDLE;
-class D3D12Renderer;
 class ShaderTable;
 class RaytracingManager
 {
     CRITICAL_SECTION   m_cs = {};
-    CONDITION_VARIABLE m_cv= {};
-
+    CONDITION_VARIABLE m_cv = {};
 
     D3D12Renderer *m_pRenderer = nullptr;
 
@@ -23,10 +22,12 @@ class RaytracingManager
 
     ShaderTable *m_pRayGenShaderTable = nullptr;
     ShaderTable *m_pMissShaderTable = nullptr;
-    ShaderTable *m_pHitShaderTable = nullptr;
+    ShaderTable *m_pHitShaderTables[MAX_PENDING_FRAME_COUNT] = {nullptr};
 
     UINT m_AllocatedInstanceCount = 0;
     UINT m_maxInstanceCount = 0;
+
+    UINT m_curContextIndex = 0;
 
     void CreateShaderTables();
     void Cleanup();

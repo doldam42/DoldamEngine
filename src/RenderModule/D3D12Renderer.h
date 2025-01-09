@@ -74,8 +74,6 @@ class D3D12Renderer : public IRenderer
 
     PostProcessor *m_pPostProcessor = nullptr;
 
-    /* ID3D12CommandAllocator    *m_ppCommandAllocator[MAX_PENDING_FRAME_COUNT] = {};
-     ID3D12GraphicsCommandList *m_ppCommandList[MAX_PENDING_FRAME_COUNT] = {};*/
     CommandListPool       *m_ppCommandListPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     DescriptorPool        *m_ppDescriptorPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
@@ -101,7 +99,7 @@ class D3D12Renderer : public IRenderer
     D3D12_RECT         m_ScissorRect = {};
     float              m_DPI = 96.0f;
 
-    ID3D12Resource *m_pRTOutputBuffers[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
+    ID3D12Resource *m_pRaytracingOutputBuffers[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pIntermediateRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pDepthStencil = nullptr;
@@ -143,7 +141,7 @@ class D3D12Renderer : public IRenderer
     HANDLE       m_hFenceEvent = nullptr;
     ID3D12Fence *m_pFence = nullptr;
 
-    UINT m_dwCurContextIndex = 0;
+    UINT m_curContextIndex = 0;
 
   private:
     void CreateDefaultTex();
@@ -264,12 +262,12 @@ class D3D12Renderer : public IRenderer
 
     DescriptorPool *GetDescriptorPool(UINT threadIndex) const
     {
-        return m_ppDescriptorPool[m_dwCurContextIndex][threadIndex];
+        return m_ppDescriptorPool[m_curContextIndex][threadIndex];
     }
 
     CommandListPool *GetCommandListPool(UINT threadIndex) const
     {
-        return m_ppCommandListPool[m_dwCurContextIndex][threadIndex];
+        return m_ppCommandListPool[m_curContextIndex][threadIndex];
     }
 
     ConstantBufferPool *GetConstantBufferPool(CONSTANT_BUFFER_TYPE type, UINT threadIndex);

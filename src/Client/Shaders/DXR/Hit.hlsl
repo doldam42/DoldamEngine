@@ -215,11 +215,10 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     return color;
 }
 
-[shader("closesthit")] 
-void ClosestHit(inout HitInfo payload, Attributes attrib) {
+[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib) {
     uint        startIndex = PrimitiveIndex() * 3;
     const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
-    Vertex v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
+    Vertex      v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
 
     float2 vertexTexCoords[3] = {v[0].texcoord, v[1].texcoord, v[2].texcoord};
     float2 texcoord = HitAttribute(vertexTexCoords, attrib);
@@ -238,8 +237,8 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
 
-    // float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
-    float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
+    float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
+    // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());
 }
 

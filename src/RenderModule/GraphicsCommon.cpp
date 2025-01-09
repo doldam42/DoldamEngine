@@ -887,6 +887,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
         SerializeAndCreateRootSignature(pD3DDevice, &globalRootSignatureDesc, &globalRS, L"GlbalRootSig");
     }
     // Init Local Hit Root Signature
+    // |  VERTICES(t0, space1)  | INDICES(t1, space1) | DIFFUSE_TEX(t2, space1) | 
     {
         CD3DX12_DESCRIPTOR_RANGE ranges[LOCAL_ROOT_PARAM_INDEX_COUNT];
         ranges[LOCAL_ROOT_PARAM_INDEX_VERTICES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);

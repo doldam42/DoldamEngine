@@ -25,7 +25,7 @@
 BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
     ID3D12Device5 *pDevice = pRenderer->GetD3DDevice();
-    m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    m_descriptorSize = pRenderer->GetSRVDescriptorSize();
 
     m_pRenderer = pRenderer;
     m_pD3DDevice = pDevice;
@@ -42,7 +42,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
-    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
+    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && pBoneMats != nullptr)
     {
         UpdateSkinnedBLAS(pCommandList, pBoneMats, numBones);
     }
@@ -502,6 +502,7 @@ void RaytracingMeshObject::CreateSkinningBufferSRVs()
     m_pD3DDevice->CreateUnorderedAccessView(m_pDeformedVertexBuffer, nullptr, &uavDesc, cpuHandle);
 }
 
+// | Vertices | Indices0 | Diffuse Tex0 | Indices1 | Diffuse Tex1 | ... |
 void RaytracingMeshObject::CreateRootArgsSRV()
 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_rootArgDescriptorTable.cpuHandle);
