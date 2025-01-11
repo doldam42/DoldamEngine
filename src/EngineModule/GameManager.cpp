@@ -167,7 +167,7 @@ BOOL GameManager::LoadResources()
                               L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesBrdf.dds");
 
     // Create Lights
-    Vector3 radiance = Vector3(5.0f);
+    Vector3 radiance = Vector3(1.0f);
     Vector3 direction = Vector3(0.0f, -0.554f, 0.832f);
     Vector3 position = Vector3(0.0f, 16.0f, -16.0f);
 
@@ -313,12 +313,6 @@ void GameManager::Update(ULONGLONG curTick)
 
 void GameManager::LateUpdate(ULONGLONG curTick)
 {
-    //// m_pMainCharacter->LateUpdate();
-    // for (int i = 0; i < m_scene.size(); i++)
-    //{
-    //     m_scene[i]->LateUpdate(dt);
-    // }
-
     // 성능 측정
     m_frameCount++;
     if (curTick - m_prevFrameCheckTick > 1000)
@@ -381,6 +375,7 @@ IGameCharacter *GameManager::CreateCharacter()
 {
     Character *pGameObj = new Character;
     pGameObj->Initialize(this, 5);
+
     LinkToLinkedListFIFO(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pGameObj->m_LinkInGame);
 
     return pGameObj;

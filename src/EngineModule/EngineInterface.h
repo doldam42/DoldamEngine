@@ -197,6 +197,8 @@ interface IGameManager
     virtual Vector3 GetCameraPos() = 0;
     virtual Vector3 GetCameraLookAt() = 0;
 
+    virtual void SetCameraPos(const Vector3* pPos) = 0;
+
     virtual float DeltaTime() const = 0;
     virtual UINT  FPS() const = 0;
 

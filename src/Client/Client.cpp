@@ -9,6 +9,7 @@
 #include "VideoManager.h"
 
 #include "BadAppleController.h"
+#include "RaytracingDemoController.h"
 #include "TimeController.h"
 
 #include "Client.h"
@@ -28,6 +29,11 @@ void Client::CleanupControllers()
     {
         delete m_pTimeController;
         m_pTimeController = nullptr;
+    }
+    if (m_pRaytracingDemoController)
+    {
+        delete m_pRaytracingDemoController;
+        m_pRaytracingDemoController = nullptr;
     }
 }
 
@@ -107,11 +113,13 @@ BOOL Client::Initialize(HWND hWnd)
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
+    m_pRaytracingDemoController = new RaytracingDemoController;
     //m_pDemoController = new BadAppleController;
 
     m_pGame->Register(this);
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
+    m_pGame->Register(m_pRaytracingDemoController);
     //m_pGame->Register(m_pDemoController);
     
     m_pGame->Start();
@@ -146,63 +154,6 @@ void Client::LoadResources()
 
     // Create Textures
     m_pDynamicTexture = m_pRenderer->CreateDynamicTexture(imageWidth, imageHeight);
-
-    //// Create Materials
-    Material mat;
-    //wcscpy_s(mat.name, L"wall");
-    //wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    //wcscpy_s(mat.albedoTextureName, L"earth.jpg");
-    //mat.roughnessFactor = 0.2f;
-    //mat.metallicFactor = 0.8f;
-    //mat.opacityFactor = 1.0f;
-    //IRenderMaterial *pWallMaterial = m_pRenderer->CreateMaterialHandle(&mat);
-
-    mat = Material();
-    mat.roughnessFactor = 0.1f;
-    mat.metallicFactor = 0.8f;
-    wcscpy_s(mat.name, L"ground");
-    wcscpy_s(mat.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(mat.albedoTextureName, L"blender_uv_grid_2k.png");
-    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&mat);
-
-    //IRenderMaterial *pDynamicMaterial = m_pRenderer->CreateDynamicMaterial(L"dynamic");
-    //pDynamicMaterial->UpdateTextureWithTexture(m_pDynamicTexture, TEXTURE_TYPE_ALBEDO);
-
-    //IGameModel *pModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-
-    //IGameObject *pSphere1 = m_pGame->CreateGameObject();
-    //IGameObject *pSphere2 = m_pGame->CreateGameObject();
-
-    //pSphere1->SetModel(pModel);
-    //pSphere1->SetPosition(0.0f, 5.0f, 3.0f);
-    //pSphere1->SetMaterials(&pWallMaterial, 1);
-
-    //pModel->AddRef();
-    //pSphere2->SetModel(pModel);
-    //pSphere2->SetPosition(0.0f, 7.05f, 3.0f);
-    //pSphere2->SetMaterials(&pDynamicMaterial, 1);
-
-    Sphere sphere(1.0f);
-    //pSphere1->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
-    //pSphere2->InitPhysics(&sphere, 0.0f, 0.8f, 0.5f);
-
-    //m_pSphere = pSphere1;
-
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    IGameObject *pGround = m_pGame->CreateGameObject();
-    pGround->SetModel(pGroundModel);
-    pGround->SetPosition(0.0f, -102.f, 0.f);
-    pGround->SetScale(100.0f);
-    pGround->SetMaterials(&pGroundMaterial, 1);
-
-    sphere.Radius = 100.0f;
-    pGround->InitPhysics(&sphere, 0.0f, 1.0f, 0.5f);
-
-    // Create Sprite
-    /*m_pTextSprite = m_pGame->CreateDynamicSprite(m_textImageWidth, m_textImageHeight);
-    m_pTextSprite->SetPosition(512 + 5, 256 + 5 + 256 + 5);
-    m_pDynamicSprite = m_pGame->CreateDynamicSprite(imageWidth, imageHeight);
-    m_pDynamicSprite->SetPosition(0, 512);*/
 }
 
 void Client::LoadScene() 

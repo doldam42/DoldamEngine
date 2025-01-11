@@ -13,11 +13,12 @@
       <Filter>VideoManager</Filter>
     </ClCompile>
     <ClCompile Include="BadAppleController.cpp">
-      <Filter>BadAppleDemoController</Filter>
+      <Filter>DemoControllers</Filter>
     </ClCompile>
     <ClCompile Include="AudioManager.cpp">
       <Filter>AudioManager</Filter>
     </ClCompile>
+    <ClCompile Include="RaytracingDemoController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -35,11 +36,12 @@
       <Filter>VideoManager</Filter>
     </ClInclude>
     <ClInclude Include="BadAppleController.h">
-      <Filter>BadAppleDemoController</Filter>
+      <Filter>DemoControllers</Filter>
     </ClInclude>
     <ClInclude Include="AudioManager.h">
       <Filter>AudioManager</Filter>
     </ClInclude>
+    <ClInclude Include="RaytracingDemoController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -68,11 +70,11 @@
     <Filter Include="VideoManager">
       <UniqueIdentifier>{b68427e8-01ac-4754-998c-6f4ea3b3874b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="BadAppleDemoController">
-      <UniqueIdentifier>{d6d7ee05-be9f-48c4-997b-473ca28aa889}</UniqueIdentifier>
-    </Filter>
     <Filter Include="AudioManager">
       <UniqueIdentifier>{bd5370f9-3946-477b-9aba-eaa1ed05725d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DemoControllers">
+      <UniqueIdentifier>{d6d7ee05-be9f-48c4-997b-473ca28aa889}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

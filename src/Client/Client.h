@@ -2,6 +2,7 @@
 
 class TimeController;
 class BadAppleController;
+class RaytracingDemoController;
 class AudioManager;
 class Client : public IController
 {
@@ -39,6 +40,7 @@ class Client : public IController
     // Controllers
     TimeController* m_pTimeController = nullptr;
     BadAppleController* m_pDemoController = nullptr;
+    RaytracingDemoController *m_pRaytracingDemoController = nullptr;
 
   private:
     void CleanupControllers();
@@ -64,6 +66,8 @@ class Client : public IController
 
     IGameManager *GetGameManager() { return m_pGame; }
     AudioManager *GetAudioManager() { return m_pAudio; }
+
+    IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }
 
     Client() = default;
     ~Client();

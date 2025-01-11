@@ -47,6 +47,7 @@ class CameraController
 
     void SetAspectRatio(float aspect);
     void SetFollowTarget(GameObject *pTarget);
+    void SetCameraPos(const Vector3 *pos);
 
     GameObject *GetFollowTarget() const { return m_pTarget; }
 

@@ -71,8 +71,6 @@ class GameManager : public IGameManager
     UINT m_commandListCount = 0;
     UINT m_renderThreadCount = 0;
 
-    Character *m_pMainCharacter = nullptr;
-
     BoundingFrustum m_boundingFrustum;
 
     HWND m_hWnd = nullptr;
@@ -150,6 +148,8 @@ class GameManager : public IGameManager
     void    SetCameraFollowTarget(IGameObject *pObj) override { m_pMainCamera->SetFollowTarget((GameObject *)pObj); }
     Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
     Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
+
+    void SetCameraPos(const Vector3 *pPos) override { m_pMainCamera->SetCameraPos(pPos); }
 
     inline IRenderer        *GetRenderer() const { return m_pRenderer; }
     inline IInputManager    *GetInputManager() const { return m_pInputManager; }

@@ -89,18 +89,18 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
     return rayPayload;
 }
 
-float3 TraceReflectiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal,
+float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, in float3 objectNormal,
                           inout HitInfo rayPayload, in float TMax = 10000)
 {
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
     float  tOffset = 0.001f;
-    float3 offsetAlongRay = tOffset * wt;
+    float3 offsetAlongRay = tOffset * wi;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 
-    Ray ray = {adjustedHitPosition, wt};
+    Ray ray = {adjustedHitPosition, wi};
 
     float tMin = 0;
     float tMax = TMax;
@@ -195,6 +195,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition,
              in MaterialConstant material)
 {
+    float3 V = -WorldRayDirection();
     bool isReflective = (material.reflectionFactor > 1e-3);
 
     // Shadowing
@@ -203,10 +204,24 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
 
     const float3 albedo = material.albedo;
 
+    const float3 ambient = 0.2;
+    const float3 diffuse = 0.2;
+    const float3 specular = 1.0;
+
     float3 lightDir = normalize(lightPos - hitPosition);
     float  len = length(lightPos - hitPosition);
 
-    float3 color = CalculateDiffuseLighting(albedo, hitPosition, N, L).xyz;
+    //float3 color = CalculateDiffuseLighting(albedo, hitPosition, N, L).xyz;
+    
+    float3 color =
+        albedo * ComputeDirectionalLight(L, N, V, ambient, diffuse, specular, 1.0);
+
+    if (isReflective)
+    {
+        HitInfo reflectedRayPayLoad = rayPayload;
+        float3  wi = reflect(-V, N);
+        color += material.reflectionFactor * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
+    }
 
     bool  isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, N, rayPayload, len);
     float shadowFactor = isInShadow ? 0.3 : 1.0;
@@ -215,7 +230,8 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     return color;
 }
 
-[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib) {
+[shader("closesthit")] 
+void ClosestHit(inout HitInfo payload, Attributes attrib) {
     uint        startIndex = PrimitiveIndex() * 3;
     const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
     Vertex      v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
@@ -238,6 +254,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     float3 hitPosition = HitWorldPosition();
 
     float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
+    
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());
 }

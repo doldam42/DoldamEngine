@@ -129,6 +129,8 @@ void CameraController::SetFollowTarget(GameObject *pTarget)
     m_pTarget = pTarget;
 }
 
+void CameraController::SetCameraPos(const Vector3 *pos) { m_pCamera->SetPosition(*pos); }
+
 void CameraController::ToggleProjectionSetting()
 {
     if (m_pCamera->m_usePerspectiveProjection)
