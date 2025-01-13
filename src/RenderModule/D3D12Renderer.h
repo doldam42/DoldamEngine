@@ -28,9 +28,9 @@ class RaytracingManager;
 class PostProcessor;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
- #define USE_RAYTRACING
- //#define USE_MULTI_THREAD
-// #define USE_MULTILPE_COMMAND_LIST
+#define USE_RAYTRACING
+//#define USE_MULTI_THREAD
+//#define USE_MULTILPE_COMMAND_LIST
 
 enum GLOBAL_DESCRIPTOR_INDEX
 {

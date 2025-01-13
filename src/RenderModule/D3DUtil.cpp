@@ -207,7 +207,8 @@ constexpr void ThrowIfFailed(HRESULT hr)
     }
 }
 
-IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
+
+IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disableOptimize)
 {
     static IDxcCompiler       *pCompiler = nullptr;
     static IDxcLibrary        *pLibrary = nullptr;
@@ -255,7 +256,7 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
     }
     // Compile
     IDxcOperationResult *pResult;
-    ThrowIfFailed(pCompiler->Compile(pTextBlob, fileName, L"", L"lib_6_5", pArg, dwArgCount, nullptr, 0,
+    ThrowIfFailed(pCompiler->Compile(pTextBlob, fileName, entryPoint, L"lib_6_5", pArg, dwArgCount, nullptr, 0,
                                      dxcIncludeHandler, &pResult));
 
     // Verify the result
@@ -283,7 +284,13 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
     }
 
     IDxcBlob *pBlob;
-
+    
     ThrowIfFailed(pResult->GetResult(&pBlob));
     return pBlob;
+}
+
+
+IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
+{
+    return CompileShaderLibrary(fileName, L"", disableOptimize);
 }

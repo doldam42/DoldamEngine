@@ -1,9 +1,8 @@
-#ifndef HIT_HLSL
-#define HIT_HLSL
+#ifndef RAYTRACING_HLSL
+#define RAYTRACING_HLSL
 
-#include "RaytracingTypedef.hlsli"
 #include "Common.hlsli"
-#include "BxDF.hlsli"
+#include "PhongLighting.hlsli"
 
 cbuffer l_RayFaceGroupConstants : register(b0, space1) { uint materialId; };
 
@@ -124,41 +123,6 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, in f
     return rayPayload.colorAndDistance.xyz;
 }
 
-float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal,
-                          inout HitInfo rayPayload, in float TMax = 10000)
-{
-    // Here we offset ray start along the ray direction instead of surface normal
-    // so that the reflected ray projects to the same screen pixel.
-    // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float  tOffset = 0.001f;
-    float3 offsetAlongRay = tOffset * wt;
-
-    float3 adjustedHitPosition = hitPosition + offsetAlongRay;
-
-    Ray ray = {adjustedHitPosition, wt};
-
-    float tMin = 0;
-    float tMax = TMax;
-
-    // TRADEOFF: Performance vs visual quality
-    // Cull transparent surfaces when casting a transmission ray for a transparent surface.
-    // Spaceship in particular has multiple layer glass causing a substantial perf hit
-    // with multiple bounces along the way.
-    // This can cause visual pop ins however, such as in a case of looking at the spaceship's
-    // glass cockpit through a window in the house. The cockpit will be skipped in this case.
-    bool cullNonOpaque = true;
-
-    rayPayload = TraceRadianceRay(ray, rayPayload.rayRecursionDepth, tMin, tMax, 0, cullNonOpaque);
-
-    if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
-    {
-        // Add current thit and the added offset to the thit of the traced ray.
-        rayPayload.colorAndDistance.w += RayTCurrent() + tOffset;
-    }
-
-    return rayPayload.colorAndDistance.xyz;
-}
-
 // Trace a shadow ray and return true if it hits any geometry.
 bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRayRecursionDepth,
                                   in bool retrieveTHit = true, in float TMax = FAR_PLANE)
@@ -230,84 +194,38 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition,
              in MaterialConstant material)
 {
-    const float3 Fdielectric = 0.3; // 비금속(Dielectric) 재질의 F0
-    const uint   materialType = MATERIAL_TYPE_DEFAULT;  // 지금은 Default Material로 고정
-    
     float3 V = -WorldRayDirection();
-    float3 L = 0;
+    bool   isReflective = (material.reflectionFactor > 1e-3);
 
     // Shadowing
-    const float3 lightPos = lights[0].position;
-    const float3 radiance = lights[0].radiance;
+    const Light  L = lights[0];
+    const float3 lightPos = L.position;
 
-    const float Kr = material.reflectionFactor;
-    const float Kt = 1 - material.opacityFactor;
-    const float metallic = material.metallicFactor;
-    const float roughness = material.roughnessFactor;
+    const float3 albedo = material.albedo;
 
-    const float3 Kd = material.albedo;
-    const float3 Ks = lerp(Fdielectric, Kd, metallic);
-    
-    // Direct illumination
-    if (!BxDF::IsBlack(Kd) || !BxDF::IsBlack(Ks))
+    const float3 ambient = 0.2;
+    const float3 diffuse = 0.2;
+    const float3 specular = 1.0;
+
+    float3 lightDir = normalize(lightPos - hitPosition);
+    float  len = length(lightPos - hitPosition);
+
+    // float3 color = CalculateDiffuseLighting(albedo, hitPosition, N, L).xyz;
+
+    float3 color = albedo * ComputeDirectionalLight(L, N, V, ambient, diffuse, specular, 1.0);
+
+    if (isReflective)
     {
-        float3 wi = normalize(lightPos - hitPosition);
-
-        // Raytraced shadows.
-        bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, wi, N, rayPayload);
-
-        L += BxDF::DirectLighting::Shade(materialType, Kd, Ks, radiance, isInShadow, roughness, N, V, wi);
+        HitInfo reflectedRayPayLoad = rayPayload;
+        float3  wi = reflect(-V, N);
+        color += material.reflectionFactor * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
     }
 
-    const float defaultAmbientIntensity = 0.04f;
-    L += defaultAmbientIntensity * Kd;
+    bool  isInShadow = TraceShadowRayAndReportIfHit(hitPosition, lightDir, N, rayPayload, len);
+    float shadowFactor = isInShadow ? 0.3 : 1.0;
 
-    // Specular Indirect Illumination
-    bool isReflective = !BxDF::IsBlack(Kr);
-    bool isTransmissive = !BxDF::IsBlack(Kt);
-
-    // Handle cases where ray is coming from behind due to imprecision,
-    // don't cast reflection rays in that case.
-    float smallValue = 1e-6f;
-    isReflective = dot(V, N) > smallValue ? isReflective : false;
-
-    if (isReflective || isTransmissive)
-    {
-        if (isReflective &&
-            (BxDF::Specular::Reflection::IsTotalInternalReflection(V, N) || materialType == MATERIAL_TYPE_MIRROR))
-        {
-            float3 wi = reflect(-V, N);
-
-            HitInfo reflectedRayPayLoad = rayPayload;
-            L += Kr * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
-        }
-        else // No total internal reflection
-        {
-            float3 Fo = Ks;
-            if (isReflective)
-            {
-                // Radiance contribution from reflection.
-                float3 wi;
-                float3 Fr = Kr * BxDF::Specular::Reflection::Sample_Fr(V, wi, N, Fo); // Calculates wi
-
-                HitInfo reflectedRayPayLoad = rayPayload;
-                // Ref: eq 24.4, [Ray-tracing from the Ground Up]
-                L += Fr * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
-            }
-
-            if (isTransmissive)
-            {
-                // Radiance contribution from refraction.
-                float3 wt;
-                float3 Ft = Kt * BxDF::Specular::Transmission::Sample_Ft(V, wt, N, Fo); // Calculates wt
-
-                HitInfo refractedRayPayLoad = rayPayload;
-                L += Ft * TraceRefractiveRay(hitPosition, wt, N, objectNormal, refractedRayPayLoad);
-            }
-        }
-    }
-
-    return L;
+    color *= shadowFactor;
+    return color;
 }
 
 [shader("closesthit")] 
@@ -339,4 +257,97 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     payload.colorAndDistance = float4(color, RayTCurrent());
 }
 
-#endif // HIT_HLSL
+[shader("raygeneration")] 
+void RayGen()
+{
+    HitInfo payload;
+    payload.colorAndDistance = float4(0, 0, 0, 0);
+    payload.rayRecursionDepth = 0;
+
+    uint2 launchIndex = DispatchRaysIndex().xy;
+
+    Ray ray = GenerateCameraRay(launchIndex, eyeWorld, invViewProj);
+
+    // Set the ray's extents.
+    RayDesc rayDesc;
+    rayDesc.Origin = ray.origin;
+    rayDesc.Direction = ray.direction;
+    rayDesc.TMin = 0.0;
+    rayDesc.TMax = 10000.0;
+
+    uint rayFlags = RAY_FLAG_CULL_NON_OPAQUE;
+
+    TraceRay(
+        // Parameter name: AccelerationStructure
+        // Acceleration structure
+        g_scene,
+
+        // Parameter name: RayFlags
+        // Flags can be used to specify the behavior upon hitting a surface
+        rayFlags,
+
+        // Parameter name: InstanceInclusionMask
+        // Instance inclusion mask, which can be used to mask out some geometry to
+        // this ray by and-ing the mask with a geometry mask. The 0xFF flag then
+        // indicates no geometry will be masked
+        INSTANCE_MASK,
+
+        // Parameter name: RayContributionToHitGroupIndex
+        // Depending on the type of ray, a given object can have several hit
+        // groups attached (ie. what to do when hitting to compute regular
+        // shading, and what to do when hitting to compute shadows). Those hit
+        // groups are specified sequentially in the SBT, so the value below
+        // indicates which offset (on 4 bits) to apply to the hit groups for this
+        // ray. In this sample we only have one hit group per object, hence an
+        // offset of 0.
+        HITGROUP_INDEX_RADIENT,
+
+        // Parameter name: MultiplierForGeometryContributionToHitGroupIndex
+        // The offsets in the SBT can be computed from the object ID, its instance
+        // ID, but also simply by the order the objects have been pushed in the
+        // acceleration structure. This allows the application to group shaders in
+        // the SBT in the same order as they are added in the AS, in which case
+        // the value below represents the stride (4 bits representing the number
+        // of hit groups) between two consecutive objects.
+        GEOMETRY_STRIDE,
+
+        // Parameter name: MissShaderIndex
+        // Index of the miss shader to use in case several consecutive miss
+        // shaders are present in the SBT. This allows to change the behavior of
+        // the program when no geometry have been hit, for example one to return a
+        // sky color for regular rendering, and another returning a full
+        // visibility value for shadow rays. This sample has only one miss shader,
+        // hence an index 0
+        MISS_INDEX_RADIENT,
+
+        // Parameter name: Ray
+        // Ray information to trace
+        rayDesc,
+
+        // Parameter name: Payload
+        // Payload associated to the ray, which will be used to communicate
+        // between the hit/miss shaders and the raygen
+        payload);
+
+    gOutput[launchIndex] = float4(payload.colorAndDistance.rgb, 1.0);
+}
+
+[shader("miss")] 
+void Miss(inout HitInfo payload : SV_RayPayload) {
+    uint2  launchIndex = DispatchRaysIndex().xy;
+    float2 dims = float2(DispatchRaysDimensions().xy);
+
+    float ramp = launchIndex.y / dims.y;
+    payload.colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
+}
+
+[shader("closesthit")] 
+void ShadowClosestHit(inout ShadowHitInfo hit, Attributes bary) { hit.tHit = RayTCurrent(); }
+
+[shader("miss")] 
+void ShadowMiss(inout ShadowHitInfo hit : SV_RayPayload)
+{
+    hit.tHit = 0;
+}
+
+#endif

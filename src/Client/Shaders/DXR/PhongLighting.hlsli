@@ -19,7 +19,7 @@ float3 ComputeDirectionalLight(Light L, float3 normal,
     float3 lightVec = -L.direction;
 
     float ndotl = max(dot(lightVec, normal), 0.0f);
-    float3 lightStrength = L.strength * ndotl;
+    float3 lightStrength = L.radiance * ndotl;
 
     // Luna DX12 책에서는 Specular 계산에도
     // Lambert's law가 적용된 lightStrength를 사용합니다.
@@ -52,7 +52,7 @@ float3 ComputePointLight(Light L, float3 pos, float3 normal,
         lightVec /= d;
 
         float ndotl = max(dot(lightVec, normal), 0.0f);
-        float3 lightStrength = L.strength * ndotl;
+        float3 lightStrength = L.radiance * ndotl;
 
         float att = CalcAttenuation(d, L.fallOffStart, L.fallOffEnd);
         lightStrength *= att;
@@ -79,7 +79,7 @@ float3 ComputeSpotLight(Light L, float3 pos, float3 normal,
         lightVec /= d;
 
         float ndotl = max(dot(lightVec, normal), 0.0f);
-        float3 lightStrength = L.strength * ndotl;
+        float3 lightStrength = L.radiance * ndotl;
 
         float att = CalcAttenuation(d, L.fallOffStart, L.fallOffEnd);
         lightStrength *= att;

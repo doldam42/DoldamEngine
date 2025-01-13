@@ -1,0 +1,32 @@
+#ifndef RAYTRACING_TYPEDEF_HLSL
+#define RAYTRACING_TYPEDEF_HLSL
+
+#define MAX_RADIENT_RAY_RECURSION_DEPTH 3
+#define MAX_SHADOW_RAY_RECURSION_DEPTH 1
+
+#define INSTANCE_MASK ~0
+#define GEOMETRY_STRIDE 2
+
+#define MISS_INDEX_RADIENT 0
+#define MISS_INDEX_SHADOW 1
+
+#define HITGROUP_INDEX_RADIENT 0
+#define HITGROUP_INDEX_SHADOW 1
+#define HITGROUP_INDEX_COUNT 2
+
+#define HitDistanceOnMiss 0
+
+#define NEAR_PLANE 0.01
+#define FAR_PLANE 1000.0
+
+#define LIGHT_TYPE_OFF 0x00
+#define LIGHT_TYPE_DIRECTIONAL 0x01
+#define LIGHT_TYPE_POINT 0x02
+#define LIGHT_TYPE_SPOT 0x04
+#define LIGHT_TYPE_SHADOW 0x10
+
+#define MATERIAL_TYPE_DEFAULT 0
+#define MATERIAL_TYPE_MATTE 1    // Lambertian scattering
+#define MATERIAL_TYPE_MIRROR 2   // Specular reflector that isn't modified by the Fresnel equations.
+
+#endif

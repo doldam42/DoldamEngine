@@ -837,24 +837,23 @@ lb_return:
 
 void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeline)
 {
-    BOOL disableDebug = FALSE;
+    BOOL disableOptimize = FALSE;
 #ifdef _DEBUG
-    disableDebug = TRUE;
+    disableOptimize = TRUE;
 #endif // _DEBUG
-
-    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableDebug);
+    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableOptimize);
     auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
 
-    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableDebug);
+    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableOptimize);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(missLibrary->GetBufferPointer(), missLibrary->GetBufferSize()));
 
-    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl", disableDebug);
+    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl", disableOptimize);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(hitLibrary->GetBufferPointer(), hitLibrary->GetBufferSize()));
 
-    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl", disableDebug);
+    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl", disableOptimize);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(shadowLibrary->GetBufferPointer(), shadowLibrary->GetBufferSize()));
 }
@@ -863,16 +862,17 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
 {
     // Init Global Root Signature
     // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0) |
-    // | GlobalConstants(b0) |       Materials(t5)        |
+    // | GlobalConstants(b0) |       Materials(t5)        |   EnvIBL(t10)    |
     {
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2];
         rangesPerGlobal1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
         rangesPerGlobal1[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
         // rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
 
-        CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal2[2];
+        CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal2[3] = {};
         rangesPerGlobal2[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
         rangesPerGlobal2[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
+        rangesPerGlobal2[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10);
 
         CD3DX12_ROOT_PARAMETER rootParameters[2];
         rootParameters[0].InitAsDescriptorTable(ARRAYSIZE(rangesPerGlobal1), rangesPerGlobal1);

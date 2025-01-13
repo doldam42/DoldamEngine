@@ -30,6 +30,7 @@ D3D12Renderer *g_pRenderer = nullptr;
 
 BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV)
 {
+
     BOOL result = FALSE;
     m_DPI = GetDpiForWindow(hWnd);
     RECT rect;

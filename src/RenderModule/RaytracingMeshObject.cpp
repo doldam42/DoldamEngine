@@ -204,6 +204,9 @@ void RaytracingMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
 BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
                                            const wchar_t *path)
 {
+    if (wcsstr(pInMaterial->name, L"Outline"))
+        return FALSE;
+
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
     D3D12ResourceManager *resourceManager = m_pRenderer->GetResourceManager();

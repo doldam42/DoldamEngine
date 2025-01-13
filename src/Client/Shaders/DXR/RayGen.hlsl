@@ -1,10 +1,8 @@
 #ifndef RAYGEN_HLSL
 #define RAYGEN_HLSL
 
-#define HLSL
+#include "RaytracingTypedef.hlsli"
 #include "Common.hlsli"
-//#include "RaytracingHlslCompat.h"
-//#include "BxDF.hlsli
 
 [shader("raygeneration")]
 void RayGen()

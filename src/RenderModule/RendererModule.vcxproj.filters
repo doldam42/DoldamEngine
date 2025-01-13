@@ -234,9 +234,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\Client\Shaders\DXR\PhongLighting.hlsli">
-      <Filter>Shaders\DXR</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
@@ -272,36 +269,6 @@
     <CustomBuild Include="..\Client\Shaders\SpriteVS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\Common.hlsli">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\Hit.hlsl">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\HlslCompat.hlsli">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\Miss.hlsl">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\RayGen.hlsl">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingHlslCompat.h">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.h">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.hlsli">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
-      <Filter>Shaders\DXR</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\DepthOnlyPS.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
@@ -313,6 +280,33 @@
     </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\DrawNormal.hlsl">
       <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Common.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Hit.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Miss.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\PhongLighting.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RayGen.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\Raytracing.hlsl">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\RaytracingTypedef.hlsli">
+      <Filter>Shaders\DXR</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
+      <Filter>Shaders\DXR</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

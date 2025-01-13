@@ -10,25 +10,6 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MAX_RADIENT_RAY_RECURSION_DEPTH 3
-#define MAX_SHADOW_RAY_RECURSION_DEPTH 1
-
-#define INSTANCE_MASK ~0
-#define GEOMETRY_STRIDE 2
-
-#define MISS_INDEX_RADIENT 0
-#define MISS_INDEX_SHADOW 1
-
-#define HITGROUP_INDEX_RADIENT 0
-#define HITGROUP_INDEX_SHADOW 1
-#define HITGROUP_INDEX_COUNT 2
-
-#define NEAR_PLANE 0.01
-#define FAR_PLANE 1000.0
-
-#define HitDistanceOnMiss 0
-
-// TODO: Add recursion Depth
 struct HitInfo
 {
     float4 colorAndDistance;
@@ -79,11 +60,6 @@ struct Ray
     float3 direction;
 };
 
-bool IsBlack(float3 color)
-{
-    return !any(color);
-}
-
 inline Ray GenerateCameraRay(in uint2 index, in float3 cameraPosition, in float4x4 cameraToWorld)
 {
     float2 xy = index + 0.5f;
@@ -126,12 +102,21 @@ float3 HitWorldPosition()
 
 struct Light
 {
-    float3 strength;
+    float3 radiance; // strength
     float fallOffStart;
     float3 direction;
     float fallOffEnd;
     float3 position;
     float spotPower;
+
+    uint type;
+    float radius; // ¹ÝÁö¸§
+
+    float haloRadius;
+    float haloStrength;
+
+    float4x4 viewProj;
+    float4x4 invProj;
 };
 
 cbuffer g_cb : register(b0)
@@ -157,5 +142,7 @@ RWTexture2D<float4> gOutput : register(u0);
 RaytracingAccelerationStructure g_scene : register(t0);
 SamplerState g_sampler : register(s0);
 StructuredBuffer<MaterialConstant> g_materials : register(t5);
+
+TextureCube<float4> envIBLTex : register(t10);
 
 #endif  // COMMON_HLSL

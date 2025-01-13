@@ -168,8 +168,8 @@ BOOL GameManager::LoadResources()
 
     // Create Lights
     Vector3 radiance = Vector3(1.0f);
-    Vector3 direction = Vector3(0.0f, -0.554f, 0.832f);
-    Vector3 position = Vector3(0.0f, 16.0f, -16.0f);
+    Vector3 direction = Vector3(0.832f, -0.554f, 0.0f);
+    Vector3 position = Vector3(-16.0f, 16.0f, 0.0f);
 
     direction.Normalize();
     // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);

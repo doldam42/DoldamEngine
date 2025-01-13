@@ -38,7 +38,7 @@
 
 namespace BxDF
 {
-
+    
     // This namespace implements BTDF for a perfect transmitter that uses a single index of refraction (ior)
     // and iorOut represent air, i.e. 1.
     bool IsBlack(float3 color)
@@ -118,7 +118,7 @@ namespace BxDF
             
             // Calculate whether a total reflection occurs at a given V and a normal
             // Ref: eq 27.5, Ray Tracing from the Ground Up
-            BOOL IsTotalInternalReflection(
+            bool IsTotalInternalReflection(
                 in float3 V,
                 in float3 normal)
             {
@@ -201,7 +201,7 @@ namespace BxDF
         // Calculate a color of the shaded surface due to direct lighting.
         // Returns a shaded color.
         float3 Shade(
-            in MaterialType::Type materialType,
+            in uint materialType,
             in float3 Albedo,
             in float3 Fo,
             in float3 Radiance,
@@ -219,7 +219,7 @@ namespace BxDF
                 float3 directDiffuse = 0;
                 if (!IsBlack(Albedo))
                 {
-                    if (materialType == MaterialType::Default)
+                    if (materialType == MATERIAL_TYPE_DEFAULT)
                     {
                         directDiffuse = BxDF::Diffuse::Hammon::F(Albedo, Roughness, N, V, L, Fo);
                     }
@@ -230,7 +230,7 @@ namespace BxDF
                 }
 
                 float3 directSpecular = 0;
-                if (materialType == MaterialType::Default)
+                if (materialType == MATERIAL_TYPE_DEFAULT)
                 {
                     directSpecular = BxDF::Specular::GGX::F(Roughness, N, V, L, Fo);
                 }
@@ -244,7 +244,7 @@ namespace BxDF
 
     // Calculate a color of the shaded surface.
     float3 Shade(
-        in MaterialType::Type materialType,
+        in uint materialType,
         in float3 Albedo,
         in float3 Fo,
         in float3 Radiance,
@@ -263,7 +263,7 @@ namespace BxDF
         {
             // Diffuse.
             float3 diffuse;
-            if (materialType == MaterialType::Default)
+            if (materialType == MATERIAL_TYPE_DEFAULT)
             {
                 diffuse = BxDF::Diffuse::Hammon::F(Albedo, Roughness, N, V, L, Fo);
             }
@@ -276,7 +276,7 @@ namespace BxDF
             float3 directDiffuse = diffuse;
             float3 directSpecular = 0;
 
-            if (materialType == MaterialType::Default)
+            if (materialType == MATERIAL_TYPE_DEFAULT)
             {
                 directSpecular = BxDF::Specular::GGX::F(Roughness, N, V, L, Fo);
             }

@@ -266,6 +266,7 @@ void AssimpLoader::ProcessMaterialTextures(const aiMaterial *pInMaterial, Materi
     {
         albedoTextureFilename = ReadTextureFilename(scene, pInMaterial, aiTextureType_DIFFUSE);
     }
+
     string emissiveTextureFilename = ReadTextureFilename(scene, pInMaterial, aiTextureType_EMISSIVE);
     string normalTextureFilename = ReadTextureFilename(scene, pInMaterial, aiTextureType_NORMALS);
     string metallicTextureFilename = ReadTextureFilename(scene, pInMaterial, aiTextureType_METALNESS);

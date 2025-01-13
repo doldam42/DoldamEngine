@@ -14,3 +14,5 @@ const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
 
 // Reference: NVIDIA RAYTRACING SAMPLE CODE
 IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize);
+
+IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disableOptimize);
