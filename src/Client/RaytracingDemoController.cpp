@@ -79,7 +79,10 @@ BOOL RaytracingDemoController::Start()
     pGura->InsertAnimation(pAnim);
 
     pGura->SetPosition(2.0f, 1.0f, 1.0f);
-    pGura->SetRotationX(-XM_PIDIV2);
+    Quaternion q = Quaternion::CreateFromYawPitchRoll(Vector3(-XM_PIDIV2, XM_PI, 0.0f));
+    pGura->SetRotation(&q);
+    //pGura->SetRotationZ(XM_PI);
+    //pGura->SetRotationX(XM_PIDIV2);
 
     // Set Camera Position
     Vector3 camPos(0.0f, 0.0f, -2.0f);
