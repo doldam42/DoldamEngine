@@ -66,7 +66,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                           const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
                           DRAW_PASS_TYPE passType)
 {
-    ID3D12Device5   *pD3DDevice = m_pRenderer->GetD3DDevice();
+    ID3D12Device5     *pD3DDevice = m_pRenderer->GetD3DDevice();
     RaytracingManager *pDXRSceneManager = m_pRenderer->GetRaytracingManager();
 
     ID3D12GraphicsCommandList *ppCommandList[64] = {};
@@ -91,6 +91,11 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                            pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
                            Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0,
                            passType, 1);
+            if (passType == DRAW_PASS_TYPE_DEFAULT)
+            {
+                pMeshObj->RenderNormal(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
+                                       nullptr, 0, FILL_MODE_SOLID, 1);
+            }
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
@@ -99,6 +104,11 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                            pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
                            Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global,
                            pItem->charObjParam.pBones, pItem->charObjParam.numBones, passType, 1);
+            if (passType == DRAW_PASS_TYPE_DEFAULT)
+            {
+                pMeshObj->RenderNormal(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
+                                       pItem->charObjParam.pBones, pItem->charObjParam.numBones, FILL_MODE_SOLID, 1);
+            }
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {

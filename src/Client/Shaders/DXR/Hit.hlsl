@@ -239,6 +239,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     // Shadowing
     const float3 lightPos = lights[0].position;
     const float3 radiance = lights[0].radiance;
+    const float3 lightDir = lights[0].direction;
 
     const float Kr = material.reflectionFactor;
     const float Kt = 1 - material.opacityFactor;
@@ -251,7 +252,8 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     // Direct illumination
     if (!BxDF::IsBlack(Kd) || !BxDF::IsBlack(Ks))
     {
-        float3 wi = normalize(lightPos - hitPosition);
+        //float3 wi = normalize(lightPos - hitPosition);
+        float3 wi = -lightDir;
 
         // Raytraced shadows.
         bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, wi, N, rayPayload);

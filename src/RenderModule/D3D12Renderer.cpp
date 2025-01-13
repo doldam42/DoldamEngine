@@ -1111,11 +1111,10 @@ ConstantBufferPool *D3D12Renderer::GetConstantBufferPool(CONSTANT_BUFFER_TYPE ty
 // RTV handle
 // |  backBuffer rtv0  |  backBuffer rtv1  | ... |
 // | intermediate rtv0 | intermediate rtv1 | ... |
-
 D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type) const
 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-                                         type * SWAP_CHAIN_FRAME_COUNT, m_rtvDescriptorSize);
+                                         (INT)type * SWAP_CHAIN_FRAME_COUNT, m_rtvDescriptorSize);
     return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
 }
 
@@ -1305,10 +1304,12 @@ void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
     }
 }
 
+// RTV Heap
+// |     BackBuffer0     |     BackBuffer1     |     BackBuffer2     |
+// | IntermediateBuffer0 | IntermediateBuffer1 | IntermediateBuffer2 |
 void D3D12Renderer::CreateBuffers()
 {
     // Create frame resources.
-
     // Create a RTV for each frame.
     // Descriptor Table
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart());
@@ -1327,7 +1328,6 @@ void D3D12Renderer::CreateBuffers()
     clearValue.Color[1] = m_clearColor[1];
     clearValue.Color[2] = m_clearColor[2];
     clearValue.Color[3] = m_clearColor[3];
-
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         if (FAILED(m_pD3DDevice->CreateCommittedResource(

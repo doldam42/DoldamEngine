@@ -755,7 +755,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
                 CtrlPointToSkinnedVertex(pCtrlPoint, &vertex);
                 vertex.normal = ToVector3(normal);
 
-                vertex.normal *= -1.0f;
+                //vertex.normal *= -1.0f;
 
                 vertex.position = pCtrlPoint->position;
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);
@@ -769,7 +769,7 @@ void FBXLoader::ProcessMesh(FbxNode *inNode, IGameMesh *pOutMesh)
 
                 vertex.normal = ToVector3(normal);
 
-                vertex.normal *= -1.0f;
+                //vertex.normal *= -1.0f;
 
                 vertex.position = pCtrlPoint->position;
                 vertex.texcoord.x = static_cast<float>(uv.mData[0]);

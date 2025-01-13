@@ -76,13 +76,10 @@ class D3DMeshObject : public IRenderMesh
     Bounds m_bounds;
 
   private:
-    void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                      const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
-                      UINT numInstance = 1);
-
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                      const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
-    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex, IRenderMaterial** ppMaterials, UINT numMaterial);
+    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                           IRenderMaterial **ppMaterials, UINT numMaterial);
 
     void InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial);
     void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
@@ -93,10 +90,14 @@ class D3DMeshObject : public IRenderMesh
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
+    void RenderNormal(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                      const Matrix *pBoneMats, UINT numBones, FILL_MODE fillMode = FILL_MODE_SOLID,
+                      UINT numInstance = 1);
+
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-              IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
-              ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones,
-              DRAW_PASS_TYPE passType, UINT numInstance = 1);
+              IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO,
+              D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones, DRAW_PASS_TYPE passType,
+              UINT numInstance = 1);
 
     RENDER_ITEM_TYPE GetType() const { return m_type; }
     DRAW_PASS_TYPE   GetPassType() const { return m_pFaceGroups[0].passType; }
