@@ -93,7 +93,7 @@ BOOL RaytracingDemoController::Start()
     pGura->SetRotation(&q);
 
     // Set Camera Position
-    pGame->SetCameraPosition(0.0f, 0.0f, -2.0f);
+    pGame->SetCameraPosition(-2.0f, 6.0f, -8.0f);
 
     m_pBox = pBox;
     m_pGround = pGround;

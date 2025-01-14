@@ -70,13 +70,11 @@ BOOL PostProcessor::Initialize(D3D12Renderer *pRenderer)
 
     InitMesh();
 
-    m_ScissorRect = pRenderer->GetScissorRect();
-    m_Viewport = pRenderer->GetViewport();
-
     return TRUE;
 }
 
-void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_CPU_DESCRIPTOR_HANDLE src,
+void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_VIEWPORT *pViewport,
+                         D3D12_RECT *pScissorRect, D3D12_CPU_DESCRIPTOR_HANDLE src,
                          D3D12_CPU_DESCRIPTOR_HANDLE renderTarget)
 {
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -90,8 +88,8 @@ void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
     pD3DDeivce->CopyDescriptorsSimple(1, cpuHandle, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    pCommandList->RSSetViewports(1, &m_Viewport);
-    pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+    pCommandList->RSSetViewports(1, pViewport);
+    pCommandList->RSSetScissorRects(1, pScissorRect);
     pCommandList->OMSetRenderTargets(1, &renderTarget, FALSE, nullptr);
     pCommandList->SetGraphicsRootSignature(Graphics::presentRS);
     pCommandList->SetPipelineState(Graphics::presentPSO);

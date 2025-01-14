@@ -274,18 +274,21 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
+#ifndef USE_RAYTRACING
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
+#endif
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-    D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     D3D12_CPU_DESCRIPTOR_HANDLE   backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
     // Record commands.
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
@@ -294,7 +297,7 @@ void D3D12Renderer::EndRender()
 {
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
-    
+
     UpdateGlobal();
 #if defined(USE_MULTI_THREAD)
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
@@ -326,9 +329,9 @@ void D3D12Renderer::EndRender()
 #elif defined(USE_RAYTRACING)
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
-    ID3D12Resource *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
+    ID3D12Resource               *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtOutputSrv(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                           m_uiFrameIndex, m_srvDescriptorSize);
+                                              m_uiFrameIndex, m_srvDescriptorSize);
     m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtOutputSrv);
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
@@ -342,6 +345,7 @@ void D3D12Renderer::EndRender()
 #endif
 
     // PostProcessing
+    pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
 #ifdef USE_RAYTRACING
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -349,21 +353,17 @@ void D3D12Renderer::EndRender()
 #else
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
                                             m_srvDescriptorSize);
-#endif
-    
-    pCommandList = pCommandListPool->GetCurrentCommandList();
-
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
-    m_pPostProcessor->Draw(0, pCommandList, srvHandle, backBufferRTV);
+#endif
+
+    m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
-    //Fence();
-    //WaitForFenceValue(m_pui64LastFenceValue[m_curContextIndex]);
 #ifdef USE_RAYTRACING
     m_pRaytracingManager->Reset();
 #else

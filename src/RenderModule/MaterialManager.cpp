@@ -152,7 +152,7 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.useAOMap = wcslen(pMaterial->aoTextureName) == 0 ? FALSE : TRUE;
     materialCB.useEmissiveMap = wcslen(pMaterial->emissiveTextureName) == 0 ? FALSE : TRUE;
     materialCB.useMetallicMap = wcslen(pMaterial->metallicTextureName) == 0 ? FALSE : TRUE;
-    materialCB.useRoughnessMap = materialCB.useMetallicMap;
+    materialCB.useRoughnessMap = wcslen(pMaterial->roughnessTextureName) == 0 ? FALSE : TRUE; 
     materialCB.useNormalMap = wcslen(pMaterial->normalTextureName) == 0 ? FALSE : TRUE;
 
     memcpy(sysMemAddr, &materialCB, m_sizePerMat);

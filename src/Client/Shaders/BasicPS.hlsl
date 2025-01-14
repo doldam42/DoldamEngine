@@ -184,7 +184,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
     }
     
-    float3 albedo = texColor.rbg;
+    float3 albedo = texColor.rgb;
     float  opacity = texColor.a * material.opacityFactor;
 
     if (opacity < 0.05)
@@ -200,11 +200,12 @@ float4 main(PixelShaderInput input) : SV_TARGET
 
     float3 emission =
         material.useEmissiveMap ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb : material.emissive;
-
+    
     float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
 
     float3 directLighting = float3(0, 0, 0);
-    [unroll] for (int i = 0; i < MAX_LIGHTS; i++)
+    [unroll]
+    for (int i = 0; i < MAX_LIGHTS; i++)
     {
         if (lights[i].type != LIGHT_OFF)
         {
@@ -226,12 +227,12 @@ float4 main(PixelShaderInput input) : SV_TARGET
             float NdotO = max(0.0, dot(normalWorld, pixelToEye));
 
             const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
-            float3       F0 = lerp(Fdielectric, albedo, metallic);
-            float3       F = SchlickFresnel(F0, max(0.0, dot(halfway, pixelToEye)));
-            float3       kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
-            float3       diffuseBRDF = kd * albedo;
+            float3 F0 = lerp(Fdielectric, albedo, metallic);
+            float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, pixelToEye)));
+            float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
+            float3 diffuseBRDF = kd * albedo;
 
-            float  D = NdfGGX(NdotH, roughness);
+            float D = NdfGGX(NdotH, roughness);
             float3 G = SchlickGGX(NdotI, NdotO, roughness);
             float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO);
 
