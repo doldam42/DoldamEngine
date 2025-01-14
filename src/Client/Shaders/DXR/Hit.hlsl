@@ -3,15 +3,13 @@
 
 #include "RaytracingTypedef.hlsli"
 #include "Common.hlsli"
+
 #include "BxDF.hlsli"
 
-cbuffer l_RayFaceGroupConstants : register(b0, space1)
-{
-    uint materialId;
-};
+cbuffer l_RayFaceGroupConstants : register(b0, space1) { uint materialId; };
 
 StructuredBuffer<Vertex> l_VB : register(t0, space1);
-StructuredBuffer<uint> l_IB : register(t1, space1);
+StructuredBuffer<uint>   l_IB : register(t1, space1);
 
 Texture2D<float4> l_albedoTex : register(t2, space1);
 Texture2D<float4> l_normalTex : register(t3, space1);
@@ -103,12 +101,12 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, in f
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float tOffset = 0.001f;
+    float  tOffset = 0.001f;
     float3 offsetAlongRay = tOffset * wi;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 
-    Ray ray = { adjustedHitPosition, wi };
+    Ray ray = {adjustedHitPosition, wi};
 
     float tMin = 0;
     float tMax = TMax;
@@ -138,12 +136,12 @@ float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, in f
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float tOffset = 0.001f;
+    float  tOffset = 0.001f;
     float3 offsetAlongRay = tOffset * wt;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 
-    Ray ray = { adjustedHitPosition, wt };
+    Ray ray = {adjustedHitPosition, wt};
 
     float tMin = 0;
     float tMax = TMax;
@@ -187,7 +185,7 @@ bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRay
     // Set the initial value to a hit at TMax.
     // Miss shader will set it to HitDistanceOnMiss.
     // This way closest and any hit shaders can be skipped if true tHit is not needed.
-    ShadowHitInfo shadowPayload = { TMax };
+    ShadowHitInfo shadowPayload = {TMax};
 
     uint rayFlags = RAY_FLAG_CULL_NON_OPAQUE; // ~skip transparent objects
     bool acceptFirstHit = !retrieveTHit;
@@ -229,7 +227,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
                                   in float TMax = 10000)
 {
     float tOffset = 0.001f;
-    Ray visibilityRay = { hitPosition + tOffset * N, direction };
+    Ray   visibilityRay = {hitPosition + tOffset * N, direction};
     float dummyTHit;
     return TraceShadowRayAndReportIfHit(dummyTHit, visibilityRay, N, rayPayload.rayRecursionDepth, false,
                                         TMax); // TODO ASSERT
@@ -238,9 +236,9 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition,
              in MaterialConstant material)
 {
-    const float3 Fdielectric = 0.3; // 비금속(Dielectric) 재질의 F0
-    const uint materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
-    
+    const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
+    const uint   materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
+
     float3 V = -WorldRayDirection();
     float3 L = 0;
 
@@ -256,11 +254,11 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
 
     const float3 Kd = material.albedo;
     const float3 Ks = lerp(Fdielectric, Kd, metallic);
-    
+
     // Direct illumination
     if (!BxDF::IsBlack(Kd) || !BxDF::IsBlack(Ks))
     {
-        //float3 wi = normalize(lightPos - hitPosition);
+        // float3 wi = normalize(lightPos - hitPosition);
         float3 wi = -lightDir;
 
         // Raytraced shadows.
@@ -320,6 +318,56 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
     return L;
 }
 
+// Calculate a tangent from triangle's vertices and their uv coordinates.
+// Ref: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
+float3 CalculateTangent(in float3 v0, in float3 v1, in float3 v2, in float2 uv0, in float2 uv1, in float2 uv2)
+{
+    // Calculate edges
+    // Position delta
+    float3 deltaPos1 = v1 - v0;
+    float3 deltaPos2 = v2 - v0;
+
+    // UV delta
+    float2 deltaUV1 = uv1 - uv0;
+    float2 deltaUV2 = uv2 - uv0;
+
+    float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+    return (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+}
+
+// Sample normal map, convert to signed, apply tangent-to-world space transform.
+float3 BumpMapNormalToWorldSpaceNormal(float3 bumpNormal, float3 surfaceNormal, float3 tangent)
+{
+    // Compute tangent frame.
+    surfaceNormal = normalize(surfaceNormal);
+    tangent = normalize(tangent);
+
+    float3   bitangent = normalize(cross(tangent, surfaceNormal));
+    float3x3 tangentSpaceToWorldSpace = float3x3(tangent, bitangent, surfaceNormal);
+
+    return mul(bumpNormal, tangentSpaceToWorldSpace);
+}
+
+float3 NormalMap(in float3 normal, in float2 texCoord, in Vertex vertices[3], in Attributes attr, in float lodLevel)
+{
+    float3 tangent;
+
+    /*float3 v0 = vertices[0].posModel;
+    float3 v1 = vertices[1].posModel;
+    float3 v2 = vertices[2].posModel;
+    float2 uv0 = vertices[0].texcoord;
+    float2 uv1 = vertices[1].texcoord;
+    float2 uv2 = vertices[2].texcoord;
+    tangent = CalculateTangent(v0, v1, v2, uv0, uv1, uv2);*/
+
+    float3 vertexTangents[3] = {vertices[0].tangentModel, vertices[1].tangentModel, vertices[2].tangentModel};
+    tangent = HitAttribute(vertexTangents, attr);
+
+    float3 texSample = l_normalTex.SampleLevel(g_sampler, texCoord, lodLevel).xyz;
+    float3 bumpNormal = normalize(texSample * 2.f - 1.f);
+    return BumpMapNormalToWorldSpaceNormal(bumpNormal, normal, tangent);
+}
+
 float3 GetNormal(float3 normalWorld, float3 tangentWorld, float2 texcoord, bool useNormalMap)
 {
     if (useNormalMap) // NormalWorld를 교체
@@ -342,35 +390,35 @@ float3 GetNormal(float3 normalWorld, float3 tangentWorld, float2 texcoord, bool 
     return normalWorld;
 }
 
-[shader("closesthit")]
-void ClosestHit(inout HitInfo payload, Attributes attrib)
-{
+[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib) {
+    const static float LOG_FAR_PLANE = log(1.0 + FAR_PLANE);
     MaterialConstant material = g_materials[materialId];
-    
-    uint startIndex = PrimitiveIndex() * 3;
-    const uint3 indices = { l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2] };
-    Vertex v[3] = { l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]] };
 
-    float2 vertexTexCoords[3] = { v[0].texcoord, v[1].texcoord, v[2].texcoord };
+    // For LOD
+    float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE;      // log scale
+    //float distance = RayTCurrent() / FAR_PLANE; // [0, 1]         // linear scale
+    float lodLevel = lerp(0.0, 4.0, distance);
+
+    uint        startIndex = PrimitiveIndex() * 3;
+    const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
+    Vertex      v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
+
+    float2 vertexTexCoords[3] = {v[0].texcoord, v[1].texcoord, v[2].texcoord};
     float2 texcoord = HitAttribute(vertexTexCoords, attrib);
 
-    float3 vertexTangent[3] = { v[0].tangentModel, v[1].tangentModel, v[2].tangentModel };
-    float3 objectTangent = normalize(HitAttribute(vertexTangent, attrib));
-    float3 tangent = normalize(mul((float3x3) ObjectToWorld3x4(), objectTangent));
-    
-    float3 vertexNormals[3] = { v[0].normalModel, v[1].normalModel, v[2].normalModel };
+    float3 vertexNormals[3] = {v[0].normalModel, v[1].normalModel, v[2].normalModel};
     float3 objectNormal = normalize(HitAttribute(vertexNormals, attrib));
-    float orientation = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE ? 1 : -1;
+    float  orientation = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE ? 1 : -1;
     objectNormal *= orientation;
-    float3 normal = normalize(mul((float3x3) ObjectToWorld3x4(), objectNormal));
-    normal = GetNormal(normal, tangent, texcoord, material.useNormalMap);
+    float3 normal = normalize(mul((float3x3)ObjectToWorld3x4(), objectNormal));
+    normal = material.useNormalMap ? NormalMap(normal, texcoord, v, attrib, lodLevel) : normal;
     
     material.albedo =
-        (material.useAlbedoMap == TRUE) ? l_albedoTex.SampleLevel(g_sampler, texcoord, 0).xyz : material.albedo;
-
+        (material.useAlbedoMap == TRUE) ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
+                                                      : material.albedo;
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
-
+    
     float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;

@@ -12,27 +12,55 @@
 
 using namespace std;
 
+static Vector3 CalculateTangent(const Vector3 &v0, const Vector3 &v1, const Vector3 &v2, const Vector2 &uv0,
+                                const Vector2 &uv1, const Vector2 &uv2)
+{
+    // Calculate edges
+    // Position delta
+    Vector3 deltaPos1 = v1 - v0;
+    Vector3 deltaPos2 = v2 - v0;
+
+    // UV delta
+    Vector2 deltaUV1 = uv1 - uv0;
+    Vector2 deltaUV2 = uv2 - uv0;
+
+    float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+    return (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+}
+
 static void CalcVerticeTangent(BasicVertex *pInOutVertices, UINT numVertices, const uint32_t *pIndices,
                                UINT numTriangles)
 {
-    for (int i = 0; i < numVertices; i++)
+    for (int i = 0; i < numTriangles * 3; i += 3)
     {
-        BasicVertex &v = pInOutVertices[i];
+        BasicVertex &v0 = pInOutVertices[pIndices[i]];
+        BasicVertex &v1 = pInOutVertices[pIndices[i + 1]];
+        BasicVertex &v2 = pInOutVertices[pIndices[i + 2]];
 
-        Vector3 tangent;
-        Vector3 c1 = v.normal.Cross(Vector3::UnitZ);
-        Vector3 c2 = v.normal.Cross(Vector3::UnitY);
+        Vector3 tangent =
+            CalculateTangent(v0.position, v1.position, v2.position, v0.texcoord, v1.texcoord, v2.texcoord);
 
-        if (c1.Length() > c2.Length())
-        {
-            tangent = c1;
-        }
-        else
-        {
-            tangent = c2;
-        }
+        v0.tangent = tangent;
+        v1.tangent = tangent;
+        v2.tangent = tangent;
+    }
+}
 
-        v.tangent = tangent;
+static void CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertices, const uint32_t *pIndices,
+                               UINT numTriangles)
+{
+    for (int i = 0; i < numTriangles * 3; i += 3)
+    {
+        SkinnedVertex &v0 = pInOutVertices[pIndices[i]];
+        SkinnedVertex &v1 = pInOutVertices[pIndices[i + 1]];
+        SkinnedVertex &v2 = pInOutVertices[pIndices[i + 2]];
+
+        Vector3 tangent =
+            CalculateTangent(v0.position, v1.position, v2.position, v0.texcoord, v1.texcoord, v2.texcoord);
+
+        v0.tangent = tangent;
+        v1.tangent = tangent;
+        v2.tangent = tangent;
     }
 }
 
@@ -212,7 +240,8 @@ Model *GeometryGenerator::MakeBox(const float scale)
         16, 17, 18, 16, 18, 19, // 왼쪽
         20, 21, 22, 20, 22, 23  // 오른쪽
     };
-    CalcVerticeTangent(pVertices, 4, indices, 2);
+
+    CalcVerticeTangent(pVertices, 24, indices, 12);
     Model *pModel = new Model;
 
     MeshObject *pObj = new MeshObject;
@@ -404,11 +433,12 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     {
 
         // 스택에 쌓일 수록 시작점을 x-y 평면에서 회전 시켜서 위로 올리는 구조
-        Vector3 stackstartpoint = Vector3::Transform(Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dphi * float(j)));
+        Vector3 stackstartpoint =
+            Vector3::Transform(Vector3(0.0f, -radius, 0.0f), Matrix::CreateRotationZ(dphi * float(j)));
         // 하층 (0, 1) - (1, 1)
         // 상층 (0, 0) - (1, 0)
         for (int i = 0; i <= numslices; i++)
-        {           
+        {
             BasicVertex v;
 
             // 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조
@@ -417,9 +447,9 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
             v.normal = v.position; // 원점이 구의 중심
             v.normal.Normalize();
             v.texcoord = Vector2(float(i) / numslices, 1.0f - float(j) / numstacks);
-            
+
             const Vector3 biTangent = Vector3(0.0f, 1.0f, 0.0f);
-            Vector3 normalOrth = v.normal - biTangent.Dot(v.normal) * v.normal;
+            Vector3       normalOrth = v.normal - biTangent.Dot(v.normal) * v.normal;
             normalOrth.Normalize();
 
             v.tangent = biTangent.Cross(normalOrth);
