@@ -54,7 +54,7 @@ class RaytracingMeshObject : public IRenderMesh
     static const UINT MAX_FACE_GROUP_COUNT_PER_OBJ = 12;
     
     static const UINT DESCRIPTOR_COUNT_PER_BLAS = 1;         // | VertexBuffer |
-    static const UINT DESCRIPTOR_COUNT_PER_RAY_FACEGROUP = 2; // | IndexBuffer | DiffuseTex |
+    static const UINT DESCRIPTOR_COUNT_PER_RAY_FACEGROUP = 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT; // | IndexBuffer | Material Textures |
     static const UINT MAX_DESCRIPTOR_COUNT_PER_BLAS =
         DESCRIPTOR_COUNT_PER_BLAS + DESCRIPTOR_COUNT_PER_RAY_FACEGROUP * MAX_FACE_GROUP_COUNT_PER_OBJ; // TODO
 

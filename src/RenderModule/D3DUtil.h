@@ -9,7 +9,7 @@ void SetDebugLayerInfo(ID3D12Device *pD3DDevice);
 void UpdateTexture(ID3D12Device *pD3DDevice, ID3D12GraphicsCommandList *pCommandList, ID3D12Resource *pDestTexResource,
                    ID3D12Resource *pSrcTexResource);
 
-const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
+BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
                                 int *pHeight); // 4채널 이미지를 반환하는 함수
 
 // Reference: NVIDIA RAYTRACING SAMPLE CODE

@@ -239,10 +239,11 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
     }
     else
     {
-        int         mWidth = 0, mHeight = 0;
-        int         rWidth = 0, rHeight = 0;
-        const BYTE *mImage = nullptr;
-        const BYTE *rImage = nullptr;
+        int mWidth = 0, mHeight = 0;
+        int rWidth = 0, rHeight = 0;
+
+        BYTE *mImage = nullptr;
+        BYTE *rImage = nullptr;
 
         BYTE *combinedImage = nullptr;
         BOOL  result = FALSE;
@@ -272,13 +273,39 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
         }
         else
         {
-            if (wcslen(metallicFilename) != 0)
+            if (IsFile(metallicFilename))
             {
                 mImage = CreateImageFromFile(metallicFilename, &mWidth, &mHeight);
+                if (IsFile(roughneessFilename))
+                {
+                    rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+                }
+                else
+                {
+                    rWidth = mWidth;
+                    rHeight = mHeight;
+                    rImage = new BYTE[rWidth * rWidth * 4];
+                    ZeroMemory(rImage, sizeof(BYTE) * rWidth * rHeight * 4);
+                }
             }
-            if (wcslen(roughneessFilename) != 0)
+            else
             {
-                rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+                if (IsFile(roughneessFilename))
+                {
+                    rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+
+                    mWidth = rWidth;
+                    mHeight = rHeight;
+                    mImage = new BYTE[mWidth * mHeight * 4];
+                    ZeroMemory(mImage, sizeof(BYTE) * mHeight * mHeight * 4);
+                }
+                else
+                {
+#ifdef _DEBUG
+                    __debugbreak();
+#endif
+                    goto lb_return;
+                }
             }
 
             if (mWidth != rWidth || mHeight != rHeight || !mImage || !rImage)

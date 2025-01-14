@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include <filesystem>
-#include <Windows.h>
 #include "StringUtil.h"
+#include <Windows.h>
+#include <filesystem>
 
 void s2ws(const char *inStr, wchar_t *outWStr)
 {
@@ -27,4 +27,10 @@ bool TryGetExtension(const wchar_t *filename, wchar_t *outExtension)
     }
 
     return !ext.empty();
+}
+
+bool IsFile(const wchar_t *filename) \
+{ 
+    std::filesystem::path p(filename);
+    return std::filesystem::is_regular_file(p) && p.has_filename();
 }

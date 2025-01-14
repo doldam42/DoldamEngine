@@ -4,7 +4,7 @@ class TimeController;
 class BadAppleController;
 class RaytracingDemoController;
 class AudioManager;
-class Client : public IController
+class Client
 {
   private:
     HWND            m_hWnd = nullptr;
@@ -19,23 +19,6 @@ class Client : public IController
 
     IModelExporter *m_pFbxExporter = nullptr;
     IModelExporter *m_pAssimpExporter = nullptr;
-
-    // TMP
-    IFontHandle *m_pFontHandle = nullptr;
-
-    UINT m_textImageWidth = 0;
-    UINT m_textImageHeight = 0;
-
-    BYTE *m_pTextImage = nullptr;
-    BYTE *m_pImage = nullptr;
-
-    IGameSprite *m_pStaticSprite = nullptr;
-    IGameSprite *m_pDynamicSprite = nullptr;
-    IGameSprite *m_pTextSprite = nullptr;
-
-    ITextureHandle *m_pDynamicTexture = nullptr;
-
-    WCHAR m_text[260] = {0};
 
     // Controllers
     TimeController* m_pTimeController = nullptr;
@@ -55,8 +38,8 @@ class Client : public IController
 
     void Process();
 
-    BOOL Start() override;
-    void Update(float dt) override;
+    BOOL Start();
+    // void Update(float dt);
 
     void OnKeyDown(UINT nChar, UINT uiScanCode);
     void OnKeyUp(UINT nChar, UINT uiScanCode);
@@ -68,6 +51,7 @@ class Client : public IController
     AudioManager *GetAudioManager() { return m_pAudio; }
 
     IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }
+    IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }
 
     Client() = default;
     ~Client();

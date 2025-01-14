@@ -149,7 +149,11 @@ class GameManager : public IGameManager
     Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
     Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
 
-    void SetCameraPos(const Vector3 *pPos) override { m_pMainCamera->SetCameraPos(pPos); }
+    void SetCameraPosition(float x, float y, float z) override 
+    { 
+        Vector3 pos(x, y, z);
+        m_pMainCamera->SetCameraPos(&pos);
+    }
 
     inline IRenderer        *GetRenderer() const { return m_pRenderer; }
     inline IInputManager    *GetInputManager() const { return m_pInputManager; }

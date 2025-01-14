@@ -27,27 +27,36 @@ BOOL RaytracingDemoController::Start()
     IRenderer    *pRenderer = pGame->GetRenderer();
 
     // Create Material
-    Material reflectiveMaterial;
+    Material reflectiveMaterial = {};
     reflectiveMaterial.roughnessFactor = 0.1f;
-    reflectiveMaterial.metallicFactor = 0.8f;
-    reflectiveMaterial.reflectionFactor = 0.8f;
+    reflectiveMaterial.metallicFactor = 0.0f;
+    reflectiveMaterial.reflectionFactor = 0.7f;
     wcscpy_s(reflectiveMaterial.name, L"ground");
-    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(reflectiveMaterial.albedoTextureName, L"blender_uv_grid_2k.png");
+    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
+    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_1K-JPG_Color.jpg");
+    wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_1K-JPG_NormalDX.jpg");
+    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_1K-JPG_Roughness.jpg");
+    //wcscpy_s(reflectiveMaterial.metallicTextureName, L"Tiles074_1K-JPG_Roughness.jpg");
+
     IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
-    Material wallMaterial;
+    Material wallMaterial = {};
+    wallMaterial.roughnessFactor = 1.0f;
+    wallMaterial.metallicFactor = 0.0f;
     wcscpy_s(wallMaterial.name, L"wall");
-    wcscpy_s(wallMaterial.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(wallMaterial.albedoTextureName, L"wall.jpg");
+    wcscpy_s(wallMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
+    wcscpy_s(wallMaterial.albedoTextureName, L"Bricks097_1K-JPG_Color.jpg");
+    wcscpy_s(wallMaterial.normalTextureName, L"Bricks097_1K-JPG_NormalDX.jpg");
+    wcscpy_s(wallMaterial.roughnessTextureName, L"Bricks097_1K-JPG_Roughness.jpg");
+
     IRenderMaterial *pWallMaterial = pRenderer->CreateMaterialHandle(&wallMaterial);
 
     // Create Model & GameObject
     IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
     IGameObject *pGround = pGame->CreateGameObject();
     pGround->SetModel(pBoxModel);
-    pGround->SetPosition(0.0f, -51.f, 0.f);
-    pGround->SetScale(50.0f);
+    pGround->SetPosition(0.0f, -21.f, 0.f);
+    pGround->SetScale(20.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
 
     IGameObject *pBox = pGame->CreateGameObject();
@@ -81,12 +90,9 @@ BOOL RaytracingDemoController::Start()
     pGura->SetPosition(2.0f, 1.0f, 1.0f);
     Quaternion q = Quaternion::CreateFromYawPitchRoll(Vector3(-XM_PIDIV2, XM_PI, 0.0f));
     pGura->SetRotation(&q);
-    //pGura->SetRotationZ(XM_PI);
-    //pGura->SetRotationX(XM_PIDIV2);
 
     // Set Camera Position
-    Vector3 camPos(0.0f, 0.0f, -2.0f);
-    pGame->SetCameraPos(&camPos);
+    pGame->SetCameraPosition(0.0f, 0.0f, -2.0f);
 
     m_pBox = pBox;
     m_pGround = pGround;

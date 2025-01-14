@@ -124,7 +124,7 @@ void UpdateTexture(ID3D12Device *pD3DDevice, ID3D12GraphicsCommandList *pCommand
                                                                            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 }
 
-const BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth, int *pHeight)
+BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth, int *pHeight)
 {
     // whar -> char
     size_t convertedChars = 0;

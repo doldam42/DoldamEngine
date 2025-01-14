@@ -887,12 +887,12 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
         SerializeAndCreateRootSignature(pD3DDevice, &globalRootSignatureDesc, &globalRS, L"GlbalRootSig");
     }
     // Init Local Hit Root Signature
-    // |  VERTICES(t0, space1)  | INDICES(t1, space1) | DIFFUSE_TEX(t2, space1) | 
+    // | VERTICES(t0, space1) | INDICES(t1, space1) | ALBEDO_TEX(t2, space1) | NORMAL_TEX(t3, space1) | AO_TEX(t4, space1) | METALLIC_ROUGHNESS(t5, space1) | EMISSIVE(t6, space1) |
     {
         CD3DX12_DESCRIPTOR_RANGE ranges[LOCAL_ROOT_PARAM_INDEX_COUNT];
         ranges[LOCAL_ROOT_PARAM_INDEX_VERTICES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
         ranges[LOCAL_ROOT_PARAM_INDEX_INDICES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 1);
-        ranges[LOCAL_ROOT_PARAM_INDEX_DIFFUSE_TEX].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 1);
+        ranges[LOCAL_ROOT_PARAM_INDEX_TEXTURES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 2, 1);
 
         CD3DX12_ROOT_PARAMETER rootParameters[LOCAL_ROOT_PARAM_INDEX_COUNT];
         rootParameters[LOCAL_ROOT_PARAM_INDEX_CB].InitAsConstants(SizeOfInUint32(RaytracingFaceGroupCB), 0, 1);
@@ -900,8 +900,8 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
                                                                               &ranges[LOCAL_ROOT_PARAM_INDEX_VERTICES]);
         rootParameters[LOCAL_ROOT_PARAM_INDEX_INDICES].InitAsDescriptorTable(1,
                                                                              &ranges[LOCAL_ROOT_PARAM_INDEX_INDICES]);
-        rootParameters[LOCAL_ROOT_PARAM_INDEX_DIFFUSE_TEX].InitAsDescriptorTable(
-            1, &ranges[LOCAL_ROOT_PARAM_INDEX_DIFFUSE_TEX]);
+        rootParameters[LOCAL_ROOT_PARAM_INDEX_TEXTURES].InitAsDescriptorTable(1,
+                                                                              &ranges[LOCAL_ROOT_PARAM_INDEX_TEXTURES]);
 
         CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;

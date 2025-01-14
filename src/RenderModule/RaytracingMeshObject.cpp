@@ -57,6 +57,11 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
     CD3DX12_CPU_DESCRIPTOR_HANDLE src(m_rootArgDescriptorTable.cpuHandle);
 
+    //  Descriptor Table Per obj
+    // | VERTICES |
+    // | INDICES0 | ALBEDO0 | NORMAL0 | AO0 | METALLIC_ROUGHNESS0 | EMMISIVE0 |
+    // | INDICES1 | ALBEDO1 | NORMAL1 | AO1 | METALLIC_ROUGHNESS1 | EMMISIVE1 |
+    // ...
     m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     dest.Offset(m_descriptorSize, 1);
     src.Offset(m_descriptorSize, 1);
@@ -68,20 +73,22 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
 
         if (!ppMaterials)
         {
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            m_pRootArgPerGeometries[i].cb.materialIndex = pFace->pMaterialHandle->index;
+            pFace->pMaterialHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+            /*m_pD3DDevice->CopyDescriptorsSimple(1, dest, pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
         }
         else
         {
             MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pMatHandle->pAlbedoTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
+            /*m_pD3DDevice->CopyDescriptorsSimple(1, dest, pMatHandle->pAlbedoTexHandle->srv.cpuHandle,
+                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
             m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
+            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
         }
 
-        dest.Offset(m_descriptorSize);
-        src.Offset(m_descriptorSize, 2);
+        dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
+        src.Offset(m_descriptorSize, 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
     /*m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
 
@@ -94,8 +101,8 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         rootArg->vertices = gpuHandlePerVB;
         rootArg->indices = gpuHandlePerGeom;
         gpuHandlePerGeom.Offset(m_descriptorSize);
-        rootArg->diffuseTex = gpuHandlePerGeom;
-        gpuHandlePerGeom.Offset(m_descriptorSize);
+        rootArg->textures = gpuHandlePerGeom;
+        gpuHandlePerGeom.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
     m_pRaytracingManager->InsertBLASInstance(m_bottomLevelAS.pResult, pWorldMat, 0, m_pRootArgPerGeometries,
                                              m_faceGroupCount);
@@ -539,11 +546,8 @@ void RaytracingMeshObject::CreateRootArgsSRV()
         m_pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
         cpuHandle.Offset(m_descriptorSize);
 
-        D3D12_CPU_DESCRIPTOR_HANDLE diffuseTexHandle = !pFace->pMaterialHandle->pAlbedoTexHandle
-                                                           ? m_pRenderer->GetDefaultTex()->srv.cpuHandle
-                                                           : pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle;
-        m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, diffuseTexHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        cpuHandle.Offset(m_descriptorSize);
+        pFace->pMaterialHandle->CopyDescriptors(m_pD3DDevice, cpuHandle, m_descriptorSize);
+        cpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
 }
 

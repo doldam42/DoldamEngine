@@ -50,50 +50,15 @@ void Client::Cleanup()
         DeleteAssimpExporter(m_pAssimpExporter);
         m_pAssimpExporter = nullptr;
     }
-    if (m_pFontHandle)
+    if (m_pAudio)
     {
-        m_pRenderer->DeleteFontObject(m_pFontHandle);
-        m_pFontHandle = nullptr;
-    }
-    if (m_pTextImage)
-    {
-        delete[] m_pTextImage;
-        m_pTextImage = nullptr;
-    }
-    if (m_pImage)
-    {
-        delete[] m_pImage;
-        m_pImage = nullptr;
-    }
-    if (m_pStaticSprite)
-    {
-        m_pGame->DeleteSprite(m_pStaticSprite);
-        m_pStaticSprite = nullptr;
-    }
-    if (m_pDynamicSprite)
-    {
-        m_pGame->DeleteSprite(m_pDynamicSprite);
-        m_pDynamicSprite = nullptr;
-    }
-    if (m_pDynamicTexture)
-    {
-        m_pRenderer->DeleteTexture(m_pDynamicTexture);
-        m_pDynamicTexture = nullptr;
-    }
-    if (m_pTextSprite)
-    {
-        m_pGame->DeleteSprite(m_pTextSprite);
-        m_pTextSprite = nullptr;
+        delete m_pAudio;
+        m_pAudio = nullptr;
     }
     if (m_pGame)
     {
         DeleteGameEngine(m_pGame);
         m_pGame = nullptr;
-    }
-    if (m_pAudio)
-    {
-        delete m_pAudio;
-        m_pAudio = nullptr;
     }
 }
 
@@ -114,14 +79,12 @@ BOOL Client::Initialize(HWND hWnd)
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
     m_pRaytracingDemoController = new RaytracingDemoController;
-    //m_pDemoController = new BadAppleController;
 
-    m_pGame->Register(this);
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
     m_pGame->Register(m_pRaytracingDemoController);
-    //m_pGame->Register(m_pDemoController);
-    
+
+    Start();
     m_pGame->Start();
 
     return result;
@@ -129,31 +92,7 @@ BOOL Client::Initialize(HWND hWnd)
 
 void Client::LoadResources()
 {
-    fs::path p;
 
-    m_pFontHandle = m_pRenderer->CreateFontObject(L"Tahoma", 18.f);
-
-    // Create texture from draw Text
-    m_textImageWidth = 712;
-    m_textImageHeight = 256;
-    m_pTextImage = new BYTE[m_textImageWidth * m_textImageHeight * 4];
-
-    // Create Image
-    UINT   imageWidth = 512;
-    UINT   imageHeight = 256;
-    BYTE  *pImage = new BYTE[imageWidth * imageHeight * 4];
-    DWORD *pDest = (DWORD *)pImage;
-    for (DWORD y = 0; y < imageHeight; y++)
-    {
-        for (DWORD x = 0; x < imageWidth; x++)
-        {
-            pDest[x + imageWidth * y] = 0xff0000ff;
-        }
-    }
-    m_pImage = pImage;
-
-    // Create Textures
-    m_pDynamicTexture = m_pRenderer->CreateDynamicTexture(imageWidth, imageHeight);
 }
 
 void Client::LoadScene() 
@@ -177,103 +116,6 @@ BOOL Client::Start()
     m_pGame->BuildScene();
 
     return TRUE;
-}
-
-void Client::Update(float dt)
-{
-    //// Update Texture
-    //static DWORD g_dwCount = 0;
-    //static DWORD g_dwTileColorR = 0;
-    //static DWORD g_dwTileColorG = 0;
-    //static DWORD g_dwTileColorB = 0;
-
-    //const DWORD TILE_WIDTH = 16;
-    //const DWORD TILE_HEIGHT = 16;
-
-    //DWORD TILE_WIDTH_COUNT = 512 / TILE_WIDTH;
-    //DWORD TILE_HEIGHT_COUNT = 256 / TILE_HEIGHT;
-
-    //if (g_dwCount >= TILE_WIDTH_COUNT * TILE_HEIGHT_COUNT)
-    //{
-    //    g_dwCount = 0;
-    //}
-    //DWORD TileY = g_dwCount / TILE_WIDTH_COUNT;
-    //DWORD TileX = g_dwCount % TILE_WIDTH_COUNT;
-
-    //DWORD StartX = TileX * TILE_WIDTH;
-    //DWORD StartY = TileY * TILE_HEIGHT;
-
-    //// DWORD r = rand() % 256;
-    //// DWORD g = rand() % 256;
-    //// DWORD b = rand() % 256;
-
-    //DWORD r = g_dwTileColorR;
-    //DWORD g = g_dwTileColorG;
-    //DWORD b = g_dwTileColorB;
-
-    //DWORD *pDest = (DWORD *)m_pImage;
-    //for (DWORD y = 0; y < 16; y++)
-    //{
-    //    for (DWORD x = 0; x < 16; x++)
-    //    {
-    //        if (StartX + x >= 512)
-    //            __debugbreak();
-
-    //        if (StartY + y >= 256)
-    //            __debugbreak();
-
-    //        pDest[(StartX + x) + (StartY + y) * 512] = 0xff000000 | (b << 16) | (g << 8) | r;
-    //    }
-    //}
-    //g_dwCount++;
-    //g_dwTileColorR += 8;
-    //if (g_dwTileColorR > 255)
-    //{
-    //    g_dwTileColorR = 0;
-    //    g_dwTileColorG += 8;
-    //}
-    //if (g_dwTileColorG > 255)
-    //{
-    //    g_dwTileColorG = 0;
-    //    g_dwTileColorB += 8;
-    //}
-    //if (g_dwTileColorB > 255)
-    //{
-    //    g_dwTileColorB = 0;
-    //}
-
-    //m_pDynamicSprite->UpdateTextureWithImage(m_pImage, 512, 256);
-
-    //m_pRenderer->UpdateTextureWithImage(m_pDynamicTexture, m_pImage, 512, 256);
-
-    // draw text
-    // UINT    fps = m_pGame->FPS();
-    // Vector3 pos = m_pSphere->GetPosition();
-
-    /*float rotX = m_pSphere->GetRotationX();
-    float rotY = m_pSphere->GetRotationY();
-    float rotZ = m_pSphere->GetRotationZ();*/
-
-    //int   iTextWidth = 0;
-    //int   iTextHeight = 0;
-    //WCHAR wchTxt[260];
-    //memset(wchTxt, 0, sizeof(wchTxt));
-    //DWORD dwTxtLen =
-    //    swprintf_s(wchTxt, L"Current FrameRate: %u\n", fps);
-
-    //if (wcscmp(m_text, wchTxt))
-    //{
-    //    // 텍스트가 변경된 경우
-    //    m_pRenderer->WriteTextToBitmap(m_pTextImage, m_textImageWidth, m_textImageHeight, m_textImageWidth * 4,
-    //                                   &iTextWidth, &iTextHeight, m_pFontHandle, wchTxt, dwTxtLen);
-    //    m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_textImageWidth, m_textImageHeight);
-    //    wcscpy_s(m_text, wchTxt);
-    //}
-    //else
-    //{
-    //    // 텍스트가 변경되지 않은 경우 - 업데이트 할 필요 없다.
-    //    int a = 0;
-    //}
 }
 
 void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }
