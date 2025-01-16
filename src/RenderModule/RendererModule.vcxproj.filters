@@ -80,6 +80,9 @@
     <Filter Include="PostProcessor">
       <UniqueIdentifier>{30b89509-4661-4a9e-9741-59540a513d60}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PSOLibrary">
+      <UniqueIdentifier>{72e2a590-38ed-4fb6-bf01-0a85033d916d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -159,6 +162,18 @@
     <ClInclude Include="PostProcessor.h">
       <Filter>PostProcessor</Filter>
     </ClInclude>
+    <ClInclude Include="MemoryMappedFile.h">
+      <Filter>PSOLibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryMappedPipelineLibrary.h">
+      <Filter>PSOLibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryMappedPSOCache.h">
+      <Filter>PSOLibrary</Filter>
+    </ClInclude>
+    <ClInclude Include="PSOLibrary.h">
+      <Filter>PSOLibrary</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -231,56 +246,23 @@
     <ClCompile Include="PostProcessor.cpp">
       <Filter>PostProcessor</Filter>
     </ClCompile>
+    <ClCompile Include="MemoryMappedFile.cpp">
+      <Filter>PSOLibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryMappedPipelineLibrary.cpp">
+      <Filter>PSOLibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryMappedPSOCache.cpp">
+      <Filter>PSOLibrary</Filter>
+    </ClCompile>
+    <ClCompile Include="PSOLibrary.cpp">
+      <Filter>PSOLibrary</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\Client\Shaders\BxDF.hlsli">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\Common.hlsli">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\ComputeShader.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\Phong.hlsli">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\PresentPS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\PresentVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\SkinningCS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\SkyboxPS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\SkyboxVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\SpritePS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\SpriteVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DepthOnlyPS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DepthOnlyVS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\D32ToRgbaPS.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Client\Shaders\DrawNormal.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
       <Filter>Shaders\DXR</Filter>
     </CustomBuild>
@@ -308,6 +290,18 @@
     <CustomBuild Include="..\Client\Shaders\DXR\ShadowRay.hlsl">
       <Filter>Shaders\DXR</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Phong.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\Common.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DrawNormal.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\ComputeShader.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Client\Shaders\BasicPS.hlsl">
@@ -317,6 +311,36 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Client\Shaders\DeferredPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\D32ToRgbaPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\DepthOnlyPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\DepthOnlyVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\PresentPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\PresentVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SkinningCS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SkyboxPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SkyboxVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SpritePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SpriteVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
