@@ -21,6 +21,7 @@ struct Triangle
     BOOL     culled;
 };
 
+
 void ShadowManager::Cleanup()
 {
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();

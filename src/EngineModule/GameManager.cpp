@@ -161,10 +161,10 @@ BOOL GameManager::LoadResources()
     //m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
     // Create Cubemap
-    m_pRenderer->InitCubemaps(L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesEnvHDR.dds",
-                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesSpecularHDR.dds",
-                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesDiffuseHDR.dds",
-                              L"..\\..\\assets\\textures\\Skybox\\MyCubeTexturesBrdf.dds");
+    m_pRenderer->InitCubemaps(L"..\\..\\assets\\textures\\Skybox\\DaySky\\DaySkyEnvHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\DaySky\\DaySkySpecularHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\DaySky\\DaySkyDiffuseHDR.dds",
+                              L"..\\..\\assets\\textures\\Skybox\\DaySky\\DaySkyBrdf.dds");
 
     // Create Lights
     Vector3 radiance = Vector3(1.0f);

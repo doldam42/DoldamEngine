@@ -368,36 +368,16 @@ float3 NormalMap(in float3 normal, in float2 texCoord, in Vertex vertices[3], in
     return BumpMapNormalToWorldSpaceNormal(bumpNormal, normal, tangent);
 }
 
-float3 GetNormal(float3 normalWorld, float3 tangentWorld, float2 texcoord, bool useNormalMap)
-{
-    if (useNormalMap) // NormalWorld를 교체
-    {
-        float3 normal = l_normalTex.SampleLevel(g_sampler, texcoord, 0).rgb;
-        normal = 2.0 * normal - 1.0; // 범위 조절 [-1.0, 1.0]
-
-        // OpenGL 용 노멀맵일 경우에는 y 방향을 뒤집어줍니다.
-        // normal.y = -normal.y;
-
-        float3 N = normalWorld;
-        float3 T = normalize(tangentWorld - dot(tangentWorld, N) * N);
-        float3 B = cross(N, T);
-
-        // matrix는 float4x4, 여기서는 벡터 변환용이라서 3x3 사용
-        float3x3 TBN = float3x3(T, B, N);
-        normalWorld = normalize(mul(normal, TBN));
-    }
-
-    return normalWorld;
-}
-
-[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib) {
+[shader("closesthit")] 
+void ClosestHit(inout HitInfo payload, Attributes attrib) {
     const static float LOG_FAR_PLANE = log(1.0 + FAR_PLANE);
     MaterialConstant material = g_materials[materialId];
 
     // For LOD
-    float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE;      // log scale
+    //float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE;      // log scale
     //float distance = RayTCurrent() / FAR_PLANE; // [0, 1]         // linear scale
-    float lodLevel = lerp(0.0, 4.0, distance);
+    //float lodLevel = lerp(0.0, 4.0, distance);
+    float lodLevel = 0;
 
     uint        startIndex = PrimitiveIndex() * 3;
     const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
@@ -413,6 +393,12 @@ float3 GetNormal(float3 normalWorld, float3 tangentWorld, float2 texcoord, bool 
     float3 normal = normalize(mul((float3x3)ObjectToWorld3x4(), objectNormal));
     normal = material.useNormalMap ? NormalMap(normal, texcoord, v, attrib, lodLevel) : normal;
     
+    material.roughnessFactor = material.useRoughnessMap
+                                   ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).g
+                                   : material.roughnessFactor;
+    material.metallicFactor = material.useMetallicMap
+                                  ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).b
+                                  : material.metallicFactor;
     material.albedo =
         (material.useAlbedoMap == TRUE) ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
                                                       : material.albedo;

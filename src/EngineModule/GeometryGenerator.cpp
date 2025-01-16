@@ -73,7 +73,7 @@ Model *GeometryGenerator::MakeSquare(const float scale)
                          Vector3(0.0f, 0.0f, 1.0f)};
     Vector2 texcoords[] = {Vector2(0.0f, 0.0f), Vector2(1.0f, 0.0f), Vector2(1.0f, 1.0f), Vector2(0.0f, 1.0f)};
 
-    uint32_t indices[] = {0, 1, 2, 0, 2, 3};
+    uint32_t indices[] = {3, 2, 0, 2, 1, 0};
 
     BasicVertex pVertices[4];
     for (size_t i = 0; i < 4; i++)
