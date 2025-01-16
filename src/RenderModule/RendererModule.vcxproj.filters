@@ -316,5 +316,8 @@
     <FxCompile Include="..\Client\Shaders\BasicVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\Client\Shaders\DeferredPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

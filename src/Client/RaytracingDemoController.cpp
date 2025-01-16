@@ -38,14 +38,13 @@ BOOL RaytracingDemoController::Start()
     wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
     wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
 
-    IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
-
     Material wallMaterial = {};
     wcscpy_s(wallMaterial.name, L"wall");
     wcscpy_s(wallMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
     wcscpy_s(wallMaterial.albedoTextureName, L"Bricks097_2K-JPG_Color.DDS");
     wcscpy_s(wallMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
     wcscpy_s(wallMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
+    wallMaterial.metallicFactor = 0.0f;
 
     Material ChristmasTreeOrnamentMaterial = {};
     wcscpy_s(ChristmasTreeOrnamentMaterial.name, L"ChristmasTreeOrnament");
@@ -54,14 +53,16 @@ BOOL RaytracingDemoController::Start()
     wcscpy_s(ChristmasTreeOrnamentMaterial.normalTextureName, L"ChristmasTreeOrnament014_2K-JPG_NormalDX.jpg");
     wcscpy_s(ChristmasTreeOrnamentMaterial.roughnessTextureName, L"ChristmasTreeOrnament014_2K-JPG_Roughness.jpg");
     wcscpy_s(ChristmasTreeOrnamentMaterial.metallicTextureName, L"ChristmasTreeOrnament014_2K-JPG_Metalness.jpg");
+    ChristmasTreeOrnamentMaterial.reflectionFactor = 0.1f;
 
+    IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
     IRenderMaterial *pWallMaterial = pRenderer->CreateMaterialHandle(&wallMaterial);
     IRenderMaterial *pChristmasTreeOrnamentMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
 
     // Create Model & GameObject
-    IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameModel  *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
-    IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    IGameModel *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+    IGameModel *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameModel *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
     IGameObject *pGround = pGame->CreateGameObject();
     pGround->SetModel(pSquareModel);
@@ -82,7 +83,7 @@ BOOL RaytracingDemoController::Start()
     pSphere->SetScale(2.0f);
     pSphere->SetPosition(-5.0f, 2.0f, 0.0f);
     pSphere->SetMaterials(&pChristmasTreeOrnamentMaterial, 1);
-    
+
     IModelExporter *pExporter = g_pClient->GetFBXModelExporter();
 
     std::filesystem::path p = L"..\\..\\assets\\characters\\gura\\gura.dom";
@@ -99,7 +100,8 @@ BOOL RaytracingDemoController::Start()
     }
 
     IGameModel     *pGuraModel = pGame->CreateModelFromFile(L"../../assets/characters/gura/", L"gura.dom");
-    IGameAnimation *pAnim = pGame->CreateAnimationFromFile(L"../../assets/characters/gura/", L"Smolgura_seafoamboy_anims.dca");
+    IGameAnimation *pAnim =
+        pGame->CreateAnimationFromFile(L"../../assets/characters/gura/", L"Smolgura_seafoamboy_anims.dca");
 
     IGameCharacter *pGura = pGame->CreateCharacter();
     pGura->SetModel(pGuraModel);
@@ -108,12 +110,23 @@ BOOL RaytracingDemoController::Start()
     pGura->SetPosition(0.0f, 1.0f, -1.0f);
     Quaternion q = Quaternion::CreateFromYawPitchRoll(Vector3(-XM_PIDIV2, XM_PI, 0.0f));
     pGura->SetRotation(&q);
+    m_pBox = pBox;
+    m_pGround = pGround;
+    /*IModelExporter       *pExporter = g_pClient->GetAssimpExporter();
+    std::filesystem::path p = L"..\\..\\assets\\sponza\\NewSponza_Main_glTF_003.dom";
+    if (!std::filesystem::exists(p))
+    {
+        pExporter->Load(L"../../assets/sponza/", L"NewSponza_Main_glTF_003.gltf");
+        pExporter->ExportModel();
+    }
+
+    IGameModel  *pSponzaModel = pGame->CreateModelFromFile(L"../../assets/sponza/", L"NewSponza_Main_glTF_003.dom");
+    IGameObject *pSponza = pGame->CreateGameObject();
+    pSponza->SetModel(pSponzaModel);
+    pSponza->SetScale(20.f);*/
 
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
-
-    m_pBox = pBox;
-    m_pGround = pGround;
 
     return TRUE;
 }

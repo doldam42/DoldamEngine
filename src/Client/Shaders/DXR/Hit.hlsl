@@ -374,10 +374,10 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     MaterialConstant material = g_materials[materialId];
 
     // For LOD
-    //float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE;      // log scale
+    float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE;      // log scale
     //float distance = RayTCurrent() / FAR_PLANE; // [0, 1]         // linear scale
-    //float lodLevel = lerp(0.0, 4.0, distance);
-    float lodLevel = 0;
+    float lodLevel = lerp(0.0, 4.0, distance);
+    //float lodLevel = 0;
 
     uint        startIndex = PrimitiveIndex() * 3;
     const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};

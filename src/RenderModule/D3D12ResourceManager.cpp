@@ -736,8 +736,8 @@ BOOL D3D12ResourceManager::CreateTexturePair(ID3D12Resource **ppOutResource, ID3
     return TRUE;
 }
 
-BOOL D3D12ResourceManager::CreateRenderableTexture(ID3D12Resource **ppOutResource, UINT width, UINT height,
-                                                   DXGI_FORMAT format)
+BOOL D3D12ResourceManager::CreateTexture(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format,
+                                         D3D12_RESOURCE_FLAGS flags)
 {
     ID3D12Resource *pTexResource = nullptr;
 
@@ -746,7 +746,7 @@ BOOL D3D12ResourceManager::CreateRenderableTexture(ID3D12Resource **ppOutResourc
     textureDesc.Format = format;
     textureDesc.Width = width;
     textureDesc.Height = height;
-    textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    textureDesc.Flags = flags;
     textureDesc.DepthOrArraySize = 1;
     textureDesc.SampleDesc.Count = 1;
     textureDesc.SampleDesc.Quality = 0;

@@ -1,7 +1,7 @@
 #ifndef __COMMON_HLSLI__
 #define __COMMON_HLSLI__
 
-#define MAX_LIGHTS 3 // 쉐이더에서도 #define 사용 가능
+#define MAX_LIGHTS 3 
 #define LIGHT_OFF 0x00
 #define LIGHT_DIRECTIONAL 0x01
 #define LIGHT_POINT 0x02

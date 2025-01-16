@@ -70,7 +70,8 @@ class D3D12ResourceManager
     BOOL CreateTexturePair(ID3D12Resource **ppOutResource, ID3D12Resource **ppOutUploadBuffer, UINT Width, UINT Height,
                            DXGI_FORMAT format);
 
-    BOOL CreateRenderableTexture(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format);
+    BOOL CreateTexture(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format,
+                       D3D12_RESOURCE_FLAGS flags);
 
     UINT GetDescriptorSize() const { return m_descriptorSize; }
 

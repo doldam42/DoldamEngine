@@ -316,8 +316,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
 
             // 4Ã¤³Î
             combinedImage = new BYTE[mWidth * mHeight * 4];
-            memset(combinedImage, 0, sizeof(BYTE) * mWidth * mHeight * 4);
-
+            ZeroMemory(combinedImage, sizeof(BYTE) * mHeight * mHeight * 4);
             for (size_t i = 0; i < size_t(mWidth * mHeight); i++)
             {
                 combinedImage[4 * i + 1] = rImage[4 * i]; // Green = Roughness
@@ -384,7 +383,7 @@ TEXTURE_HANDLE *TextureManager::CreateRenderableTexture(UINT texWidth, UINT texH
     ID3D12Resource   *pTexResource = nullptr;
     DESCRIPTOR_HANDLE srv = {};
 
-    if (m_pResourceManager->CreateRenderableTexture(&pTexResource, texWidth, texHeight, format))
+    if (m_pResourceManager->CreateTexture(&pTexResource, texWidth, texHeight, format, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET))
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
         SRVDesc.Format = format;
