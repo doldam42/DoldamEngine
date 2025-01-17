@@ -414,7 +414,7 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
     pD3DDevice->CreateDepthStencilView(pDepthStencil, &dsvDesc, m_shadowMapDSV.cpuHandle);
 
     m_pShadowMapTexture =
-        pTextureManager->CreateRenderableTexture(shadowWidth, shadowWidth, DXGI_FORMAT_R8G8B8A8_UNORM);
+        pTextureManager->CreateRenderableTexture(shadowWidth, shadowWidth, DXGI_FORMAT_R16G16B16A16_FLOAT);
     pD3DDevice->CreateRenderTargetView(m_pShadowMapTexture->pTexture, nullptr, m_shadowMapRTV.cpuHandle);
 
     m_pShadowDepthStencils = pDepthStencil;

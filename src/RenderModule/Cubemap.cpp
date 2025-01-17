@@ -180,12 +180,12 @@ void Cubemap::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
     dest.Offset(srvDescriptorSize);
     pD3DDevice->CopyDescriptorsSimple(1, dest, m_pBrdf->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    pCommandList->SetGraphicsRootSignature(Graphics::GetRS(RENDER_ITEM_TYPE_SKYBOX, DRAW_PASS_TYPE_DEFAULT));
+    pCommandList->SetGraphicsRootSignature(Graphics::skyboxRS);
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
     pCommandList->SetGraphicsRootConstantBufferView(0, m_pRenderer->INL_GetGlobalCB()->pGPUMemAddr);
     pCommandList->SetGraphicsRootDescriptorTable(1, gpuHandle);
 
-    pCommandList->SetPipelineState(Graphics::GetPSO(RENDER_ITEM_TYPE_SKYBOX, DRAW_PASS_TYPE_DEFAULT, FILL_MODE_SOLID));
+    pCommandList->SetPipelineState(Graphics::skyboxPSO);
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     pCommandList->IASetIndexBuffer(&m_indexBufferView);

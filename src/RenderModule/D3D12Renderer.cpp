@@ -233,8 +233,8 @@ lb_exit:
         m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
     }
 
-    m_pNonOpaqueRenderQueue = new RenderQueue;
-    m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
+ /*   m_pNonOpaqueRenderQueue = new RenderQueue;
+    m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);*/
 
 // #DXR
 #ifdef USE_RAYTRACING
@@ -324,9 +324,9 @@ void D3D12Renderer::EndRender()
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 
-    m_pNonOpaqueRenderQueue->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                     GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
-                                     DRAW_PASS_TYPE_TRANSPARENCY);
+    //m_pNonOpaqueRenderQueue->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
+    //                                 GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
+    //                                 DRAW_PASS_TYPE_TRANSPARENCY);
 
 #elif defined(USE_RAYTRACING)
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
@@ -373,7 +373,7 @@ void D3D12Renderer::EndRender()
     {
         m_ppRenderQueue[i]->Reset();
     }
-    m_pNonOpaqueRenderQueue->Reset();
+    //m_pNonOpaqueRenderQueue->Reset();
     m_pShadowManager->Reset();
 #endif
 }
@@ -529,16 +529,18 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.meshObjParam.ppMaterials = nullptr;
     item.meshObjParam.numMaterials = 0;
 
-    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
-    {
-        if (!m_pNonOpaqueRenderQueue->Add(&item))
-            __debugbreak();
-    }
-    else
-    {
-        if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-            __debugbreak();
-    }
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+    //if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
+    //{
+    //    if (!m_pNonOpaqueRenderQueue->Add(&item))
+    //        __debugbreak();
+    //}
+    //else
+    //{
+    //    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    //        __debugbreak();
+    //}
 
     if (!m_pShadowManager->Add(&item))
     {
@@ -570,7 +572,9 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
     item.meshObjParam.ppMaterials = ppMaterials;
     item.meshObjParam.numMaterials = numMaterial;
 
-    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+    /*if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
     {
         if (!m_pNonOpaqueRenderQueue->Add(&item))
             __debugbreak();
@@ -579,7 +583,7 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
     {
         if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
             __debugbreak();
-    }
+    }*/
 
     if (!m_pShadowManager->Add(&item))
     {
@@ -1460,11 +1464,11 @@ void D3D12Renderer::Cleanup()
             m_ppRenderQueue[i] = nullptr;
         }
     }
-    if (m_pNonOpaqueRenderQueue)
+    /*if (m_pNonOpaqueRenderQueue)
     {
         delete m_pNonOpaqueRenderQueue;
         m_pNonOpaqueRenderQueue = nullptr;
-    }
+    }*/
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
