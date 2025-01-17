@@ -28,13 +28,12 @@ BOOL RaytracingDemoController::Start()
 
     // Create Material
     Material reflectiveMaterial = {};
-    reflectiveMaterial.roughnessFactor = 0.1f;
     reflectiveMaterial.metallicFactor = 0.0f;
     reflectiveMaterial.reflectionFactor = 0.9f;
 
     wcscpy_s(reflectiveMaterial.name, L"ground");
     wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
-    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_4K-JPG_Color.jpg");
+    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
     wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
     wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
 
@@ -46,23 +45,23 @@ BOOL RaytracingDemoController::Start()
     wcscpy_s(wallMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
     wallMaterial.metallicFactor = 0.0f;
 
-    Material ChristmasTreeOrnamentMaterial = {};
-    wcscpy_s(ChristmasTreeOrnamentMaterial.name, L"ChristmasTreeOrnament");
-    wcscpy_s(ChristmasTreeOrnamentMaterial.basePath, L"..\\..\\assets\\textures\\ChristmasTreeOrnament014\\");
-    wcscpy_s(ChristmasTreeOrnamentMaterial.albedoTextureName, L"ChristmasTreeOrnament014_2K-JPG_Color.jpg");
-    wcscpy_s(ChristmasTreeOrnamentMaterial.normalTextureName, L"ChristmasTreeOrnament014_2K-JPG_NormalDX.jpg");
-    wcscpy_s(ChristmasTreeOrnamentMaterial.roughnessTextureName, L"ChristmasTreeOrnament014_2K-JPG_Roughness.jpg");
-    wcscpy_s(ChristmasTreeOrnamentMaterial.metallicTextureName, L"ChristmasTreeOrnament014_2K-JPG_Metalness.jpg");
-    ChristmasTreeOrnamentMaterial.reflectionFactor = 0.1f;
+    //Material ChristmasTreeOrnamentMaterial = {};
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.name, L"ChristmasTreeOrnament");
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.basePath, L"..\\..\\assets\\textures\\ChristmasTreeOrnament014\\");
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.albedoTextureName, L"ChristmasTreeOrnament014_2K-JPG_Color.jpg");
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.normalTextureName, L"ChristmasTreeOrnament014_2K-JPG_NormalDX.jpg");
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.roughnessTextureName, L"ChristmasTreeOrnament014_2K-JPG_Roughness.jpg");
+    //wcscpy_s(ChristmasTreeOrnamentMaterial.metallicTextureName, L"ChristmasTreeOrnament014_2K-JPG_Metalness.jpg");
+    //ChristmasTreeOrnamentMaterial.reflectionFactor = 0.1f;
 
     IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
     IRenderMaterial *pWallMaterial = pRenderer->CreateMaterialHandle(&wallMaterial);
-    IRenderMaterial *pChristmasTreeOrnamentMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
+    //IRenderMaterial *pChristmasTreeOrnamentMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
 
     // Create Model & GameObject
     IGameModel *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
     IGameModel *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
-    IGameModel *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    //IGameModel *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
     IGameObject *pGround = pGame->CreateGameObject();
     pGround->SetModel(pSquareModel);
@@ -78,11 +77,11 @@ BOOL RaytracingDemoController::Start()
     pBox->SetPosition(3.0f, 1.5f, 0.0f);
     pBox->SetMaterials(&pWallMaterial, 1);
 
-    IGameObject *pSphere = pGame->CreateGameObject();
-    pSphere->SetModel(pSphereModel);
-    pSphere->SetScale(2.0f);
-    pSphere->SetPosition(-5.0f, 2.0f, 0.0f);
-    pSphere->SetMaterials(&pChristmasTreeOrnamentMaterial, 1);
+    //IGameObject *pSphere = pGame->CreateGameObject();
+    //pSphere->SetModel(pSphereModel);
+    //pSphere->SetScale(2.0f);
+    //pSphere->SetPosition(-5.0f, 2.0f, 0.0f);
+    //pSphere->SetMaterials(&pChristmasTreeOrnamentMaterial, 1);
 
     IModelExporter *pExporter = g_pClient->GetFBXModelExporter();
 

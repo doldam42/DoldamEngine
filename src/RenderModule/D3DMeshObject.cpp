@@ -272,7 +272,7 @@ void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInM
     Material mat;
     memcpy(&mat, pInMaterial, sizeof(Material));
 
-    pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_NON_OPAQUE : DRAW_PASS_TYPE_DEFAULT;
+    pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_TRANSPARENCY : DRAW_PASS_TYPE_DEFAULT;
 
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }

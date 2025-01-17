@@ -241,7 +241,7 @@ void Graphics::InitBlendStates()
     using namespace DirectX;
 
     blendStates[DRAW_PASS_TYPE_DEFAULT] = blendStates[DRAW_PASS_TYPE_SHADOW] = CommonStates::Opaque;
-    blendStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::AlphaBlend;
+    blendStates[DRAW_PASS_TYPE_TRANSPARENCY] = CommonStates::AlphaBlend;
 }
 
 void Graphics::InitRasterizerStates()
@@ -250,11 +250,11 @@ void Graphics::InitRasterizerStates()
 
     const CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
     rasterizerStates[DRAW_PASS_TYPE_DEFAULT][FILL_MODE_SOLID] =
-        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_SOLID] =
+        rasterizerStates[DRAW_PASS_TYPE_TRANSPARENCY][FILL_MODE_SOLID] =
             rasterizerStates[DRAW_PASS_TYPE_SHADOW][FILL_MODE_SOLID] = desc;
 
     rasterizerStates[DRAW_PASS_TYPE_DEFAULT][FILL_MODE_WIRED] =
-        rasterizerStates[DRAW_PASS_TYPE_NON_OPAQUE][FILL_MODE_WIRED] =
+        rasterizerStates[DRAW_PASS_TYPE_TRANSPARENCY][FILL_MODE_WIRED] =
             rasterizerStates[DRAW_PASS_TYPE_SHADOW][FILL_MODE_WIRED] = CommonStates::Wireframe;
 }
 
@@ -263,7 +263,7 @@ void Graphics::InitDepthStencilStates()
     using namespace DirectX;
 
     depthStencilStates[DRAW_PASS_TYPE_DEFAULT] = depthStencilStates[DRAW_PASS_TYPE_SHADOW] = CommonStates::DepthDefault;
-    depthStencilStates[DRAW_PASS_TYPE_NON_OPAQUE] = CommonStates::DepthRead;
+    depthStencilStates[DRAW_PASS_TYPE_TRANSPARENCY] = CommonStates::DepthRead;
 }
 
 void Graphics::InitSamplers()
@@ -964,7 +964,7 @@ ID3D12RootSignature *Graphics::GetRS(RENDER_ITEM_TYPE itemType, DRAW_PASS_TYPE p
     switch (passType)
     {
     case DRAW_PASS_TYPE_DEFAULT:
-    case DRAW_PASS_TYPE_NON_OPAQUE:
+    case DRAW_PASS_TYPE_TRANSPARENCY:
         return rootSignatures[itemType];
     case DRAW_PASS_TYPE_SHADOW: {
         if (itemType == RENDER_ITEM_TYPE_MESH_OBJ)

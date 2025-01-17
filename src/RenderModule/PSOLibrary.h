@@ -10,22 +10,24 @@
 ////*********************************************************
 //
 //#pragma once
+//
+//#include "RendererTypedef.h"
 //#include "MemoryMappedPSOCache.h"
 //#include "MemoryMappedPipelineLibrary.h"
 //
-//#include "SimpleVertexShader.hlsl.h"
-//#include "SimplePixelShader.hlsl.h"
-//#include "QuadVertexShader.hlsl.h"
-//#include "InvertPixelShader.hlsl.h"
-//#include "BlitPixelShader.hlsl.h"
-//#include "GrayScalePixelShader.hlsl.h"
-//#include "EdgeDetectPixelShader.hlsl.h"
-//#include "BlurPixelShader.hlsl.h"
-//#include "WarpPixelShader.hlsl.h"
-//#include "PixelatePixelShader.hlsl.h"
-//#include "DistortPixelShader.hlsl.h"
-//#include "WavePixelShader.hlsl.h"
-//#include "UberPixelShader.hlsl.h"
+//#include "../Client/Shaders/BasicPS.hlsl.h"
+//#include "../Client/Shaders/BasicVS.hlsl.h"
+//#include "../Client/Shaders/D32ToRgbaPS.hlsl.h"
+//#include "../Client/Shaders/DeferredPS.hlsl.h"
+//#include "../Client/Shaders/DepthOnlyPS.hlsl.h"
+//#include "../Client/Shaders/DepthOnlyVS.hlsl.h"
+//#include "../Client/Shaders/PresentPS.hlsl.h"
+//#include "../Client/Shaders/PresentVS.hlsl.h"
+//#include "../Client/Shaders/SkinningCS.hlsl.h"
+//#include "../Client/Shaders/SkyboxVS.hlsl.h"
+//#include "../Client/Shaders/SkyboxPS.hlsl.h"
+//#include "../Client/Shaders/SpritePS.hlsl.h"
+//#include "../Client/Shaders/SpriteVS.hlsl.h"
 //
 //using namespace Microsoft::WRL;
 //using namespace DirectX;
@@ -39,25 +41,6 @@
 //    PipelineLibraries,
 //
 //    PSOCachingMechanismCount
-//};
-//
-//enum EffectPipelineType : UINT
-//{
-//    // These always get compiled at startup.
-//    BaseNormal3DRender,
-//    BaseUberShader,
-//
-//    // These are compiled a la carte.
-//    PostBlit,
-//    PostInvert,
-//    PostGrayScale,
-//    PostEdgeDetect,
-//    PostBlur,
-//    PostWarp,
-//    PostPixelate,
-//    PostDistort,
-//    PostWave,
-//    EffectPipelineTypeCount
 //};
 //
 //struct GraphicsShaderSet

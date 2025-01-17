@@ -22,6 +22,8 @@
 
 #include "PostProcessor.h"
 
+//#include "PSOLibrary.h"
+
 #include <process.h>
 
 #include "D3D12Renderer.h"
@@ -324,7 +326,7 @@ void D3D12Renderer::EndRender()
 
     m_pNonOpaqueRenderQueue->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
                                      GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
-                                     DRAW_PASS_TYPE_NON_OPAQUE);
+                                     DRAW_PASS_TYPE_TRANSPARENCY);
 
 #elif defined(USE_RAYTRACING)
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
@@ -527,7 +529,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.meshObjParam.ppMaterials = nullptr;
     item.meshObjParam.numMaterials = 0;
 
-    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
+    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
     {
         if (!m_pNonOpaqueRenderQueue->Add(&item))
             __debugbreak();
@@ -568,7 +570,7 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
     item.meshObjParam.ppMaterials = ppMaterials;
     item.meshObjParam.numMaterials = numMaterial;
 
-    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_NON_OPAQUE)
+    if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
     {
         if (!m_pNonOpaqueRenderQueue->Add(&item))
             __debugbreak();
