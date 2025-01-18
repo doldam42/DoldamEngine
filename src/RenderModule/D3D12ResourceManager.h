@@ -9,9 +9,10 @@ enum TEXTURE_FILE_FORMAT
 class DescriptorAllocator;
 class D3D12ResourceManager
 {
-    static const UINT DESCRIPTOR_COUNT_PER_RTV = 20;
-    static const UINT DESCRIPTOR_COUNT_PER_DSV = 20;
+    static const UINT DESCRIPTOR_COUNT_PER_RTV = 32;
+    static const UINT DESCRIPTOR_COUNT_PER_DSV = 32;
     static const UINT DESCRIPTOR_POOL_SIZE = 6;
+    static const UINT RTV_DESCRIPTOR_POOL_SIZE = 4;
 
     ID3D12Device              *m_pD3DDevice = nullptr;
     ID3D12CommandQueue        *m_pCommandQueue = nullptr;
@@ -22,8 +23,8 @@ class D3D12ResourceManager
     ID3D12Fence *m_pFence = nullptr;
     UINT64       m_ui64FenceValue = 0;
 
-    DescriptorAllocator *m_pDescriptorAllocators[DESCRIPTOR_POOL_SIZE];
-    DescriptorAllocator *m_pRTVDescriptorAllocator = nullptr;
+    DescriptorAllocator *m_pDescriptorAllocators[DESCRIPTOR_POOL_SIZE] = {nullptr};
+    DescriptorAllocator *m_pRTVDescriptorAllocators[RTV_DESCRIPTOR_POOL_SIZE] = {nullptr};
     DescriptorAllocator *m_pDSVDescriptorAllocator = nullptr;
 
     UINT m_maxDescriptorCount = 0;
@@ -44,7 +45,7 @@ class D3D12ResourceManager
 
     // descriptor 개수에 맞는 리소스 반환
     BOOL AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors);
-    BOOL AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
+    BOOL AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors = 1);
     BOOL AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
 
     void DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor);

@@ -45,8 +45,14 @@ BOOL D3D12ResourceManager::Initialize(ID3D12Device5 *pDevice, UINT maxDescriptor
     m_pDescriptorAllocators[5] = new DescriptorAllocator;
     m_pDescriptorAllocators[5]->Initialize(pDevice, m_maxDescriptorCount, 64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    m_pRTVDescriptorAllocator = new DescriptorAllocator;
-    m_pRTVDescriptorAllocator->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_pRTVDescriptorAllocators[0] = new DescriptorAllocator;
+    m_pRTVDescriptorAllocators[0]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_pRTVDescriptorAllocators[1] = new DescriptorAllocator;
+    m_pRTVDescriptorAllocators[1]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 4, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_pRTVDescriptorAllocators[2] = new DescriptorAllocator;
+    m_pRTVDescriptorAllocators[2]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 8, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_pRTVDescriptorAllocators[3] = new DescriptorAllocator;
+    m_pRTVDescriptorAllocators[3]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 16, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     m_pDSVDescriptorAllocator = new DescriptorAllocator;
     m_pDSVDescriptorAllocator->Initialize(pDevice, DESCRIPTOR_COUNT_PER_DSV, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -58,7 +64,8 @@ lb_return:
 
 BOOL D3D12ResourceManager::AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors)
 {
-    if (numDescriptors <= 1)
+    assert(numDescriptors > 0);
+    if (numDescriptors == 1)
         return m_pDescriptorAllocators[0]->Alloc(pOutDescriptor);
     if (numDescriptors <= 4)
         return m_pDescriptorAllocators[1]->Alloc(pOutDescriptor);
@@ -73,9 +80,21 @@ BOOL D3D12ResourceManager::AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescripto
     return FALSE;
 }
 
-BOOL D3D12ResourceManager::AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
+BOOL D3D12ResourceManager::AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors)
 {
-    return m_pRTVDescriptorAllocator->Alloc(pOutDescriptor);
+    assert(numDescriptors > 0);
+    if (numDescriptors == 1)
+        return m_pRTVDescriptorAllocators[0]->Alloc(pOutDescriptor);
+    if (numDescriptors <= 4)
+        return m_pRTVDescriptorAllocators[1]->Alloc(pOutDescriptor);
+    if (numDescriptors <= 8)
+        return m_pRTVDescriptorAllocators[2]->Alloc(pOutDescriptor);
+    if (numDescriptors <= 16)
+        return m_pRTVDescriptorAllocators[3]->Alloc(pOutDescriptor);
+#ifdef _DEBUG
+    __debugbreak();
+#endif
+    return FALSE;
 }
 
 BOOL D3D12ResourceManager::AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
@@ -109,9 +128,26 @@ void D3D12ResourceManager::DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor
         break;
     }
 }
-void D3D12ResourceManager::DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
+void D3D12ResourceManager::DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor)
 {
-    m_pRTVDescriptorAllocator->DeAlloc(pOutDescriptor);
+    switch (pDescriptor->descriptorCount)
+    {
+    case 1:
+        m_pRTVDescriptorAllocators[0]->DeAlloc(pDescriptor);
+        break;
+    case 4:
+        m_pRTVDescriptorAllocators[1]->DeAlloc(pDescriptor);
+        break;
+    case 8:
+        m_pRTVDescriptorAllocators[2]->DeAlloc(pDescriptor);
+        break;
+    case 16:
+        m_pRTVDescriptorAllocators[3]->DeAlloc(pDescriptor);
+        break;
+    default:
+        __debugbreak();
+        break;
+    }
 }
 void D3D12ResourceManager::DeallocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
 {
@@ -870,10 +906,13 @@ void D3D12ResourceManager::Cleanup()
             m_pDescriptorAllocators[i] = nullptr;
         }
     }
-    if (m_pRTVDescriptorAllocator)
+    for (UINT i = 0; i < RTV_DESCRIPTOR_POOL_SIZE; i++)
     {
-        delete m_pRTVDescriptorAllocator;
-        m_pRTVDescriptorAllocator = nullptr;
+        if (m_pRTVDescriptorAllocators[i])
+        {
+            delete m_pRTVDescriptorAllocators[i];
+            m_pRTVDescriptorAllocators[i] = nullptr;
+        }
     }
     if (m_pDSVDescriptorAllocator)
     {

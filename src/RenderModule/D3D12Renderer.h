@@ -1,9 +1,9 @@
 #pragma once
 
-#include "RendererInterface.h"
-#include "RendererTypedef.h"
 #include "ConstantBuffers.h"
 #include "RenderQueue.h"
+#include "RendererInterface.h"
+#include "RendererTypedef.h"
 
 const UINT  SWAP_CHAIN_FRAME_COUNT = 3;
 const UINT  MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
@@ -28,8 +28,9 @@ class PostProcessor;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
 //#define USE_RAYTRACING
-#define USE_MULTI_THREAD
-//#define USE_MULTILPE_COMMAND_LIST
+//#define USE_FORWARD_RENDERING
+#define USE_DEFERRED_RENDERING
+// #define USE_MULTILPE_COMMAND_LIST
 
 enum GLOBAL_DESCRIPTOR_INDEX
 {
@@ -58,6 +59,8 @@ class D3D12Renderer : public IRenderer
     static const UINT MAX_DESCRIPTOR_COUNT = 4096;
     static const UINT MAX_RENDER_THREAD_COUNT = 8;
 
+    static const UINT DEFERRED_RENDER_TARGET_COUNT = 3;
+
     Camera *m_pMainCamera = nullptr;
 
     HWND                  m_hWnd = nullptr;
@@ -77,7 +80,7 @@ class D3D12Renderer : public IRenderer
     DescriptorPool        *m_ppDescriptorPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
-    //RenderQueue           *m_pNonOpaqueRenderQueue = nullptr;
+    // RenderQueue           *m_pNonOpaqueRenderQueue = nullptr;
 
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;
@@ -101,18 +104,30 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource *m_pRaytracingOutputBuffers[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pIntermediateRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
-    ID3D12Resource *m_pDepthStencil = nullptr;
+    ID3D12Resource *m_pDepthStencils[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
+
+    // DEFERRED RenderTargets
+    ID3D12Resource   *m_pDiffuseRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
+    ID3D12Resource   *m_pNormalRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
+    ID3D12Resource   *m_pElementsRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
+    DESCRIPTOR_HANDLE m_deferredRTVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+    DESCRIPTOR_HANDLE m_deferredSRVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
 
     // Shadow Map
     // CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
     ShadowManager *m_pShadowManager = nullptr;
     UINT           m_shadowWidth = 1024;
 
-    ID3D12DescriptorHeap *m_pRTVHeap = nullptr;
-    ID3D12DescriptorHeap *m_pSRVHeap = nullptr;
-    ID3D12DescriptorHeap *m_pDSVHeap = nullptr;
-    ID3D12DescriptorHeap *m_pRaytracingOutputHeap = nullptr;
+    DESCRIPTOR_HANDLE m_intermediateRTVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+    DESCRIPTOR_HANDLE m_intermediateSRVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
 
+    DESCRIPTOR_HANDLE m_backRTVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+
+    DESCRIPTOR_HANDLE m_raytracingSRVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+    DESCRIPTOR_HANDLE m_raytracingUAVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+
+    DESCRIPTOR_HANDLE m_depthStencilDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+    
     // Global
     Matrix  m_camViewRow;
     Matrix  m_camProjRow;
@@ -147,8 +162,8 @@ class D3D12Renderer : public IRenderer
 
     void CreateFence();
     void CleanupFence();
-    BOOL CreateDescriptorHeap();
-    void CleanupDescriptorHeap();
+    BOOL CreateDescriptorTables();
+    void CleanupDescriptorTables();
 
     UINT64 Fence();
     void   WaitForFenceValue(UINT64 ExpectedFenceValue);
@@ -163,6 +178,10 @@ class D3D12Renderer : public IRenderer
 
     void UpdateGlobal();
     void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
+
+    // Deferred RenderTargets
+    void CreateDeferredBuffers();
+    void CleanupDeferredBuffers();
 
   public:
     // Inherited via IRenderer
@@ -280,13 +299,18 @@ class D3D12Renderer : public IRenderer
     MaterialManager      *GetMaterialManager() const { return m_pMaterialManager; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(RENDER_TARGET_TYPE type) const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetSRVHandle(RENDER_TARGET_TYPE type) const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetUAVHandle(RENDER_TARGET_TYPE type) const;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetDeferredRTV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetDeferredSRV() const;
 
     // void UpdateTextureWithShadowMap(ITextureHandle *pTexHandle, UINT lightIndex) override;
     ITextureHandle *GetShadowMapTexture(UINT lightIndex) override;
 
     // for RenderThread
     UINT GetRenderThreadCount() { return m_renderThreadCount; }
-    void ProcessByThread(UINT threadIndex);
+    void ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType);
 
     void WaitForGPU();
 

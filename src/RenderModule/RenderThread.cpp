@@ -11,6 +11,7 @@ UINT __stdcall RenderThread(void *pArg)
     RENDER_THREAD_DESC *pDesc = (RENDER_THREAD_DESC *)pArg;
     D3D12Renderer      *pRenderer = pDesc->pRenderer;
     UINT                threadIndex = pDesc->threadindex;
+    DRAW_PASS_TYPE      passType = pDesc->passType;
     const HANDLE       *phEventList = pDesc->hEventList;
     while (1)
     {
@@ -19,7 +20,7 @@ UINT __stdcall RenderThread(void *pArg)
         switch (eventIndex)
         {
         case RENDER_THREAD_EVENT_TYPE_PROCESS:
-            pRenderer->ProcessByThread(threadIndex);
+            pRenderer->ProcessByThread(threadIndex, passType);
             break;
         case RENDER_THREAD_EVENT_TYPE_DESTROY:
             goto lb_exit;

@@ -22,7 +22,7 @@
 
 #include "PostProcessor.h"
 
-//#include "PSOLibrary.h"
+// #include "PSOLibrary.h"
 
 #include <process.h>
 
@@ -192,7 +192,7 @@ lb_exit:
     m_pPostProcessor = new PostProcessor;
     m_pPostProcessor->Initialize(this);
 
-    CreateDescriptorHeap();
+    CreateDescriptorTables();
 
     CreateBuffers();
 
@@ -207,7 +207,7 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifdef USE_MULTI_THREAD
+#ifdef USE_FORWARD_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
 #endif
 
@@ -233,8 +233,8 @@ lb_exit:
         m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
     }
 
- /*   m_pNonOpaqueRenderQueue = new RenderQueue;
-    m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);*/
+    /*   m_pNonOpaqueRenderQueue = new RenderQueue;
+       m_pNonOpaqueRenderQueue->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);*/
 
 // #DXR
 #ifdef USE_RAYTRACING
@@ -276,20 +276,38 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
-#ifndef USE_RAYTRACING
+#ifdef USE_FORWARD_RENDERING
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-#endif
+#elif defined(USE_DEFERRED_RENDERING)
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex],
+                                                                           D3D12_RESOURCE_STATE_PRESENT,
+                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex],
+                                                                           D3D12_RESOURCE_STATE_PRESENT,
+                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex],
+                                                                           D3D12_RESOURCE_STATE_PRESENT,
+                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
+    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
+    rtvHandle.Offset(m_rtvDescriptorSize);
+    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
+    rtvHandle.Offset(m_rtvDescriptorSize);
+    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
+    rtvHandle.Offset(m_rtvDescriptorSize);
+#endif // USE_DEFERRED_RENDERING
+
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_PRESENT,
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     D3D12_CPU_DESCRIPTOR_HANDLE   backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
     // Record commands.
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -301,9 +319,9 @@ void D3D12Renderer::EndRender()
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     UpdateGlobal();
-#if defined(USE_MULTI_THREAD)
-    D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
+#if defined(USE_FORWARD_RENDERING)
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
 
     m_pShadowManager->Render(m_pCommandQueue);
 
@@ -323,38 +341,45 @@ void D3D12Renderer::EndRender()
         SetEvent(m_pThreadDescList[i].hEventList[RENDER_THREAD_EVENT_TYPE_PROCESS]);
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
+#elif defined(USE_DEFERRED_RENDERING)
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
 
-    //m_pNonOpaqueRenderQueue->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-    //                                 GetGlobalDescriptorHandle(0), &m_Viewport, &m_ScissorRect, 1,
-    //                                 DRAW_PASS_TYPE_TRANSPARENCY);
+    m_pShadowManager->Render(m_pCommandQueue);
 
+    pCommandList = pCommandListPool->GetCurrentCommandList();
+    if (m_pCubemap)
+    {
+        pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+        pCommandList->RSSetViewports(1, &m_Viewport);
+        pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+        m_pCubemap->Draw(0, pCommandList);
+    }
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+
+    m_activeThreadCount = m_renderThreadCount;
+    for (UINT i = 0; i < m_renderThreadCount; i++)
+    {
+        SetEvent(m_pThreadDescList[i].hEventList[RENDER_THREAD_EVENT_TYPE_PROCESS]);
+    }
+    WaitForSingleObject(m_hCompleteEvent, INFINITE);
 #elif defined(USE_RAYTRACING)
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
-    ID3D12Resource               *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtOutputSrv(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                              m_uiFrameIndex, m_srvDescriptorSize);
-    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, rtOutputSrv);
+    ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
+    D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = GetUAVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, uavHandle);
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
-#else
-    for (UINT i = 0; i < m_renderThreadCount; i++)
-    {
-        pCommadListPool = m_ppCommandListPool[m_dwCurContextIndex][i];
-        m_ppRenderQueue[i]->Process(i, pCommadListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle, &m_Viewport,
-                                    &m_ScissorRect);
-    }
 #endif
 
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
 #ifdef USE_RAYTRACING
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart(),
-                                            m_uiFrameIndex, m_srvDescriptorSize);
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 #else
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex,
-                                            m_srvDescriptorSize);
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
@@ -373,7 +398,7 @@ void D3D12Renderer::EndRender()
     {
         m_ppRenderQueue[i]->Reset();
     }
-    //m_pNonOpaqueRenderQueue->Reset();
+    // m_pNonOpaqueRenderQueue->Reset();
     m_pShadowManager->Reset();
 #endif
 }
@@ -531,16 +556,16 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
-    //if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
+    // if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
     //{
-    //    if (!m_pNonOpaqueRenderQueue->Add(&item))
-    //        __debugbreak();
-    //}
-    //else
+    //     if (!m_pNonOpaqueRenderQueue->Add(&item))
+    //         __debugbreak();
+    // }
+    // else
     //{
-    //    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //        __debugbreak();
-    //}
+    //     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    //         __debugbreak();
+    // }
 
     if (!m_pShadowManager->Add(&item))
     {
@@ -1114,14 +1139,56 @@ ConstantBufferPool *D3D12Renderer::GetConstantBufferPool(CONSTANT_BUFFER_TYPE ty
     return m_ppConstantBufferManager[m_curContextIndex][threadIndex]->GetConstantBufferPool(type);
 }
 
-// RTV handle
-// |  backBuffer rtv0  |  backBuffer rtv1  | ... |
-// | intermediate rtv0 | intermediate rtv1 | ... |
 D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type) const
 {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-                                         (INT)type * SWAP_CHAIN_FRAME_COUNT, m_rtvDescriptorSize);
-    return handle.Offset(m_uiFrameIndex, m_rtvDescriptorSize);
+    switch (type)
+    {
+    case RENDER_TARGET_TYPE_BACK:
+        return m_backRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    case RENDER_TARGET_TYPE_INTERMEDIATE:
+        return m_intermediateRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    case RENDER_TARGET_TYPE_DEFERRED:
+        return m_deferredRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    default:
+        __debugbreak();
+        break;
+    }
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetSRVHandle(RENDER_TARGET_TYPE type) const
+{
+    switch (type)
+    {
+    case RENDER_TARGET_TYPE_INTERMEDIATE:
+        return m_intermediateSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    case RENDER_TARGET_TYPE_RAYTRACING:
+        return m_raytracingSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    default:
+        __debugbreak();
+        break;
+    }
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetUAVHandle(RENDER_TARGET_TYPE type) const
+{
+    switch (type)
+    {
+    case RENDER_TARGET_TYPE_RAYTRACING:
+        return m_raytracingUAVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    default:
+        __debugbreak();
+        break;
+    }
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetDeferredRTV() const
+{
+    return m_deferredRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetDeferredSRV() const
+{
+    return m_deferredSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
 }
 
 // ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_pShadowMapTextures[lightIndex]; }
@@ -1137,16 +1204,16 @@ ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_p
 //    pTex->IsUpdated = TRUE;
 //}
 
-void D3D12Renderer::ProcessByThread(UINT threadIndex)
+void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
                                           GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect, 1,
-                                          DRAW_PASS_TYPE_DEFAULT);
+                                          passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
     if (curCount == 0)
@@ -1211,83 +1278,60 @@ void D3D12Renderer::CleanupFence()
     }
 }
 
-BOOL D3D12Renderer::CreateDescriptorHeap()
+BOOL D3D12Renderer::CreateDescriptorTables()
 {
     HRESULT hr = S_OK;
 
-    // 렌더타겟용 디스크립터힙
-    // |       rtv 0       |       rtv 1       | ... |
-    // | intermediate rtv0 | intermediate rtv1 | ... |
-    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-    rtvHeapDesc.NumDescriptors = SWAP_CHAIN_FRAME_COUNT * RENDER_TARGET_TYPE_COUNT;
-    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_pRTVHeap))))
+    // 렌더타겟용 디스크립터 테이블
+    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
-        __debugbreak();
+        m_pResourceManager->AllocRTVDescriptorTable(&m_backRTVDescriptorTables[i]);
+        m_pResourceManager->AllocRTVDescriptorTable(&m_intermediateRTVDescriptorTables[i]);
+
+        m_pResourceManager->AllocDescriptorTable(&m_intermediateSRVDescriptorTables[i], 1);
+
+        m_pResourceManager->AllocDSVDescriptorTable(&m_depthStencilDescriptorTables[i]);
     }
 
-    // 렌더타겟 SRV용 디스크립터 힙
-    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = SWAP_CHAIN_FRAME_COUNT; // SwapChain Buffers * render target type
-    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_pSRVHeap))))
+    // 레이트레이싱용 디스크립터 테이블
+    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
-        __debugbreak();
-    }
-
-    // 깊이 버퍼용 디스크립터 힙
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1 + MAX_LIGHTS; // SHADOW MAP용 Descriptor 포함
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap))))
-    {
-        __debugbreak();
-    }
-
-    // Raytracing용 디스크립터 힙
-    D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc = {};
-    rtHeapDesc.NumDescriptors = SWAP_CHAIN_FRAME_COUNT;
-    rtHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    rtHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (FAILED(m_pD3DDevice->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_pRaytracingOutputHeap))))
-    {
-        __debugbreak();
+        m_pResourceManager->AllocDescriptorTable(&m_raytracingSRVDescriptorTables[i], 1);
+        m_pResourceManager->AllocDescriptorTable(&m_raytracingUAVDescriptorTables[i], 1);
     }
 
     // Descriptor Size 저장
     m_rtvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_srvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+    // Deferred Rendering 용 디스크립터 테이블
+    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
+    {
+        m_pResourceManager->AllocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
+        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
+    }
     return TRUE;
 }
 
-void D3D12Renderer::CleanupDescriptorHeap()
+void D3D12Renderer::CleanupDescriptorTables()
 {
-    if (m_pRTVHeap)
+    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
-        m_pRTVHeap->Release();
-        m_pRTVHeap = nullptr;
-    }
+        // FORWARD RENDERING
+        m_pResourceManager->DeallocRTVDescriptorTable(&m_backRTVDescriptorTables[i]);
+        m_pResourceManager->DeallocRTVDescriptorTable(&m_intermediateRTVDescriptorTables[i]);
+        m_pResourceManager->DeallocDescriptorTable(&m_intermediateSRVDescriptorTables[i]);
 
-    if (m_pDSVHeap)
-    {
-        m_pDSVHeap->Release();
-        m_pDSVHeap = nullptr;
-    }
+        // DEFERRED RENDERING
+        m_pResourceManager->DeallocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i]);
+        m_pResourceManager->DeallocDescriptorTable(&m_deferredSRVDescriptorTables[i]);
 
-    if (m_pSRVHeap)
-    {
-        m_pSRVHeap->Release();
-        m_pSRVHeap = nullptr;
-    }
+        // RAYTRACING
+        m_pResourceManager->DeallocDescriptorTable(&m_raytracingSRVDescriptorTables[i]);
+        m_pResourceManager->DeallocDescriptorTable(&m_raytracingUAVDescriptorTables[i]);
 
-    if (m_pRaytracingOutputHeap)
-    {
-        m_pRaytracingOutputHeap->Release();
-        m_pRaytracingOutputHeap = nullptr;
+        // DEPTH STENCIL
+        m_pResourceManager->DeallocDSVDescriptorTable(&m_depthStencilDescriptorTables[i]);
     }
 }
 
@@ -1310,24 +1354,10 @@ void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
     }
 }
 
-// RTV Heap
-// |     BackBuffer0     |     BackBuffer1     |     BackBuffer2     |
-// | IntermediateBuffer0 | IntermediateBuffer1 | IntermediateBuffer2 |
-void D3D12Renderer::CreateBuffers()
+// DEFERRED RTV TABLE
+// |     Diffuse     |     Normal     |     Elements     |
+void D3D12Renderer::CreateDeferredBuffers()
 {
-    // Create frame resources.
-    // Create a RTV for each frame.
-    // Descriptor Table
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart());
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_pSRVHeap->GetCPUDescriptorHandleForHeapStart());
-    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
-    {
-        m_pSwapChain->GetBuffer(n, IID_PPV_ARGS(&m_pRenderTargets[n]));
-        m_pD3DDevice->CreateRenderTargetView(m_pRenderTargets[n], nullptr, rtvHandle);
-
-        rtvHandle.Offset(1, m_rtvDescriptorSize);
-    }
-
     D3D12_CLEAR_VALUE clearValue = {};
     clearValue.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     clearValue.Color[0] = m_clearColor[0];
@@ -1336,6 +1366,99 @@ void D3D12Renderer::CreateBuffers()
     clearValue.Color[3] = m_clearColor[3];
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_deferredRTVDescriptorTables[n].cpuHandle);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_deferredSRVDescriptorTables[n].cpuHandle);
+
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
+                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+                D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&m_pDiffuseRenderTargets[n]))))
+        {
+            __debugbreak();
+        }
+        m_pD3DDevice->CreateRenderTargetView(m_pDiffuseRenderTargets[n], nullptr, rtvHandle);
+        m_pD3DDevice->CreateShaderResourceView(m_pDiffuseRenderTargets[n], nullptr, srvHandle);
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
+        srvHandle.Offset(1, m_srvDescriptorSize);
+
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
+                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+                D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&m_pNormalRenderTargets[n]))))
+        {
+            __debugbreak();
+        }
+        m_pD3DDevice->CreateRenderTargetView(m_pNormalRenderTargets[n], nullptr, rtvHandle);
+        m_pD3DDevice->CreateShaderResourceView(m_pNormalRenderTargets[n], nullptr, srvHandle);
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
+        srvHandle.Offset(1, m_srvDescriptorSize);
+
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
+                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+                D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&m_pElementsRenderTargets[n]))))
+        {
+            __debugbreak();
+        }
+        m_pD3DDevice->CreateRenderTargetView(m_pElementsRenderTargets[n], nullptr, rtvHandle);
+        m_pD3DDevice->CreateShaderResourceView(m_pElementsRenderTargets[n], nullptr, srvHandle);
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
+        srvHandle.Offset(1, m_srvDescriptorSize);
+    }
+}
+
+void D3D12Renderer::CleanupDeferredBuffers()
+{
+    for (UINT i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
+    {
+        if (m_pDiffuseRenderTargets[i])
+        {
+            m_pDiffuseRenderTargets[i]->Release();
+            m_pDiffuseRenderTargets[i] = nullptr;
+        }
+
+        if (m_pNormalRenderTargets[i])
+        {
+            m_pNormalRenderTargets[i]->Release();
+            m_pNormalRenderTargets[i] = nullptr;
+        }
+
+        if (m_pElementsRenderTargets[i])
+        {
+            m_pElementsRenderTargets[i]->Release();
+            m_pElementsRenderTargets[i] = nullptr;
+        }
+    }
+}
+
+// Create frame resources.
+// Create a RTV for each frame.
+void D3D12Renderer::CreateBuffers()
+{
+    D3D12_CLEAR_VALUE clearValue = {};
+    clearValue.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    clearValue.Color[0] = m_clearColor[0];
+    clearValue.Color[1] = m_clearColor[1];
+    clearValue.Color[2] = m_clearColor[2];
+    clearValue.Color[3] = m_clearColor[3];
+
+    // Create Back RTV
+    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
+    {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_backRTVDescriptorTables[n].cpuHandle);
+        m_pSwapChain->GetBuffer(n, IID_PPV_ARGS(&m_pRenderTargets[n]));
+        m_pD3DDevice->CreateRenderTargetView(m_pRenderTargets[n], nullptr, rtvHandle);
+    }
+
+    // Create Intermediate RTV
+    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
+    {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_intermediateRTVDescriptorTables[n].cpuHandle);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_intermediateSRVDescriptorTables[n].cpuHandle);
+
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
@@ -1346,13 +1469,13 @@ void D3D12Renderer::CreateBuffers()
         }
         m_pD3DDevice->CreateRenderTargetView(m_pIntermediateRenderTargets[n], nullptr, rtvHandle);
         m_pD3DDevice->CreateShaderResourceView(m_pIntermediateRenderTargets[n], nullptr, srvHandle);
-        rtvHandle.Offset(1, m_rtvDescriptorSize);
-        srvHandle.Offset(1, m_srvDescriptorSize);
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle(m_pRaytracingOutputHeap->GetCPUDescriptorHandleForHeapStart());
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
+        D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = m_raytracingUAVDescriptorTables[n].cpuHandle;
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = m_raytracingSRVDescriptorTables[n].cpuHandle;
+
         ID3D12Resource *pOutBuffer = nullptr;
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -1365,13 +1488,14 @@ void D3D12Renderer::CreateBuffers()
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        m_pD3DDevice->CreateUnorderedAccessView(pOutBuffer, nullptr, &uavDesc, rtHandle);
+        m_pD3DDevice->CreateUnorderedAccessView(pOutBuffer, nullptr, &uavDesc, uavHandle);
+        m_pD3DDevice->CreateShaderResourceView(pOutBuffer, nullptr, srvHandle);
 
         m_pRaytracingOutputBuffers[n] = pOutBuffer;
-        rtHandle.Offset(1, m_srvDescriptorSize);
     }
 
     // Create DSV
+    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
         depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -1387,18 +1511,21 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencil))))
+                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
         {
             __debugbreak();
         }
 
-        m_pD3DDevice->CreateDepthStencilView(m_pDepthStencil, &depthStencilDesc,
-                                             m_pDSVHeap->GetCPUDescriptorHandleForHeapStart());
+        m_pD3DDevice->CreateDepthStencilView(m_pDepthStencils[n], &depthStencilDesc,
+                                             m_depthStencilDescriptorTables[n].cpuHandle);
     }
+
+    CreateDeferredBuffers();
 }
 
 void D3D12Renderer::CleanupBuffers()
 {
+    CleanupDeferredBuffers();
     // Cleanup Render Targets
     for (UINT i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
@@ -1419,18 +1546,18 @@ void D3D12Renderer::CleanupBuffers()
             m_pRaytracingOutputBuffers[i]->Release();
             m_pRaytracingOutputBuffers[i] = nullptr;
         }
-    }
 
-    if (m_pDepthStencil)
-    {
-        m_pDepthStencil->Release();
-        m_pDepthStencil = nullptr;
+        if (m_pDepthStencils[i])
+        {
+            m_pDepthStencils[i]->Release();
+            m_pDepthStencils[i] = nullptr;
+        }
     }
 }
 
 void D3D12Renderer::Cleanup()
 {
-#ifdef USE_MULTI_THREAD
+#ifdef USE_FORWARD_RENDERING
     CleanupRenderThreadPool();
 #endif
 
@@ -1507,7 +1634,7 @@ void D3D12Renderer::Cleanup()
     }
 
     CleanupFence();
-    CleanupDescriptorHeap();
+    CleanupDescriptorTables();
     CleanupBuffers();
 
     if (m_pPostProcessor)
@@ -1579,6 +1706,11 @@ BOOL D3D12Renderer::InitRenderThreadPool(UINT threadCount)
         }
         m_pThreadDescList[i].pRenderer = this;
         m_pThreadDescList[i].threadindex = i;
+#ifdef USE_DEFERRED_RENDERING
+        m_pThreadDescList[i].passType = DRAW_PASS_TYPE_DEFERRED;
+#else
+        m_pThreadDescList[i].passType = DRAW_PASS_TYPE_DEFAULT;
+#endif
         UINT threadID = 0;
         m_pThreadDescList[i].hThread =
             (HANDLE)_beginthreadex(nullptr, 0, RenderThread, m_pThreadDescList + i, 0, &threadID);

@@ -3,7 +3,7 @@ SamplerState samplerDiffuse : register(s0);
 
 struct PS_OUTPUT
 {
-    float4 albedo : SV_Target0;
+    float4 diffues : SV_Target0;
     float4 normal : SV_Target1;
     /*
      * r : reflect factor
@@ -11,7 +11,7 @@ struct PS_OUTPUT
      * b : metallic factor
      * a : transparancy factor
      */
-    float4 factors : SV_Target2;
+    float4 elements : SV_Target2;
 };
 
 struct PSInput
@@ -26,9 +26,9 @@ PS_OUTPUT main(PSInput input)
     PS_OUTPUT output;
 
     float4 texColor = texDiffuse.Sample(samplerDiffuse, input.texcoord);
-    output.albedo = texColor * input.color;
+    output.diffues = texColor * input.color;
     output.normal = 0.0;
-    output.factors = 0.0;
+    output.elements = 0.0;
 
     return output;
 }

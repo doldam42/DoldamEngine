@@ -11,6 +11,7 @@ struct RENDER_THREAD_DESC
 {
     D3D12Renderer *pRenderer;
     UINT           threadindex;
+    DRAW_PASS_TYPE passType;
     HANDLE         hThread;
     HANDLE         hEventList[RENDER_THREAD_EVENT_TYPE_COUNT];
 };
