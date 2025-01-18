@@ -343,5 +343,8 @@
     <FxCompile Include="..\Client\Shaders\SpriteVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\Client\Shaders\SpriteDeferredPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -40,16 +40,15 @@ float3 GetNormal(PixelShaderInput input, bool useNormalMap)
 
 struct PS_OUTPUT
 {
-    float4 position : SV_Target0;
-    float4 albedo : SV_Target1;
-    float4 normal : SV_Target2;
+    float4 albedo : SV_Target0;
+    float4 normal : SV_Target1;
     /*
      * r : reflect factor
      * g : roughness factor
      * b : metallic factor
      * a : transparancy factor
      */
-    float4 factors : SV_Target3;
+    float4 factors : SV_Target2;
 };
 
 PS_OUTPUT main(PixelShaderInput input) 
@@ -72,7 +71,6 @@ PS_OUTPUT main(PixelShaderInput input)
     float metallic = material.useMetallicMap ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
                                              : material.metallicFactor;
 
-    output.position = float4(input.posWorld, 1.0);
     output.albedo = float4(texColor.rgb, 1.0);
     output.normal = float4(normalWorld, 0.0);
     

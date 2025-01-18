@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ConstantBuffers.h"
-#include "RenderQueue.h"
 #include "RendererInterface.h"
 #include "RendererTypedef.h"
+#include "ConstantBuffers.h"
+#include "RenderQueue.h"
 
 const UINT  SWAP_CHAIN_FRAME_COUNT = 3;
 const UINT  MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
@@ -12,7 +12,6 @@ const float STRENGTH_IBL = 0.2f;
 struct CB_CONTAINER;
 struct RENDER_THREAD_DESC;
 
-// class CascadedShadowsManager;
 class ShadowManager;
 class DescriptorPool;
 class ConstantBufferPool;
