@@ -30,8 +30,6 @@ class PostProcessor;
 //#define USE_RAYTRACING
 //#define USE_FORWARD_RENDERING
 #define USE_DEFERRED_RENDERING
-// #define USE_MULTILPE_COMMAND_LIST
-
 enum GLOBAL_DESCRIPTOR_INDEX
 {
     GLOBAL_DESCRIPTOR_INDEX_CB = 0,
@@ -182,6 +180,8 @@ class D3D12Renderer : public IRenderer
     // Deferred RenderTargets
     void CreateDeferredBuffers();
     void CleanupDeferredBuffers();
+
+    void RenderSecondPass(ID3D12GraphicsCommandList *pCommandList);
 
   public:
     // Inherited via IRenderer

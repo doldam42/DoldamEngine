@@ -261,6 +261,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\Client\Shaders\HlslUtils.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\Client\Shaders\DXR\BxDF.hlsli">
@@ -344,6 +347,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Client\Shaders\SpriteDeferredPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Client\Shaders\LightOnlyPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

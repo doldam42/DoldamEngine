@@ -40,14 +40,14 @@ float3 GetNormal(PixelShaderInput input, bool useNormalMap)
 
 struct PS_OUTPUT
 {
+    // a : opacity
     float4 diffues : SV_Target0;
+    // a : emission
     float4 normal : SV_Target1;
-    /*
-     * r : reflect factor
-     * g : roughness factor
-     * b : metallic factor
-     * a : transparancy factor
-     */
+    // r : ao factor
+    // g : roughness factor
+    // b : metallic factor
+    // a : transparancy factor
     float4 elements : SV_Target2;
 };
 
@@ -63,21 +63,23 @@ PS_OUTPUT main(PixelShaderInput input)
     {
         discard;
     }
-
+    float ao = material.useAOMap ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
     float3 normalWorld = GetNormal(input, material.useNormalMap);
     
     float roughness = material.useRoughnessMap ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
                                                : material.roughnessFactor;
     float metallic = material.useMetallicMap ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
                                              : material.metallicFactor;
-
-    output.diffues = float4(texColor.rgb, 1.0);
-    output.normal = float4(normalWorld, 0.0);
+    float3 emission =
+        material.useEmissiveMap ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb : material.emissive;
     
-    output.elements.r = material.reflectionFactor;
+    output.diffues = float4(texColor.rgb, alpha);
+    output.normal = float4(normalWorld, length(emission));
+    
+    output.elements.r = ao;
     output.elements.g = roughness;
     output.elements.b = metallic;
-    output.elements.a = 1.0 - alpha;
+    output.elements.a = material.reflectionFactor;
 
     return output;
 }

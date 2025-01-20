@@ -77,7 +77,7 @@ void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                          D3D12_RECT *pScissorRect, D3D12_CPU_DESCRIPTOR_HANDLE src,
                          D3D12_CPU_DESCRIPTOR_HANDLE renderTarget)
 {
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
+    ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
     UINT                  srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -86,7 +86,7 @@ void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 1);
-    pD3DDeivce->CopyDescriptorsSimple(1, cpuHandle, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     pCommandList->RSSetViewports(1, pViewport);
     pCommandList->RSSetScissorRects(1, pScissorRect);

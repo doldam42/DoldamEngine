@@ -46,6 +46,8 @@ ID3DBlob *drawNormalPS = nullptr;
 ID3DBlob *presentVS = nullptr;
 ID3DBlob *presentPS = nullptr;
 
+ID3DBlob *lightOnlyPS = nullptr;
+
 // RootSignature
 ID3D12RootSignature *basicRS = nullptr;
 ID3D12RootSignature *skinnedRS = nullptr;
@@ -58,6 +60,9 @@ ID3D12RootSignature *depthOnlyBasicRS = nullptr;
 ID3D12RootSignature *depthOnlySkinnedRS = nullptr;
 ID3D12RootSignature *deformingVertexRS = nullptr;
 
+// Deferred
+ID3D12RootSignature *secondPassRS = nullptr;
+
 ID3D12RootSignature *rootSignatures[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT] = {nullptr};
 
 // Pipeline State Objects
@@ -67,6 +72,9 @@ ID3D12PipelineState *D32ToRgbaPSO = nullptr;
 ID3D12PipelineState *drawNormalPSO = nullptr;
 ID3D12PipelineState *drawSkinnedNormalPSO = nullptr;
 ID3D12PipelineState *skyboxPSO = nullptr;
+
+// Deferred
+ID3D12PipelineState *secondPassPSO = nullptr;
 
 ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE_COUNT] = {nullptr};
 
@@ -208,6 +216,11 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    hr = D3DCompileFromFile(L"./Shaders/LightOnlyPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
+                            compileFlags, 0, &lightOnlyPS, nullptr);
+    if (FAILED(hr))
+        __debugbreak();
+
     // Mesh Object
     g_shaderData[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] = {
         basicIL,
@@ -293,6 +306,14 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         simpleIL,
         CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(presentPS->GetBufferPointer(), presentPS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
+    g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS] = {
+        simpleIL,
+        CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(lightOnlyPS->GetBufferPointer(), lightOnlyPS->GetBufferSize()),
         {},
         {},
         {},
@@ -631,6 +652,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &deformingVertexRS, L"deformingVertex RS");
     }
 
+    // Init Present Root Signature
     {
         CD3DX12_DESCRIPTOR_RANGE ranges[1] = {};
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
@@ -676,13 +698,59 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         rangePerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2, 1); // b1~b2
 
         CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
-        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), rangePerGlobal, D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), &rangePerGlobal[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
                                                       samplerStates,
                                                       D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
         SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlySkinnedRS, L"depthOnly Skinned RS");
+    }
+
+    // Init Second Pass Root Signature
+    {
+        // Root Paramaters
+        // | ranges per Global |
+        // |   DiffuseTex   | NormalTex | ElementsTex | DepthTex |
+        CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
+        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0); // t0~t3
+        
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), rangesPerGlobal,
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(ranges), ranges, D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+        hr =
+            D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &pSignature, &pError);
+        if (FAILED(hr))
+        {
+            __debugbreak();
+            goto lb_return;
+        }
+
+        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
+                                                   IID_PPV_ARGS(&secondPassRS))))
+        {
+            __debugbreak();
+            goto lb_return;
+        }
+
+        if (pSignature)
+        {
+            pSignature->Release();
+            pSignature = nullptr;
+        }
+        if (pError)
+        {
+            pError->Release();
+            pError = nullptr;
+        }
     }
 
     rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] = basicRS;
@@ -728,6 +796,19 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         {
             if (!rootSignatures[itemType][passType])
                 continue;
+            if (passType == DRAW_PASS_TYPE_DEFERRED)
+            {
+                psoDesc.NumRenderTargets = 3;
+                psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            }
+            else
+            {
+                psoDesc.NumRenderTargets = 1;
+                psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
+                psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+            }
             psoDesc.InputLayout = g_shaderData[itemType][passType].inputLayout;
             psoDesc.pRootSignature = rootSignatures[itemType][passType];
             psoDesc.VS = g_shaderData[itemType][passType].VS;
@@ -754,6 +835,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
 
     // skybox PSO
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState.DepthEnable = FALSE;
+    psoDesc.DepthStencilState.StencilEnable = FALSE;
     psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].inputLayout;
     psoDesc.pRootSignature = skyboxRS;
     psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].VS;
@@ -785,6 +868,30 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         psoDesc.DepthStencilState.StencilEnable = FALSE;
 
         if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&presentPSO))))
+        {
+            __debugbreak();
+        }
+    }
+
+    // Second Pass PSO
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+        psoDesc.pRootSignature = secondPassRS;
+        psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].inputLayout;
+        psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].VS;
+        psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].PS;
+
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.SampleDesc.Count = 1;
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        psoDesc.NumRenderTargets = 1;
+        psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        psoDesc.DepthStencilState.DepthEnable = FALSE;
+        psoDesc.DepthStencilState.StencilEnable = FALSE;
+
+        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&secondPassPSO))))
         {
             __debugbreak();
         }
@@ -1064,6 +1171,11 @@ void Graphics::DeleteShaders()
         presentPS->Release();
         presentPS = nullptr;
     }
+    if (lightOnlyPS)
+    {
+        lightOnlyPS->Release();
+        lightOnlyPS = nullptr;
+    }
 }
 
 void Graphics::DeleteSamplers() {}
@@ -1115,6 +1227,11 @@ void Graphics::DeleteRootSignatures()
         skyboxRS->Release();
         skyboxRS = nullptr;
     }
+    if (secondPassRS)
+    {
+        secondPassRS->Release();
+        secondPassRS = nullptr;
+    }
 }
 
 void Graphics::DeletePipelineStates()
@@ -1144,11 +1261,15 @@ void Graphics::DeletePipelineStates()
         drawSkinnedNormalPSO->Release();
         drawSkinnedNormalPSO = nullptr;
     }
-
     if (skyboxPSO)
     {
         skyboxPSO->Release();
         skyboxPSO = nullptr;
+    }
+    if (secondPassPSO)
+    {
+        secondPassPSO->Release();
+        secondPassPSO = nullptr;
     }
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {

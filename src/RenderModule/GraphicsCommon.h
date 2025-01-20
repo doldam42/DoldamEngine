@@ -45,6 +45,7 @@ enum ADDITIONAL_PIPELINE_TYPE
 {
     ADDITIONAL_PIPELINE_TYPE_SKYBOX = 0,
     ADDITIONAL_PIPELINE_TYPE_POST_PROCESS,
+    ADDITIONAL_PIPELINE_TYPE_SECOND_PASS,
     ADDITIONAL_PIPELINE_TYPE_COUNT
 };
 
@@ -95,6 +96,8 @@ extern ID3D12RootSignature *deformingVertexRS;
 extern ID3D12RootSignature *depthOnlyBasicRS;
 extern ID3D12RootSignature *depthOnlySkinnedRS;
 
+extern ID3D12RootSignature *secondPassRS;
+
 // Pipeline State Objects
 extern ID3D12PipelineState *deformingVertexPSO;
 extern ID3D12PipelineState *presentPSO;
@@ -102,6 +105,8 @@ extern ID3D12PipelineState *presentPSO;
 extern ID3D12PipelineState *drawNormalPSO;
 extern ID3D12PipelineState *drawSkinnedNormalPSO;
 extern ID3D12PipelineState *skyboxPSO;
+
+extern ID3D12PipelineState *secondPassPSO;
 
 // #DXR
 extern IDxcBlob *rayGenLibrary;

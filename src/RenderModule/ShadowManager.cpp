@@ -592,7 +592,7 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
     pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    m_pRenderQueue->Process(threadIndex, pCommandListPool, pCommandQueue, 400, rtvHandle, dsvHandle, gpuHandle,
+    m_pRenderQueue->Process(threadIndex, pCommandListPool, pCommandQueue, 400, &rtvHandle, dsvHandle, gpuHandle,
                             &m_shadowViewports, &m_shadowScissorRects, 1, DRAW_PASS_TYPE_SHADOW);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();

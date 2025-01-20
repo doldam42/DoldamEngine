@@ -32,7 +32,6 @@ D3D12Renderer *g_pRenderer = nullptr;
 
 BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV)
 {
-
     BOOL result = FALSE;
     m_DPI = GetDpiForWindow(hWnd);
     RECT rect;
@@ -207,7 +206,7 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifdef USE_FORWARD_RENDERING
+#ifndef USE_RAYTRACING
     InitRenderThreadPool(m_renderThreadCount);
 #endif
 
@@ -276,35 +275,32 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
-#ifdef USE_FORWARD_RENDERING
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)
+    };
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE intermediateRtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    pCommandList->ClearRenderTargetView(intermediateRtvHandle, m_clearColor, 0, nullptr);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-#elif defined(USE_DEFERRED_RENDERING)
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-    rtvHandle.Offset(m_rtvDescriptorSize);
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-    rtvHandle.Offset(m_rtvDescriptorSize);
-    pCommandList->ClearRenderTargetView(rtvHandle, m_clearColor, 0, nullptr);
-    rtvHandle.Offset(m_rtvDescriptorSize);
-#endif // USE_DEFERRED_RENDERING
-
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    CD3DX12_CPU_DESCRIPTOR_HANDLE deferredRtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
+    pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
+    deferredRtvHandle.Offset(m_rtvDescriptorSize);
+    pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
+    deferredRtvHandle.Offset(m_rtvDescriptorSize);
+    pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
+    deferredRtvHandle.Offset(m_rtvDescriptorSize);
 
     D3D12_CPU_DESCRIPTOR_HANDLE   backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
@@ -342,15 +338,17 @@ void D3D12Renderer::EndRender()
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 #elif defined(USE_DEFERRED_RENDERING)
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED);
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
+    D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
+                                            rtvHandle.Offset(m_rtvDescriptorSize)};
+    D3D12_CPU_DESCRIPTOR_HANDLE   dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
 
     m_pShadowManager->Render(m_pCommandQueue);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
     {
-        pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+        pCommandList->OMSetRenderTargets(3, rtvs, FALSE, &dsvHandle);
         pCommandList->RSSetViewports(1, &m_Viewport);
         pCommandList->RSSetScissorRects(1, &m_ScissorRect);
         m_pCubemap->Draw(0, pCommandList);
@@ -373,6 +371,10 @@ void D3D12Renderer::EndRender()
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 #endif
 
+#ifdef USE_DEFERRED_RENDERING
+    pCommandList = pCommandListPool->GetCurrentCommandList();
+    RenderSecondPass(pCommandList);
+#endif // USE_DEFERRED_RENDERING
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
@@ -1163,6 +1165,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetSRVHandle(RENDER_TARGET_TYPE type)
         return m_intermediateSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
     case RENDER_TARGET_TYPE_RAYTRACING:
         return m_raytracingSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    case RENDER_TARGET_TYPE_DEFERRED:
+        return m_deferredSRVDescriptorTables[m_uiFrameIndex].cpuHandle;
     default:
         __debugbreak();
         break;
@@ -1208,11 +1212,19 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
-    D3D12_CPU_DESCRIPTOR_HANDLE   rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+#ifdef USE_FORWARD_RENDERING
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {rtvHandle};
+#elif defined(USE_DEFERRED_RENDERING)
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
+    D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
+                                            rtvHandle.Offset(m_rtvDescriptorSize)};
+#endif
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
 
-    m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvHandle, dsvHandle,
-                                          GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect, 1,
+    m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle,
+                                          GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect,
+                                          _countof(rtvs),
                                           passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
@@ -1308,7 +1320,7 @@ BOOL D3D12Renderer::CreateDescriptorTables()
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
         m_pResourceManager->AllocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
-        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
+        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
     }
     return TRUE;
 }
@@ -1364,6 +1376,12 @@ void D3D12Renderer::CreateDeferredBuffers()
     clearValue.Color[1] = m_clearColor[1];
     clearValue.Color[2] = m_clearColor[2];
     clearValue.Color[3] = m_clearColor[3];
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC depthSrvDesc = {};
+    depthSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    depthSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    depthSrvDesc.Texture2D.MipLevels = 1;
+    depthSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_deferredRTVDescriptorTables[n].cpuHandle);
@@ -1407,6 +1425,8 @@ void D3D12Renderer::CreateDeferredBuffers()
         m_pD3DDevice->CreateShaderResourceView(m_pElementsRenderTargets[n], nullptr, srvHandle);
         rtvHandle.Offset(1, m_rtvDescriptorSize);
         srvHandle.Offset(1, m_srvDescriptorSize);
+
+        m_pD3DDevice->CreateShaderResourceView(m_pDepthStencils[n], &depthSrvDesc, srvHandle);
     }
 }
 
@@ -1432,6 +1452,49 @@ void D3D12Renderer::CleanupDeferredBuffers()
             m_pElementsRenderTargets[i] = nullptr;
         }
     }
+}
+
+void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
+{
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex],
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                             D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex],
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                                             D3D12_RESOURCE_STATE_COMMON)};
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    DescriptorPool             *pDescriptorPool = GetDescriptorPool(0);
+    ID3D12DescriptorHeap       *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+
+    D3D12_GPU_DESCRIPTOR_HANDLE globalGpuHandle = GetGlobalDescriptorHandle(0);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+
+    // | DiffuseTex | NormalTex | ElementsTex | Depth |
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 4);
+
+    m_pD3DDevice->CopyDescriptorsSimple(4, cpuHandle, GetSRVHandle(RENDER_TARGET_TYPE_DEFERRED),
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    pCommandList->RSSetViewports(1, &m_Viewport);
+    pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+    pCommandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+    pCommandList->SetGraphicsRootSignature(Graphics::secondPassRS);
+    pCommandList->SetPipelineState(Graphics::secondPassPSO);
+
+    pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
+    pCommandList->SetGraphicsRootDescriptorTable(0, globalGpuHandle);
+    pCommandList->SetGraphicsRootDescriptorTable(1, gpuHandle);
+
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCommandList->IASetVertexBuffers(0, 1, &m_pPostProcessor->GetVertexBufferView());
+    pCommandList->IASetIndexBuffer(&m_pPostProcessor->GetIndexBufferView());
+    pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
 
 // Create frame resources.
@@ -1511,7 +1574,7 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
+                D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
         {
             __debugbreak();
         }
@@ -1557,7 +1620,7 @@ void D3D12Renderer::CleanupBuffers()
 
 void D3D12Renderer::Cleanup()
 {
-#ifdef USE_FORWARD_RENDERING
+#ifndef USE_RAYTRACING
     CleanupRenderThreadPool();
 #endif
 
