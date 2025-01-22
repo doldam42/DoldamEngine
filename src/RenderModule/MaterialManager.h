@@ -11,12 +11,13 @@ enum DESCRIPTOR_INDEX_PER_MATERIAL
     DESCRIPTOR_INDEX_PER_MATERIAL_AO,
     DESCRIPTOR_INDEX_PER_MATERIAL_METALLIC_ROUGHNESS,
     DESCRIPTOR_INDEX_PER_MATERIAL_EMMISIVE,
+    DESCRIPTOR_INDEX_PER_MATERIAL_HEIGHT,
     DESCRIPTOR_INDEX_PER_MATERIAL_COUNT
 };
 
 struct MATERIAL_HANDLE : IRenderMaterial
 {
-    static const UINT DESCRIPTOR_SIZE = 5;
+    static const UINT DESCRIPTOR_SIZE = DESCRIPTOR_INDEX_PER_MATERIAL_COUNT;
 
     UINT  index;
     ULONG  refCount;
@@ -28,6 +29,7 @@ struct MATERIAL_HANDLE : IRenderMaterial
     TEXTURE_HANDLE *pAOTexHandle = nullptr;
     TEXTURE_HANDLE *pEmissiveTexHandle = nullptr;
     TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
+    TEXTURE_HANDLE *pHeightTexHandle = nullptr;
 
     inline void CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT descriptorSize) const
     {
@@ -44,6 +46,9 @@ struct MATERIAL_HANDLE : IRenderMaterial
                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(descriptorSize);
         pDevice->CopyDescriptorsSimple(1, dest, pEmissiveTexHandle->srv.cpuHandle,
+                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dest.Offset(descriptorSize);
+        pDevice->CopyDescriptorsSimple(1, dest, pHeightTexHandle->srv.cpuHandle,
                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 

@@ -391,16 +391,16 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     float  orientation = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE ? 1 : -1;
     objectNormal *= orientation;
     float3 normal = normalize(mul((float3x3)ObjectToWorld3x4(), objectNormal));
-    normal = material.useNormalMap ? NormalMap(normal, texcoord, v, attrib, lodLevel) : normal;
+    normal = (material.flags & MATERIAL_USE_NORMAL_MAP) ? NormalMap(normal, texcoord, v, attrib, lodLevel) : normal;
     
-    material.roughnessFactor = material.useRoughnessMap
+    material.roughnessFactor = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
                                    ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).g
                                    : material.roughnessFactor;
-    material.metallicFactor = material.useMetallicMap
+    material.metallicFactor = (material.flags & MATERIAL_USE_METALLIC_MAP)
                                   ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).b
                                   : material.metallicFactor;
-    material.albedo =
-        (material.useAlbedoMap == TRUE) ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
+    material.albedo = (material.flags & MATERIAL_USE_ALBEDO_MAP)
+                          ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
                                                       : material.albedo;
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();

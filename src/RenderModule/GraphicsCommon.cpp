@@ -496,12 +496,12 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
 
     // Ranges Per Global
     // | Global Consts(b0) |
-    // | Materials (t5)    |
+    // | Materials (t20)   |
     // | EnvIBL(t10)       | SpecularIBL(t11) | irradianceIBL(t12) | brdfIBL(t13) | ProjectionTex(t14) |
-    // | ShadowMap1(t15)   | ShadowMap2(t16)  | ShadowMap3(t15) |
+    // | ShadowMap1(t15)   | ShadowMap2(t16)  | ShadowMap3(t17) |
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[4];
     rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
-    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);  // t5 : materials
+    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20);  // t20 : materials
     rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 10); // t10~13 : IBL Textures, t14 : ProjectionTex
     rangesPerGlobal[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_LIGHTS, 15); // t15~t15+MAX_LIGHT : shadow maps
     // Init Basic Root Signature
@@ -512,14 +512,14 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 
         // Root Paramaters
-        // | Global Consts |  Materials  | IBL Textures(t10) | ShadowMaps(t15) |
+        // | Global Consts |  Materials(t20)  | IBL Textures(t10) | ShadowMaps(t15) |
         // |   TR Matrix   |
-        // |   Geometry    |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4) |
+        // |   Geometry    |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4) | heightTex(t5) |
         rangesPerObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
                              1); // b1 : TR Matrix
         rangesPerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
                               5); // b5 : Geometry
-        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5,
+        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6,
                               0); // textures
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
@@ -572,10 +572,10 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
                              1); // b1 : TR Matrix, b2 : Bone Matrix
         rangesPerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
                               5); // b5 : Geometry
-        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5,
+        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6,
                               0); // t0 : Texture
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
-                                                D3D12_SHADER_VISIBILITY_ALL); // t5 : Materials
+                                                D3D12_SHADER_VISIBILITY_ALL); // t20 : Materials
         rootParameters[1].InitAsDescriptorTable(_countof(rangesPerObj), &rangesPerObj[0], D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMesh), &rangesPerMesh[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
@@ -1029,7 +1029,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
 {
     // Init Global Root Signature
     // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0) |
-    // | GlobalConstants(b0) |       Materials(t5)        |   EnvIBL(t10)    |
+    // | GlobalConstants(b0) |       Materials(t20)        |   EnvIBL(t10)    |
     {
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2];
         rangesPerGlobal1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
@@ -1038,7 +1038,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
 
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal2[3] = {};
         rangesPerGlobal2[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
-        rangesPerGlobal2[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
+        rangesPerGlobal2[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20);
         rangesPerGlobal2[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10);
 
         CD3DX12_ROOT_PARAMETER rootParameters[2];

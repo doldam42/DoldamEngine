@@ -23,10 +23,17 @@ BOOL TessellationDemoController::Start()
     reflectiveMaterial.reflectionFactor = 0.9f;
 
     wcscpy_s(reflectiveMaterial.name, L"ground");
-    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
+    /*wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
     wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
     wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
     wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
+    wcscpy_s(reflectiveMaterial.heightTextureName, L"Tiles074_2K-JPG_Displacement.jpg");*/
+    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
+    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Bricks097_2K-JPG_Color.jpg");
+    wcscpy_s(reflectiveMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
+    wcscpy_s(reflectiveMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
+    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
+    wcscpy_s(reflectiveMaterial.heightTextureName, L"Bricks097_2K-JPG_Displacement.jpg");
 
     IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
     IGameModel      *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);

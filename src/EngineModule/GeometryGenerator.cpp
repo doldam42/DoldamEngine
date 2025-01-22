@@ -75,7 +75,7 @@ Model *GeometryGenerator::MakeSquare(const float scale)
                          Vector3(0.0f, 0.0f, 1.0f)};
     Vector2 texcoords[] = {Vector2(0.0f, 0.0f), Vector2(1.0f, 0.0f), Vector2(1.0f, 1.0f), Vector2(0.0f, 1.0f)};
 
-    //uint32_t indices[] = {3, 2, 0, 2, 1, 0};
+    // uint32_t indices[] = {3, 2, 0, 2, 1, 0};
     uint32_t indices[] = {0, 1, 2, 0, 2, 3};
 
     BasicVertex pVertices[4];
@@ -97,6 +97,64 @@ Model *GeometryGenerator::MakeSquare(const float scale)
 
     pObj->BeginCreateMesh(pVertices, 4, 1);
     pObj->InsertFaceGroup(indices, 2, 0);
+    pObj->EndCreateMesh();
+
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
+    model->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
+    model->AddRef();
+    return model;
+}
+
+Model *GeometryGenerator::MakeSquareGrid(const int numSlices, const int numStacks, const float scale)
+{
+    float dx = 2.0f / numSlices;
+    float dy = 2.0f / numStacks;
+
+    std::vector<BasicVertex> vertices;
+    vertices.reserve(numStacks * numSlices);
+    std::vector<UINT> indices;
+    indices.reserve(numStacks * numSlices * 6);
+    float y = 1.0f;
+    for (int j = 0; j < numStacks + 1; j++)
+    {
+        float x = -1.0f;
+        for (int i = 0; i < numSlices + 1; i++)
+        {
+            BasicVertex v;
+            v.position = Vector3(x, y, 0.0f) * scale;
+            v.normal = Vector3(0.0f, 0.0f, -1.0f);
+            v.texcoord = Vector2(x + 1.0f, y + 1.0f) * 0.5f;
+            v.tangent = Vector3(1.0f, 0.0f, 0.0f);
+
+            vertices.push_back(v);
+
+            x += dx;
+        }
+        y -= dy;
+    }
+
+    for (int j = 0; j < numStacks; j++)
+    {
+        for (int i = 0; i < numSlices; i++)
+        {
+            indices.push_back((numSlices + 1) * j + i);
+            indices.push_back((numSlices + 1) * j + i + 1);
+            indices.push_back((numSlices + 1) * (j + 1) + i);
+            indices.push_back((numSlices + 1) * (j + 1) + i);
+            indices.push_back((numSlices + 1) * j + i + 1);
+            indices.push_back((numSlices + 1) * (j + 1) + i + 1);
+        }
+    }
+
+    Model *model = new Model;
+
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"SquareGrid");
+
+    pObj->BeginCreateMesh(vertices.data(), vertices.size(), 1);
+    pObj->InsertFaceGroup(indices.data(), indices.size(), 0);
     pObj->EndCreateMesh();
 
     MeshObject *ppObjs[] = {pObj};

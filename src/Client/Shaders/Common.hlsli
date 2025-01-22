@@ -8,6 +8,14 @@
 #define LIGHT_SPOT 0x04
 #define LIGHT_SHADOW 0x10
 
+#define MATERIAL_USE_ALBEDO_MAP 0x01
+#define MATERIAL_USE_NORMAL_MAP 0x02
+#define MATERIAL_USE_AO_MAP 0x04
+#define MATERIAL_USE_METALLIC_MAP 0x08
+#define MATERIAL_USE_ROUGHNESS_MAP 0x10
+#define MATERIAL_USE_EMISSIVE_MAP 0x20
+#define MATERIAL_USE_HEIGHT_MAP 0x40
+
 SamplerState linearWrapSampler : register(s0);
 SamplerState linearClampSampler : register(s1);
 SamplerState pointWrapSampler : register(s2);
@@ -60,15 +68,11 @@ struct MaterialConstant
     float opacityFactor;
     float reflectionFactor;
     
-    uint useAlbedoMap;
-    uint useNormalMap;
-    uint useAOMap;
-    uint useMetallicMap;
-    uint useRoughnessMap;
-    uint useEmissiveMap;
+    uint flags;
+    float dummy[5];
 };
 
-StructuredBuffer<MaterialConstant> g_materials : register(t5);
+StructuredBuffer<MaterialConstant> g_materials : register(t20);
 
 cbuffer GlobalConstants : register(b0)
 {

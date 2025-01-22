@@ -10,6 +10,14 @@
 #define TRUE 1
 #define FALSE 0
 
+#define MATERIAL_USE_ALBEDO_MAP 0x01
+#define MATERIAL_USE_NORMAL_MAP 0x02
+#define MATERIAL_USE_AO_MAP 0x04
+#define MATERIAL_USE_METALLIC_MAP 0x08
+#define MATERIAL_USE_ROUGHNESS_MAP 0x10
+#define MATERIAL_USE_EMISSIVE_MAP 0x20
+#define MATERIAL_USE_HEIGHT_MAP 0x40
+
 struct HitInfo
 {
     float4 colorAndDistance;
@@ -39,12 +47,8 @@ struct MaterialConstant
     float opacityFactor;
     float reflectionFactor;
     
-    uint useAlbedoMap;
-    uint useNormalMap;
-    uint useAOMap;
-    uint useMetallicMap;
-    uint useRoughnessMap;
-    uint useEmissiveMap;
+    uint flags;
+    float dummy[5];
 };
 
 // Attributes output by the raytracing when hitting a surface,
@@ -141,7 +145,7 @@ RWTexture2D<float4> gOutput : register(u0);
 // Raytracing acceleration structure, accessed as a SRV
 RaytracingAccelerationStructure g_scene : register(t0);
 SamplerState g_sampler : register(s0);
-StructuredBuffer<MaterialConstant> g_materials : register(t5);
+StructuredBuffer<MaterialConstant> g_materials : register(t20);
 
 TextureCube<float4> envIBLTex : register(t10);
 

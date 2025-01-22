@@ -169,10 +169,11 @@ float4 main(PSInput input) : SV_TARGET
     MaterialConstant material = g_materials[materialId];
 
     float3 pixelToEye = normalize(eyeWorld - input.posWorld);
-    float3 normalWorld = GetNormal(input, material.useNormalMap);
+    float3 normalWorld = GetNormal(input, material.flags & MATERIAL_USE_NORMAL_MAP);
 
-    float4 texColor =
-        material.useAlbedoMap ? albedoTex.Sample(linearWrapSampler, input.texcoord) : float4(material.albedo, 1.0);
+    float4 texColor = (material.flags & MATERIAL_USE_ALBEDO_MAP)
+                          ? albedoTex.Sample(linearWrapSampler, input.texcoord)
+                          : float4(material.albedo, 1.0);
 
     if (useTextureProjection)
     {
@@ -193,14 +194,16 @@ float4 main(PSInput input) : SV_TARGET
         discard;
     }
 
-    float ao = material.useAOMap ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
-    float roughness = material.useRoughnessMap ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
+    float ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
+    float roughness = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
+                          ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
                                                : material.roughnessFactor;
-    float metallic = material.useMetallicMap ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
+    float metallic = (material.flags & MATERIAL_USE_METALLIC_MAP)
+                         ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
                                              : material.metallicFactor;
 
     float3 emission =
-        material.useEmissiveMap ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb : material.emissive;
+        (material.flags & MATERIAL_USE_EMISSIVE_MAP) ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb : material.emissive;
     
     float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
 

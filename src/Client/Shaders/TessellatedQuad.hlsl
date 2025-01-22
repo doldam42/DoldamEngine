@@ -2,6 +2,8 @@
 
 cbuffer MeshConstantBuffer : register(b1) { MeshConstant meshCB[256]; };
 
+Texture2D heightTex : register(t5);
+
 float3 BilinearInterpolationFloat3(float3 quad[4], float2 uv)
 {
     // Perform Bilinear Interpolation
@@ -45,7 +47,7 @@ PatchConstOutput MyPatchConstantFunc(InputPatch<HSInput, 4> patch, uint patchID 
 {
     PatchConstOutput pt;
 
-    const float tessfactor = 8;
+    const float tessfactor = 64.0;
     
     pt.edges[0] = tessfactor;
     pt.edges[1] = tessfactor;
@@ -111,6 +113,12 @@ PSInput DSMain(PatchConstOutput patchConst,
     
     float3 tangentQuad[4] = { quad[0].tangentWorld, quad[1].tangentWorld, quad[2].tangentWorld, quad[3].tangentWorld };
     float3 tangentWorld = BilinearInterpolationFloat3(tangentQuad, uv);
+
+    // displacement mapping
+    float height = heightTex.SampleLevel(linearClampSampler, texcoord, 0).r;
+    height = height * 2.0 - 1.0;
+    // [0, 1] -> [-1, 1] ?
+    posWorld += normalWorld * height;
 
     output.posProj = mul(float4(posWorld, 1.0), viewProj);
     output.posWorld = posWorld;

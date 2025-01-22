@@ -17,6 +17,7 @@ class GeometryGenerator
     static void Normalize(const Vector3 center, const float longestLength, Model *pInOutModel);
 
     static Model *MakeSquare(const float scale = 1.0f);
+    static Model *MakeSquareGrid(const int numSlices, const int numStacks, const float scale = 1.0f);
     static Model *MakeBox(const float scale = 1.0f);
     static Model *MakeWireBox(const Vector3 center, const Vector3 extends);
     static Model *MakeCylinder(const float bottomRadius, const float topRadius, float height, int numSlices);

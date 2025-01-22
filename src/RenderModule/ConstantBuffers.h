@@ -61,25 +61,37 @@ struct Light : public ILightHandle
 // register (b0) 사용
 struct GlobalConstants
 {
-    Matrix  view;
-    Matrix  invView;
-    Matrix  proj;
-    Matrix  invProj; // 역프로젝션행렬
-    Matrix  viewProj;
-    Matrix  invViewProj; // Proj -> World
-    
-    Matrix  projectionViewProj; // 텍스쳐 투영
+    Matrix view;
+    Matrix invView;
+    Matrix proj;
+    Matrix invProj; // 역프로젝션행렬
+    Matrix viewProj;
+    Matrix invViewProj; // Proj -> World
+
+    Matrix projectionViewProj; // 텍스쳐 투영
 
     Vector3 eyeWorld;
     float   strengthIBL;
 
     Light lights[MAX_LIGHTS];
     BOOL  useTextureProjection;
-    
+
     DWORD dummys[59];
 };
 
 static_assert((sizeof(GlobalConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+
+enum MATERIAL_FLAGS : UINT
+{
+    MATERIAL_DEFAULT = 0,
+    MATERIAL_USE_ALBEDO_MAP = 0x01,
+    MATERIAL_USE_NORMAL_MAP = 0x02,
+    MATERIAL_USE_AO_MAP = 0x04,
+    MATERIAL_USE_METALLIC_MAP = 0x08,
+    MATERIAL_USE_ROUGHNESS_MAP = 0x10,
+    MATERIAL_USE_EMISSIVE_MAP = 0x20,
+    MATERIAL_USE_HEIGHT_MAP = 0x40,
+};
 
 struct MaterialConstants
 {
@@ -91,12 +103,9 @@ struct MaterialConstants
     float opacityFactor = 1.0f;
     float reflectionFactor = 0.0f;
 
-    BOOL useAlbedoMap = 0;
-    BOOL useNormalMap = 0;
-    BOOL useAOMap = 0;
-    BOOL useMetallicMap = 0;
-    BOOL useRoughnessMap = 0;
-    BOOL useEmissiveMap = 0;
+    UINT flags = MATERIAL_DEFAULT;
+
+    DWORD dummy[5];
 };
 
 static_assert((sizeof(MaterialConstants) % 32) == 0, "Constant Buffer size must be 256-byte aligned");

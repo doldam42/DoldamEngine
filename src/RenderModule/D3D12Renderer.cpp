@@ -287,10 +287,9 @@ void D3D12Renderer::BeginRender()
         CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
                                              D3D12_RESOURCE_STATE_RENDER_TARGET),
         CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)
-    };
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
     pCommandList->ResourceBarrier(_countof(barriers), barriers);
-    
+
     D3D12_CPU_DESCRIPTOR_HANDLE intermediateRtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     pCommandList->ClearRenderTargetView(intermediateRtvHandle, m_clearColor, 0, nullptr);
 
@@ -343,7 +342,7 @@ void D3D12Renderer::EndRender()
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
     D3D12_CPU_DESCRIPTOR_HANDLE   dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
 
-    //m_pShadowManager->Render(m_pCommandQueue);
+    // m_pShadowManager->Render(m_pCommandQueue);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
@@ -1210,6 +1209,7 @@ ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_p
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
+#ifndef USE_RAYTRACING
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
 #ifdef USE_FORWARD_RENDERING
@@ -1224,14 +1224,14 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle,
                                           GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect,
-                                          _countof(rtvs),
-                                          passType);
+                                          _countof(rtvs), passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
     if (curCount == 0)
     {
         SetEvent(m_hCompleteEvent);
     }
+#endif // !USE_RAYTRACING
 }
 
 void D3D12Renderer::WaitForGPU()
@@ -1320,7 +1320,8 @@ BOOL D3D12Renderer::CreateDescriptorTables()
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
         m_pResourceManager->AllocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
-        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
+        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i],
+                                                 DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
     }
     return TRUE;
 }

@@ -13,6 +13,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     TEXTURE_HANDLE *pAOTexHandle = nullptr;
     TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
     TEXTURE_HANDLE *pEmissiveTexHandle = nullptr;
+    TEXTURE_HANDLE *pHeightTexHandle = nullptr;
 
     // Albedo
     memset(path, 0, sizeof(path));
@@ -53,6 +54,12 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     pMetallicRoughnessTexHandle =
         static_cast<TEXTURE_HANDLE *>(m_pRenderer->CreateMetallicRoughnessTexture(metallicPath, roughnessPath));
 
+    // Height
+    memset(path, 0, sizeof(path));
+    wcscpy_s(path, pInMaterial->basePath);
+    wcscat_s(path, pInMaterial->heightTextureName);
+    pHeightTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
+
     if (!pAlbedoTexHandle)
     {
         pAlbedoTexHandle = m_pRenderer->GetDefaultTex();
@@ -73,12 +80,17 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     {
         pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
     }
+    if (!pHeightTexHandle)
+    {
+        pHeightTexHandle = m_pRenderer->GetDefaultTex();
+    }
 
     pOutMaterial->pAlbedoTexHandle = pAlbedoTexHandle;
     pOutMaterial->pNormalTexHandle = pNormalTexHandle;
     pOutMaterial->pAOTexHandle = pAOTexHandle;
     pOutMaterial->pMetallicRoughnessTexHandle = pMetallicRoughnessTexHandle;
     pOutMaterial->pEmissiveTexHandle = pEmissiveTexHandle;
+    pOutMaterial->pHeightTexHandle = pHeightTexHandle;
 }
 
 void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
@@ -120,6 +132,11 @@ void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
         m_pRenderer->DeleteTexture(pMaterial->pEmissiveTexHandle);
         pMaterial->pEmissiveTexHandle = nullptr;
     }
+    if (pMaterial->pHeightTexHandle)
+    {
+        m_pRenderer->DeleteTexture(pMaterial->pHeightTexHandle);
+        pMaterial->pHeightTexHandle = nullptr;
+    }
 }
 
 MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
@@ -147,13 +164,15 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.roughnessFactor = pMaterial->roughnessFactor;
     materialCB.opacityFactor = pMaterial->opacityFactor;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
-
-    materialCB.useAlbedoMap = wcslen(pMaterial->albedoTextureName) == 0 ? FALSE : TRUE;
-    materialCB.useAOMap = wcslen(pMaterial->aoTextureName) == 0 ? FALSE : TRUE;
-    materialCB.useEmissiveMap = wcslen(pMaterial->emissiveTextureName) == 0 ? FALSE : TRUE;
-    materialCB.useMetallicMap = wcslen(pMaterial->metallicTextureName) == 0 ? FALSE : TRUE;
-    materialCB.useRoughnessMap = wcslen(pMaterial->roughnessTextureName) == 0 ? FALSE : TRUE; 
-    materialCB.useNormalMap = wcslen(pMaterial->normalTextureName) == 0 ? FALSE : TRUE;
+    
+    materialCB.flags = MATERIAL_DEFAULT;
+    materialCB.flags |= wcslen(pMaterial->albedoTextureName) == 0 ? 0 : MATERIAL_USE_ALBEDO_MAP;
+    materialCB.flags |= wcslen(pMaterial->normalTextureName) == 0 ? 0 : MATERIAL_USE_NORMAL_MAP;
+    materialCB.flags |= wcslen(pMaterial->aoTextureName) == 0 ? 0 : MATERIAL_USE_AO_MAP;
+    materialCB.flags |= wcslen(pMaterial->metallicTextureName) == 0 ? 0 : MATERIAL_USE_METALLIC_MAP;
+    materialCB.flags |= wcslen(pMaterial->roughnessTextureName) == 0 ? 0 : MATERIAL_USE_ROUGHNESS_MAP; 
+    materialCB.flags |= wcslen(pMaterial->emissiveTextureName) == 0 ? 0 : MATERIAL_USE_EMISSIVE_MAP;
+    materialCB.flags |= wcslen(pMaterial->heightTextureName) == 0 ? 0 : MATERIAL_USE_HEIGHT_MAP;
 
     memcpy(sysMemAddr, &materialCB, m_sizePerMat);
 
@@ -338,7 +357,7 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
             pMatHandle->pAlbedoTexHandle = nullptr;
         }
         pMatHandle->pAlbedoTexHandle = pTexHandle;
-        pMatConst->useAlbedoMap = TRUE;
+        pMatConst->flags |= MATERIAL_USE_ALBEDO_MAP;
         break;
     case TEXTURE_TYPE_NORMAL:
         if (pMatHandle->pNormalTexHandle)
@@ -347,7 +366,7 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
             pMatHandle->pNormalTexHandle = nullptr;
         }
         pMatHandle->pNormalTexHandle = pTexHandle;
-        pMatConst->useNormalMap = TRUE;
+        pMatConst->flags |= MATERIAL_USE_NORMAL_MAP;
         break;
     case TEXTURE_TYPE_AO:
         if (pMatHandle->pAOTexHandle)
@@ -356,7 +375,7 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
             pMatHandle->pAOTexHandle = nullptr;
         }
         pMatHandle->pAOTexHandle = pTexHandle;
-        pMatConst->useAOMap = TRUE;
+        pMatConst->flags |= MATERIAL_USE_AO_MAP;
         break;
     case TEXTURE_TYPE_EMISSIVE:
         if (pMatHandle->pEmissiveTexHandle)
@@ -365,7 +384,7 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
             pMatHandle->pEmissiveTexHandle = nullptr;
         }
         pMatHandle->pEmissiveTexHandle = pTexHandle;
-        pMatConst->useEmissiveMap = TRUE;
+        pMatConst->flags |= MATERIAL_USE_EMISSIVE_MAP;
         break;
     case TEXTURE_TYPE_METALLIC_ROUGHNESS:
         if (pMatHandle->pMetallicRoughnessTexHandle)
@@ -374,8 +393,7 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
             pMatHandle->pMetallicRoughnessTexHandle = nullptr;
         }
         pMatHandle->pMetallicRoughnessTexHandle = pTexHandle;
-        pMatConst->useMetallicMap = TRUE;
-        pMatConst->useRoughnessMap = TRUE;
+        pMatConst->flags |= (MATERIAL_USE_METALLIC_MAP | MATERIAL_USE_ROUGHNESS_MAP);
         break;
     default:
 #ifdef _DEBUG
