@@ -34,7 +34,8 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                          UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
 {
     // For Tessellation
-    pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_WIRED);
+    pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_SOLID);
+    //pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_WIRED);
     
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -44,7 +45,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
 
     UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, numInstance, pBoneMats, numBones);
-
+    
     if (passType != DRAW_PASS_TYPE_SHADOW)
     {
         UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex, ppMaterials, numMaterials);
