@@ -11,9 +11,9 @@ cbuffer SkinnedConstantBuffer : register(b2)
 
 static const float4x4 bias = float4x4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 
-PixelShaderInput main(VertexShaderInput input)
+PSInput main(VSInput input)
 {
-    PixelShaderInput output;
+    PSInput output;
 
     MeshConstant meshConst = meshCB[input.instanceId];
 

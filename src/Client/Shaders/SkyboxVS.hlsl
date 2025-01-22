@@ -1,20 +1,20 @@
 #include "Common.hlsli"
 
-struct SkyboxVertexShaderInput
+struct SkyboxVSInput
 {
     float3 position : POSITION;
     float2 texcoord : TEXCOORD0;
 };
 
-struct SkyboxPixelShaderInput
+struct SkyboxPSInput
 {
     float4 posProj : SV_POSITION;
     float3 posModel : POSITION;
 };
 
-SkyboxPixelShaderInput main(SkyboxVertexShaderInput input)
+SkyboxPSInput main(SkyboxVSInput input)
 {
-    SkyboxPixelShaderInput output;
+    SkyboxPSInput output;
     
     output.posModel = input.position;
     output.posProj = mul(float4(input.position, 0.0), view);

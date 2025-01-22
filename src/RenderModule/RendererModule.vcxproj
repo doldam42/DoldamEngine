@@ -209,6 +209,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="ShaderTable.h" />
     <ClInclude Include="ShadowManager.h" />
     <ClInclude Include="SpriteObject.h" />
+    <ClInclude Include="Terrain.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -258,6 +261,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClCompile Include="SpriteObject.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp" />
   </ItemGroup>
@@ -384,6 +390,18 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <FileType>Document</FileType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Library</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.5</ShaderModel>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\DXR\DeferredRayGen.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
     </CustomBuild>
     <FxCompile Include="..\Client\Shaders\LightOnlyPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -538,6 +556,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">g_%(Filename)</VariableName>
       <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(FullPath).h</HeaderFileOutput>
     </FxCompile>
+    <CustomBuild Include="..\Client\Shaders\TessellatedQuad.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Client\Shaders\DepthOnlyPS.hlsl">

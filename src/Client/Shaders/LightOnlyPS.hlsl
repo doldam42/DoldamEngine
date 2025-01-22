@@ -6,7 +6,7 @@ Texture2D<float4> normalTex : register(t1);
 Texture2D<float4> elementsTex : register(t2);
 Texture2D<float> depthTex : register(t3);
 
-struct PSInput
+struct DeferredPSInput
 {
     float4 position : SV_Position;
     float2 texcoord : TEXCOORD0;
@@ -148,7 +148,7 @@ float3 CalculateWorldPositionFromDepthMap(float2 screenCoord, float depth)
     return worldPosition.xyz;
 }
 
-float4 main(PSInput input) : SV_TARGET
+float4 main(DeferredPSInput input) : SV_TARGET
 {
     float4      diffuse = diffuseTex.Sample(linearWrapSampler, input.texcoord);
     float3 albedo = diffuse.xyz;

@@ -66,14 +66,17 @@ static void CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertices, 
 
 Model *GeometryGenerator::MakeSquare(const float scale)
 {
+    /*Vector3 positions[] = {Vector3(-1.0f, 1.0f, 0.0f) * scale, Vector3(1.0f, 1.0f, 0.0f) * scale,
+                           Vector3(1.0f, -1.0f, 0.0f) * scale, Vector3(-1.0f, -1.0f, 0.0f) * scale};*/
 
-    Vector3 positions[] = {Vector3(-1.0f, 1.0f, 0.0f) * scale, Vector3(1.0f, 1.0f, 0.0f) * scale,
-                           Vector3(1.0f, -1.0f, 0.0f) * scale, Vector3(-1.0f, -1.0f, 0.0f) * scale};
+    Vector3 positions[] = {Vector3(-1.0f, -1.0f, 0.0f) * scale, Vector3(1.0f, -1.0f, 0.0f) * scale,
+                           Vector3(1.0f, 1.0f, 0.0f) * scale, Vector3(-1.0f, 1.0f, 0.0f) * scale};
     Vector3 normals[] = {Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f),
                          Vector3(0.0f, 0.0f, 1.0f)};
     Vector2 texcoords[] = {Vector2(0.0f, 0.0f), Vector2(1.0f, 0.0f), Vector2(1.0f, 1.0f), Vector2(0.0f, 1.0f)};
 
-    uint32_t indices[] = {3, 2, 0, 2, 1, 0};
+    //uint32_t indices[] = {3, 2, 0, 2, 1, 0};
+    uint32_t indices[] = {0, 1, 2, 0, 2, 3};
 
     BasicVertex pVertices[4];
     for (size_t i = 0; i < 4; i++)

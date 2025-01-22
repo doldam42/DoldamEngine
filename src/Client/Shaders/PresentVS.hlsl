@@ -1,19 +1,19 @@
 
-struct PresentVertexShaderInput
+struct PresentVSInput
 {
     float3 position : POSITION;
     float2 texcoord : TEXCOORD0;
 };
 
-struct PresentPixelShaderInput
+struct PresentPSInput
 {
     float4 position : SV_POSITION;
     float2 texcoord : TEXCOORD0;
 };
 
-PresentPixelShaderInput main(PresentVertexShaderInput input)
+PresentPSInput main(PresentVSInput input)
 {
-    PresentPixelShaderInput output;
+    PresentPSInput output;
     
     output.position = float4(input.position.xy * float2(2, -2) + float2(-1, 1), 0, 1);
     // output.position = float4(input.position,1);

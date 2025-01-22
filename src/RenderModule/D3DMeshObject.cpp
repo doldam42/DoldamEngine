@@ -33,6 +33,9 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                          ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
                          UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
 {
+    // For Tessellation
+    pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_WIRED);
+    
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
@@ -48,13 +51,13 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     }
 
     // set RootSignature
-    ID3D12RootSignature *pSignature = pRS;
-    ID3D12PipelineState *pPipelineState = pPSO;
-    pCommandList->SetGraphicsRootSignature(pSignature);
+    pCommandList->SetGraphicsRootSignature(pRS);
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->SetPipelineState(pPipelineState);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCommandList->SetPipelineState(pPSO);
+    //pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
@@ -78,8 +81,10 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
         }
 
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
+        /*pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);*/
+
+        pCommandList->DrawInstanced(4, 1, 0, 0);
     }
 }
 

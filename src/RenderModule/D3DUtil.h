@@ -16,3 +16,5 @@ BYTE *CreateImageFromFile(const wchar_t *filePath, int *pWidth,
 IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize);
 
 IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disableOptimize);
+
+IDxcBlob *CompileGraphicsShader(LPCWSTR fileName, LPCWSTR entryPoint, LPCWSTR target, BOOL disableOptimize);

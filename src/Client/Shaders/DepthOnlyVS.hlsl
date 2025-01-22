@@ -12,7 +12,7 @@ cbuffer SkinnedConstantBuffer : register(b2)
 }
 #endif
 
-float4 main(VertexShaderInput input) : SV_POSITION
+float4 main(VSInput input) : SV_POSITION
 {
     
 #ifdef SKINNED

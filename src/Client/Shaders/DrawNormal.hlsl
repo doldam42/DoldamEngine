@@ -20,7 +20,7 @@ struct NormalGeometryShaderInput
     float3 normalWorld : NORMAL;
 };
 
-struct NormalPixelShaderInput
+struct NormalPSInput
 {
     float4 pos : SV_POSITION;
     float3 color : COLOR;
@@ -28,7 +28,7 @@ struct NormalPixelShaderInput
 
 static const float lineScale = 0.1;
 
-NormalGeometryShaderInput VSMain(VertexShaderInput input)
+NormalGeometryShaderInput VSMain(VSInput input)
 {
     
 #ifdef SKINNED
@@ -70,9 +70,9 @@ NormalGeometryShaderInput VSMain(VertexShaderInput input)
 }
 
 [maxvertexcount(2)]
-void GSMain(point NormalGeometryShaderInput input[1], inout LineStream<NormalPixelShaderInput> outputStream)
+void GSMain(point NormalGeometryShaderInput input[1], inout LineStream<NormalPSInput> outputStream)
 {
-    NormalPixelShaderInput output;
+    NormalPSInput output;
     float4 posWorld = mul(input[0].posModel, world);
     float4 normalModel = float4(input[0].normalWorld, 0.0);
     float4 normalWorld = mul(normalModel, worldIT);
@@ -87,7 +87,7 @@ void GSMain(point NormalGeometryShaderInput input[1], inout LineStream<NormalPix
     outputStream.Append(output);
 }
 
-float4 PSMain(NormalPixelShaderInput input) : SV_Target
+float4 PSMain(NormalPSInput input) : SV_Target
 {
     return float4(input.color, 1.0f);
 }

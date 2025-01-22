@@ -24,7 +24,7 @@ float3 SchlickFresnel(float3 F0, float NdotH)
     // return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float3 GetNormal(PixelShaderInput input, bool useNormalMap)
+float3 GetNormal(PSInput input, bool useNormalMap)
 {
     float3 normalWorld = normalize(input.normalWorld);
 
@@ -164,7 +164,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     return radiance;
 }
 
-float4 main(PixelShaderInput input) : SV_TARGET
+float4 main(PSInput input) : SV_TARGET
 {   
     MaterialConstant material = g_materials[materialId];
 

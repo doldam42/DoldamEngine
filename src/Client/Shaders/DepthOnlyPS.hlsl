@@ -1,6 +1,6 @@
 #include "Common.hlsli"
 
-struct DepthOnlyPixelShaderInput
+struct DepthOnlyPSInput
 {
     float4 posProj : SV_Position;
 };

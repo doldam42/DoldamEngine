@@ -3,6 +3,7 @@
 class TimeController;
 class BadAppleController;
 class RaytracingDemoController;
+class TessellationDemoController;
 class AudioManager;
 class Client
 {
@@ -24,6 +25,7 @@ class Client
     TimeController* m_pTimeController = nullptr;
     BadAppleController* m_pDemoController = nullptr;
     RaytracingDemoController *m_pRaytracingDemoController = nullptr;
+    TessellationDemoController *m_pTessellationDemoController = nullptr;
 
   private:
     void CleanupControllers();

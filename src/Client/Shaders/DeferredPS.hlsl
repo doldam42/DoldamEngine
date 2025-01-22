@@ -14,7 +14,7 @@ cbuffer cb : register(b5)
     uint cbDummy[2];
 };
 
-float3 GetNormal(PixelShaderInput input, bool useNormalMap)
+float3 GetNormal(PSInput input, bool useNormalMap)
 {
     float3 normalWorld = normalize(input.normalWorld);
 
@@ -51,7 +51,7 @@ struct PS_OUTPUT
     float4 elements : SV_Target2;
 };
 
-PS_OUTPUT main(PixelShaderInput input) 
+PS_OUTPUT main(PSInput input) 
 { 
     PS_OUTPUT output;
     const MaterialConstant material = g_materials[materialId];

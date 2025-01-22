@@ -39,8 +39,8 @@ struct Light
     float haloRadius;
     float haloStrength;
 
-    Matrix viewProj; 
-    Matrix invProj;
+    float4x4 viewProj; 
+    float4x4 invProj;
 };
 
 struct MeshConstant
@@ -88,7 +88,7 @@ cbuffer GlobalConstants : register(b0)
     float gcDummy2[59];
 };
 
-struct VertexShaderInput
+struct VSInput
 {
     float3 posModel : POSITION; //모델 좌표계의 위치 position
     float3 normalModel : NORMAL; // 모델 좌표계의 normal    
@@ -102,7 +102,7 @@ struct VertexShaderInput
 #endif
 };
 
-struct PixelShaderInput
+struct PSInput
 {
     float4 posProj : SV_POSITION; // Screen position
     float3 posWorld : POSITION; // World position (조명 계산에 사용)

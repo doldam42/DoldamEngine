@@ -48,6 +48,13 @@ ID3DBlob *presentPS = nullptr;
 
 ID3DBlob *lightOnlyPS = nullptr;
 
+// Tessellation
+IDxcBlob *tessellatedQuadVS = nullptr;
+IDxcBlob *tessellatedQuadHS = nullptr;
+IDxcBlob *tessellatedQuadDS = nullptr;
+IDxcBlob *tessellatedQuadPS = nullptr;
+IDxcBlob *tessellatedQuadDeferredPS = nullptr;
+
 // RootSignature
 ID3D12RootSignature *basicRS = nullptr;
 ID3D12RootSignature *skinnedRS = nullptr;
@@ -221,6 +228,38 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    // Tesselation
+    {
+        tessellatedQuadVS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"VSMain", L"vs_6_1", TRUE);
+        tessellatedQuadHS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"HSMain", L"hs_6_1", TRUE);
+        tessellatedQuadDS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"DSMain", L"ds_6_1", TRUE);
+        tessellatedQuadPS = CompileGraphicsShader(L"./Shaders/BasicPS.hlsl", L"main", L"ps_6_1", TRUE);
+        tessellatedQuadDeferredPS = CompileGraphicsShader(L"./Shaders/DeferredPS.hlsl", L"main", L"ps_6_1", TRUE);
+        /*hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain",
+                                "vs_5_1", compileFlags, 0, &tessellatedQuadVS, &pError);*/
+        /*if (FAILED(hr))
+        {
+            OutputDebugStringA((char *)pError->GetBufferPointer());
+            __debugbreak();
+        }
+            
+        hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "HSMain",
+                                "hs_5_1", compileFlags, 0, &tessellatedQuadHS, &pError);
+        if (FAILED(hr))
+        {
+            OutputDebugStringA((char *)pError->GetBufferPointer());
+            __debugbreak();
+        }
+        hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "DSMain",
+                                "ds_5_1", compileFlags, 0, &tessellatedQuadDS, &pError);
+        if (FAILED(hr))
+        {
+            OutputDebugStringA((char *)pError->GetBufferPointer());
+            __debugbreak();
+        }*/
+    }
+
+
     // Mesh Object
     g_shaderData[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] = {
         basicIL,
@@ -290,6 +329,25 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         CD3DX12_SHADER_BYTECODE(spriteDeferredPS->GetBufferPointer(), spriteDeferredPS->GetBufferSize()),
         {},
         {},
+        {},
+    };
+
+    // Tessellation
+    g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
+        basicIL,
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadVS->GetBufferPointer(), tessellatedQuadVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadPS->GetBufferPointer(), tessellatedQuadPS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadHS->GetBufferPointer(), tessellatedQuadHS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadDS->GetBufferPointer(), tessellatedQuadDS->GetBufferSize()),
+        {},
+    };
+    g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = {
+        basicIL,
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadVS->GetBufferPointer(), tessellatedQuadVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadDeferredPS->GetBufferPointer(),
+                                tessellatedQuadDeferredPS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadHS->GetBufferPointer(), tessellatedQuadHS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(tessellatedQuadDS->GetBufferPointer(), tessellatedQuadDS->GetBufferSize()),
         {},
     };
 
@@ -753,15 +811,20 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         }
     }
 
-    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] = basicRS;
-    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFAULT] = skinnedRS;
-    rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFAULT] = spriteRS;
-    
-    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFERRED] = basicRS;
-    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFERRED] = skinnedRS;
+    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] =
+        rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFERRED] = basicRS;
 
+    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFAULT] =
+        rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFERRED] = skinnedRS;
+
+    rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFAULT] =
+        rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFERRED] = spriteRS;
+    
     rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_SHADOW] = depthOnlyBasicRS;
     rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_SHADOW] = depthOnlySkinnedRS;
+
+    rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] =
+        rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = basicRS;
 
 lb_return:
     if (pSignature)
@@ -792,6 +855,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
 
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
+        psoDesc.PrimitiveTopologyType = (itemType == RENDER_ITEM_TYPE_TERRAIN) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH
+                                                                               : D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)
         {
             if (!rootSignatures[itemType][passType])
@@ -834,6 +899,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     }
 
     // skybox PSO
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState.DepthEnable = FALSE;
     psoDesc.DepthStencilState.StencilEnable = FALSE;

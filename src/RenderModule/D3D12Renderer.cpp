@@ -343,7 +343,7 @@ void D3D12Renderer::EndRender()
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
     D3D12_CPU_DESCRIPTOR_HANDLE   dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
 
-    m_pShadowManager->Render(m_pCommandQueue);
+    //m_pShadowManager->Render(m_pCommandQueue);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)

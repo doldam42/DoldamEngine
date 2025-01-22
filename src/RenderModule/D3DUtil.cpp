@@ -1,14 +1,13 @@
 #include "pch.h"
 
 #include <d3d12.h>
-#include <d3dx12.h>
 #include <d3dcompiler.h>
+#include <d3dx12.h>
 
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
@@ -207,7 +206,6 @@ constexpr void ThrowIfFailed(HRESULT hr)
     }
 }
 
-
 IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disableOptimize)
 {
     static IDxcCompiler       *pCompiler = nullptr;
@@ -284,11 +282,91 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disabl
     }
 
     IDxcBlob *pBlob;
-    
+
     ThrowIfFailed(pResult->GetResult(&pBlob));
     return pBlob;
 }
 
+IDxcBlob *CompileGraphicsShader(LPCWSTR fileName, LPCWSTR entryPoint, LPCWSTR target, BOOL disableOptimize)
+{
+    static IDxcCompiler       *pCompiler = nullptr;
+    static IDxcLibrary        *pLibrary = nullptr;
+    static IDxcIncludeHandler *dxcIncludeHandler;
+
+    HRESULT hr;
+
+    // Initialize the DXC compiler and compiler helper
+    if (!pCompiler)
+    {
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void **)&pCompiler));
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void **)&pLibrary));
+        ThrowIfFailed(pLibrary->CreateIncludeHandler(&dxcIncludeHandler));
+    }
+    // Open and read the file
+    std::ifstream shaderFile(fileName);
+    if (shaderFile.good() == false)
+    {
+        throw std::logic_error("Cannot find shader file");
+    }
+    std::stringstream strStream;
+    strStream << shaderFile.rdbuf();
+    std::string sShader = strStream.str();
+
+    // Create blob from the string
+    IDxcBlobEncoding *pTextBlob;
+    ThrowIfFailed(
+        pLibrary->CreateBlobWithEncodingFromPinned((LPBYTE)sShader.c_str(), (uint32_t)sShader.size(), 0, &pTextBlob));
+
+    LPCWSTR pArg[16] = {};
+    DWORD   dwArgCount = 0;
+    if (disableOptimize)
+    {
+        pArg[dwArgCount] = L"-Zi";
+        dwArgCount++;
+        pArg[dwArgCount] = L"-Qembed_debug";
+        dwArgCount++;
+        pArg[dwArgCount] = L"-Od";
+        dwArgCount++;
+    }
+    else
+    {
+        pArg[dwArgCount] = L"-O3"; // Optimization level 3
+        dwArgCount++;
+    }
+    // Compile
+    IDxcOperationResult *pResult;
+    ThrowIfFailed(pCompiler->Compile(pTextBlob, fileName, entryPoint, target, pArg, dwArgCount, nullptr, 0,
+                                     dxcIncludeHandler, &pResult));
+
+    // Verify the result
+    HRESULT resultCode;
+    ThrowIfFailed(pResult->GetStatus(&resultCode));
+    if (FAILED(resultCode))
+    {
+        IDxcBlobEncoding *pError;
+        hr = pResult->GetErrorBuffer(&pError);
+        if (FAILED(hr))
+        {
+            throw std::logic_error("Failed to get shader compiler error");
+        }
+
+        // Convert error blob to a string
+        std::vector<char> infoLog(pError->GetBufferSize() + 1);
+        memcpy(infoLog.data(), pError->GetBufferPointer(), pError->GetBufferSize());
+        infoLog[pError->GetBufferSize()] = 0;
+
+        std::string errorMsg = "Shader Compiler Error:\n";
+        errorMsg.append(infoLog.data());
+
+        MessageBoxA(nullptr, errorMsg.c_str(), "Error!", MB_OK);
+        throw std::logic_error("Failed compile shader");
+    }
+
+    IDxcBlob *pBlob;
+
+    ThrowIfFailed(pResult->GetResult(&pBlob));
+    return pBlob;
+}
 
 IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, BOOL disableOptimize)
 {

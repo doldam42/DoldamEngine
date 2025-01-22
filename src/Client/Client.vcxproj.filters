@@ -12,13 +12,16 @@
     <ClCompile Include="VideoManager.cpp">
       <Filter>VideoManager</Filter>
     </ClCompile>
-    <ClCompile Include="BadAppleController.cpp">
-      <Filter>DemoControllers</Filter>
-    </ClCompile>
     <ClCompile Include="AudioManager.cpp">
       <Filter>AudioManager</Filter>
     </ClCompile>
     <ClCompile Include="RaytracingDemoController.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="BadAppleController.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="TessellationDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,13 +40,16 @@
     <ClInclude Include="VideoManager.h">
       <Filter>VideoManager</Filter>
     </ClInclude>
-    <ClInclude Include="BadAppleController.h">
-      <Filter>DemoControllers</Filter>
-    </ClInclude>
     <ClInclude Include="AudioManager.h">
       <Filter>AudioManager</Filter>
     </ClInclude>
     <ClInclude Include="RaytracingDemoController.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="BadAppleController.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="TessellationDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
   </ItemGroup>
@@ -76,9 +82,6 @@
     </Filter>
     <Filter Include="AudioManager">
       <UniqueIdentifier>{bd5370f9-3946-477b-9aba-eaa1ed05725d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DemoControllers">
-      <UniqueIdentifier>{d6d7ee05-be9f-48c4-997b-473ca28aa889}</UniqueIdentifier>
     </Filter>
     <Filter Include="Demos">
       <UniqueIdentifier>{8957c0e8-9b7b-40eb-817a-d2f700fd4efb}</UniqueIdentifier>
