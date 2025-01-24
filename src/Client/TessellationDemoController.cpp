@@ -27,14 +27,14 @@ BOOL TessellationDemoController::Start()
     wcscpy_s(groundMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
     wcscpy_s(groundMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
     wcscpy_s(groundMaterial.heightTextureName, L"Tiles074_2K-JPG_Displacement.jpg");*/
-    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
-    wcscpy_s(groundMaterial.albedoTextureName, L"Bricks097_2K-JPG_Color.jpg");
-    wcscpy_s(groundMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
-    wcscpy_s(groundMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
-    wcscpy_s(groundMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
-    wcscpy_s(groundMaterial.heightTextureName, L"Bricks097_2K-JPG_Displacement.jpg");
+    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\heightMap\\");
+    wcscpy_s(groundMaterial.albedoTextureName, L"color.bmp");
+    //wcscpy_s(groundMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
+    //wcscpy_s(groundMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
+    //wcscpy_s(groundMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"height.bmp");
 
-    pGame->CreateTerrain(&groundMaterial, 4, 4, 20);
+    pGame->CreateTerrain(&groundMaterial, 16, 16, 100.0f);
 
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 10.0f, -3.0f);

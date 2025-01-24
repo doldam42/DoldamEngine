@@ -142,7 +142,7 @@ BOOL GameManager::Initialize(HWND hWnd)
     m_pPhysicsManager->Initialize();
 
     m_pMainCamera = new CameraController;
-    m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 100.0f);
+    m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 1000.0f);
     m_pMainCamera->m_useFirstPersonView = true;
 
     m_hWnd = hWnd;
@@ -335,7 +335,7 @@ void GameManager::Render()
     // begin
     m_pRenderer->BeginRender();
 
-    m_pRenderer->RenderTerrain(m_pTerrain, true);
+    m_pRenderer->RenderTerrain(m_pTerrain);
 
     // render game objects
     SORT_LINK *pCur = m_pGameObjLinkHead;

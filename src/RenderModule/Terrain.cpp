@@ -30,7 +30,7 @@ BOOL Terrain::InitMesh(const WCHAR *heightFilename, const int numSlice, const in
 
     int      width, height, channels;
     uint8_t *pImage = stbi_load(filename, &width, &height, &channels, 0);
-    assert(channels == 1);
+    //assert(channels == 1);
 
     const float dx = float(width - 1) / numSlice;
     const float dy = float(height - 1) / numStack;
@@ -168,7 +168,7 @@ void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3
     pTerrainCB = pTerrainConstantBufferPool->Alloc();
 
     TerrainConstants *pTerrainConsts = (TerrainConstants *)pTerrainCB->pSystemMemAddr;
-    pTerrainConsts->heightScale = 1.0f;
+    pTerrainConsts->heightScale = 12.0f;
     pTerrainConsts->numSlice = m_numSlices;
     pTerrainConsts->numStack = m_numStacks;
     pTerrainConsts->scale = m_scale;

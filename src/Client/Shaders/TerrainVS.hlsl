@@ -34,9 +34,10 @@ HSInput VSMain(VSCPInput input)
 
     const float x = -1.0f + dx * i;
     const float z = -1.0f + dz * j;
-    const float height = input.height * 2.0 - 1.0;
+    //const float height = input.height * 2.0 - 1.0;
 
-    output.posWorld = float3(x * scale, height * heightScale, z * scale);
+    //output.posWorld = float3(x * scale, height * heightScale, z * scale);
+    output.posWorld = float3(x * scale, 0.0, z * scale);
     output.texcoord = float2(1.0 + x, 1.0 - z) * 0.5;
 
     return output;
