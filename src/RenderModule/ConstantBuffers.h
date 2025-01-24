@@ -14,6 +14,7 @@ enum CONSTANT_BUFFER_TYPE
     CONSTANT_BUFFER_TYPE_SKINNED,
     CONSTANT_BUFFER_TYPE_SPRITE,
     CONSTANT_BUFFER_TYPE_GEOMETRY,
+    CONSTANT_BUFFER_TYPE_TERRAIN,
     CONSTANT_BUFFER_TYPE_COUNT
 };
 
@@ -48,7 +49,7 @@ struct Light : public ILightHandle
     Vector3 position = Vector3(0.0f, 3.0f, -3.0f);
     float   spotPower = 6.0f;
 
-    uint32_t type = LIGHT_TYPE_OFF;
+    uint32_t type = LIGHT_OFF;
     float    radius = 0.035f; // ¹ÝÁö¸§
 
     float haloRadius = 0.0f;
@@ -81,9 +82,9 @@ struct GlobalConstants
 
 static_assert((sizeof(GlobalConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
-enum MATERIAL_FLAGS : UINT
+enum MATERIAL_USE_FLAGS : UINT
 {
-    MATERIAL_DEFAULT = 0,
+    MATERIAL_USE_DEFAULT = 0,
     MATERIAL_USE_ALBEDO_MAP = 0x01,
     MATERIAL_USE_NORMAL_MAP = 0x02,
     MATERIAL_USE_AO_MAP = 0x04,
@@ -103,7 +104,7 @@ struct MaterialConstants
     float opacityFactor = 1.0f;
     float reflectionFactor = 0.0f;
 
-    UINT flags = MATERIAL_DEFAULT;
+    UINT flags = MATERIAL_USE_DEFAULT;
 
     DWORD dummy[5];
 };
@@ -127,14 +128,26 @@ static_assert((sizeof(SpriteConstants) % 256) == 0, "Constant Buffer size must b
 
 struct FaceGroupConstants
 {
-    UINT  useTexture;
-    UINT  materialIndex;
-    DWORD dummy[62];
+    UINT  materialIndex = 0;
+    BOOL  useMaterial = TRUE;
+    BOOL  useHeightMap = FALSE;
+    DWORD dummy[61];
 };
+static_assert((sizeof(FaceGroupConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+
+struct TerrainConstants
+{
+    UINT  numSlice;
+    UINT  numStack;
+    float scale;
+    float heightScale;
+    float tessFactor;
+    DWORD dummy[59];
+};
+static_assert((sizeof(TerrainConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
 struct RaytracingFaceGroupCB
 {
     UINT materialIndex;
 };
 
-static_assert((sizeof(FaceGroupConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");

@@ -313,6 +313,18 @@
     <CustomBuild Include="..\Client\Shaders\TessellatedQuad.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\TessellatedTri.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\TerrainVS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\TerrainDS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Client\Shaders\TerrainHS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Client\Shaders\BasicPS.hlsl">

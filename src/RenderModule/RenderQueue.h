@@ -36,6 +36,11 @@ struct RENDER_SPRITE_PARAM
     ITextureHandle *pTexHandle;
 };
 
+struct RENDER_TERRAIN_PARAM
+{
+    FILL_MODE fillMode;
+};
+
 struct RENDER_ITEM
 {
     RENDER_ITEM_TYPE   type;
@@ -44,6 +49,7 @@ struct RENDER_ITEM
         RENDER_CHAR_OBJ_PARAM charObjParam;
         RENDER_MESH_OBJ_PARAM meshObjParam;
         RENDER_SPRITE_PARAM   spriteParam;
+        RENDER_TERRAIN_PARAM  terrainParam;
     };
 };
 

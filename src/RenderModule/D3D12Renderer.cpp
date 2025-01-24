@@ -19,6 +19,7 @@
 #include "ShadowManager.h"
 #include "SpriteObject.h"
 #include "TextureManager.h"
+#include "Terrain.h"
 
 #include "PostProcessor.h"
 
@@ -536,6 +537,15 @@ IRenderSprite *D3D12Renderer::CreateSpriteObject(const WCHAR *texFileName, int P
     return pSprObj;
 }
 
+IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const int numSlice, const int numStack,
+                                             const float scale)
+{
+    Terrain *pTerrain = new Terrain;
+    pTerrain->Initialize(this, pMaterial, numSlice, numStack, scale);
+    pTerrain->AddRef();
+    return pTerrain;
+}
+
 void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
 {
 #ifdef USE_RAYTRACING
@@ -746,6 +756,27 @@ void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iP
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
+
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+}
+
+void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, bool isWired) 
+{
+    Terrain *pObj = (Terrain*)pTerrain;
+
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_TERRAIN;
+    item.pObjHandle = pObj;
+    item.terrainParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+
+    /*if (!m_pShadowManager->Add(&item))
+    {
+        __debugbreak();
+    }*/
 
     m_curThreadIndex++;
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
@@ -989,13 +1020,13 @@ ILightHandle *D3D12Renderer::CreateDirectionalLight(const Vector3 *pRadiance, co
     light.direction = *pDirection;
     light.position = *pPosition;
     light.radiance = *pRadiance;
-    light.type = LIGHT_TYPE_DIRECTIONAL;
-    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
+    light.type = LIGHT_DIRECTIONAL;
+    light.type |= (hasShadow) ? LIGHT_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_TYPE_OFF)
+        if (pLight->type == LIGHT_OFF)
         {
             *pLight = light;
             return pLight;
@@ -1016,13 +1047,13 @@ ILightHandle *D3D12Renderer::CreatePointLight(const Vector3 *pRadiance, const Ve
     light.fallOffStart = fallOffStart;
     light.fallOffEnd = fallOffEnd;
 
-    light.type = LIGHT_TYPE_POINT;
-    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
+    light.type = LIGHT_POINT;
+    light.type |= (hasShadow) ? LIGHT_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_TYPE_OFF)
+        if (pLight->type == LIGHT_OFF)
         {
             *pLight = light;
             return pLight;
@@ -1044,13 +1075,13 @@ ILightHandle *D3D12Renderer::CreateSpotLight(const Vector3 *pRadiance, const Vec
     light.fallOffStart = fallOffStart;
     light.fallOffEnd = fallOffEnd;
 
-    light.type = LIGHT_TYPE_SPOT;
-    light.type |= (hasShadow) ? LIGHT_TYPE_SHADOW : 0;
+    light.type = LIGHT_SPOT;
+    light.type |= (hasShadow) ? LIGHT_SHADOW : 0;
 
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         Light *pLight = m_pLights + i;
-        if (pLight->type == LIGHT_TYPE_OFF)
+        if (pLight->type == LIGHT_OFF)
         {
             *pLight = light;
             return pLight;
@@ -1068,7 +1099,7 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
         __debugbreak();
     }
     Light *pLight = static_cast<Light *>(pLightHandle);
-    pLight->type = LIGHT_TYPE_OFF;
+    pLight->type = LIGHT_OFF;
 }
 
 IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)

@@ -55,6 +55,13 @@ IDxcBlob *tessellatedQuadDS = nullptr;
 IDxcBlob *tessellatedQuadPS = nullptr;
 IDxcBlob *tessellatedQuadDeferredPS = nullptr;
 
+// Terrain
+IDxcBlob *terrainVS = nullptr;
+IDxcBlob *terrainHS = nullptr;
+IDxcBlob *terrainDS = nullptr;
+IDxcBlob *terrainPS = nullptr;
+IDxcBlob *terrainDeferredPS = nullptr;
+
 // RootSignature
 ID3D12RootSignature *basicRS = nullptr;
 ID3D12RootSignature *skinnedRS = nullptr;
@@ -235,30 +242,16 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         tessellatedQuadDS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"DSMain", L"ds_6_1", TRUE);
         tessellatedQuadPS = CompileGraphicsShader(L"./Shaders/BasicPS.hlsl", L"main", L"ps_6_1", TRUE);
         tessellatedQuadDeferredPS = CompileGraphicsShader(L"./Shaders/DeferredPS.hlsl", L"main", L"ps_6_1", TRUE);
-        /*hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain",
-                                "vs_5_1", compileFlags, 0, &tessellatedQuadVS, &pError);*/
-        /*if (FAILED(hr))
-        {
-            OutputDebugStringA((char *)pError->GetBufferPointer());
-            __debugbreak();
-        }
-            
-        hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "HSMain",
-                                "hs_5_1", compileFlags, 0, &tessellatedQuadHS, &pError);
-        if (FAILED(hr))
-        {
-            OutputDebugStringA((char *)pError->GetBufferPointer());
-            __debugbreak();
-        }
-        hr = D3DCompileFromFile(L"./Shaders/TessellatedQuad.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "DSMain",
-                                "ds_5_1", compileFlags, 0, &tessellatedQuadDS, &pError);
-        if (FAILED(hr))
-        {
-            OutputDebugStringA((char *)pError->GetBufferPointer());
-            __debugbreak();
-        }*/
     }
 
+    // Terrain
+    {
+        terrainVS = CompileGraphicsShader(L"./Shaders/TerrainVS.hlsl", L"VSMain", L"vs_6_1", TRUE);
+        terrainHS = CompileGraphicsShader(L"./Shaders/TerrainHS.hlsl", L"HSMain", L"hs_6_1", TRUE);
+        terrainDS = CompileGraphicsShader(L"./Shaders/TerrainDS.hlsl", L"DSMain", L"ds_6_1", TRUE);
+        terrainPS = CompileGraphicsShader(L"./Shaders/BasicPS.hlsl", L"main", L"ps_6_1", TRUE);
+        terrainDeferredPS = CompileGraphicsShader(L"./Shaders/DeferredPS.hlsl", L"main", L"ps_6_1", TRUE);
+    }
 
     // Mesh Object
     g_shaderData[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] = {
@@ -334,20 +327,20 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
 
     // Tessellation
     g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
-        basicIL,
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadVS->GetBufferPointer(), tessellatedQuadVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadPS->GetBufferPointer(), tessellatedQuadPS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadHS->GetBufferPointer(), tessellatedQuadHS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadDS->GetBufferPointer(), tessellatedQuadDS->GetBufferSize()),
+        terrainIL,
+        CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainPS->GetBufferPointer(), terrainPS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainHS->GetBufferPointer(), terrainHS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainDS->GetBufferPointer(), terrainDS->GetBufferSize()),
         {},
     };
     g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = {
-        basicIL,
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadVS->GetBufferPointer(), tessellatedQuadVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadDeferredPS->GetBufferPointer(),
-                                tessellatedQuadDeferredPS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadHS->GetBufferPointer(), tessellatedQuadHS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(tessellatedQuadDS->GetBufferPointer(), tessellatedQuadDS->GetBufferSize()),
+        terrainIL,
+        CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainDeferredPS->GetBufferPointer(),
+                                terrainDeferredPS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainHS->GetBufferPointer(), terrainHS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainDS->GetBufferPointer(), terrainDS->GetBufferSize()),
         {},
     };
 

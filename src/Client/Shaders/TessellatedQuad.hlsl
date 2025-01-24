@@ -2,6 +2,14 @@
 
 cbuffer MeshConstantBuffer : register(b1) { MeshConstant meshCB[256]; };
 
+cbuffer cb : register(b5)
+{
+    uint materialId;
+    uint useMaterial;
+    uint useHeightMap;
+    uint cbDummy[61];
+};
+
 Texture2D heightTex : register(t5);
 
 float3 BilinearInterpolationFloat3(float3 quad[4], float2 uv)
@@ -69,6 +77,14 @@ HSInput VSMain(VSInput input)
     float3 normalWorld = mul(float4(input.normalModel, 0.0f), world).xyz;
     float3 tangentWorld = mul(float4(input.tangentModel, 0.0f), world).xyz;
 
+    // displacement mapping
+    if (useHeightMap)
+    {
+        float height = heightTex.SampleLevel(linearClampSampler, input.texcoord, 0).r;
+        height = height * 2.0 - 1.0; // [0, 1] -> [-1, 1]
+        posWorld += normalWorld * height;
+    }
+
     output.posWorld = posWorld;
     output.normalWorld = normalize(normalWorld);
     output.texcoord = input.texcoord;
@@ -115,10 +131,12 @@ PSInput DSMain(PatchConstOutput patchConst,
     float3 tangentWorld = BilinearInterpolationFloat3(tangentQuad, uv);
 
     // displacement mapping
-    float height = heightTex.SampleLevel(linearClampSampler, texcoord, 0).r;
-    height = height * 2.0 - 1.0;
-    // [0, 1] -> [-1, 1] ?
-    posWorld += normalWorld * height;
+    if (useHeightMap)
+    {
+        float height = heightTex.SampleLevel(linearClampSampler, texcoord, 0).r;
+        height = height * 2.0 - 1.0; // [0, 1] -> [-1, 1]
+        posWorld += normalWorld * height;
+    }
 
     output.posProj = mul(float4(posWorld, 1.0), viewProj);
     output.posWorld = posWorld;

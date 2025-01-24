@@ -18,35 +18,27 @@ BOOL TessellationDemoController::Start()
     IRenderer    *pRenderer = pGame->GetRenderer();
 
     // Create Material
-    Material reflectiveMaterial = {};
-    reflectiveMaterial.metallicFactor = 0.0f;
-    reflectiveMaterial.reflectionFactor = 0.9f;
+    Material groundMaterial = {};
+    groundMaterial.metallicFactor = 0.0f;
 
-    wcscpy_s(reflectiveMaterial.name, L"ground");
-    /*wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
-    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
-    wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
-    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
-    wcscpy_s(reflectiveMaterial.heightTextureName, L"Tiles074_2K-JPG_Displacement.jpg");*/
-    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
-    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Bricks097_2K-JPG_Color.jpg");
-    wcscpy_s(reflectiveMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
-    wcscpy_s(reflectiveMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
-    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
-    wcscpy_s(reflectiveMaterial.heightTextureName, L"Bricks097_2K-JPG_Displacement.jpg");
+    wcscpy_s(groundMaterial.name, L"ground");
+    /*wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
+    wcscpy_s(groundMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
+    wcscpy_s(groundMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
+    wcscpy_s(groundMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"Tiles074_2K-JPG_Displacement.jpg");*/
+    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\Bricks097\\");
+    wcscpy_s(groundMaterial.albedoTextureName, L"Bricks097_2K-JPG_Color.jpg");
+    wcscpy_s(groundMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
+    wcscpy_s(groundMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
+    wcscpy_s(groundMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"Bricks097_2K-JPG_Displacement.jpg");
 
-    IRenderMaterial *pGroundMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
-    IGameModel      *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
-
-    IGameObject *pGround = pGame->CreateGameObject();
-    pGround->SetModel(pSquareModel);
-    pGround->SetPosition(0.0f, -1e-3, 0.f);
-    pGround->SetRotationX(-XM_PIDIV2);
-    pGround->SetScale(20.0f);
-    pGround->SetMaterials(&pGroundMaterial, 1);
+    pGame->CreateTerrain(&groundMaterial, 4, 4, 20);
 
     // Set Camera Position
-    pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
+    pGame->SetCameraPosition(-0.0f, 10.0f, -3.0f);
+
 
     return TRUE;
 }

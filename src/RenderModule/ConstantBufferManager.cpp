@@ -5,13 +5,12 @@
 #include "ConstantBufferManager.h"
 
 
-CONSTANT_BUFFER_PROPERTY g_pConstantBufferPropList[] = {
-    {CONSTANT_BUFFER_TYPE_GLOBAL, sizeof(GlobalConstants)},
-    {CONSTANT_BUFFER_TYPE_MESH, sizeof(MeshConstants)},
-    {CONSTANT_BUFFER_TYPE_SKINNED, sizeof(SkinnedConstants)},
-    {CONSTANT_BUFFER_TYPE_SPRITE, sizeof(SpriteConstants)},
-    {CONSTANT_BUFFER_TYPE_GEOMETRY, sizeof(FaceGroupConstants)},
-};
+CONSTANT_BUFFER_PROPERTY g_pConstantBufferPropList[] = {{CONSTANT_BUFFER_TYPE_GLOBAL, sizeof(GlobalConstants)},
+                                                        {CONSTANT_BUFFER_TYPE_MESH, sizeof(MeshConstants)},
+                                                        {CONSTANT_BUFFER_TYPE_SKINNED, sizeof(SkinnedConstants)},
+                                                        {CONSTANT_BUFFER_TYPE_SPRITE, sizeof(SpriteConstants)},
+                                                        {CONSTANT_BUFFER_TYPE_GEOMETRY, sizeof(FaceGroupConstants)},
+                                                        {CONSTANT_BUFFER_TYPE_TERRAIN, sizeof(TerrainConstants)}};
 
 BOOL ConstantBufferManager::Initialize(ID3D12Device *pD3DDevice, UINT maxCBVNum)
 {
@@ -35,7 +34,10 @@ void ConstantBufferManager::Reset()
 ConstantBufferPool *ConstantBufferManager::GetConstantBufferPool(CONSTANT_BUFFER_TYPE type)
 {
     if (type >= CONSTANT_BUFFER_TYPE_COUNT)
+    {
         __debugbreak();
+        return nullptr;
+    }   
     return m_ppConstantBufferPool[type];
 }
 

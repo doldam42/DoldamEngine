@@ -32,11 +32,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
                          IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
                          ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
                          UINT numBones, DRAW_PASS_TYPE passType, UINT numInstance)
-{
-    // For Tessellation
-    pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_SOLID);
-    //pPSO = Graphics::GetPSO(RENDER_ITEM_TYPE_TERRAIN, passType, FILL_MODE_WIRED);
-    
+{   
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
@@ -56,8 +52,7 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
     pCommandList->SetPipelineState(pPSO);
-    //pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
@@ -82,10 +77,8 @@ void D3DMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
         }
 
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        /*pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);*/
-
-        pCommandList->DrawInstanced(4, 1, 0, 0);
+        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, numInstance, 0, 0, 0);
     }
 }
 
@@ -199,7 +192,8 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
             MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
 
             pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
             m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
             dest.Offset(m_descriptorSize);
@@ -212,7 +206,8 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
             MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
 
             pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useTexture = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
             m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
             dest.Offset(m_descriptorSize);

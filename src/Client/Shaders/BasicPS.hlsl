@@ -10,9 +10,10 @@ Texture2D emissiveTex : register(t4);
 
 cbuffer cb : register(b5)
 {
-    uint useTexture;
     uint materialId;
-    uint cbDummy[2];
+    uint useMaterial;
+    uint useHeightMap;
+    uint cbDummy[61];
 };
 
 static const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0

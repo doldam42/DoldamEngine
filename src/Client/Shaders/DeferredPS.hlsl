@@ -9,9 +9,10 @@ Texture2D emissiveTex : register(t4);
 
 cbuffer cb : register(b5)
 {
-    uint useTexture;
     uint materialId;
-    uint cbDummy[2];
+    uint useMaterial;
+    uint useHeightMap;
+    uint cbDummy[61];
 };
 
 float3 GetNormal(PSInput input, bool useNormalMap)

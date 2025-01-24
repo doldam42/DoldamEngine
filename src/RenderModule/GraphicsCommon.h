@@ -59,6 +59,8 @@ struct GraphicsShaderSet
     D3D12_SHADER_BYTECODE   GS;
 };
 
+static const D3D12_INPUT_ELEMENT_DESC terrainIEs[] = {
+    {"HEIGHT", 0, DXGI_FORMAT_R8_UNORM, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 static const D3D12_INPUT_ELEMENT_DESC simpleIEs[] = {
     {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
@@ -80,6 +82,7 @@ static const D3D12_INPUT_ELEMENT_DESC skinnedIEs[] = {
 static const D3D12_INPUT_LAYOUT_DESC simpleIL = {simpleIEs, _countof(simpleIEs)};
 static const D3D12_INPUT_LAYOUT_DESC basicIL = {basicIEs, _countof(basicIEs)};
 static const D3D12_INPUT_LAYOUT_DESC skinnedIL = {skinnedIEs, _countof(skinnedIEs)};
+static const D3D12_INPUT_LAYOUT_DESC terrainIL = {terrainIEs, _countof(terrainIEs)};
 
 extern GraphicsShaderSet g_shaderData[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT];
 extern GraphicsShaderSet g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_COUNT];

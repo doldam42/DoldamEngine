@@ -31,6 +31,7 @@ interface IRenderMaterial : public IUnknown
 
 interface IRenderableObject : public IUnknown{};
 interface IRenderSprite : public IRenderableObject{};
+interface IRenderTerrain : public IRenderableObject{};
 interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
@@ -40,6 +41,7 @@ interface IRenderMesh : public IRenderableObject
 
     virtual BOOL UpdateMaterial(IRenderMaterial * pInMaterial, UINT faceGroupIndex) = 0;
 };
+
 
 interface IRenderer
 {
@@ -64,6 +66,9 @@ interface IRenderer
     virtual IRenderSprite *CreateSpriteObject() = 0;
     virtual IRenderSprite *CreateSpriteObject(const WCHAR *texFileName, int PosX, int PosY, int Width, int Height) = 0;
 
+    virtual IRenderTerrain *CreateTerrain(const Material *pMaterial, const int numSlice = 1, const int numStack = 1,
+                                          const float scale = 1.0f) = 0;
+
     virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                                   UINT numInstance = 1) = 0;
     virtual void RenderMeshObjectWithMaterials(IRenderMesh * pMeshObj, const Matrix *pWorldMat,
@@ -79,6 +84,7 @@ interface IRenderer
                               float Z) = 0;
     virtual void RenderSpriteWithTex(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                                      const RECT *pRect, float Z, ITextureHandle *pTexHandle) = 0;
+    virtual void RenderTerrain(IRenderTerrain* pTerrain, bool isWired = false) = 0;
 
     virtual IFontHandle *CreateFontObject(const WCHAR *fontFamilyName, float fontSize) = 0;
     virtual void         DeleteFontObject(IFontHandle * pFontHandle) = 0;

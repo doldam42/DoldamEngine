@@ -2,13 +2,13 @@
 
 #include "RendererInterface.h"
 
-enum LIGHT_TYPE : UINT
+enum LIGHT_FLAGS : UINT
 {
-    LIGHT_TYPE_OFF = 0x00,
-    LIGHT_TYPE_DIRECTIONAL = 0x01,
-    LIGHT_TYPE_POINT = 0x02,
-    LIGHT_TYPE_SPOT = 0x04,
-    LIGHT_TYPE_SHADOW = 0x10,
+    LIGHT_OFF = 0x00,
+    LIGHT_DIRECTIONAL = 0x01,
+    LIGHT_POINT = 0x02,
+    LIGHT_SPOT = 0x04,
+    LIGHT_SHADOW = 0x10,
 };
 
 constexpr const UINT MAX_LIGHTS = 3;

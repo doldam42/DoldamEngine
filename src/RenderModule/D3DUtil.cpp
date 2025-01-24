@@ -365,6 +365,7 @@ IDxcBlob *CompileGraphicsShader(LPCWSTR fileName, LPCWSTR entryPoint, LPCWSTR ta
     IDxcBlob *pBlob;
 
     ThrowIfFailed(pResult->GetResult(&pBlob));
+
     return pBlob;
 }
 

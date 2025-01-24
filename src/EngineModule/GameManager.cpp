@@ -72,6 +72,11 @@ void GameManager::Cleanup()
         delete m_pWorld;
         m_pWorld = nullptr;
     }
+    if (m_pTerrain)
+    {
+        m_pTerrain->Release();
+        m_pTerrain = nullptr;
+    }
 
     DeleteAllSprite();
 
@@ -330,6 +335,8 @@ void GameManager::Render()
     // begin
     m_pRenderer->BeginRender();
 
+    m_pRenderer->RenderTerrain(m_pTerrain, true);
+
     // render game objects
     SORT_LINK *pCur = m_pGameObjLinkHead;
     UINT       objCount = 0;
@@ -572,6 +579,20 @@ void GameManager::DeleteAllAnimation()
         delete m_pAnimationHashTable;
         m_pAnimationHashTable = nullptr;
     }
+}
+
+BOOL GameManager::CreateTerrain(const Material *pMaterial, const int numSlice, const int numStack, const float scale)
+{
+    if (m_pTerrain)
+    {
+        m_pTerrain->Release();
+        m_pTerrain = nullptr;
+    }
+    m_pTerrain = m_pRenderer->CreateTerrain(pMaterial, numSlice, numStack, scale);
+
+    if (m_pTerrain)
+        return TRUE;
+    return FALSE;
 }
 
 void GameManager::Register(IController *pController) { m_pControllerManager->Register(pController); }

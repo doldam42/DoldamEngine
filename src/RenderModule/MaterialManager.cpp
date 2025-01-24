@@ -165,7 +165,7 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.opacityFactor = pMaterial->opacityFactor;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
     
-    materialCB.flags = MATERIAL_DEFAULT;
+    materialCB.flags = MATERIAL_USE_DEFAULT;
     materialCB.flags |= wcslen(pMaterial->albedoTextureName) == 0 ? 0 : MATERIAL_USE_ALBEDO_MAP;
     materialCB.flags |= wcslen(pMaterial->normalTextureName) == 0 ? 0 : MATERIAL_USE_NORMAL_MAP;
     materialCB.flags |= wcslen(pMaterial->aoTextureName) == 0 ? 0 : MATERIAL_USE_AO_MAP;

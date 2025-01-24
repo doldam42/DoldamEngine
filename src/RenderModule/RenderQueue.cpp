@@ -5,6 +5,7 @@
 #include "D3DMeshObject.h"
 #include "RaytracingManager.h"
 #include "SpriteObject.h"
+#include "Terrain.h"
 
 #include "RenderQueue.h"`
 
@@ -129,12 +130,17 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             }
             else
             {
-                SpriteObject *pSpriteObj = (SpriteObject *)pItem->pObjHandle;
                 Vector2       Pos = {(float)pItem->spriteParam.posX, (float)pItem->spriteParam.posY};
                 Vector2       Scale = {pItem->spriteParam.scaleX, pItem->spriteParam.scaleY};
 
                 pSpriteObj->Draw(threadIndex, pCommandList, &Pos, &Scale, Z);
             }
+        }
+        break;
+        case RENDER_ITEM_TYPE_TERRAIN:
+        {
+            Terrain *pTerrain = (Terrain *)pItem->pObjHandle;
+            pTerrain->Draw(threadIndex, pCommandList, global, passType, pItem->terrainParam.fillMode);
         }
         break;
         default:

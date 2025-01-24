@@ -24,7 +24,7 @@ class GameManager : public IGameManager
 
     // For Debugging
     UINT m_culledObjectCountForDebug = 0;
-    
+
   private:
     static UINT initRefCount;
 
@@ -62,6 +62,9 @@ class GameManager : public IGameManager
 
     // Animation
     HashTable *m_pAnimationHashTable = nullptr;
+
+    // Terrain
+    IRenderTerrain *m_pTerrain = nullptr;
 
     // Controller Manager
     ControllerManager *m_pControllerManager = nullptr;
@@ -118,6 +121,9 @@ class GameManager : public IGameManager
     IGameAnimation *GetAnimationByName(const WCHAR *name) override;
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
+
+    BOOL CreateTerrain(const Material *pMaterial, const int numSlice = 1, const int numStack = 1,
+                       const float scale = 1.0f) override;
 
     void Register(IController *pController) override;
 

@@ -113,7 +113,7 @@ struct PSInput
     float3 normalWorld : NORMAL;
     float2 texcoord : TEXCOORD0;
     float4 projTexcoord : TEXCOORD1;
-    float3 tangentWorld : TANGENT0;
+    float3 tangentWorld : TANGENT;
 };
 
 #endif // __COMMON_HLSLI__
