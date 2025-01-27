@@ -139,10 +139,11 @@ struct TerrainConstants
 {
     UINT  numSlice;
     UINT  numStack;
-    float scale;
-    float heightScale;
+    float scaleX;
+    float scaleY;
+    float scaleZ;
     float tessFactor;
-    DWORD dummy[59];
+    DWORD dummy[58];
 };
 static_assert((sizeof(TerrainConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 

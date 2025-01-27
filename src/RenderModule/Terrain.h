@@ -35,7 +35,7 @@ class Terrain : public IRenderTerrain
 
     UINT m_numSlices = 0;
     UINT m_numStacks = 0;
-    float m_scale = 0;
+    Vector3 m_scale;
 
     ULONG m_refCount = 0;
 
@@ -44,10 +44,10 @@ class Terrain : public IRenderTerrain
     void Cleanup();
 
   public:
-    BOOL Initialize(D3D12Renderer *pRenderer, const Material *pMaterial, const int numSlice = 1,
-                    const int numStack = 1, const float scale = 1.0f);
+    BOOL Initialize(D3D12Renderer *pRenderer, const Vector3* pScale, const Material *pMaterial, const int numSlice = 1,
+                    const int numStack = 1);
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
-              D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, DRAW_PASS_TYPE passType, FILL_MODE fillMode);
+              D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, DRAW_PASS_TYPE passType, const Vector3* pScale, FILL_MODE fillMode);
     Terrain() = default;
     ~Terrain();
 

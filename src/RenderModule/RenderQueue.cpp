@@ -140,7 +140,8 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         case RENDER_ITEM_TYPE_TERRAIN:
         {
             Terrain *pTerrain = (Terrain *)pItem->pObjHandle;
-            pTerrain->Draw(threadIndex, pCommandList, global, passType, pItem->terrainParam.fillMode);
+            pTerrain->Draw(threadIndex, pCommandList, global, passType, &pItem->terrainParam.scale,
+                           pItem->terrainParam.fillMode);
         }
         break;
         default:

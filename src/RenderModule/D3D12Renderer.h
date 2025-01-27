@@ -198,8 +198,8 @@ class D3D12Renderer : public IRenderer
     IRenderSprite *CreateSpriteObject() override;
     IRenderSprite *CreateSpriteObject(const WCHAR *texFileName, int PosX, int PosY, int Width, int Height) override;
 
-    IRenderTerrain *CreateTerrain(const Material *pMaterial, const int numSlice = 1, const int numStack = 1,
-                                  const float scale = 1.0f) override;
+    IRenderTerrain *CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
+                                  const int numStack = 1) override;
 
     void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
                           UINT numInstance = 1) override;
@@ -214,7 +214,7 @@ class D3D12Renderer : public IRenderer
                              const RECT *pRect, float Z, ITextureHandle *pTexHandle) override;
     void RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                       float Z) override;
-    void RenderTerrain(IRenderTerrain *pTerrain, bool isWired = false) override;
+    void RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScale, bool isWired = false) override;
 
     IFontHandle *CreateFontObject(const WCHAR *fontFamilyName, float fontSize) override;
     void         DeleteFontObject(IFontHandle *pFontHandle) override;

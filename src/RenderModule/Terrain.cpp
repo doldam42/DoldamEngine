@@ -30,6 +30,7 @@ BOOL Terrain::InitMesh(const WCHAR *heightFilename, const int numSlice, const in
 
     int      width, height, channels;
     uint8_t *pImage = stbi_load(filename, &width, &height, &channels, 0);
+    assert(pImage != NULL);
     //assert(channels == 1);
 
     const float dx = float(width - 1) / numSlice;
@@ -124,8 +125,8 @@ void Terrain::Cleanup()
     }
 }
 
-BOOL Terrain::Initialize(D3D12Renderer *pRenderer, const Material *pMaterial, const int numSlice, const int numStack,
-                         const float scale)
+BOOL Terrain::Initialize(D3D12Renderer *pRenderer, const Vector3 *pScale, const Material *pMaterial,
+                         const int numSlice, const int numStack)
 {
     m_pRenderer = pRenderer;
     m_pD3DDevice = pRenderer->GetD3DDevice();
@@ -138,14 +139,14 @@ BOOL Terrain::Initialize(D3D12Renderer *pRenderer, const Material *pMaterial, co
     MaterialManager *pMatManager = m_pRenderer->GetMaterialManager();
     m_pMaterialHandle = pMatManager->CreateMaterial(pMaterial, pMaterial->name);
 
-    m_scale = scale;
+    m_scale = *pScale;
     m_descriptorSize = pRenderer->GetSRVDescriptorSize();
 
     return TRUE;
 }
 
 void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV,
-                   DRAW_PASS_TYPE passType, FILL_MODE fillMode)
+                   DRAW_PASS_TYPE passType, const Vector3 *pScale, FILL_MODE fillMode)
 {
     // TODO: ADD Shadow
     if (passType == DRAW_PASS_TYPE_SHADOW)
@@ -168,10 +169,11 @@ void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3
     pTerrainCB = pTerrainConstantBufferPool->Alloc();
 
     TerrainConstants *pTerrainConsts = (TerrainConstants *)pTerrainCB->pSystemMemAddr;
-    pTerrainConsts->heightScale = 12.0f;
     pTerrainConsts->numSlice = m_numSlices;
     pTerrainConsts->numStack = m_numStacks;
-    pTerrainConsts->scale = m_scale;
+    pTerrainConsts->scaleX = pScale->x;
+    pTerrainConsts->scaleY = pScale->y;
+    pTerrainConsts->scaleZ = pScale->z;
     pTerrainConsts->tessFactor = 16.0f;
 
     m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, pTerrainCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

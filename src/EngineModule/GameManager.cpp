@@ -152,6 +152,8 @@ BOOL GameManager::Initialize(HWND hWnd)
 
     m_pControllerManager = new ControllerManager;
 
+    m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
+
     m_pWorld = new World;
     m_pWorld->Initialize();
 
@@ -335,7 +337,7 @@ void GameManager::Render()
     // begin
     m_pRenderer->BeginRender();
 
-    m_pRenderer->RenderTerrain(m_pTerrain);
+    m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);
 
     // render game objects
     SORT_LINK *pCur = m_pGameObjLinkHead;
@@ -581,14 +583,16 @@ void GameManager::DeleteAllAnimation()
     }
 }
 
-BOOL GameManager::CreateTerrain(const Material *pMaterial, const int numSlice, const int numStack, const float scale)
+BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale,
+                                const int numSlice, const int numStack)
 {
     if (m_pTerrain)
     {
         m_pTerrain->Release();
         m_pTerrain = nullptr;
     }
-    m_pTerrain = m_pRenderer->CreateTerrain(pMaterial, numSlice, numStack, scale);
+    m_pTerrain = m_pRenderer->CreateTerrain(pMaterial, pScale, numSlice, numStack);
+    m_terrainScale = *pScale;
 
     if (m_pTerrain)
         return TRUE;

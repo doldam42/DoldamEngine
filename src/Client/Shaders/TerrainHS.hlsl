@@ -2,10 +2,11 @@ cbuffer TerrainConstantBuffer : register(b1)
 {
     uint  numSlice;
     uint  numStack;
-    float scale;
-    float heightScale;
+    float scaleX;
+    float scaleY;
+    float scaleZ;
     float tessFactor;
-    uint  tcDummy[59];
+    uint  tcDummy[58];
 }
 
 struct HSInput

@@ -24,6 +24,7 @@ class GameManager : public IGameManager
 
     // For Debugging
     UINT m_culledObjectCountForDebug = 0;
+    bool m_isWired = false;
 
   private:
     static UINT initRefCount;
@@ -66,6 +67,8 @@ class GameManager : public IGameManager
     // Terrain
     IRenderTerrain *m_pTerrain = nullptr;
 
+    Vector3 m_terrainScale;
+
     // Controller Manager
     ControllerManager *m_pControllerManager = nullptr;
 
@@ -82,7 +85,7 @@ class GameManager : public IGameManager
     bool m_activateCamera = true;
 
     // For Debugging
-    //IRenderSprite *m_pShadowMapSprite = nullptr;
+    // IRenderSprite *m_pShadowMapSprite = nullptr;
 
   private:
     void LoadPrimitiveMeshes();
@@ -122,8 +125,8 @@ class GameManager : public IGameManager
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 
-    BOOL CreateTerrain(const Material *pMaterial, const int numSlice = 1, const int numStack = 1,
-                       const float scale = 1.0f) override;
+    BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
+                       const int numStack = 1) override;
 
     void Register(IController *pController) override;
 
@@ -144,7 +147,7 @@ class GameManager : public IGameManager
     float DeltaTime() const override { return m_deltaTime; }
     UINT  FPS() const override { return m_FPS; }
 
-    void  SetTimeSpeed(float speed) override { m_timeSpeed = speed; }
+    void SetTimeSpeed(float speed) override { m_timeSpeed = speed; }
     void TogglePause() override { m_isPaused = !m_isPaused; }
 
     void Render() override;
@@ -155,8 +158,8 @@ class GameManager : public IGameManager
     Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
     Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
 
-    void SetCameraPosition(float x, float y, float z) override 
-    { 
+    void SetCameraPosition(float x, float y, float z) override
+    {
         Vector3 pos(x, y, z);
         m_pMainCamera->SetCameraPos(&pos);
     }

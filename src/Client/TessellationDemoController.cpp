@@ -1,9 +1,11 @@
 #include "pch.h"
+
 #include "Client.h"
+
 #include "TessellationDemoController.h"
 
-void TessellationDemoController::Cleanup() 
-{ 
+void TessellationDemoController::Cleanup()
+{
     IGameManager *pGame = g_pClient->GetGameManager();
     if (m_pGround)
     {
@@ -12,7 +14,7 @@ void TessellationDemoController::Cleanup()
     }
 }
 
-BOOL TessellationDemoController::Start() 
+BOOL TessellationDemoController::Start()
 {
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRenderer = pGame->GetRenderer();
@@ -22,23 +24,18 @@ BOOL TessellationDemoController::Start()
     groundMaterial.metallicFactor = 0.0f;
 
     wcscpy_s(groundMaterial.name, L"ground");
-    /*wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
-    wcscpy_s(groundMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
-    wcscpy_s(groundMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
-    wcscpy_s(groundMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
-    wcscpy_s(groundMaterial.heightTextureName, L"Tiles074_2K-JPG_Displacement.jpg");*/
-    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\heightMap\\");
-    wcscpy_s(groundMaterial.albedoTextureName, L"color.bmp");
-    //wcscpy_s(groundMaterial.normalTextureName, L"Bricks097_2K-JPG_NormalDX.jpg");
-    //wcscpy_s(groundMaterial.aoTextureName, L"Bricks097_2K-JPG_AmbientOcclusion.jpg");
-    //wcscpy_s(groundMaterial.roughnessTextureName, L"Bricks097_2K-JPG_Roughness.jpg");
-    wcscpy_s(groundMaterial.heightTextureName, L"height.bmp");
+    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\terrain\\rocky\\");
+    wcscpy_s(groundMaterial.albedoTextureName, L"diffuse.dds");
+    wcscpy_s(groundMaterial.normalTextureName, L"normal.dds");
+    wcscpy_s(groundMaterial.roughnessTextureName, L"roughness.jpg");
+    wcscpy_s(groundMaterial.metallicTextureName, L"metallic.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"height.jpg");
 
-    pGame->CreateTerrain(&groundMaterial, 16, 16, 100.0f);
+    Vector3 scale(20.0f, 1.0f, 20.0f);
+    pGame->CreateTerrain(&groundMaterial, &scale, 256, 256);
 
     // Set Camera Position
-    pGame->SetCameraPosition(-0.0f, 10.0f, -3.0f);
-
+    pGame->SetCameraPosition(-0.0f, 2.0f, -3.0f);
 
     return TRUE;
 }

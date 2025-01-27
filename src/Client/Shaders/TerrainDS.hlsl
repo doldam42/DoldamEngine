@@ -4,10 +4,11 @@ cbuffer TerrainConstantBuffer : register(b1)
 {
     uint  numSlice;
     uint  numStack;
-    float scale;
-    float heightScale;
+    float scaleX;
+    float scaleY;
+    float scaleZ;
     float tessFactor;
-    uint  tcDummy[59];
+    uint  tcDummy[58];
 }
 
 Texture2D heightTex : register(t5);
@@ -55,7 +56,7 @@ PSInput DSMain(PatchConstOutput patchConst, float2 uv : SV_DomainLocation, const
 
     float height = heightTex.SampleLevel(linearClampSampler, texcoord, 0).r; // displacement mapping
     height = height * 2.0 - 1.0; // UNORM -> SNORM
-    posWorld += normalWorld * height * heightScale;
+    posWorld += normalWorld * height * scaleY;
 
     PSInput output;
     output.posWorld = posWorld;

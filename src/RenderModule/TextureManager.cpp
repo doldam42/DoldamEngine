@@ -276,6 +276,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
             if (IsFile(metallicFilename))
             {
                 mImage = CreateImageFromFile(metallicFilename, &mWidth, &mHeight);
+                
                 if (IsFile(roughneessFilename))
                 {
                     rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);

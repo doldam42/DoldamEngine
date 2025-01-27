@@ -190,8 +190,8 @@ interface IGameManager
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
-    virtual BOOL CreateTerrain(const Material *pMaterial, const int numSlice = 1, const int numStack = 1,
-                               const float scale = 1.0f) = 0;
+    virtual BOOL CreateTerrain(const Material *pMaterial, const Vector3* pScale,
+                               const int numSlice = 1, const int numStack = 1) = 0;
 
     virtual void Register(IController * pController) = 0;
 

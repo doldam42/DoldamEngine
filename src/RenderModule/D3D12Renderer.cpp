@@ -537,11 +537,11 @@ IRenderSprite *D3D12Renderer::CreateSpriteObject(const WCHAR *texFileName, int P
     return pSprObj;
 }
 
-IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const int numSlice, const int numStack,
-                                             const float scale)
+IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice,
+                                             const int numStack)
 {
     Terrain *pTerrain = new Terrain;
-    pTerrain->Initialize(this, pMaterial, numSlice, numStack, scale);
+    pTerrain->Initialize(this, pScale, pMaterial, numSlice, numStack);
     pTerrain->AddRef();
     return pTerrain;
 }
@@ -761,13 +761,14 @@ void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iP
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
 }
 
-void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, bool isWired) 
+void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScale, bool isWired)
 {
     Terrain *pObj = (Terrain*)pTerrain;
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_TERRAIN;
     item.pObjHandle = pObj;
+    item.terrainParam.scale = *pScale;
     item.terrainParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))

@@ -39,6 +39,7 @@ struct RENDER_SPRITE_PARAM
 struct RENDER_TERRAIN_PARAM
 {
     FILL_MODE fillMode;
+    Vector3   scale;
 };
 
 struct RENDER_ITEM

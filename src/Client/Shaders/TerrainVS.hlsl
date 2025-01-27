@@ -4,10 +4,11 @@ cbuffer TerrainConstantBuffer : register(b1)
 {
     uint  numSlice;
     uint  numStack;
-    float scale;
-    float heightScale;
+    float scaleX;
+    float scaleY;
+    float scaleZ;
     float tessFactor;
-    uint  tcDummy[59];
+    uint  tcDummy[58];
 }
 
 // Vertex Shader Control Point Input
@@ -37,7 +38,7 @@ HSInput VSMain(VSCPInput input)
     //const float height = input.height * 2.0 - 1.0;
 
     //output.posWorld = float3(x * scale, height * heightScale, z * scale);
-    output.posWorld = float3(x * scale, 0.0, z * scale);
+    output.posWorld = float3(x*scaleX, 0, z*scaleZ);
     output.texcoord = float2(1.0 + x, 1.0 - z) * 0.5;
 
     return output;
@@ -57,7 +58,7 @@ PSInput VSMainWithoutHS(VSCPInput input)
     const float z = -1.0f + dz * j;
     const float height = input.height * 2.0 - 1.0;
 
-    output.posWorld = float3(x * scale, height * heightScale, z * scale);
+    output.posWorld = float3(x * scaleX, height * scaleY, z * scaleZ);
     output.normalWorld = float3(0.0, 1.0, 0.0);
     output.texcoord = float2(1.0 + x, 1.0 - z) * 0.5;
     output.tangentWorld = float3(1.0, 0.0, 0.0);
