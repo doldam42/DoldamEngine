@@ -137,17 +137,6 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     return radiance;
 }
 
-// Retrieves pixel's position in world space.
-float3 CalculateWorldPositionFromDepthMap(float2 screenCoord, float depth)
-{
-    float4 screenPos = float4(screenCoord.x, screenCoord.y, depth, 1.0);
-    float4 viewPosition = mul(screenPos, invProj);
-    viewPosition /= viewPosition.w; // Perspective division
-    float4 worldPosition = mul(viewPosition, invView);
-
-    return worldPosition.xyz;
-}
-
 float4 main(DeferredPSInput input) : SV_TARGET
 {
     float4      diffuse = diffuseTex.Sample(linearWrapSampler, input.texcoord);
@@ -169,7 +158,8 @@ float4 main(DeferredPSInput input) : SV_TARGET
 
     float  depth = depthTex.Sample(pointClampSampler, input.texcoord).r;
 
-    float2 screenCoord = 2 * input.texcoord - 1; // Texture Coordinate -> Screen Coordinate
+    // Texture Coordinate -> Screen Coordinate
+    float2 screenCoord = 2 * input.texcoord - 1; 
     screenCoord.y = -screenCoord.y;
     
     float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth);
@@ -178,7 +168,8 @@ float4 main(DeferredPSInput input) : SV_TARGET
     float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
 
     float3 directLighting = float3(0, 0, 0);
-    [unroll] for (int i = 0; i < MAX_LIGHTS; i++)
+    [unroll] 
+    for (int i = 0; i < MAX_LIGHTS; i++)
     {
         if (lights[i].type != LIGHT_OFF)
         {
