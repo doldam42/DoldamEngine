@@ -52,6 +52,18 @@
     <ClInclude Include="TessellationDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\typedef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\EngineInterface.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ModelExporterInterface.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\RendererInterface.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -85,6 +97,9 @@
     </Filter>
     <Filter Include="Demos">
       <UniqueIdentifier>{8957c0e8-9b7b-40eb-817a-d2f700fd4efb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{3418e9d2-50b9-4ba3-9c7c-37c392b1b533}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

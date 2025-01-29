@@ -3,11 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "../EngineModule/EngineInterface.h"
 #include "../MathModule/MathHeaders.h"
+#include "../Common/EngineInterface.h"
 
-#include "ModelExporterInterface.h"
+#include "../Common/ModelExporterInterface.h"
+
 
 using namespace std;
 
@@ -20,6 +20,8 @@ class AssimpLoader : public IModelExporter
 {
   private:
     IGameManager      *m_pGame = nullptr;
+
+    ULONG m_refCount = 1;
 
   public:
     wchar_t         m_basePath[MAX_PATH] = {0};
@@ -61,4 +63,9 @@ class AssimpLoader : public IModelExporter
 
     AssimpLoader() = default;
     ~AssimpLoader();
+
+    // Inherited via IModelExporter
+    HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
+    ULONG __stdcall AddRef(void) override;
+    ULONG __stdcall Release(void) override;
 };

@@ -6,9 +6,9 @@
 
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
-#include "../EngineModule/EngineInterface.h"
+#include "../Common/EngineInterface.h"
 
-#include "ModelExporterInterface.h"
+#include "../Common/ModelExporterInterface.h"
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -34,6 +34,8 @@ class FBXLoader : public IModelExporter
         string      materialName;
         vector<UINT> indices;  
     };
+
+    ULONG m_refCount = 1;
 
     CtrlPoint *m_pCtrlPointList = nullptr;
 
@@ -108,4 +110,9 @@ class FBXLoader : public IModelExporter
 
     FBXLoader() = default;
     ~FBXLoader();
+
+    // Inherited via IModelExporter
+    HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
+    ULONG __stdcall AddRef(void) override;
+    ULONG __stdcall Release(void) override;
 };

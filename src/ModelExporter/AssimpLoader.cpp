@@ -104,8 +104,8 @@ void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene, const Matrix 
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
 
-        IGameMesh *pObj = nullptr;
-        if (!CreateGameMesh(&pObj))
+        IGameMesh *pObj = m_pGame->CreateGameMesh();
+        if (!pObj)
         {
             __debugbreak();
         }
@@ -435,3 +435,20 @@ void AssimpLoader::ExportModel()
 void AssimpLoader::ExportAnimation() {}
 
 AssimpLoader::~AssimpLoader() { Cleanup(); }
+
+HRESULT __stdcall AssimpLoader::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+
+ULONG __stdcall AssimpLoader::AddRef(void)
+{
+    m_refCount++;
+    return m_refCount;
+}
+
+ULONG __stdcall AssimpLoader::Release(void)
+{
+    ULONG ref_count = --m_refCount;
+    if (!m_refCount)
+        delete this;
+
+    return ref_count;
+}

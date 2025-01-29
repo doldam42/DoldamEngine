@@ -1,13 +1,15 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
+#include "AssimpLoader.h"
+#include "FBXLoader.h"
+
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "assimp-vc143-mt.lib")
 #pragma comment(lib, "libfbxsdk.lib")
 
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
-#pragma comment(lib, "EngineModule.lib")
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -25,3 +27,34 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
+DLL_API DllCreateAssimpLoader(void **ppv)
+{
+    HRESULT    hr;
+    IModelExporter *pExporter = new AssimpLoader;
+
+    if (!pExporter)
+    {
+        hr = E_OUTOFMEMORY;
+        goto lb_return;
+    }
+    hr = S_OK;
+    *ppv = pExporter;
+lb_return:
+    return hr;
+}
+
+DLL_API DllCreateFbxLoader(void **ppv)
+{
+    HRESULT    hr;
+    IModelExporter *pExporter = new FBXLoader;
+
+    if (!pExporter)
+    {
+        hr = E_OUTOFMEMORY;
+        goto lb_return;
+    }
+    hr = S_OK;
+    *ppv = pExporter;
+lb_return:
+    return hr;
+}

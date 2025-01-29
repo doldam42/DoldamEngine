@@ -6,6 +6,7 @@
 #include "ControllerManager.h"
 #include "GameObject.h"
 #include "GeometryGenerator.h"
+#include "MeshObject.h"
 #include "Model.h"
 #include "PhysicsManager.h"
 #include "Sprite.h"
@@ -14,8 +15,6 @@
 #include "GameManager.h"
 
 GameManager *g_pGame = nullptr;
-
-UINT GameManager::initRefCount = 0;
 
 Model *GameManager::SquareMesh = nullptr;
 Model *GameManager::BoxMesh = nullptr;
@@ -101,7 +100,7 @@ void GameManager::Cleanup()
 
     if (m_pRenderer)
     {
-        DeleteD3D12Renderer(m_pRenderer);
+        m_pRenderer->Release();
         m_pRenderer = nullptr;
     }
     if (m_pMainCamera)
@@ -116,25 +115,26 @@ void GameManager::Cleanup()
     }
 }
 
-BOOL GameManager::Initialize(HWND hWnd)
+BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
 {
     BOOL result = FALSE;
+
+    if (!pRnd)
+    {
+        __debugbreak();
+        return FALSE;
+    }
+
+    pRnd->AddRef();
+    m_pRenderer = pRnd;
 
     RECT rect;
     GetClientRect(hWnd, &rect);
     DWORD width = rect.right - rect.left;
     DWORD height = rect.bottom - rect.top;
 
-    g_pGame = this;
-
     m_pInputManager = new InputManager();
     m_pInputManager->Initialize(width, height);
-
-    if (!CreateD3D12Renderer(hWnd, TRUE, FALSE, &m_pRenderer))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
 
     m_renderThreadCount = m_pRenderer->GetRenderThreadCount();
 
@@ -157,6 +157,7 @@ BOOL GameManager::Initialize(HWND hWnd)
     m_pWorld = new World;
     m_pWorld->Initialize();
 
+    g_pGame = this;
     result = TRUE;
 lb_return:
     return result;
@@ -379,6 +380,18 @@ BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
 }
 
 void GameManager::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
+
+IGameMesh *GameManager::CreateGameMesh() 
+{ 
+    MeshObject *pObj = new MeshObject;
+    return pObj;
+}
+
+void GameManager::DeleteGameMesh(IGameMesh *pGameMesh) 
+{
+    MeshObject *pObj = reinterpret_cast<MeshObject *>(pGameMesh);
+    delete pObj;
+}
 
 IGameCharacter *GameManager::CreateCharacter()
 {
@@ -604,3 +617,20 @@ void GameManager::Register(IController *pController) { m_pControllerManager->Reg
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
 GameManager::~GameManager() { Cleanup(); }
+
+HRESULT __stdcall GameManager::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+
+ULONG __stdcall GameManager::AddRef(void)
+{
+    m_refCount++;
+    return m_refCount;
+}
+
+ULONG __stdcall GameManager::Release(void)
+{
+    ULONG ref_count = --m_refCount;
+    if (!m_refCount)
+        delete this;
+
+    return ref_count;
+}

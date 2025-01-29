@@ -6,6 +6,42 @@
 
 #define MAX_LOADSTRING 100
 
+extern "C"
+{
+    __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// D3D12 Agility SDK Runtime
+
+extern "C"
+{
+    __declspec(dllexport) extern const UINT D3D12SDKVersion = 614;
+}
+
+#if defined(_M_ARM64EC)
+extern "C"
+{
+    __declspec(dllexport) extern const char *D3D12SDKPath = u8".\\D3D12\\arm64\\";
+}
+#elif defined(_M_ARM64)
+extern "C"
+{
+    __declspec(dllexport) extern const char *D3D12SDKPath = u8".\\D3D12\\arm64\\";
+}
+#elif defined(_M_AMD64)
+extern "C"
+{
+    __declspec(dllexport) extern const char *D3D12SDKPath = u8".\\D3D12\\x64\\";
+}
+#elif defined(_M_IX86)
+extern "C"
+{
+    __declspec(dllexport) extern const char *D3D12SDKPath = u8".\\D3D12\\x86\\";
+}
+#endif
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 
 #pragma comment(lib, "avcodec.lib")
@@ -22,9 +58,13 @@
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
-#pragma comment(lib, "RenderModule.lib")
-#pragma comment(lib, "EngineModule.lib")
-#pragma comment(lib, "ModelExporter.lib")
+
+#ifdef _DEBUG
+#pragma comment(lib, "../../DLL/RendererD3D12_x64_debug.lib")
+#else
+#pragma comment(lib, "../../DLL/RendererD3D12_x64_release.lib")
+#endif // _DEBUG
+
 
 // Global Variables:
 

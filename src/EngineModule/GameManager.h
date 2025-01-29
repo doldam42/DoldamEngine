@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EngineInterface.h"
+#include "../Common/EngineInterface.h"
 
 #include "CameraController.h"
 #include "GameUtils.h"
@@ -27,7 +27,7 @@ class GameManager : public IGameManager
     bool m_isWired = false;
 
   private:
-    static UINT initRefCount;
+    ULONG m_refCount = 1;
 
     // Timer
     ULONGLONG m_prevUpdateTick = 0;
@@ -95,13 +95,16 @@ class GameManager : public IGameManager
 
   public:
     // Derived from IRenderer
-    BOOL Initialize(HWND hWnd) override;
+    BOOL Initialize(HWND hWnd, IRenderer *pRnd) override;
 
     void OnKeyDown(UINT nChar, UINT uiScanCode) override;
     void OnKeyUp(UINT nChar, UINT uiScanCode) override;
     void OnMouseMove(int mouseX, int mouseY) override;
     BOOL OnUpdateWindowSize(UINT width, UINT height) override;
     void OnMouseWheel(float deltaWheel) override;
+
+    IGameMesh *CreateGameMesh() override;
+    void       DeleteGameMesh(IGameMesh *pGameMesh) override;
 
     IGameCharacter *CreateCharacter() override;
     IGameObject    *CreateGameObject() override;
@@ -170,6 +173,11 @@ class GameManager : public IGameManager
 
     GameManager() = default;
     ~GameManager();
+
+    // Inherited via IGameManager
+    HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
+    ULONG __stdcall AddRef(void) override;
+    ULONG __stdcall Release(void) override;
 };
 
 extern GameManager *g_pGame;

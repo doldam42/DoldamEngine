@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="CameraController.cpp" />
-    <ClCompile Include="EngineInterface.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="InputManager.cpp" />
@@ -57,7 +56,6 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="EngineInterface.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="pch.h">
@@ -100,6 +98,7 @@
     </ClInclude>
     <ClInclude Include="World.h" />
     <ClInclude Include="ControllerManager.h" />
+    <ClInclude Include="..\Common\EngineInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "EngineInterface.h"
+#include "../Common/EngineInterface.h"
 #include "GameUtils.h"
-#include "MathHeaders.h"
 
 struct KEYFRAME_HEADER
 {

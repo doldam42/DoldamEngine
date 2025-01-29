@@ -12,8 +12,9 @@
 
 #include <filesystem>
 
+#include "../Common/typedef.h"
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
-#include "../EngineModule/EngineInterface.h"
+#include "../Common/EngineInterface.h"
 
 #endif //PCH_H

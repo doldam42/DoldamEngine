@@ -1,6 +1,4 @@
 #pragma once
-#include "EngineInterface.h"
-#include "EventListener.h"
 
 class InputManager : public IInputManager
 {

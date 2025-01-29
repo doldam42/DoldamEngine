@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <filesystem>
 
 #include "AnimationClip.h"
@@ -5,8 +7,6 @@
 #include "GameUtils.h"
 #include "MeshObject.h"
 #include "Model.h"
-
-#include "EngineInterface.h"
 
 #include "GeometryGenerator.h"
 

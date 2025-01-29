@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EngineInterface.h"
 #include "GameObject.h"
 
 class Character : public IGameCharacter, public GameObject

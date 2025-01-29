@@ -13,9 +13,9 @@
 
 #include <windows.h>
 
+#include "../Common/typedef.h"
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
-#include "../RenderModule/RendererInterface.h"
-#include "../EngineModule/EngineInterface.h"
-#include "../ModelExporter/ModelExporterInterface.h"
-
+#include "../Common/RendererInterface.h"
+#include "../Common/EngineInterface.h"
+#include "../Common/ModelExporterInterface.h"

@@ -1,9 +1,10 @@
 #include "pch.h"
 
 #include "AnimationClip.h"
-#include "Character.h"
 #include "GameManager.h"
 #include "Model.h"
+
+#include "Character.h"
 
 void Character::Cleanup()
 {

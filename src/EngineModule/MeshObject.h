@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EngineInterface.h"
 #include "BaseObject.h"
 
 interface IRenderer;

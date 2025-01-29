@@ -420,8 +420,9 @@ void FBXLoader::ProcessNodeRecursively(FbxNode *inNode, int inDepth, int myIndex
         case FbxNodeAttribute::eMesh: {
             m_pGeoConverter->Triangulate(inNode->GetMesh(), true);
 
-            IGameMesh *pObj = nullptr;
-            if (!CreateGameMesh(&pObj))
+            IGameMesh *pObj = m_pGame->CreateGameMesh();
+            
+            if (!pObj)
             {
                 __debugbreak();
             }
@@ -1267,3 +1268,20 @@ void FBXLoader::ExportModel()
 }
 
 FBXLoader::~FBXLoader() { Cleanup(); }
+
+HRESULT __stdcall FBXLoader::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
+
+ULONG __stdcall FBXLoader::AddRef(void)
+{
+    m_refCount++;
+    return m_refCount;
+}
+
+ULONG __stdcall FBXLoader::Release(void)
+{
+    ULONG ref_count = --m_refCount;
+    if (!m_refCount)
+        delete this;
+
+    return ref_count;
+}

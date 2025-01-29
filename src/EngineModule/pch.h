@@ -26,7 +26,8 @@
 
 #include "GameUtils.h"
 
+#include "../Common/typedef.h"
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
-#include "../RenderModule/RendererInterface.h"
-#include "EngineInterface.h"
+#include "../Common/RendererInterface.h"
+#include "../Common/EngineInterface.h"

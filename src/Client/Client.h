@@ -8,12 +8,14 @@ class AudioManager;
 class Client
 {
   private:
+    HMODULE m_hRendererDLL = nullptr;
+    HMODULE m_hEngineDLL = nullptr;
+    HMODULE m_hModelExporterDLL = nullptr;
+
     HWND            m_hWnd = nullptr;
     IGameManager   *m_pGame = nullptr;
     AudioManager   *m_pAudio = nullptr;
 
-    // m_pGame에 종속된 객체 - m_pGame에서 delete한다.
-    // TODO: Reference Count 추가
     IRenderer      *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
     IGameObject    *m_pSphere = nullptr;
@@ -28,6 +30,8 @@ class Client
     TessellationDemoController *m_pTessellationDemoController = nullptr;
 
   private:
+    BOOL LoadModules(HWND hWnd);
+      
     void CleanupControllers();
     void Cleanup();
 

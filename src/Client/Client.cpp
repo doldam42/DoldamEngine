@@ -2,9 +2,6 @@
 
 #include <filesystem>
 
-#include "../EngineModule/EngineInterface.h"
-#include "../RenderModule/RendererInterface.h"
-
 #include "AudioManager.h"
 #include "VideoManager.h"
 
@@ -18,6 +15,74 @@
 namespace fs = std::filesystem;
 
 Client *g_pClient = nullptr;
+
+BOOL Client::LoadModules(HWND hWnd)
+{
+    BOOL                 result = FALSE;
+    CREATE_INSTANCE_FUNC pCreateFunc;
+
+    const WCHAR *rendererFileName = nullptr;
+    const WCHAR *engineFileName = nullptr;
+    const WCHAR *exporterFileName = nullptr;
+#ifdef _DEBUG
+    rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_debug.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_debug.dll";
+#else
+    rendererFileName = L"../../DLL/RendererD3D12_x64_release.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_release.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_release.dll";
+#endif
+
+    WCHAR wchErrTxt[128] = {};
+    DWORD dwErrCode = 0;
+
+    m_hRendererDLL = LoadLibrary(rendererFileName);
+    if (!m_hRendererDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", rendererFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hRendererDLL, "DllCreateInstance");
+    pCreateFunc(&m_pRenderer);
+
+    m_hEngineDLL = LoadLibrary(engineFileName);
+    if (!m_hEngineDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", engineFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hEngineDLL, "DllCreateInstance");
+    pCreateFunc(&m_pGame);
+
+    m_hModelExporterDLL = LoadLibrary(exporterFileName);
+    if (!m_hModelExporterDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", exporterFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hModelExporterDLL, "DllCreateAssimpLoader");
+    pCreateFunc(&m_pAssimpExporter);
+
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hModelExporterDLL, "DllCreateFbxLoader");
+    pCreateFunc(&m_pFbxExporter);
+
+    result = m_pRenderer->Initialize(hWnd, TRUE, FALSE);
+    result = m_pGame->Initialize(hWnd, m_pRenderer);
+    result = m_pAssimpExporter->Initialize(m_pGame);
+    result = m_pFbxExporter->Initialize(m_pGame);
+
+    if (!result)
+        __debugbreak();
+
+    return result;
+}
 
 void Client::CleanupControllers()
 {
@@ -48,48 +113,63 @@ void Client::Cleanup()
     CleanupControllers();
     if (m_pFbxExporter)
     {
-        DeleteFbxExporter(m_pFbxExporter);
+        m_pFbxExporter->Release();
         m_pFbxExporter = nullptr;
     }
     if (m_pAssimpExporter)
     {
-        DeleteAssimpExporter(m_pAssimpExporter);
+        m_pAssimpExporter->Release();
         m_pAssimpExporter = nullptr;
+    }
+    if (m_pRenderer)
+    {
+        m_pRenderer->Release();
+        m_pRenderer = nullptr;
+    }
+    if (m_pGame)
+    {
+        m_pGame->Release();
+        m_pGame = nullptr;
     }
     if (m_pAudio)
     {
         delete m_pAudio;
         m_pAudio = nullptr;
     }
-    if (m_pGame)
+    if (m_hRendererDLL)
     {
-        DeleteGameEngine(m_pGame);
-        m_pGame = nullptr;
+        FreeLibrary(m_hRendererDLL);
+        m_hRendererDLL = nullptr;
+    }
+    if (m_hEngineDLL)
+    {
+        FreeLibrary(m_hEngineDLL);
+        m_hEngineDLL = nullptr;
+    }
+    if (m_hModelExporterDLL)
+    {
+        FreeLibrary(m_hModelExporterDLL);
+        m_hModelExporterDLL = nullptr;
     }
 }
 
 BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
-    result = CreateGameEngine(hWnd, &m_pGame);
 
-    m_pRenderer = m_pGame->GetRenderer();
-    result = CreateFbxExporter(&m_pFbxExporter);
-    result = CreateAssimpExporter(&m_pAssimpExporter);
-    result = m_pFbxExporter->Initialize(m_pGame);
-    result = m_pAssimpExporter->Initialize(m_pGame);
+    result = LoadModules(hWnd);
 
     m_pAudio = new AudioManager;
     m_pAudio->Initialize();
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
-    //m_pRaytracingDemoController = new RaytracingDemoController;
+    // m_pRaytracingDemoController = new RaytracingDemoController;
     m_pTessellationDemoController = new TessellationDemoController();
 
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
-    //m_pGame->Register(m_pRaytracingDemoController);
+    // m_pGame->Register(m_pRaytracingDemoController);
     m_pGame->Register(m_pTessellationDemoController);
 
     Start();
@@ -98,15 +178,9 @@ BOOL Client::Initialize(HWND hWnd)
     return result;
 }
 
-void Client::LoadResources()
-{
+void Client::LoadResources() {}
 
-}
-
-void Client::LoadScene() 
-{
-
-}
+void Client::LoadScene() {}
 
 void Client::Process()
 {
@@ -115,12 +189,12 @@ void Client::Process()
     m_pGame->Render();
 }
 
-BOOL Client::Start() 
+BOOL Client::Start()
 {
     LoadResources();
 
     LoadScene();
-    
+
     m_pGame->BuildScene();
 
     return TRUE;
