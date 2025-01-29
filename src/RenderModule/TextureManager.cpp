@@ -226,6 +226,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
     ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12Resource   *pTexResource = nullptr;
+    D3D12_RESOURCE_DESC desc = {};
     DESCRIPTOR_HANDLE srv = {};
     TEXTURE_HANDLE   *pTexHandle = nullptr;
 
@@ -250,86 +251,55 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
 
         if (!wcscmp(metallicFilename, roughneessFilename))
         {
-            if (wcsstr(metallicFilename, L".dds") != NULL || wcsstr(metallicFilename, L".DDS"))
-            {
-                if (FAILED(m_pResourceManager->CreateDDSTextureFromFile(&pTexResource, metallicFilename, false)))
-                    __debugbreak();
-                result = TRUE;
-            }
-            else
-            {
-                mImage = CreateImageFromFile(metallicFilename, &mWidth, &mHeight);
-
-                if (mImage)
-                {
-                    combinedImage = new BYTE[mWidth * mHeight * 4];
-                    for (size_t i = 0; i < size_t(mWidth * mHeight); i++)
-                    {
-                        combinedImage[4 * i + 1] = mImage[4 * i]; // Green = Roughness
-                        combinedImage[4 * i + 2] = mImage[4 * i]; // Blue = Metalness
-                    }
-                }
-            }
+            if (wcslen(metallicFilename) == 0)
+                return nullptr;
+            result = ((wcsstr(metallicFilename, L".dds") != NULL || wcsstr(metallicFilename, L".DDS")))
+                         ? m_pResourceManager->CreateTextureFromDDS(&pTexResource, &desc, metallicFilename)
+                         : m_pResourceManager->CreateTextureFromWIC(&pTexResource, &desc, metallicFilename);
         }
         else
         {
             if (IsFile(metallicFilename))
             {
                 mImage = CreateImageFromFile(metallicFilename, &mWidth, &mHeight);
-                
-                if (IsFile(roughneessFilename))
-                {
-                    rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
-                }
-                else
-                {
-                    rWidth = mWidth;
-                    rHeight = mHeight;
-                    rImage = new BYTE[rWidth * rWidth * 4];
-                    ZeroMemory(rImage, sizeof(BYTE) * rWidth * rHeight * 4);
-                }
             }
-            else
+            if (IsFile(roughneessFilename))
             {
-                if (IsFile(roughneessFilename))
-                {
-                    rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+                rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+            }
 
-                    mWidth = rWidth;
-                    mHeight = rHeight;
-                    mImage = new BYTE[mWidth * mHeight * 4];
-                    ZeroMemory(mImage, sizeof(BYTE) * mHeight * mHeight * 4);
-                }
-                else
-                {
+            if (!(mWidth == rWidth && mHeight == rHeight) || (!mImage && !rImage))
+            {
 #ifdef _DEBUG
-                    __debugbreak();
-#endif
-                    goto lb_return;
-                }
-            }
-
-            if (mWidth != rWidth || mHeight != rHeight || !mImage || !rImage)
-            {
                 __debugbreak();
+#endif // _DEBUG
                 goto lb_return;
             }
 
             // 4Ã¤³Î
             combinedImage = new BYTE[mWidth * mHeight * 4];
             ZeroMemory(combinedImage, sizeof(BYTE) * mHeight * mHeight * 4);
-            for (size_t i = 0; i < size_t(mWidth * mHeight); i++)
+            if (mImage)
             {
-                combinedImage[4 * i + 1] = rImage[4 * i]; // Green = Roughness
-                combinedImage[4 * i + 2] = mImage[4 * i]; // Blue = Metalness
+                for (size_t i = 0; i < size_t(mWidth * mHeight); i++)
+                {
+                    combinedImage[4 * i + 2] = mImage[4 * i + 2]; // Blue = Metalness
+                }
+            }
+            if (rImage)
+            {
+                for (size_t i = 0; i < size_t(rWidth * rHeight); i++)
+                {
+                    combinedImage[4 * i + 1] = rImage[4 * i + 1]; // Green = Roughness
+                }
             }
             result = m_pResourceManager->CreateTextureFromMemory(&pTexResource, (UINT)mWidth, (UINT)mHeight,
                                                                  DXGI_FORMAT_R8G8B8A8_UNORM, combinedImage);
+            desc = pTexResource->GetDesc();
         }
 
         if (result)
         {
-            D3D12_RESOURCE_DESC             desc = pTexResource->GetDesc();
             D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
             SRVDesc.Format = desc.Format;
             SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

@@ -24,15 +24,16 @@ BOOL TessellationDemoController::Start()
     groundMaterial.metallicFactor = 0.0f;
 
     wcscpy_s(groundMaterial.name, L"ground");
-    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\terrain\\rocky\\");
+    wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\terrain\\grayrock\\");
     wcscpy_s(groundMaterial.albedoTextureName, L"diffuse.dds");
     wcscpy_s(groundMaterial.normalTextureName, L"normal.dds");
-    wcscpy_s(groundMaterial.roughnessTextureName, L"roughness.jpg");
-    wcscpy_s(groundMaterial.metallicTextureName, L"metallic.jpg");
-    wcscpy_s(groundMaterial.heightTextureName, L"height.jpg");
+    wcscpy_s(groundMaterial.aoTextureName, L"ao.jpg");
+    wcscpy_s(groundMaterial.roughnessTextureName, L"ao_roughness_metallic.jpg");
+    wcscpy_s(groundMaterial.metallicTextureName, L"ao_roughness_metallic.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"height.png");
 
-    Vector3 scale(20.0f, 1.0f, 20.0f);
-    pGame->CreateTerrain(&groundMaterial, &scale, 256, 256);
+    Vector3 scale(10.0f, 0.5f, 10.0f);
+    pGame->CreateTerrain(&groundMaterial, &scale, 64, 64);
 
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -3.0f);

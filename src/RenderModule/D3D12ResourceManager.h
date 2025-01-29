@@ -66,8 +66,6 @@ class D3D12ResourceManager
     BOOL CreateTextureFromDDS(ID3D12Resource **ppOutResource, D3D12_RESOURCE_DESC *pOutDesc, const wchar_t *filename);
     BOOL CreateTextureFromWIC(ID3D12Resource **ppOutResource, D3D12_RESOURCE_DESC *pOutDesc, const wchar_t *filename);
 
-    HRESULT CreateDDSTextureFromFile(ID3D12Resource **ppOutResource, const wchar_t *filename, const bool isCubeMap);
-
     BOOL CreateTexturePair(ID3D12Resource **ppOutResource, ID3D12Resource **ppOutUploadBuffer, UINT Width, UINT Height,
                            DXGI_FORMAT format);
 

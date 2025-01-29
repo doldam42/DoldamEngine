@@ -670,69 +670,6 @@ lb_return:
     return result;
 }
 
-HRESULT
-D3D12ResourceManager::CreateDDSTextureFromFile(ID3D12Resource **ppOutResource, const wchar_t *filename,
-                                               const bool isCubeMap)
-{
-    // https://github.com/microsoft/DirectXTK12/wiki/DDSTextureLoader
-    HRESULT         hr = E_FAIL;
-    ID3D12Resource *pTexResource = nullptr;
-    ID3D12Resource *pUploadBuffer = nullptr;
-
-    std::unique_ptr<uint8_t[]>          ddsData;
-    std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-
-    hr = DirectX::LoadDDSTextureFromFile(m_pD3DDevice, filename, &pTexResource, ddsData, subresources);
-    if (FAILED(hr))
-    {
-        __debugbreak();
-    }
-
-    const UINT64 uploadBufferSize =
-        GetRequiredIntermediateSize(pTexResource, 0, static_cast<UINT>(subresources.size()));
-
-    // Create the GPU upload buffer
-    hr =
-        m_pD3DDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                                              &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
-                                              D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pUploadBuffer));
-    if (FAILED(hr))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-
-    // CommandList ÃÊ±âÈ­
-    if (FAILED(m_pCommandAllocator->Reset()))
-        __debugbreak();
-
-    if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-        __debugbreak();
-
-    UpdateSubresources(m_pCommandList, pTexResource, pUploadBuffer, 0, 0, static_cast<UINT>(subresources.size()),
-                       subresources.data());
-
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
-                                                        D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_pCommandList->ResourceBarrier(1, &barrier);
-
-    m_pCommandList->Close();
-    ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-    m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    Fence();
-    WaitForFenceValue();
-
-    pUploadBuffer->Release();
-    pUploadBuffer = nullptr;
-
-    hr = S_OK;
-lb_return:
-    *ppOutResource = pTexResource;
-
-    return hr;
-}
-
 BOOL D3D12ResourceManager::CreateTexturePair(ID3D12Resource **ppOutResource, ID3D12Resource **ppOutUploadBuffer,
                                              UINT Width, UINT Height, DXGI_FORMAT format)
 {
