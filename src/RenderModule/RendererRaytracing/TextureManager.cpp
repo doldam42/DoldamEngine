@@ -12,8 +12,6 @@ TEXTURE_HANDLE *TextureManager::AllocTextureHandle()
 {
     TEXTURE_HANDLE *pTexHandle = new TEXTURE_HANDLE;
     memset(pTexHandle, 0, sizeof(TEXTURE_HANDLE));
-    pTexHandle->link.pItem = pTexHandle;
-    LinkToLinkedListFIFO(&m_pTexLinkHead, &m_pTexLinkTail, &pTexHandle->link);
     pTexHandle->refCount = 1;
     return pTexHandle;
 }
@@ -48,7 +46,6 @@ UINT TextureManager::DeallocTextureHandle(TEXTURE_HANDLE *pTexHandle)
             m_pHashTable->Delete(pTexHandle->pSearchHandle);
             pTexHandle->pSearchHandle = nullptr;
         }
-        UnLinkFromLinkedList(&m_pTexLinkHead, &m_pTexLinkTail, &pTexHandle->link);
 
         delete pTexHandle;
     }
@@ -61,11 +58,6 @@ void TextureManager::Cleanup()
     {
         delete[] m_ppUpdatedTextures;
         m_ppUpdatedTextures = nullptr;
-    }
-    if (m_pTexLinkHead)
-    {
-        // texture resource leak!!!
-        __debugbreak();
     }
     if (m_pHashTable)
     {
@@ -90,6 +82,8 @@ BOOL TextureManager::Initialize(D3D12Renderer *pRenderer, UINT maxBucketNum, UIN
 
 TEXTURE_HANDLE *TextureManager::CreateTextureFromFile(const WCHAR *filename, BOOL isCubemap)
 {
+    if (!IsFile(filename))
+        return nullptr;
     ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12Resource     *pTexResource = nullptr;
@@ -223,6 +217,7 @@ TEXTURE_HANDLE *TextureManager::CreateImmutableTexture(UINT texWidth, UINT texHe
 TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *metallicFilename,
                                                                const WCHAR *roughneessFilename)
 {
+    
     ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12Resource   *pTexResource = nullptr;
@@ -230,8 +225,22 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
     DESCRIPTOR_HANDLE srv = {};
     TEXTURE_HANDLE   *pTexHandle = nullptr;
 
-    // metallicFilename으로 texture 저장
-    UINT fileNameLen = (DWORD)wcslen(metallicFilename);
+    const WCHAR *key;
+    UINT         fileNameLen;
+    if (IsFile(metallicFilename))
+    {
+        fileNameLen = (UINT)wcslen(metallicFilename);
+        key = metallicFilename;
+    }
+    else if (IsFile(roughneessFilename))
+    {
+        fileNameLen = (UINT)wcslen(roughneessFilename);
+        key = roughneessFilename;
+    }
+    else
+    {
+        return nullptr;
+    }
     UINT keySize = fileNameLen * sizeof(WCHAR);
 
     if (m_pHashTable->Select((void **)&pTexHandle, 1, metallicFilename, keySize))

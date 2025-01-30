@@ -13,9 +13,6 @@ class TextureManager
     UINT             m_updatedTextureCount = 0;
     UINT             m_maxTextureCount = 0;
 
-    SORT_LINK *m_pTexLinkHead = nullptr;
-    SORT_LINK *m_pTexLinkTail = nullptr;
-
     TEXTURE_HANDLE *AllocTextureHandle();
     UINT            DeallocTextureHandle(TEXTURE_HANDLE *pTexHandle);
     void            Cleanup();

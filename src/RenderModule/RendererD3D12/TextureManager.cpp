@@ -225,16 +225,29 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
 {
     ID3D12Device *pD3DDevice = m_pRenderer->GetD3DDevice();
 
-    ID3D12Resource   *pTexResource = nullptr;
+    ID3D12Resource     *pTexResource = nullptr;
     D3D12_RESOURCE_DESC desc = {};
-    DESCRIPTOR_HANDLE srv = {};
-    TEXTURE_HANDLE   *pTexHandle = nullptr;
+    DESCRIPTOR_HANDLE   srv = {};
+    TEXTURE_HANDLE     *pTexHandle = nullptr;
 
-    // metallicFilename으로 texture 저장
-    UINT fileNameLen = (DWORD)wcslen(metallicFilename);
+    const WCHAR *key;
+    UINT         fileNameLen;
+    if (IsFile(metallicFilename))
+    {
+        fileNameLen = (UINT)wcslen(metallicFilename);
+        key = metallicFilename;
+    }
+    else if (IsFile(roughneessFilename))
+    {
+        fileNameLen = (UINT)wcslen(roughneessFilename);
+        key = roughneessFilename;
+    }
+    else
+    {
+        return nullptr;
+    }
     UINT keySize = fileNameLen * sizeof(WCHAR);
-
-    if (m_pHashTable->Select((void **)&pTexHandle, 1, metallicFilename, keySize))
+    if (m_pHashTable->Select((void **)&pTexHandle, 1, key, keySize))
     {
         pTexHandle->refCount++;
     }

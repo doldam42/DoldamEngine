@@ -1582,11 +1582,17 @@ void D3D12Renderer::Cleanup()
 #endif
 
     WaitForGPU();
-
+    
     if (m_pDefaultTexHandle)
     {
         DeleteTexture(m_pDefaultTexHandle);
         m_pDefaultTexHandle = nullptr;
+    }
+
+    if (m_pEnv)
+    {
+        DeleteTexture(m_pEnv);
+        m_pEnv = nullptr;
     }
 
     if (m_pRaytracingManager)

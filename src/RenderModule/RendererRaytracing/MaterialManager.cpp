@@ -38,7 +38,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     wcscpy_s(path, pInMaterial->basePath);
     wcscat_s(path, pInMaterial->emissiveTextureName);
     pEmissiveTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-
+    
     // Metallic-Roughness
     WCHAR metallicPath[MAX_PATH];
     WCHAR roughnessPath[MAX_PATH];

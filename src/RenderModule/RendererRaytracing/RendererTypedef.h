@@ -91,7 +91,6 @@ struct TEXTURE_HANDLE : public ITextureHandle
     BOOL              IsFromFile;
     UINT              refCount;
     void             *pSearchHandle;
-    SORT_LINK         link;
 };
 
 // #DXR
