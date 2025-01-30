@@ -399,7 +399,7 @@ BOOL ShadowManager::Initialize(D3D12Renderer *pRnd, UINT shadowWidth)
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, shadowWidth, shadowWidth, 1, 1, 1, 0,
                                           D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
+            D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&pDepthStencil))))
     {
         __debugbreak();
     }
@@ -581,7 +581,7 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
                                       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils,
-                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                                                                           D3D12_RESOURCE_STATE_COMMON,
                                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMapTexture->pTexture,
@@ -602,7 +602,7 @@ void ShadowManager::Render(ID3D12CommandQueue *pCommandQueue)
                                                                            D3D12_RESOURCE_STATE_COMMON));
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowDepthStencils,
                                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+                                                                           D3D12_RESOURCE_STATE_COMMON));
     pCommandListPool->CloseAndExecute(pCommandQueue);
 }
 

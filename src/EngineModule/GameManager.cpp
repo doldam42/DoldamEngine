@@ -119,6 +119,8 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
 {
     BOOL result = FALSE;
 
+    g_pGame = this;
+
     if (!pRnd)
     {
         __debugbreak();
@@ -157,7 +159,6 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
     m_pWorld = new World;
     m_pWorld->Initialize();
 
-    g_pGame = this;
     result = TRUE;
 lb_return:
     return result;
@@ -180,8 +181,6 @@ BOOL GameManager::LoadResources()
     Vector3 position = Vector3(-16.0f, 16.0f, 0.0f);
 
     direction.Normalize();
-    // m_pLight = m_pRenderer->CreateSpotLight(&radiance, &direction, &position, 0.5f, 0.35);
-    // m_pLight = m_pRenderer->CreatePointLight(&radiance, &direction, &position, 0.35f);
     m_pLight = m_pRenderer->CreateDirectionalLight(&radiance, &direction, &position);
 
     return TRUE;

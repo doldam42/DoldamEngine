@@ -16,8 +16,8 @@
 #include "RenderThread.h"
 #include "ShadowManager.h"
 #include "SpriteObject.h"
-#include "TextureManager.h"
 #include "Terrain.h"
+#include "TextureManager.h"
 
 #include "PostProcessor.h"
 
@@ -268,24 +268,7 @@ void D3D12Renderer::BeginRender()
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
-    CD3DX12_RESOURCE_BARRIER barriers[] = {
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
-                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
-    pCommandList->ResourceBarrier(_countof(barriers), barriers);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE intermediateRtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    pCommandList->ClearRenderTargetView(intermediateRtvHandle, m_clearColor, 0, nullptr);
-
+#ifdef USE_DEFERRED_RENDERING
     CD3DX12_CPU_DESCRIPTOR_HANDLE deferredRtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
     pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
@@ -293,12 +276,22 @@ void D3D12Renderer::BeginRender()
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
     pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
+#endif
 
-    D3D12_CPU_DESCRIPTOR_HANDLE   backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET)};
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE intermediateRtv = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+    D3D12_CPU_DESCRIPTOR_HANDLE backRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
     // Record commands.
-    pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
-    pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    pCommandList->ClearRenderTargetView(intermediateRtv, m_clearColor, 0, nullptr);
+    pCommandList->ClearRenderTargetView(backRTV, m_clearColor, 0, nullptr);
+    pCommandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void D3D12Renderer::EndRender()
@@ -307,11 +300,10 @@ void D3D12Renderer::EndRender()
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     UpdateGlobal();
+    // m_pShadowManager->Render(m_pCommandQueue);
 #if defined(USE_FORWARD_RENDERING)
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
-
-    m_pShadowManager->Render(m_pCommandQueue);
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
     if (m_pCubemap)
@@ -353,12 +345,10 @@ void D3D12Renderer::EndRender()
         SetEvent(m_pThreadDescList[i].hEventList[RENDER_THREAD_EVENT_TYPE_PROCESS]);
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
-#endif
 
-#ifdef USE_DEFERRED_RENDERING
     pCommandList = pCommandListPool->GetCurrentCommandList();
     RenderSecondPass(pCommandList);
-#endif // USE_DEFERRED_RENDERING
+#endif
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
@@ -691,7 +681,7 @@ void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iP
 
 void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScale, bool isWired)
 {
-    Terrain *pObj = (Terrain*)pTerrain;
+    Terrain *pObj = (Terrain *)pTerrain;
 
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_TERRAIN;
@@ -1190,7 +1180,7 @@ ULONG __stdcall D3D12Renderer::AddRef(void)
     return m_refCount;
 }
 
-ULONG __stdcall D3D12Renderer::Release(void) 
+ULONG __stdcall D3D12Renderer::Release(void)
 {
     ULONG ref_count = --m_refCount;
     if (!m_refCount)
@@ -1400,7 +1390,7 @@ void D3D12Renderer::CleanupDeferredBuffers()
 
 void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
 {
-    CD3DX12_RESOURCE_BARRIER barriers[] = {
+    CD3DX12_RESOURCE_BARRIER beginBarriers[] = {
         CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex],
                                              D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
         CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -1409,7 +1399,7 @@ void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
                                              D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
         CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_DEPTH_WRITE,
                                              D3D12_RESOURCE_STATE_COMMON)};
-    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+    pCommandList->ResourceBarrier(_countof(beginBarriers), beginBarriers);
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     DescriptorPool             *pDescriptorPool = GetDescriptorPool(0);
@@ -1439,6 +1429,17 @@ void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
     pCommandList->IASetVertexBuffers(0, 1, &m_pPostProcessor->GetVertexBufferView());
     pCommandList->IASetIndexBuffer(&m_pPostProcessor->GetIndexBufferView());
     pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+    CD3DX12_RESOURCE_BARRIER endBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
+    pCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }
 
 // Create frame resources.
@@ -1495,7 +1496,7 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
+                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
         {
             __debugbreak();
         }
