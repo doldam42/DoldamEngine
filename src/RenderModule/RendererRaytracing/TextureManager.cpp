@@ -259,16 +259,21 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
         }
         else
         {
+            int width, height;
             if (IsFile(metallicFilename))
             {
                 mImage = CreateImageFromFile(metallicFilename, &mWidth, &mHeight);
+                width = mWidth; 
+                height = mHeight;
             }
             if (IsFile(roughneessFilename))
             {
                 rImage = CreateImageFromFile(roughneessFilename, &rWidth, &rHeight);
+                width = rWidth;
+                height = rHeight;
             }
 
-            if (!(mWidth == rWidth && mHeight == rHeight) || (!mImage && !rImage))
+            if (!(mWidth == rWidth && mHeight == rHeight) && (!mImage && !rImage))
             {
 #ifdef _DEBUG
                 __debugbreak();
@@ -277,7 +282,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
             }
 
             // 4Ã¤³Î
-            combinedImage = new BYTE[mWidth * mHeight * 4];
+            combinedImage = new BYTE[width * height * 4];
             ZeroMemory(combinedImage, sizeof(BYTE) * mHeight * mHeight * 4);
             if (mImage)
             {
@@ -293,7 +298,7 @@ TEXTURE_HANDLE *TextureManager::CreateMetallicRoughnessTexture(const WCHAR *meta
                     combinedImage[4 * i + 1] = rImage[4 * i + 1]; // Green = Roughness
                 }
             }
-            result = m_pResourceManager->CreateTextureFromMemory(&pTexResource, (UINT)mWidth, (UINT)mHeight,
+            result = m_pResourceManager->CreateTextureFromMemory(&pTexResource, (UINT)width, (UINT)height,
                                                                  DXGI_FORMAT_R8G8B8A8_UNORM, combinedImage);
             desc = pTexResource->GetDesc();
         }

@@ -33,7 +33,7 @@ class PostProcessor;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
 #define USE_RAYTRACING
-//#define USE_FORWARD_RENDERING
+// #define USE_DEFERRED_RENDERING
 enum GLOBAL_DESCRIPTOR_INDEX
 {
     GLOBAL_DESCRIPTOR_INDEX_GLOBALCB = 0,
@@ -110,11 +110,6 @@ class D3D12Renderer : public IRenderer
     ID3D12Resource   *m_pElementsRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     DESCRIPTOR_HANDLE m_deferredRTVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
     DESCRIPTOR_HANDLE m_deferredSRVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
-
-    // Shadow Map
-    // CascadedShadowsManager *m_pCascadedShadowManager = nullptr;
-    ShadowManager *m_pShadowManager = nullptr;
-    UINT           m_shadowWidth = 1024;
 
     DESCRIPTOR_HANDLE m_intermediateRTVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
     DESCRIPTOR_HANDLE m_intermediateSRVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};

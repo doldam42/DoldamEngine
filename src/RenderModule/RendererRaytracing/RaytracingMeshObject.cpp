@@ -59,8 +59,8 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
 
     //  Descriptor Table Per obj
     // | VERTICES |
-    // | INDICES0 | ALBEDO0 | NORMAL0 | AO0 | METALLIC_ROUGHNESS0 | EMMISIVE0 |
-    // | INDICES1 | ALBEDO1 | NORMAL1 | AO1 | METALLIC_ROUGHNESS1 | EMMISIVE1 |
+    // | INDICES0 | ALBEDO0 | NORMAL0 | AO0 | METALLIC_ROUGHNESS0 | EMMISIVE0 | Height0 |
+    // | INDICES1 | ALBEDO1 | NORMAL1 | AO1 | METALLIC_ROUGHNESS1 | EMMISIVE1 | Height1 |
     // ...
     m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     dest.Offset(m_descriptorSize, 1);
@@ -75,14 +75,10 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         {
             m_pRootArgPerGeometries[i].cb.materialIndex = pFace->pMaterialHandle->index;
             pFace->pMaterialHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-            /*m_pD3DDevice->CopyDescriptorsSimple(1, dest, pFace->pMaterialHandle->pAlbedoTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
         }
         else
         {
             MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
-            /*m_pD3DDevice->CopyDescriptorsSimple(1, dest, pMatHandle->pAlbedoTexHandle->srv.cpuHandle,
-                                                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
             m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
             pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
         }

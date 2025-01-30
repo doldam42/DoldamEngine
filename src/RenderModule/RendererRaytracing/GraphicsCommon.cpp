@@ -225,8 +225,8 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
-    hr = D3DCompileFromFile(L"./Shaders/SpriteDeferredPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_1",
-                            compileFlags, 0, &spriteDeferredPS, nullptr);
+    hr = D3DCompileFromFile(L"./Shaders/SpriteDeferredPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "ps_5_1", compileFlags, 0, &spriteDeferredPS, nullptr);
     if (FAILED(hr))
         __debugbreak();
 
@@ -337,34 +337,16 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = {
         terrainIL,
         CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(terrainDeferredPS->GetBufferPointer(),
-                                terrainDeferredPS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainDeferredPS->GetBufferPointer(), terrainDeferredPS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(terrainHS->GetBufferPointer(), terrainHS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(terrainDS->GetBufferPointer(), terrainDS->GetBufferSize()),
         {},
     };
 
-    // Additional Shader
-    g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX] = {
-        simpleIL,
-        CD3DX12_SHADER_BYTECODE(skyboxVS->GetBufferPointer(), skyboxVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(skyboxPS->GetBufferPointer(), skyboxPS->GetBufferSize()),
-        {},
-        {},
-        {},
-    };
     g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS] = {
         simpleIL,
         CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(presentPS->GetBufferPointer(), presentPS->GetBufferSize()),
-        {},
-        {},
-        {},
-    };
-    g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS] = {
-        simpleIL,
-        CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(lightOnlyPS->GetBufferPointer(), lightOnlyPS->GetBufferSize()),
         {},
         {},
         {},
@@ -491,21 +473,21 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // | Global Consts(b0) |
     // | Materials (t20)   |
     // | EnvIBL(t10)       |
-    CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[4];
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerGlobal[3] = {};
     rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
-    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20);  // t20 : materials
+    rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20); // t20 : materials
     rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10); // t10 : EnvIBL
     // Init Basic Root Signature
     {
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1];
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerMesh[2];
-
-        CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+        CD3DX12_ROOT_PARAMETER1   rootParameters[3] = {};
+        CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1] = {};
+        CD3DX12_DESCRIPTOR_RANGE1 rangesPerMesh[2] = {};
 
         // Root Paramaters
-        // | Global Params |
-        // |   TR Matrix   |
-        // |   Geometry    |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4) | heightTex(t5) |
+        // |  Global Params   |
+        // |  TR Matrix(b1)   |
+        // |   Geometry(b5)   |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4)
+        // | heightTex(t5) |
         rangesPerObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
                              1); // b1 : TR Matrix
         rangesPerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
@@ -519,7 +501,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, _countof(samplerStates), samplerStates,
                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
         hr =
@@ -764,7 +746,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         // |   DiffuseTex   | NormalTex | ElementsTex | DepthTex |
         CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0); // t0~t3
-        
+
         CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
 
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), rangesPerGlobal,
@@ -802,20 +784,13 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         }
     }
 
-    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFAULT] =
-        rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFERRED] = basicRS;
+    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFERRED] = basicRS;
 
-    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFAULT] =
-        rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFERRED] = skinnedRS;
+    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFERRED] = skinnedRS;
 
-    rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFAULT] =
-        rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFERRED] = spriteRS;
-    
-    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_SHADOW] = depthOnlyBasicRS;
-    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_SHADOW] = depthOnlySkinnedRS;
+    rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFERRED] = spriteRS;
 
-    rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] =
-        rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = basicRS;
+    rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = basicRS;
 
 lb_return:
     if (pSignature)
@@ -889,23 +864,6 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         }
     }
 
-    // skybox PSO
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState.DepthEnable = FALSE;
-    psoDesc.DepthStencilState.StencilEnable = FALSE;
-    psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].inputLayout;
-    psoDesc.pRootSignature = skyboxRS;
-    psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].VS;
-    psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].PS;
-    psoDesc.DS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].DS;
-    psoDesc.HS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].HS;
-    psoDesc.GS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SKYBOX].GS;
-    if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&skyboxPSO))))
-    {
-        __debugbreak();
-    }
-
     // present PSO
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -925,30 +883,6 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         psoDesc.DepthStencilState.StencilEnable = FALSE;
 
         if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&presentPSO))))
-        {
-            __debugbreak();
-        }
-    }
-
-    // Second Pass PSO
-    {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.pRootSignature = secondPassRS;
-        psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].inputLayout;
-        psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].VS;
-        psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_SECOND_PASS].PS;
-
-        psoDesc.SampleMask = UINT_MAX;
-        psoDesc.SampleDesc.Count = 1;
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        psoDesc.NumRenderTargets = 1;
-        psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-        psoDesc.DepthStencilState.DepthEnable = FALSE;
-        psoDesc.DepthStencilState.StencilEnable = FALSE;
-
-        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&secondPassPSO))))
         {
             __debugbreak();
         }
@@ -1022,7 +956,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
     // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0) |
     // | GlobalConstants(b0) |       Materials(t20)        |   EnvIBL(t10)    |
     {
-        CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2];
+        CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2] = {};
         rangesPerGlobal1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
         rangesPerGlobal1[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
         // rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
@@ -1032,7 +966,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
         rangesPerGlobal2[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20);
         rangesPerGlobal2[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10);
 
-        CD3DX12_ROOT_PARAMETER rootParameters[2];
+        CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
         rootParameters[0].InitAsDescriptorTable(ARRAYSIZE(rangesPerGlobal1), rangesPerGlobal1);
         rootParameters[1].InitAsDescriptorTable(ARRAYSIZE(rangesPerGlobal2), rangesPerGlobal2);
 
@@ -1046,12 +980,12 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
     }
     // Init Local Hit Root Signature
     // | VERTICES(t0, space1) | INDICES(t1, space1) | ALBEDO_TEX(t2, space1) | NORMAL_TEX(t3, space1) | AO_TEX(t4,
-    // space1) | METALLIC_ROUGHNESS(t5, space1) | EMISSIVE(t6, space1) |
+    // space1) | METALLIC_ROUGHNESS(t5, space1) | EMISSIVE(t6, space1) | Height(t7, space1) |
     {
-        CD3DX12_DESCRIPTOR_RANGE ranges[LOCAL_ROOT_PARAM_INDEX_COUNT];
+        CD3DX12_DESCRIPTOR_RANGE ranges[LOCAL_ROOT_PARAM_INDEX_COUNT] = {};
         ranges[LOCAL_ROOT_PARAM_INDEX_VERTICES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
         ranges[LOCAL_ROOT_PARAM_INDEX_INDICES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 1);
-        ranges[LOCAL_ROOT_PARAM_INDEX_TEXTURES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 2, 1);
+        ranges[LOCAL_ROOT_PARAM_INDEX_TEXTURES].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 2, 1);
 
         CD3DX12_ROOT_PARAMETER rootParameters[LOCAL_ROOT_PARAM_INDEX_COUNT];
         rootParameters[LOCAL_ROOT_PARAM_INDEX_CB].InitAsConstants(SizeOfInUint32(RaytracingFaceGroupCB), 0, 1);
