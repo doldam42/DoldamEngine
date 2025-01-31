@@ -48,7 +48,7 @@ struct PS_OUTPUT
     // r : ao factor
     // g : roughness factor
     // b : metallic factor
-    // a : transparancy factor
+    // a : reflect factor
     float4 elements : SV_Target2;
 };
 

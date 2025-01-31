@@ -154,7 +154,7 @@ float4 main(DeferredPSInput input) : SV_TARGET
     const float ao = elements.x;
     const float roughness = elements.y;
     const float metallic = elements.z;
-    const float Kt = elements.w;
+    const float Kr = elements.w;
 
     float  depth = depthTex.Sample(pointClampSampler, input.texcoord).r;
 
@@ -162,7 +162,7 @@ float4 main(DeferredPSInput input) : SV_TARGET
     float2 screenCoord = 2 * input.texcoord - 1; 
     screenCoord.y = -screenCoord.y;
     
-    float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth);
+    float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
     float3 pixelToEye = normalize(eyeWorld - posWorld);
 
     float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;

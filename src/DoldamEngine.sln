@@ -75,6 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DXR", "DXR", "{E05839F0-998
 	ProjectSection(SolutionItems) = preProject
 		Client\Shaders\DXR\BxDF.hlsli = Client\Shaders\DXR\BxDF.hlsli
 		Client\Shaders\DXR\Common.hlsli = Client\Shaders\DXR\Common.hlsli
+		Client\Shaders\DXR\DeferredRayGen.hlsl = Client\Shaders\DXR\DeferredRayGen.hlsl
 		Client\Shaders\DXR\Hit.hlsl = Client\Shaders\DXR\Hit.hlsl
 		Client\Shaders\DXR\HlslCompat.hlsli = Client\Shaders\DXR\HlslCompat.hlsli
 		Client\Shaders\DXR\Miss.hlsl = Client\Shaders\DXR\Miss.hlsl

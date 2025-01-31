@@ -34,7 +34,7 @@ float3 BumpMapNormalToWorldSpaceNormal(float3 bumpNormal, float3 surfaceNormal, 
 }
 
 // Retrieves pixel's position in world space.
-float3 CalculateWorldPositionFromDepthMap(float2 screenCoord, float depth)
+float3 CalculateWorldPositionFromDepthMap(float2 screenCoord, float depth, float4x4 invView, float4x4 invProj)
 {
     float4 screenPos = float4(screenCoord.x, screenCoord.y, depth, 1.0);
     float4 viewPosition = mul(screenPos, invProj);
@@ -42,4 +42,19 @@ float3 CalculateWorldPositionFromDepthMap(float2 screenCoord, float depth)
     float4 worldPosition = mul(viewPosition, invView);
 
     return worldPosition.xyz;
+}
+
+inline float2 ScreenToTextureCoord(float2 screenCoord)
+{
+    float2 texcoord = float2(screenCoord.x, -screenCoord.y);
+    texcoord += 1.0;
+    texcoord *= 0.5;
+    return texcoord;
+}
+
+inline float2 TextureToScreenCoord(float2 texcoord)
+{
+    float2 screenCoord = 2 * texcoord - 1;
+    screenCoord.y = -screenCoord.y;
+    return screenCoord;
 }

@@ -33,7 +33,7 @@ class PostProcessor;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
 #define USE_RAYTRACING
-// #define USE_DEFERRED_RENDERING
+//#define USE_DEFERRED_RENDERING
 enum GLOBAL_DESCRIPTOR_INDEX
 {
     GLOBAL_DESCRIPTOR_INDEX_GLOBALCB = 0,
@@ -78,8 +78,7 @@ class D3D12Renderer : public IRenderer
     DescriptorPool        *m_ppDescriptorPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     //RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
-    // RenderQueue           *m_pNonOpaqueRenderQueue = nullptr;
-
+    
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;
 
@@ -173,6 +172,8 @@ class D3D12Renderer : public IRenderer
     void CreateDeferredBuffers();
     void CleanupDeferredBuffers();
 
+    // Deferred Rendering Pass
+    void RenderFirstPass(ID3D12GraphicsCommandList *pCommandList);
     void RenderSecondPass(ID3D12GraphicsCommandList *pCommandList);
 
   public:
