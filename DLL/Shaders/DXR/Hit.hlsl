@@ -95,7 +95,7 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
     return rayPayload;
 }
 
-float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, in float3 objectNormal,
+float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N,
                           inout HitInfo rayPayload, in float TMax = 10000)
 {
     // Here we offset ray start along the ray direction instead of surface normal
@@ -130,7 +130,7 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, in f
     return rayPayload.colorAndDistance.xyz;
 }
 
-float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, in float3 objectNormal,
+float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N,
                           inout HitInfo rayPayload, in float TMax = 10000)
 {
     // Here we offset ray start along the ray direction instead of surface normal
@@ -228,12 +228,12 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 {
     float tOffset = 0.001f;
     Ray   visibilityRay = {hitPosition + tOffset * N, direction};
-    float dummyTHit;
+    float dummyTHit = 0.0;
     return TraceShadowRayAndReportIfHit(dummyTHit, visibilityRay, N, rayPayload.rayRecursionDepth, false,
                                         TMax); // TODO ASSERT
 }
 
-float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in float3 hitPosition,
+float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition,
              in MaterialConstant material)
 {
     const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
@@ -287,7 +287,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
             float3 wi = reflect(-V, N);
 
             HitInfo reflectedRayPayLoad = rayPayload;
-            L += Kr * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
+            L += Kr * TraceReflectiveRay(hitPosition, wi, N, reflectedRayPayLoad);
         }
         else // No total internal reflection
         {
@@ -300,7 +300,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
 
                 HitInfo reflectedRayPayLoad = rayPayload;
                 // Ref: eq 24.4, [Ray-tracing from the Ground Up]
-                L += Fr * TraceReflectiveRay(hitPosition, wi, N, objectNormal, reflectedRayPayLoad);
+                L += Fr * TraceReflectiveRay(hitPosition, wi, N, reflectedRayPayLoad);
             }
 
             if (isTransmissive)
@@ -310,7 +310,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 objectNormal, in f
                 float3 Ft = Kt * BxDF::Specular::Transmission::Sample_Ft(V, wt, N, Fo); // Calculates wt
 
                 HitInfo refractedRayPayLoad = rayPayload;
-                L += Ft * TraceRefractiveRay(hitPosition, wt, N, objectNormal, refractedRayPayLoad);
+                L += Ft * TraceRefractiveRay(hitPosition, wt, N, refractedRayPayLoad);
             }
         }
     }
@@ -405,7 +405,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
     
-    float3 color = Shade(payload, normal, objectNormal, hitPosition, material);
+    float3 color = Shade(payload, normal, hitPosition, material);
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());

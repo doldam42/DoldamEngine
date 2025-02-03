@@ -337,8 +337,11 @@ void GameManager::Render()
     // begin
     m_pRenderer->BeginRender();
 
-    m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);
-
+    if (m_pTerrain)
+    {
+        m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);
+    }
+    
     // render game objects
     SORT_LINK *pCur = m_pGameObjLinkHead;
     UINT       objCount = 0;

@@ -77,6 +77,9 @@
     <Filter Include="DLLMain">
       <UniqueIdentifier>{1c508c2b-8461-48bd-b594-0b6526b33837}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{5373ca9b-388a-4b31-aa16-ac1c107727de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -246,5 +249,42 @@
     <None Include="packages.config">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\Client\Shaders\DXR\PhongLighting.hlsli">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\Client\Shaders\DXR\RaytracingTypedef.hlsli">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Client\Shaders\DXR\Hit.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\DXR\Miss.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\DXR\RayGen.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\DXR\Raytracing.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\DXR\ShadowRay.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\Client\Shaders\DXR\DeferredRaygen.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\DXR\Common.hlsli">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\DXR\BxDF.hlsli">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\DXR\HlslUtils.hlsli">
+      <Filter>Shader</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

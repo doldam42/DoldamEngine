@@ -28,6 +28,18 @@ enum ROOT_ARG_DESCRIPTOR_INDEX_PER_FACEGROUP
     ROOT_ARG_DESCRIPTOR_INDEX_PER_FACEGROUP_COUNT
 };
 
+enum DESCRIPTOR_INDEX_PER_FACE_GROUP
+{
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_MATERIAL = 0,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_ALBEDO,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_NORMAL,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_AO,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_METALLIC_ROUGHNESS,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_EMISSIVE,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_TEX_HEIGHT,
+    DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT
+};
+
 enum SKINNING_DESCRIPTOR_INDEX
 {
     SKINNING_DESCRIPTOR_INDEX_SRV = 0,
@@ -78,7 +90,7 @@ class RaytracingMeshObject : public IRenderMesh
     UINT m_descriptorCountPerDraw = 0;
 
     ULONG m_refCount = 0;
-
+    
     RENDER_ITEM_TYPE m_type;
 
     ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
@@ -94,6 +106,11 @@ class RaytracingMeshObject : public IRenderMesh
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
 
   private:
+    void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
+    void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                           IRenderMaterial **ppMaterials, UINT numMaterial);
+
     void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                          uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
                          UINT64 indexOffsetInBytes, uint32_t indexCount, ID3D12Resource *transformBuffer,
@@ -120,6 +137,11 @@ class RaytracingMeshObject : public IRenderMesh
 
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
+
+    void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+                      IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
+                      ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
+                      UINT numBones);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
               IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);

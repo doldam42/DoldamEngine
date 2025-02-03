@@ -43,6 +43,9 @@ class RaytracingManager
     void DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav);
 
+    void DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
+                     D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers, UINT gbufferCount);
+
     void Reset();
 
     RaytracingManager() = default;

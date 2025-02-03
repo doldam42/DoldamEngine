@@ -198,8 +198,14 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifndef USE_RAYTRACING
+#ifdef USE_DEFERRED_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
+
+    for (UINT i = 0; i < m_renderThreadCount; i++)
+    {
+        m_ppRenderQueue[i] = new RenderQueue;
+        m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
+    }
 #endif
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
@@ -217,14 +223,6 @@ lb_exit:
             m_ppConstantBufferManager[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME);
         }
     }
-
-#ifdef USE_DEFERRED_RENDERING
-    for (UINT i = 0; i < m_renderThreadCount; i++)
-    {
-        m_ppRenderQueue[i] = new RenderQueue;
-        m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
-    }
-#endif
 
     m_pRaytracingManager = new RaytracingManager;
     ID3D12GraphicsCommandList4 *pCommandList = m_ppCommandListPool[m_curContextIndex][0]->GetCurrentCommandList();
@@ -266,14 +264,18 @@ void D3D12Renderer::BeginRender()
     m_pMaterialManager->Update(pCommandList);
 
 #ifdef USE_DEFERRED_RENDERING
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_PRESENT,
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE intermediateRTV = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
-
-    pCommandList->ClearRenderTargetView(intermediateRTV, m_clearColor, 0, nullptr);
     pCommandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     CD3DX12_CPU_DESCRIPTOR_HANDLE deferredRtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
     pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
@@ -282,7 +284,6 @@ void D3D12Renderer::BeginRender()
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
     pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
-
 #endif
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
@@ -290,23 +291,17 @@ void D3D12Renderer::BeginRender()
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
+
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
 
 void D3D12Renderer::EndRender()
 {
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
-    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    ID3D12GraphicsCommandList4 *pCommandList = nullptr;
 
     UpdateGlobal();
 #ifdef USE_DEFERRED_RENDERING
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
-    D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
-                                            rtvHandle.Offset(m_rtvDescriptorSize)};
-    D3D12_CPU_DESCRIPTOR_HANDLE   dsvHandle = m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle;
-
-    // m_pShadowManager->Render(m_pCommandQueue);
-
-    pCommandList = pCommandListPool->GetCurrentCommandList();
     m_activeThreadCount = m_renderThreadCount;
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -315,25 +310,35 @@ void D3D12Renderer::EndRender()
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 
 #endif
+    pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
     ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
     D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = GetUAVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+
+#ifdef USE_DEFERRED_RENDERING
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex],
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                             D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex],
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                                             D3D12_RESOURCE_STATE_COMMON)};
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+    D3D12_CPU_DESCRIPTOR_HANDLE gbufferHandle = GetSRVHandle(RENDER_TARGET_TYPE_DEFERRED);
+    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, uavHandle, gbufferHandle, 4);
+#else
     m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, uavHandle);
+#endif
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
-#ifdef USE_RAYTRACING
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
-#else
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                                           D3D12_RESOURCE_STATE_PRESENT));
-#endif
 
     m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
@@ -483,6 +488,22 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
     // TODO: ADD Material
     pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
+
+#ifdef USE_DEFERRED_RENDERING
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
+    item.pObjHandle = pObj;
+    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.meshObjParam.worldTM = (*pWorldMat);
+    item.meshObjParam.ppMaterials = nullptr;
+    item.meshObjParam.numMaterials = 0;
+
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
+
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat,
@@ -494,36 +515,21 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
     pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, nullptr, 0);
 
-    // D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
-    // RENDER_ITEM    item = {};
-    // item.type = RENDER_ITEM_TYPE_MESH_OBJ;
-    // item.pObjHandle = pMeshObj;
-    // item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    // item.meshObjParam.worldTM = (*pWorldMat);
-    // item.meshObjParam.ppMaterials = ppMaterials;
-    // item.meshObjParam.numMaterials = numMaterial;
+#ifdef USE_DEFERRED_RENDERING
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
+    item.pObjHandle = pObj;
+    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.meshObjParam.worldTM = (*pWorldMat);
+    item.meshObjParam.ppMaterials = ppMaterials;
+    item.meshObjParam.numMaterials = numMaterial;
 
-    // if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //     __debugbreak();
-    ///*if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
-    //{
-    //    if (!m_pNonOpaqueRenderQueue->Add(&item))
-    //        __debugbreak();
-    //}
-    // else
-    //{
-    //    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //        __debugbreak();
-    //}*/
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
 
-    // if (!m_pShadowManager->Add(&item))
-    //{
-    //     __debugbreak();
-    // }
-
-    // m_curThreadIndex++;
-    // m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-    //  Shadow Map
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
@@ -534,8 +540,7 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
     pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 
-    /*D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
-
+#ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;
@@ -550,13 +555,9 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
-    if (!m_pShadowManager->Add(&item))
-    {
-        __debugbreak();
-    }
-
     m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;*/
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat,
@@ -568,8 +569,7 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
     pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 
-    /*D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
-
+#ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;
@@ -584,92 +584,85 @@ void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, co
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
-    if (!m_pShadowManager->Add(&item))
-    {
-        __debugbreak();
-    }
-
     m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;*/
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX,
                                         float fScaleY, const RECT *pRect, float Z, ITextureHandle *pTexHandle)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_curContextIndex];
+#ifdef USE_DEFERRED_RENDERING
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_SPRITE;
+    item.pObjHandle = pSprObjHandle;
+    item.spriteParam.posX = iPosX;
+    item.spriteParam.posY = iPosY;
+    item.spriteParam.scaleX = fScaleX;
+    item.spriteParam.scaleY = fScaleY;
 
-    // RENDER_ITEM item = {};
-    // item.type = RENDER_ITEM_TYPE_SPRITE;
-    // item.pObjHandle = pSprObjHandle;
-    // item.spriteParam.posX = iPosX;
-    // item.spriteParam.posY = iPosY;
-    // item.spriteParam.scaleX = fScaleX;
-    // item.spriteParam.scaleY = fScaleY;
+    if (pRect)
+    {
+        item.spriteParam.isUseRect = TRUE;
+        item.spriteParam.rect = *pRect;
+    }
+    else
+    {
+        item.spriteParam.isUseRect = FALSE;
+        item.spriteParam.rect = {};
+    }
+    item.spriteParam.pTexHandle = pTexHandle;
+    item.spriteParam.Z = Z;
 
-    // if (pRect)
-    //{
-    //     item.spriteParam.isUseRect = TRUE;
-    //     item.spriteParam.rect = *pRect;
-    // }
-    // else
-    //{
-    //     item.spriteParam.isUseRect = FALSE;
-    //     item.spriteParam.rect = {};
-    // }
-    // item.spriteParam.pTexHandle = pTexHandle;
-    // item.spriteParam.Z = Z;
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
 
-    // if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //     __debugbreak();
-
-    // m_curThreadIndex++;
-    // m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                                  float Z)
 {
-    // ID3D12GraphicsCommandList *pCommandList = m_ppCommandList[m_curContextIndex];
+#ifdef USE_DEFERRED_RENDERING
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_SPRITE;
+    item.pObjHandle = pSprObjHandle;
+    item.spriteParam.posX = iPosX;
+    item.spriteParam.posY = iPosY;
+    item.spriteParam.scaleX = fScaleX;
+    item.spriteParam.scaleY = fScaleY;
+    item.spriteParam.isUseRect = FALSE;
+    item.spriteParam.rect = {};
+    item.spriteParam.pTexHandle = nullptr;
+    item.spriteParam.Z = Z;
 
-    // RENDER_ITEM item = {};
-    // item.type = RENDER_ITEM_TYPE_SPRITE;
-    // item.pObjHandle = pSprObjHandle;
-    // item.spriteParam.posX = iPosX;
-    // item.spriteParam.posY = iPosY;
-    // item.spriteParam.scaleX = fScaleX;
-    // item.spriteParam.scaleY = fScaleY;
-    // item.spriteParam.isUseRect = FALSE;
-    // item.spriteParam.rect = {};
-    // item.spriteParam.pTexHandle = nullptr;
-    // item.spriteParam.Z = Z;
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
 
-    // if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //     __debugbreak();
-
-    // m_curThreadIndex++;
-    // m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScale, bool isWired)
 {
-    // Terrain *pObj = (Terrain *)pTerrain;
+#ifdef USE_DEFERRED_RENDERING
+    Terrain *pObj = (Terrain *)pTerrain;
 
-    // RENDER_ITEM item = {};
-    // item.type = RENDER_ITEM_TYPE_TERRAIN;
-    // item.pObjHandle = pObj;
-    // item.terrainParam.scale = *pScale;
-    // item.terrainParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    RENDER_ITEM item = {};
+    item.type = RENDER_ITEM_TYPE_TERRAIN;
+    item.pObjHandle = pObj;
+    item.terrainParam.scale = *pScale;
+    item.terrainParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
 
-    // if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //     __debugbreak();
+    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+        __debugbreak();
 
-    ///*if (!m_pShadowManager->Add(&item))
-    //{
-    //    __debugbreak();
-    //}*/
-
-    // m_curThreadIndex++;
-    // m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+    m_curThreadIndex++;
+    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#endif
 }
 
 IFontHandle *D3D12Renderer::CreateFontObject(const WCHAR *fontFamilyName, float fontSize)
@@ -743,7 +736,7 @@ void D3D12Renderer::UpdateGlobal()
 {
     UpdateGlobalConstants(m_camPosition, m_camViewRow, m_camProjRow);
 
-    // | Global Constants(b0) | Materials(t5) | IBL Textures(t10~14) |
+    // | Global Constants | Materials | IBL Textures |
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         DescriptorPool *pDescriptorPool = GetDescriptorPool(i);
@@ -1079,17 +1072,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetDeferredSRV() const
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
-#ifndef USE_RAYTRACING
+
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
-#ifdef USE_FORWARD_RENDERING
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRTVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {rtvHandle};
-#elif defined(USE_DEFERRED_RENDERING)
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
-#endif
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle,
@@ -1101,7 +1089,6 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
     {
         SetEvent(m_hCompleteEvent);
     }
-#endif // !USE_RAYTRACING
 }
 
 void D3D12Renderer::WaitForGPU()
@@ -1283,6 +1270,7 @@ void D3D12Renderer::CreateDeferredBuffers()
         {
             __debugbreak();
         }
+        m_pDiffuseRenderTargets[n]->SetName(L"DiffuseRenderTarget");
         m_pD3DDevice->CreateRenderTargetView(m_pDiffuseRenderTargets[n], nullptr, rtvHandle);
         m_pD3DDevice->CreateShaderResourceView(m_pDiffuseRenderTargets[n], nullptr, srvHandle);
         rtvHandle.Offset(1, m_rtvDescriptorSize);
@@ -1296,6 +1284,7 @@ void D3D12Renderer::CreateDeferredBuffers()
         {
             __debugbreak();
         }
+        m_pNormalRenderTargets[n]->SetName(L"NormalRenderTarget");
         m_pD3DDevice->CreateRenderTargetView(m_pNormalRenderTargets[n], nullptr, rtvHandle);
         m_pD3DDevice->CreateShaderResourceView(m_pNormalRenderTargets[n], nullptr, srvHandle);
         rtvHandle.Offset(1, m_rtvDescriptorSize);
@@ -1309,6 +1298,7 @@ void D3D12Renderer::CreateDeferredBuffers()
         {
             __debugbreak();
         }
+        m_pElementsRenderTargets[n]->SetName(L"ElementsRenderTarget");
         m_pD3DDevice->CreateRenderTargetView(m_pElementsRenderTargets[n], nullptr, rtvHandle);
         m_pD3DDevice->CreateShaderResourceView(m_pElementsRenderTargets[n], nullptr, srvHandle);
         rtvHandle.Offset(1, m_rtvDescriptorSize);
@@ -1342,10 +1332,7 @@ void D3D12Renderer::CleanupDeferredBuffers()
     }
 }
 
-void D3D12Renderer::RenderFirstPass(ID3D12GraphicsCommandList *pCommandList) 
-{
-
-}
+void D3D12Renderer::RenderFirstPass(ID3D12GraphicsCommandList *pCommandList) {}
 
 void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
 {
@@ -1437,7 +1424,7 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 1,
                                               1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
-                D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&pOutBuffer))))
+                D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pOutBuffer))))
         {
             __debugbreak();
         }
@@ -1467,11 +1454,11 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
+                D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
         {
             __debugbreak();
         }
-
+        m_pDepthStencils[n]->SetName(L"DepthStencil");
         m_pD3DDevice->CreateDepthStencilView(m_pDepthStencils[n], &depthStencilDesc,
                                              m_depthStencilDescriptorTables[n].cpuHandle);
     }
@@ -1513,11 +1500,11 @@ void D3D12Renderer::CleanupBuffers()
 
 void D3D12Renderer::Cleanup()
 {
-#ifndef USE_RAYTRACING
+    WaitForGPU();
+
+#ifdef USE_DEFERRED_RENDERING
     CleanupRenderThreadPool();
 #endif
-
-    WaitForGPU();
 
     if (m_pDefaultTexHandle)
     {
@@ -1538,20 +1525,6 @@ void D3D12Renderer::Cleanup()
     }
 
     Graphics::DeleteCommonStates();
-
-    // for (UINT i = 0; i < m_renderThreadCount; i++)
-    //{
-    //     if (m_ppRenderQueue[i])
-    //     {
-    //         delete m_ppRenderQueue[i];
-    //         m_ppRenderQueue[i] = nullptr;
-    //     }
-    // }
-    /*if (m_pNonOpaqueRenderQueue)
-    {
-        delete m_pNonOpaqueRenderQueue;
-        m_pNonOpaqueRenderQueue = nullptr;
-    }*/
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
@@ -1656,11 +1629,7 @@ BOOL D3D12Renderer::InitRenderThreadPool(UINT threadCount)
         }
         m_pThreadDescList[i].pRenderer = this;
         m_pThreadDescList[i].threadindex = i;
-#ifdef USE_DEFERRED_RENDERING
         m_pThreadDescList[i].passType = DRAW_PASS_TYPE_DEFERRED;
-#else
-        m_pThreadDescList[i].passType = DRAW_PASS_TYPE_DEFAULT;
-#endif
         UINT threadID = 0;
         m_pThreadDescList[i].hThread =
             (HANDLE)_beginthreadex(nullptr, 0, RenderThread, m_pThreadDescList + i, 0, &threadID);

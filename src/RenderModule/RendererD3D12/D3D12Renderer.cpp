@@ -508,16 +508,6 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
-    // if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
-    //{
-    //     if (!m_pNonOpaqueRenderQueue->Add(&item))
-    //         __debugbreak();
-    // }
-    // else
-    //{
-    //     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-    //         __debugbreak();
-    // }
 
     if (!m_pShadowManager->Add(&item))
     {

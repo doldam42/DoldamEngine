@@ -34,6 +34,155 @@ BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE
     return TRUE;
 }
 
+/*
+ *  Descriptor Table Per Obj - Offset : 0
+ *  Basic Mesh :   | World TM |
+ *  Skinned Mesh:  | World TM | Bone Matrices |
+ */
+void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
+                                                       const Matrix *pWorldMat, UINT numInstance,
+                                                       const Matrix *pBoneMats, UINT numBones)
+{
+    CB_CONTAINER       *pSkinnedCB;
+    CB_CONTAINER       *pMeshCB;
+    ConstantBufferPool *pMeshConstantBufferPool;
+    ConstantBufferPool *pSkinnedConstantBufferPool;
+
+    pMeshConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_MESH, threadIndex);
+
+    // Update World Transform Constant Buffer
+    pMeshCB = pMeshConstantBufferPool->Alloc(numInstance);
+
+    MeshConstants *pMeshConsts = (MeshConstants *)pMeshCB->pSystemMemAddr;
+    for (UINT i = 0; i < numInstance; i++)
+    {
+        MeshConstants *pMeshConst = pMeshConsts + i;
+        pMeshConst->world = pWorldMat[i].Transpose();
+        pMeshConst->worldIT = pWorldMat[i].Invert().Transpose();
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dest = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorTable);
+    m_pD3DDevice->CopyDescriptorsSimple(DESCRIPTOR_COUNT_PER_STATIC_OBJ, dest, pMeshCB->CBVHandle,
+                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
+    {
+        dest.Offset(m_descriptorSize);
+        pSkinnedConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
+        pSkinnedCB = pSkinnedConstantBufferPool->Alloc();
+        Matrix *pBoneTMs = (Matrix *)pSkinnedCB->pSystemMemAddr;
+        for (UINT i = 0; i < numBones; i++)
+        {
+            Matrix *pBoneTM = pBoneTMs + i;
+            memcpy(pBoneTM, &pBoneMats[i].Transpose(), sizeof(Matrix));
+        }
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
+}
+
+/*
+ *  Descriptor Table Per FaceGroup - Offset : 0
+ *  | Material | Textures |
+ */
+void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable,
+                                                             UINT threadIndex, IRenderMaterial **ppMaterials,
+                                                             UINT numMaterial)
+{
+    CB_CONTAINER       *pGeomCBs;
+    ConstantBufferPool *pGeometryConstantBufferPool =
+        m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dest(descriptorTable);
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
+    else
+        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
+
+    pGeomCBs = pGeometryConstantBufferPool->Alloc(m_faceGroupCount);
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
+        CB_CONTAINER       *pGeomCB = pGeomCBs + i;
+        FaceGroupConstants *pGeometry = (FaceGroupConstants *)pGeomCB->pSystemMemAddr;
+
+        if (i < numMaterial)
+        {
+            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
+
+            pGeometry->materialIndex = pMatHandle->index;
+            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            dest.Offset(m_descriptorSize);
+
+            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
+        }
+        else
+        {
+            MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
+
+            pGeometry->materialIndex = pMatHandle->index;
+            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+
+            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            dest.Offset(m_descriptorSize);
+
+            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
+        }
+    }
+}
+
+void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
+                                        const Matrix *pWorldMat, IRenderMaterial **ppMaterials, UINT numMaterials,
+                                        ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO,
+                                        D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones)
+{
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
+    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
+    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
+
+    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, 1, pBoneMats, numBones);
+    UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex, ppMaterials, numMaterials);
+
+    // set RootSignature
+    pCommandList->SetGraphicsRootSignature(pRS);
+    ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
+    pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    pCommandList->SetPipelineState(pPSO);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
+    pCommandList->SetGraphicsRootDescriptorTable(0, globalCBV);
+    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+    {
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
+    }
+    else
+    {
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
+    }
+
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
+        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+
+        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
+        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
+    }
+}
+
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
                                 IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats,
                                 UINT numBones)
@@ -191,7 +340,8 @@ void RaytracingMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Materia
     memcpy(&mat, pInMaterial, sizeof(Material));
 
     pFace->passType = DRAW_PASS_TYPE_DEFAULT;
-    //pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_TRANSPARENCY : DRAW_PASS_TYPE_DEFAULT;
+    // pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_TRANSPARENCY :
+    // DRAW_PASS_TYPE_DEFAULT;
 
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }

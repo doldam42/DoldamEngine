@@ -2,7 +2,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include "ConstantBuffers.h"
-//#include "RenderQueue.h"
+#include "RenderQueue.h"
 
 #include "../MathModule/MathHeaders.h"
 #include "../Common/RendererInterface.h"
@@ -77,7 +77,7 @@ class D3D12Renderer : public IRenderer
     CommandListPool       *m_ppCommandListPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     DescriptorPool        *m_ppDescriptorPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
-    //RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
+    RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
     
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;

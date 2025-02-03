@@ -2,7 +2,7 @@
 
 #include "CommandListPool.h"
 #include "D3D12Renderer.h"
-#include "D3DMeshObject.h"
+#include "RaytracingMeshObject.h"
 #include "RaytracingManager.h"
 #include "SpriteObject.h"
 #include "Terrain.h"
@@ -87,29 +87,20 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
-            D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
-                           pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
-                           Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0,
-                           passType, 1);
-            /*if (passType == DRAW_PASS_TYPE_DEFAULT)
-            {
-                pMeshObj->RenderNormal(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
-                                       nullptr, 0, FILL_MODE_SOLID, 1);
-            }*/
+            RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
+            pMeshObj->DrawDeferred(
+                threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
+                pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
+                Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
-            D3DMeshObject *pMeshObj = (D3DMeshObject *)pItem->pObjHandle;
-            pMeshObj->Draw(threadIndex, pCommandList, &pItem->charObjParam.worldTM, pItem->meshObjParam.ppMaterials,
+            RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
+            pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
+                                   pItem->meshObjParam.ppMaterials,
                            pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
                            Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global,
-                           pItem->charObjParam.pBones, pItem->charObjParam.numBones, passType, 1);
-           /* if (passType == DRAW_PASS_TYPE_DEFAULT)
-            {
-                pMeshObj->RenderNormal(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
-                                       pItem->charObjParam.pBones, pItem->charObjParam.numBones, FILL_MODE_SOLID, 1);
-            }*/
+                           pItem->charObjParam.pBones, pItem->charObjParam.numBones);
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {

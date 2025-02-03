@@ -182,7 +182,11 @@ void RaytracingManager::CreateShaderTables()
     void *shadowHitGroupShaderIdentifier = nullptr;
 
     auto *stateObjProps = Graphics::rtStateObjectProps;
+#ifdef USE_DEFERRED_RENDERING
+    rayGenShaderIdentifier = stateObjProps->GetShaderIdentifier(L"DeferredRayGen");
+#else
     rayGenShaderIdentifier = stateObjProps->GetShaderIdentifier(L"RayGen");
+#endif // USE_DEFERRED_RENDERING
     missShaderIdentifier = stateObjProps->GetShaderIdentifier(L"Miss");
     shadowMissShaderIdentifier = stateObjProps->GetShaderIdentifier(L"ShadowMiss");
     hitGroupShaderIdentifier = stateObjProps->GetShaderIdentifier(L"HitGroup");
@@ -206,17 +210,15 @@ void RaytracingManager::CreateShaderTables()
         m_pMissShaderTable->InsertRecord(missShaderIdentifier, shaderIdentifierSize);
         m_pMissShaderTable->InsertRecord(shadowMissShaderIdentifier, shaderIdentifierSize);
     }
+    // Hit Shader Table
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
-        // Hit Shader Table
-        {
-            UINT shaderRecordSize = shaderIdentifierSize + sizeof(Graphics::LOCAL_ROOT_ARG);
+        UINT shaderRecordSize = shaderIdentifierSize + sizeof(Graphics::LOCAL_ROOT_ARG);
 
-            m_pHitShaderTables[i] = new ShaderTable;
-            m_pHitShaderTables[i]->Initialize(
-                pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
-                L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
-        }
+        m_pHitShaderTables[i] = new ShaderTable;
+        m_pHitShaderTables[i]->Initialize(
+            pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
+            L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
     }
 }
 
@@ -262,7 +264,7 @@ void RaytracingManager::Reset()
 {
     m_AllocatedInstanceCount = 0;
     m_pHitShaderTables[m_curContextIndex]->Reset();
-    
+
     m_curContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     /*m_pMissShaderTable->Reset();
     m_pRayGenShaderTable->Reset();*/
@@ -271,7 +273,7 @@ void RaytracingManager::Reset()
 RaytracingManager::~RaytracingManager() { Cleanup(); }
 
 void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
-                                    D3D12_CPU_DESCRIPTOR_HANDLE srv)
+                                    D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav)
 {
     ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);
@@ -285,8 +287,8 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     pDescriptorPool->Alloc(&cpuHandles, &gpuHandles, 2); // UAV, SRV
 
     pD3DDevice->CopyDescriptorsSimple(
-        1, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandles, Graphics::GLOBAL_ROOT_PARAM_INDEX_OUTPUTVIEW, descriptorSize), srv,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        1, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandles, Graphics::GLOBAL_ROOT_PARAM_INDEX_OUTPUTVIEW, descriptorSize),
+        outputViewUav, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     pD3DDevice->CopyDescriptorsSimple(
         1,
@@ -326,4 +328,58 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pOutputView,
                                                                            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
                                                                            D3D12_RESOURCE_STATE_COPY_SOURCE));
+}
+
+void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
+                                    D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers,
+                                    UINT gbufferCount)
+{
+    ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);
+    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+
+    UINT descriptorSize = m_pRenderer->GetSRVDescriptorSize();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandles;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandles;
+    // | OutputView | TLAS | g-buffers |
+    pDescriptorPool->Alloc(&cpuHandles, &gpuHandles, 2 + gbufferCount); 
+
+    pD3DDevice->CopyDescriptorsSimple(1, cpuHandles, outputViewUav, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    cpuHandles.Offset(descriptorSize);
+    pD3DDevice->CopyDescriptorsSimple(1, cpuHandles, m_TLASHandle.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    cpuHandles.Offset(descriptorSize);
+    pD3DDevice->CopyDescriptorsSimple(gbufferCount, cpuHandles, gbuffers, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    pCommandList->ResourceBarrier(1,
+                                  &CD3DX12_RESOURCE_BARRIER::Transition(pOutputView, D3D12_RESOURCE_STATE_COMMON,
+                                                                        D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+    pCommandList->SetComputeRootSignature(Graphics::globalRS);
+    pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
+    pCommandList->SetComputeRootDescriptorTable(0, gpuHandles);
+    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(0));
+
+    ID3D12Resource *pHitShaderTable = m_pHitShaderTables[m_curContextIndex]->GetResource();
+    ID3D12Resource *pMissShaderTable = m_pMissShaderTable->GetResource();
+    ID3D12Resource *pRayGenShaderTable = m_pRayGenShaderTable->GetResource();
+
+    D3D12_DISPATCH_RAYS_DESC desc = {};
+    desc.HitGroupTable.StartAddress = pHitShaderTable->GetGPUVirtualAddress();
+    desc.HitGroupTable.SizeInBytes = m_pHitShaderTables[m_curContextIndex]->GetSizeInBytes();
+    desc.HitGroupTable.StrideInBytes = m_pHitShaderTables[m_curContextIndex]->GetShaderRecordSize();
+    desc.MissShaderTable.StartAddress = pMissShaderTable->GetGPUVirtualAddress();
+    desc.MissShaderTable.SizeInBytes = m_pMissShaderTable->GetSizeInBytes();
+    desc.MissShaderTable.StrideInBytes = m_pMissShaderTable->GetShaderRecordSize();
+    desc.RayGenerationShaderRecord.StartAddress = pRayGenShaderTable->GetGPUVirtualAddress();
+    desc.RayGenerationShaderRecord.SizeInBytes = pRayGenShaderTable->GetDesc().Width;
+    desc.Width = pOutputView->GetDesc().Width;
+    desc.Height = pOutputView->GetDesc().Height;
+    desc.Depth = 3;
+
+    pCommandList->SetPipelineState1(Graphics::rtStateObject);
+    pCommandList->DispatchRays(&desc);
+
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pOutputView,
+                                                                           D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                                                                           D3D12_RESOURCE_STATE_COMMON));
 }

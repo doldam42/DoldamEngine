@@ -14,7 +14,7 @@ void RayGen()
     uint2 launchIndex = DispatchRaysIndex().xy;
     
     Ray ray = GenerateCameraRay(launchIndex, eyeWorld, invViewProj);
-    
+
     // Set the ray's extents.
     RayDesc rayDesc;
     rayDesc.Origin = ray.origin;

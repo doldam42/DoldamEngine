@@ -15,7 +15,7 @@ namespace Graphics
 ID3DBlob *deformingVertexCS = nullptr;
 
 // Sampler States
-D3D12_STATIC_SAMPLER_DESC samplerStates[SAMPLER_TYPE_COUNT] = {};
+D3D12_STATIC_SAMPLER_DESC samplerStates[SAMPLER_TYPE_COUNT] = {}; 
 
 GraphicsShaderSet g_shaderData[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT] = {};
 GraphicsShaderSet g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_COUNT] = {};
@@ -118,9 +118,7 @@ void Graphics::InitCommonStates(ID3D12Device5 *pD3DDevice)
     InitRootSignature(pD3DDevice);
     InitPipelineStates(pD3DDevice);
 
-#ifdef USE_RAYTRACING
     InitRaytracingStates(pD3DDevice);
-#endif
 }
 
 void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
@@ -933,9 +931,16 @@ void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeli
 #ifdef _DEBUG
     disableOptimize = TRUE;
 #endif // _DEBUG
+
+#ifdef USE_DEFERRED_RENDERING
+    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/DeferredRaygen.hlsl", disableOptimize);
+    auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
+#else
     rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableOptimize);
     auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
+#endif
 
     missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableOptimize);
     lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
@@ -953,13 +958,16 @@ void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeli
 void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
 {
     // Init Global Root Signature
-    // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0) |
+    // |   OUTPUT_VIEW(u0)   | ACCELERATION_STRUCTURE(t0)  | DIFFUSE ! NORMAL ! ELEMENTS ! DEPTH ! // !:deferred
     // | GlobalConstants(b0) |       Materials(t20)        |   EnvIBL(t10)    |
     {
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal1[2] = {};
         rangesPerGlobal1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
+#ifdef USE_DEFERRED_RENDERING
+        rangesPerGlobal1[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 0); // t0~t4
+#else
         rangesPerGlobal1[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
-        // rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+#endif
 
         CD3DX12_DESCRIPTOR_RANGE rangesPerGlobal2[3] = {};
         rangesPerGlobal2[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
@@ -978,6 +986,7 @@ void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)
                                                             ARRAYSIZE(staticSamplers), staticSamplers);
         SerializeAndCreateRootSignature(pD3DDevice, &globalRootSignatureDesc, &globalRS, L"GlbalRootSig");
     }
+
     // Init Local Hit Root Signature
     // | VERTICES(t0, space1) | INDICES(t1, space1) | ALBEDO_TEX(t2, space1) | NORMAL_TEX(t3, space1) | AO_TEX(t4,
     // space1) | METALLIC_ROUGHNESS(t5, space1) | EMISSIVE(t6, space1) | Height(t7, space1) |
