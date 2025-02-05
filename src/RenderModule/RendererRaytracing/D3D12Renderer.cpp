@@ -191,6 +191,7 @@ lb_exit:
 
     Graphics::InitCommonStates(m_pD3DDevice);
 
+#ifdef USE_DEFERRED_RENDERING
     DWORD physicalCoreCount = 0;
     DWORD logicalCoreCount = 0;
     TryGetPhysicalCoreCount(&physicalCoreCount, &logicalCoreCount);
@@ -198,7 +199,6 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifdef USE_DEFERRED_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
@@ -308,7 +308,6 @@ void D3D12Renderer::EndRender()
         SetEvent(m_pThreadDescList[i].hEventList[RENDER_THREAD_EVENT_TYPE_PROCESS]);
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
-
 #endif
     pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
@@ -384,18 +383,18 @@ void D3D12Renderer::Present()
     m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
     // prepare next frame
-    UINT dwNextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
-    WaitForFenceValue(m_pui64LastFenceValue[dwNextContextIndex]);
+    UINT nextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
+    WaitForFenceValue(m_pui64LastFenceValue[nextContextIndex]);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         // reset resources per frame
-        m_ppConstantBufferManager[dwNextContextIndex][i]->Reset();
-        m_ppDescriptorPool[dwNextContextIndex][i]->Reset();
-        m_ppCommandListPool[dwNextContextIndex][i]->Reset();
+        m_ppConstantBufferManager[nextContextIndex][i]->Reset();
+        m_ppDescriptorPool[nextContextIndex][i]->Reset();
+        m_ppCommandListPool[nextContextIndex][i]->Reset();
     }
 
-    m_curContextIndex = dwNextContextIndex;
+    m_curContextIndex = nextContextIndex;
 }
 
 void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
@@ -1100,7 +1099,13 @@ void D3D12Renderer::WaitForGPU()
     }
 }
 
-D3D12Renderer::~D3D12Renderer() { Cleanup(); }
+D3D12Renderer::~D3D12Renderer()
+{
+    Cleanup();
+#ifdef _DEBUG 
+    _ASSERT(_CrtCheckMemory());
+#endif 
+}
 
 HRESULT __stdcall D3D12Renderer::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 

@@ -6,12 +6,11 @@ Texture2D<float4> normalTex : register(t2);
 Texture2D<float4> elementsTex : register(t3);
 Texture2D<float>  depthTex : register(t4);
 
-#include "RaytracingTypedef.hlsli"
-#include "HlslUtils.hlsli"
 #include "Common.hlsli"
+#include "HlslUtils.hlsli"
+#include "RaytracingTypedef.hlsli"
 
 #include "BxDF.hlsli"
-
 
 HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMin = 0, float tMax = 100000,
                          float bounceContribution = 1, bool cullNonOpaque = false)
@@ -21,7 +20,7 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
 
     if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
-        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, 0.0); // TODO: Change RayTCurrent
         return rayPayload;
     }
 
@@ -89,8 +88,8 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
     return rayPayload;
 }
 
-float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, 
-                          inout HitInfo rayPayload, in float TMax = 10000)
+float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inout HitInfo rayPayload,
+                          in float TMax = 10000)
 {
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
@@ -118,14 +117,14 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N,
     if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
     {
         // Add current thit and the added offset to the thit of the traced ray.
-        rayPayload.colorAndDistance.w += RayTCurrent() + tOffset;
+        rayPayload.colorAndDistance.w += tOffset; // TODO: Add RayTCurrent
     }
 
     return rayPayload.colorAndDistance.xyz;
 }
 
-float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, 
-                          inout HitInfo rayPayload, in float TMax = 10000)
+float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, inout HitInfo rayPayload,
+                          in float TMax = 10000)
 {
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
@@ -153,7 +152,7 @@ float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N,
     if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
     {
         // Add current thit and the added offset to the thit of the traced ray.
-        rayPayload.colorAndDistance.w += RayTCurrent() + tOffset;
+        rayPayload.colorAndDistance.w += tOffset;// Add RayTCurrent
     }
 
     return rayPayload.colorAndDistance.xyz;
@@ -227,8 +226,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
                                         TMax); // TODO ASSERT
 }
 
-float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition,
-             in MaterialConstant material)
+float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition, in MaterialConstant material)
 {
     const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
     const uint   materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
@@ -256,9 +254,10 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition,
         float3 wi = -lightDir;
 
         // Raytraced shadows.
-        bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, wi, N, rayPayload);
+        //bool isInShadow = TraceShadowRayAndReportIfHit(hitPosition, wi, N, rayPayload);
 
-        L += BxDF::DirectLighting::Shade(materialType, Kd, Ks, radiance, isInShadow, roughness, N, V, wi);
+        //L += BxDF::DirectLighting::Shade(materialType, Kd, Ks, radiance, isInShadow, roughness, N, V, wi);
+        L += BxDF::DirectLighting::Shade(materialType, Kd, Ks, radiance, false, roughness, N, V, wi);
     }
 
     const float defaultAmbientIntensity = 0.04f;
@@ -313,8 +312,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition,
 }
 
 [shader("raygeneration")] 
-void DeferredRayGen() 
-{
+void DeferredRayGen() {
     HitInfo payload;
     payload.colorAndDistance = float4(0, 0, 0, 0);
     payload.rayRecursionDepth = 0;
@@ -327,53 +325,46 @@ void DeferredRayGen()
 
     float2 texcoord = ScreenToTextureCoord(screenCoord);
 
-    float4 diffuse = diffuseTex.SampleLevel(g_sampler, texcoord, 0);
-
-    float3 albedo = diffuse.xyz;
-
-    const float opacity = diffuse.w;
-
-    float4 N = normalTex.SampleLevel(g_sampler, texcoord, 0);
-    float3 normalWorld = N.xyz;
-    float3 emission = N.w;
-
-    if (BxDF::IsBlack(normalWorld))
+    float  depth = depthTex.SampleLevel(g_sampler, texcoord, 0).r;
+    if (depth == 1.0)  // If Miss
     {
-        Ray ray = GenerateCameraRay(launchIndex, eyeWorld, invViewProj);
-
-        // Set the ray's extents.
-        RayDesc rayDesc;
-        rayDesc.Origin = ray.origin;
-        rayDesc.Direction = ray.direction;
-        rayDesc.TMin = 0.0;
-        rayDesc.TMax = 10000.0;
-
-        uint rayFlags = RAY_FLAG_CULL_NON_OPAQUE;
-
-        TraceRay(g_scene, rayFlags, INSTANCE_MASK, HITGROUP_INDEX_RADIENT, GEOMETRY_STRIDE, MISS_INDEX_RADIENT, rayDesc,
-                 payload);
-        gOutput[launchIndex] = float4(payload.colorAndDistance.rgb, 1.0);
+        const Ray ray = GenerateCameraRay(launchIndex, eyeWorld, invViewProj);
+        gOutput[launchIndex] = float4(envIBLTex.SampleLevel(g_sampler, ray.direction, 0).xyz, 1.0);
         return;
     }
 
-    float4      elements = elementsTex.SampleLevel(g_sampler, texcoord, 0);
-    const float ao = elements.r;
-    const float roughness = elements.g;
-    const float metallic = elements.b;
-    const float Kr = elements.a;
+    float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
+    float3 V = normalize(posWorld - eyeWorld);
+
+    // Diffuse G-Buffer
+    const float4 diffuse = diffuseTex.SampleLevel(g_sampler, texcoord, 0);
+    const float3 albedo = diffuse.xyz;
+    const float  opacity = diffuse.w;
+
+    // Normal G-Buffer
+    const float4 N = normalTex.SampleLevel(g_sampler, texcoord, 0);
+    float3 normalWorld = N.xyz;
+    if (dot(normalWorld, V) > 0)
+        normalWorld *= -1; 
+    const float3 emission = N.w;
+
+    // Elements G-Buffer
+    const float4 elements = elementsTex.SampleLevel(g_sampler, texcoord, 0);
+    const float  ao = elements.r;
+    const float  roughness = elements.g;
+    const float  metallic = elements.b;
+    const float  Kr = elements.a;
 
     MaterialConstant material;
     material.albedo = albedo;
     material.roughnessFactor = roughness;
     material.metallicFactor = metallic;
     material.reflectionFactor = Kr;
-    material.opacityFactor = 1.0;  // TODO: transparancy
+    material.opacityFactor = 1.0; // TODO: transparancy
 
-    float  depth = depthTex.SampleLevel(g_sampler, texcoord, 0).r;
-    float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
-    
+    //float3 color = Shade(payload, normalWorld, posWorld, material);
     float3 color = Shade(payload, normalWorld, posWorld, material);
-     
+
     gOutput[launchIndex] = float4(color + emission, 1.0);
 }
 

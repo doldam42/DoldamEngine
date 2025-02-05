@@ -205,7 +205,7 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifndef USE_RAYTRACING
+#ifndef USE_FORWARD_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
 #endif
 
@@ -1126,7 +1126,7 @@ ITextureHandle *D3D12Renderer::GetShadowMapTexture(UINT lightIndex) { return m_p
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
-#ifndef USE_RAYTRACING
+#ifndef USE_FORWARD_RENDERING
     CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
 
 #ifdef USE_FORWARD_RENDERING
@@ -1148,7 +1148,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
     {
         SetEvent(m_hCompleteEvent);
     }
-#endif // !USE_RAYTRACING
+#endif // !USE_FORWARD_RENDERING
 }
 
 void D3D12Renderer::WaitForGPU()
@@ -1160,7 +1160,13 @@ void D3D12Renderer::WaitForGPU()
     }
 }
 
-D3D12Renderer::~D3D12Renderer() { Cleanup(); }
+D3D12Renderer::~D3D12Renderer()
+{
+    Cleanup();
+#ifdef _DEBUG 
+    _ASSERT(_CrtCheckMemory());
+#endif 
+}
 
 HRESULT __stdcall D3D12Renderer::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
@@ -1526,7 +1532,7 @@ void D3D12Renderer::CleanupBuffers()
 
 void D3D12Renderer::Cleanup()
 {
-#ifndef USE_RAYTRACING
+#ifndef USE_FORWARD_RENDERING
     CleanupRenderThreadPool();
 #endif
 

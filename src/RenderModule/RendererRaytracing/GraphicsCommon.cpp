@@ -101,6 +101,7 @@ IDxcBlob *rayGenLibrary = nullptr;
 IDxcBlob *missLibrary = nullptr;
 IDxcBlob *hitLibrary = nullptr;
 IDxcBlob *shadowLibrary = nullptr;
+IDxcBlob *raytracingLibrary = nullptr;
 
 ID3D12RootSignature *globalRS = nullptr;
 ID3D12RootSignature *localHitRS = nullptr;
@@ -849,9 +850,14 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
             for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
             {
                 if (fillMode == FILL_MODE_SOLID)
+                {
                     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+                    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+                }
                 else if (fillMode == FILL_MODE_WIRED)
+                {
                     psoDesc.RasterizerState = DirectX::CommonStates::Wireframe;
+                }
 
                 if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc,
                                                                    IID_PPV_ARGS(&PSO[itemType][passType][fillMode]))))
@@ -932,27 +938,32 @@ void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeli
     disableOptimize = TRUE;
 #endif // _DEBUG
 
-#ifdef USE_DEFERRED_RENDERING
-    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/DeferredRaygen.hlsl", disableOptimize);
-    auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
-#else
-    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableOptimize);
-    auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
-#endif
-
-    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableOptimize);
-    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(missLibrary->GetBufferPointer(), missLibrary->GetBufferSize()));
-
-    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl", disableOptimize);
-    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(hitLibrary->GetBufferPointer(), hitLibrary->GetBufferSize()));
-
-    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl", disableOptimize);
-    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
-    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(shadowLibrary->GetBufferPointer(), shadowLibrary->GetBufferSize()));
+    raytracingLibrary = CompileShaderLibrary(L"./Shaders/DXR/Raytracing.hlsl", disableOptimize);
+    auto      lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+    lib->SetDXILLibrary(
+        &CD3DX12_SHADER_BYTECODE(raytracingLibrary->GetBufferPointer(), raytracingLibrary->GetBufferSize()));
+    //
+//#ifdef USE_DEFERRED_RENDERING
+//    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/DeferredRaygen.hlsl", disableOptimize);
+//    auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+//    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
+//#else
+//    rayGenLibrary = CompileShaderLibrary(L"./Shaders/DXR/RayGen.hlsl", disableOptimize);
+//    auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+//    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(rayGenLibrary->GetBufferPointer(), rayGenLibrary->GetBufferSize()));
+//#endif
+//
+//    missLibrary = CompileShaderLibrary(L"./Shaders/DXR/Miss.hlsl", disableOptimize);
+//    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+//    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(missLibrary->GetBufferPointer(), missLibrary->GetBufferSize()));
+//
+//    hitLibrary = CompileShaderLibrary(L"./Shaders/DXR/Hit.hlsl", disableOptimize);
+//    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+//    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(hitLibrary->GetBufferPointer(), hitLibrary->GetBufferSize()));
+//
+//    shadowLibrary = CompileShaderLibrary(L"./Shaders/DXR/ShadowRay.hlsl", disableOptimize);
+//    lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+//    lib->SetDXILLibrary(&CD3DX12_SHADER_BYTECODE(shadowLibrary->GetBufferPointer(), shadowLibrary->GetBufferSize()));
 }
 
 void Graphics::InitRaytracingRootSignatures(ID3D12Device5 *pD3DDevice)

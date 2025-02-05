@@ -284,6 +284,7 @@ IDxcBlob *CompileShaderLibrary(LPCWSTR fileName, LPCWSTR entryPoint, BOOL disabl
     IDxcBlob *pBlob;
 
     ThrowIfFailed(pResult->GetResult(&pBlob));
+
     return pBlob;
 }
 

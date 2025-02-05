@@ -137,20 +137,20 @@ void Client::Cleanup()
         delete m_pAudio;
         m_pAudio = nullptr;
     }
-    if (m_hRendererDLL)
+    if (m_hModelExporterDLL)
     {
-        FreeLibrary(m_hRendererDLL);
-        m_hRendererDLL = nullptr;
+        FreeLibrary(m_hModelExporterDLL);
+        m_hModelExporterDLL = nullptr;
     }
     if (m_hEngineDLL)
     {
         FreeLibrary(m_hEngineDLL);
         m_hEngineDLL = nullptr;
     }
-    if (m_hModelExporterDLL)
+    if (m_hRendererDLL)
     {
-        FreeLibrary(m_hModelExporterDLL);
-        m_hModelExporterDLL = nullptr;
+        FreeLibrary(m_hRendererDLL);
+        m_hRendererDLL = nullptr;
     }
 }
 

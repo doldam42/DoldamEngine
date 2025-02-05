@@ -68,4 +68,4 @@ AudioManager::~AudioManager() { Cleanup(); }
 
 BOOL AudioManager::Start() { return 0; }
 
-void AudioManager::Update(float dt) { m_pSystem->update(); }
+void AudioManager::Update(float dt) { m_pSystem->update();}

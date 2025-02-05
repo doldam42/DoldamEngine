@@ -99,10 +99,6 @@ void Graphics::InitCommonStates(ID3D12Device5 *pD3DDevice)
     InitShaders(pD3DDevice);
     InitRootSignature(pD3DDevice);
     InitPipelineStates(pD3DDevice);
-
-#ifdef USE_RAYTRACING
-    InitRaytracingStates(pD3DDevice);
-#endif
 }
 
 void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
@@ -823,6 +819,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     psoDesc.SampleDesc.Count = 1;
     psoDesc.BlendState = DirectX::CommonStates::Opaque;
@@ -836,19 +834,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         {
             if (!rootSignatures[itemType][passType])
                 continue;
-            if (passType == DRAW_PASS_TYPE_DEFERRED)
-            {
-                psoDesc.NumRenderTargets = 3;
-                psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-                psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-                psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            }
-            else
-            {
-                psoDesc.NumRenderTargets = 1;
-                psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
-                psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
-            }
+
+            psoDesc.NumRenderTargets = (passType == DRAW_PASS_TYPE_DEFERRED) ? 3 : 1;
             psoDesc.InputLayout = g_shaderData[itemType][passType].inputLayout;
             psoDesc.pRootSignature = rootSignatures[itemType][passType];
             psoDesc.VS = g_shaderData[itemType][passType].VS;
@@ -860,9 +847,13 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
             for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
             {
                 if (fillMode == FILL_MODE_SOLID)
+                {
                     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+                }
                 else if (fillMode == FILL_MODE_WIRED)
+                {
                     psoDesc.RasterizerState = DirectX::CommonStates::Wireframe;
+                }
 
                 if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc,
                                                                    IID_PPV_ARGS(&PSO[itemType][passType][fillMode]))))

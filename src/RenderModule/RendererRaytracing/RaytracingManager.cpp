@@ -5,6 +5,7 @@
 #include "D3D12ResourceManager.h"
 #include "DescriptorPool.h"
 #include "GraphicsCommon.h"
+#include "RaytracingMeshObject.h"
 #include "ShaderTable.h"
 
 #include "RaytracingManager.h"
@@ -12,13 +13,13 @@
 void RaytracingManager::Cleanup()
 {
     m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_TLASHandle);
-    if (m_pInstanceDescsCPU)
-    {
-        m_topLevelASBuffers.pInstanceDesc->Unmap(0, nullptr);
-        m_pInstanceDescsCPU = nullptr;
-    }
     if (m_topLevelASBuffers.pInstanceDesc)
     {
+        if (m_pInstanceDescsCPU)
+        {
+            m_topLevelASBuffers.pInstanceDesc->Unmap(0, nullptr);
+            m_pInstanceDescsCPU = nullptr;
+        }
         m_topLevelASBuffers.pInstanceDesc->Release();
         m_topLevelASBuffers.pInstanceDesc = nullptr;
     }
@@ -187,6 +188,7 @@ void RaytracingManager::CreateShaderTables()
 #else
     rayGenShaderIdentifier = stateObjProps->GetShaderIdentifier(L"RayGen");
 #endif // USE_DEFERRED_RENDERING
+
     missShaderIdentifier = stateObjProps->GetShaderIdentifier(L"Miss");
     shadowMissShaderIdentifier = stateObjProps->GetShaderIdentifier(L"ShadowMiss");
     hitGroupShaderIdentifier = stateObjProps->GetShaderIdentifier(L"HitGroup");
@@ -217,7 +219,7 @@ void RaytracingManager::CreateShaderTables()
 
         m_pHitShaderTables[i] = new ShaderTable;
         m_pHitShaderTables[i]->Initialize(
-            pD3DDevice, m_maxInstanceCount * 10, shaderRecordSize,
+            pD3DDevice, m_maxInstanceCount * RaytracingMeshObject::MAX_DESCRIPTOR_COUNT_PER_BLAS, shaderRecordSize,
             L"HitGroupShaderTable"); // TODO: Shader Record 개수를 gemetry 개수를 고려해서 변경하기
     }
 }

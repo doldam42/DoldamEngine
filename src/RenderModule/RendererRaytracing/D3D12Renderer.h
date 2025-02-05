@@ -32,8 +32,8 @@ class Terrain;
 class PostProcessor;
 
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
-#define USE_RAYTRACING
-//#define USE_DEFERRED_RENDERING
+//#define USE_FORWARD_RENDERING
+#define USE_DEFERRED_RENDERING
 enum GLOBAL_DESCRIPTOR_INDEX
 {
     GLOBAL_DESCRIPTOR_INDEX_GLOBALCB = 0,

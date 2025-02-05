@@ -1267,7 +1267,10 @@ void FBXLoader::ExportModel()
     }
 }
 
-FBXLoader::~FBXLoader() { Cleanup(); }
+FBXLoader::~FBXLoader()
+{
+    Cleanup();
+}
 
 HRESULT __stdcall FBXLoader::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 

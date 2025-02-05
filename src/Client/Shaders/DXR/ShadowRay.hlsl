@@ -1,3 +1,4 @@
+#include "RaytracingTypedef.hlsli"
 #include "Common.hlsli"
 
 [shader("closesthit")]
@@ -9,5 +10,5 @@ void ShadowClosestHit(inout ShadowHitInfo hit, Attributes bary)
 [shader("miss")]
 void ShadowMiss(inout ShadowHitInfo hit : SV_RayPayload)
 {
-    hit.tHit = 0;
+    hit.tHit = HitDistanceOnMiss;
 }

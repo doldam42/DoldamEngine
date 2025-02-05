@@ -6,7 +6,11 @@
 
 #include "BxDF.hlsli"
 
-cbuffer l_RayFaceGroupConstants : register(b0, space1) { uint materialId; };
+cbuffer l_RayFaceGroupConstants : register(b0, space1)
+{
+    uint materialId;
+    uint reserved;
+};
 
 StructuredBuffer<Vertex> l_VB : register(t0, space1);
 StructuredBuffer<uint>   l_IB : register(t1, space1);

@@ -132,7 +132,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,9 +141,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\lib\$(Configuration)\;$(SolutionDir)..\bin\$(Configuration)\;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)Client\Shaders\*.*" "$(TargetDir)Shaders\" /E /Y
-copy "$(SolutionDir)..\lib\$(Configuration)\dxcompiler.dll" "$(TargetDir)" /Y
-copy "$(SolutionDir)..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y</Command>
+      <Command>xcopy "$(SolutionDir)Client\Shaders\DXR\*.*" "$(SolutionDir)..\bin\$(Configuration)\Shaders\DXR\" /E /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -300,6 +298,11 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <FileType>Document</FileType>
     </CustomBuild>
     <CustomBuild Include="..\..\Client\Shaders\DXR\ShadowRay.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\Client\Shaders\DeferredPS.hlsl">
       <FileType>Document</FileType>
     </CustomBuild>
   </ItemGroup>

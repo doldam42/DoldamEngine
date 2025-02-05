@@ -150,5 +150,6 @@ static_assert((sizeof(TerrainConstants) % 256) == 0, "Constant Buffer size must 
 struct RaytracingFaceGroupCB
 {
     UINT materialIndex;
+    UINT reserved;
 };
 

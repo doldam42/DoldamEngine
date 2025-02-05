@@ -120,6 +120,7 @@ extern IDxcBlob *rayGenLibrary;
 extern IDxcBlob *missLibrary;
 extern IDxcBlob *hitLibrary;
 extern IDxcBlob *shadowLibrary;
+extern IDxcBlob *raytracingLibrary;
 
 extern ID3D12RootSignature *globalRS;
 extern ID3D12RootSignature *localHitRS;

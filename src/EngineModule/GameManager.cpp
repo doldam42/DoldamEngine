@@ -167,7 +167,7 @@ lb_return:
 BOOL GameManager::LoadResources()
 {
     // Create Shadow Map Sprite
-    //m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
+    // m_pShadowMapSprite = m_pRenderer->CreateSpriteObject();
 
     // Create Cubemap
     m_pRenderer->InitCubemaps(L"..\\..\\assets\\textures\\Skybox\\DaySky\\DaySkyEnvHDR.dds",
@@ -286,7 +286,7 @@ void GameManager::Update(ULONGLONG curTick)
     {
         dt = 0.03f; // 30 FPS
     }
-    
+
     // Camera Update
     if (m_activateCamera)
     {
@@ -341,7 +341,7 @@ void GameManager::Render()
     {
         m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);
     }
-    
+
     // render game objects
     SORT_LINK *pCur = m_pGameObjLinkHead;
     UINT       objCount = 0;
@@ -383,13 +383,13 @@ BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
 
 void GameManager::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
-IGameMesh *GameManager::CreateGameMesh() 
-{ 
+IGameMesh *GameManager::CreateGameMesh()
+{
     MeshObject *pObj = new MeshObject;
     return pObj;
 }
 
-void GameManager::DeleteGameMesh(IGameMesh *pGameMesh) 
+void GameManager::DeleteGameMesh(IGameMesh *pGameMesh)
 {
     MeshObject *pObj = reinterpret_cast<MeshObject *>(pGameMesh);
     delete pObj;
@@ -598,8 +598,8 @@ void GameManager::DeleteAllAnimation()
     }
 }
 
-BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale,
-                                const int numSlice, const int numStack)
+BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice,
+                                const int numStack)
 {
     if (m_pTerrain)
     {
@@ -618,7 +618,13 @@ void GameManager::Register(IController *pController) { m_pControllerManager->Reg
 
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
-GameManager::~GameManager() { Cleanup(); }
+GameManager::~GameManager()
+{
+    Cleanup();
+#ifdef _DEBUG 
+    _ASSERT(_CrtCheckMemory());
+#endif
+}
 
 HRESULT __stdcall GameManager::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
