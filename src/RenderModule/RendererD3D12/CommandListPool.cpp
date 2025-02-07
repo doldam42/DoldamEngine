@@ -12,6 +12,7 @@ BOOL CommandListPool::AddCmdList()
     if (m_totalCmdNum >= m_maxCmdListNum)
     {
         __debugbreak();
+
         goto lb_return;
     }
 

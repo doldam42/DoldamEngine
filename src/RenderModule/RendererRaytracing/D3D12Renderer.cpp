@@ -191,7 +191,6 @@ lb_exit:
 
     Graphics::InitCommonStates(m_pD3DDevice);
 
-#ifdef USE_DEFERRED_RENDERING
     DWORD physicalCoreCount = 0;
     DWORD logicalCoreCount = 0;
     TryGetPhysicalCoreCount(&physicalCoreCount, &logicalCoreCount);
@@ -199,6 +198,7 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
+#ifdef USE_DEFERRED_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)

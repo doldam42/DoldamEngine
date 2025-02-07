@@ -94,7 +94,7 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float  tOffset = 0.001f;
+    float  tOffset = 0.005f;
     float3 offsetAlongRay = tOffset * wi;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
@@ -129,7 +129,7 @@ float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, inou
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float  tOffset = 0.001f;
+    float  tOffset = 0.005f;
     float3 offsetAlongRay = tOffset * wt;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
@@ -219,7 +219,7 @@ bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in float3 N, in ui
 bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in float3 N, in HitInfo rayPayload,
                                   in float TMax = 10000)
 {
-    float tOffset = 0.001f;
+    float tOffset = 0.005f;
     Ray   visibilityRay = {hitPosition + tOffset * N, direction};
     float dummyTHit = 0.0;
     return TraceShadowRayAndReportIfHit(dummyTHit, visibilityRay, N, rayPayload.rayRecursionDepth, false,
@@ -228,7 +228,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition, in MaterialConstant material)
 {
-    const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
+    const float3 Fdielectric = 0.04;                    // 비금속(Dielectric) 재질의 F0
     const uint   materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
 
     float3 V = normalize(eyeWorld - hitPosition);

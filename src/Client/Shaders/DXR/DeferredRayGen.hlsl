@@ -228,7 +228,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
 
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition, in MaterialConstant material)
 {
-    const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
+    const float3 Fdielectric = 0.04;                    // 비금속(Dielectric) 재질의 F0
     const uint   materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
 
     float3 V = normalize(eyeWorld - hitPosition);

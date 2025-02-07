@@ -25,7 +25,7 @@ BOOL Client::LoadModules(HWND hWnd)
     const WCHAR *engineFileName = nullptr;
     const WCHAR *exporterFileName = nullptr;
 #ifdef _DEBUG
-     //rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
+    //rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
     rendererFileName = L"../../DLL/RendererRaytracing_x64_debug.dll";
     engineFileName = L"../../DLL/EngineModule_x64_debug.dll";
     exporterFileName = L"../../DLL/ModelExporter_x64_debug.dll";

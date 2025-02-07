@@ -269,6 +269,17 @@ void D3D12Renderer::BeginRender()
     m_pMaterialManager->Update(pCommandList);
 
 #ifdef USE_DEFERRED_RENDERING
+    CD3DX12_RESOURCE_BARRIER deferredbarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
+    pCommandList->ResourceBarrier(_countof(deferredbarriers), deferredbarriers);
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE deferredRtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
     pCommandList->ClearRenderTargetView(deferredRtvHandle, m_clearColor, 0, nullptr);
     deferredRtvHandle.Offset(m_rtvDescriptorSize);
@@ -1425,17 +1436,6 @@ void D3D12Renderer::RenderSecondPass(ID3D12GraphicsCommandList *pCommandList)
     pCommandList->IASetVertexBuffers(0, 1, &m_pPostProcessor->GetVertexBufferView());
     pCommandList->IASetIndexBuffer(&m_pPostProcessor->GetIndexBufferView());
     pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
-    CD3DX12_RESOURCE_BARRIER endBarriers[] = {
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pDiffuseRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pNormalRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pElementsRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
-                                             D3D12_RESOURCE_STATE_RENDER_TARGET),
-        CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencils[m_uiFrameIndex], D3D12_RESOURCE_STATE_COMMON,
-                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
-    pCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }
 
 // Create frame resources.
@@ -1492,7 +1492,7 @@ void D3D12Renderer::CreateBuffers()
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_Viewport.Width, m_Viewport.Height, 1, 0, 1, 0,
                                               D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
+                D3D12_RESOURCE_STATE_COMMON, &depthOptimizedClearValue, IID_PPV_ARGS(&m_pDepthStencils[n]))))
         {
             __debugbreak();
         }

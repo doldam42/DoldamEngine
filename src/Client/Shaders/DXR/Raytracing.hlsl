@@ -13,10 +13,12 @@ cbuffer l_RayFaceGroupConstants : register(b0, space1)
     uint reserved;
 };
 
+#ifdef DEFERRED
 Texture2D<float4> diffuseTex : register(t1);
 Texture2D<float4> normalTex : register(t2);
 Texture2D<float4> elementsTex : register(t3);
 Texture2D<float>  depthTex : register(t4);
+#endif
 
 StructuredBuffer<Vertex> l_VB : register(t0, space1);
 StructuredBuffer<uint>   l_IB : register(t1, space1);
@@ -26,8 +28,6 @@ Texture2D<float4> l_normalTex : register(t3, space1);
 Texture2D<float4> l_AOTex : register(t4, space1);
 Texture2D<float4> l_metallicRoughnessTex : register(t5, space1);
 Texture2D<float4> l_emmisiveTex : register(t6, space1);
-
-// Texture2D<float4> l_normalTex : register(t3, space1);
 
 HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMin = 0, float tMax = 100000,
                          float bounceContribution = 1, bool cullNonOpaque = false)
@@ -243,12 +243,11 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
                                         TMax); // TODO ASSERT
 }
 
-float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 hitPosition, in MaterialConstant material)
+float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPosition, in MaterialConstant material)
 {
-    const float3 Fdielectric = 0.3;                    // 비금속(Dielectric) 재질의 F0
+    const float3 Fdielectric = 0.04;                    // 비금속(Dielectric) 재질의 F0
     const uint   materialType = MATERIAL_TYPE_DEFAULT; // 지금은 Default Material로 고정
 
-    float3 V = normalize(eyeWorld - hitPosition);
     float3 L = 0;
 
     // Shadowing
@@ -392,8 +391,9 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
                           : material.albedo;
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
+    float3 V = -WorldRayDirection();
 
-    float3 color = Shade(payload, normal, hitPosition, material);
+    float3 color = Shade(payload, normal, V, hitPosition, material);
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());
@@ -402,7 +402,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
 //***************************************************************************
 //***********************------ RayGen shaders -------**************************
 //***************************************************************************
-
+#ifdef DEFERRED
 [shader("raygeneration")] 
 void DeferredRayGen()
 {
@@ -427,8 +427,8 @@ void DeferredRayGen()
     }
 
     float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
-    float3 V = normalize(posWorld - eyeWorld);
-
+    float3 V = normalize(eyeWorld - posWorld);
+    
     // Diffuse G-Buffer
     const float4 diffuse = diffuseTex.SampleLevel(g_sampler, texcoord, 0);
     const float3 albedo = diffuse.xyz;
@@ -436,9 +436,7 @@ void DeferredRayGen()
 
     // Normal G-Buffer
     const float4 N = normalTex.SampleLevel(g_sampler, texcoord, 0);
-    float3       normalWorld = N.xyz;
-    if (dot(normalWorld, V) > 0)
-        normalWorld *= -1;
+    const float3 normalWorld = N.xyz;
     const float3 emission = N.w;
 
     // Elements G-Buffer
@@ -456,11 +454,11 @@ void DeferredRayGen()
     material.opacityFactor = 1.0; // TODO: transparancy
 
     // float3 color = Shade(payload, normalWorld, posWorld, material);
-    float3 color = Shade(payload, normalWorld, posWorld, material);
+    float3 color = Shade(payload, normalWorld, V, posWorld, material);
 
     gOutput[launchIndex] = float4(color + emission, 1.0);
 }
-
+#endif
 [shader("raygeneration")] 
 void RayGen()
 {

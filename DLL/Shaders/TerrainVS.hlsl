@@ -27,19 +27,22 @@ HSInput VSMain(VSCPInput input)
 {
     HSInput output;
 
-    const int i = input.vId % (numSlice + 1);
-    const int j = input.vId / (numSlice + 1);
+    const uint i = input.vId % (numSlice + 1);
+    const uint j = input.vId / (numSlice + 1);
 
-    const float dx = 2.0f / numSlice;
-    const float dz = 2.0f / numStack;
+    const float dx = 1.0f / numSlice;
+    const float dy = 1.0f / numStack;
 
-    const float x = -1.0f + dx * i;
-    const float z = -1.0f + dz * j;
-    //const float height = input.height * 2.0 - 1.0;
+    const float x = dx * i;
+    const float y = dy * j;
 
-    //output.posWorld = float3(x * scale, height * heightScale, z * scale);
-    output.posWorld = float3(x*scaleX, 0, z*scaleZ);
-    output.texcoord = float2(1.0 + x, 1.0 - z) * 0.5;
+    // [0, 0] -> [-1, 0, 1]
+    // [1, 0] -> [ 1, 0, 1]
+    // [0, 1] -> [-1, 0,-1]
+    // [1, 1] -> [ 1, 0,-1]
+    // f(x,y) = (2x - 1, 0, 1.0 - 2y)
+    output.texcoord = float2(x, y);
+    output.posWorld = float3((2 * x - 1.0)*scaleX, 0, (1.0 - 2 * y)*scaleZ);
 
     return output;
 }
@@ -48,19 +51,24 @@ PSInput VSMainWithoutHS(VSCPInput input)
 {
     PSInput output;
 
-    const int i = input.vId % (numSlice + 1);
-    const int j = input.vId / (numSlice + 1);
+    const uint i = input.vId % (numSlice + 1);
+    const uint j = input.vId / (numSlice + 1);
 
-    const float dx = 2.0f / numSlice;
-    const float dz = 2.0f / numStack;
+    const float dx = 1.0f / numSlice;
+    const float dy = 1.0f / numStack;
 
-    const float x = -1.0f + dx * i;
-    const float z = -1.0f + dz * j;
+    const float x = dx * i;
+    const float y = dy * j;
     const float height = input.height * 2.0 - 1.0;
 
-    output.posWorld = float3(x * scaleX, height * scaleY, z * scaleZ);
+    // [0, 0] -> [-1, 0, 1]
+    // [1, 0] -> [ 1, 0, 1]
+    // [0, 1] -> [-1, 0,-1]
+    // [1, 1] -> [ 1, 0,-1]
+    // f(x,y) = (2x - 1, 0, 1.0 - 2y)
+    output.texcoord = float2(x, y);
+    output.posWorld = float3((2 * x - 1.0) * scaleX, height * scaleY, (1.0 - 2 * y) * scaleZ);
     output.normalWorld = float3(0.0, 1.0, 0.0);
-    output.texcoord = float2(1.0 + x, 1.0 - z) * 0.5;
     output.tangentWorld = float3(1.0, 0.0, 0.0);
     output.posProj = mul(float4(output.posWorld, 1.0), viewProj);
     output.projTexcoord = mul(float4(output.posWorld, 1.0), projectionViewProj);
