@@ -245,7 +245,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
 
     // Terrain
     {
-        terrainVS = CompileGraphicsShader(L"./Shaders/TerrainVS.hlsl", L"VSMain", L"vs_6_1", TRUE);
+        terrainVS = CompileGraphicsShader(L"./Shaders/TerrainVS.hlsl", L"VSMainWithoutHS", L"vs_6_1", TRUE);
         terrainHS = CompileGraphicsShader(L"./Shaders/TerrainHS.hlsl", L"HSMain", L"hs_6_1", TRUE);
         terrainDS = CompileGraphicsShader(L"./Shaders/TerrainDS.hlsl", L"DSMain", L"ds_6_1", TRUE);
         terrainPS = CompileGraphicsShader(L"./Shaders/BasicPS.hlsl", L"main", L"ps_6_1", TRUE);
@@ -325,7 +325,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     };
 
     // Tessellation
-    g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
+    /*g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
         terrainIL,
         CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(terrainPS->GetBufferPointer(), terrainPS->GetBufferSize()),
@@ -339,6 +339,22 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         CD3DX12_SHADER_BYTECODE(terrainDeferredPS->GetBufferPointer(), terrainDeferredPS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(terrainHS->GetBufferPointer(), terrainHS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(terrainDS->GetBufferPointer(), terrainDS->GetBufferSize()),
+        {},
+    };*/
+    g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
+        terrainIL,
+        CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainPS->GetBufferPointer(), terrainPS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
+    g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = {
+        terrainIL,
+        CD3DX12_SHADER_BYTECODE(terrainVS->GetBufferPointer(), terrainVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(terrainDeferredPS->GetBufferPointer(), terrainDeferredPS->GetBufferSize()),
+        {},
+        {},
         {},
     };
 
@@ -820,8 +836,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
 
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
-        psoDesc.PrimitiveTopologyType = (itemType == RENDER_ITEM_TYPE_TERRAIN) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH
-                                                                               : D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        /*psoDesc.PrimitiveTopologyType = (itemType == RENDER_ITEM_TYPE_TERRAIN) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH
+                                                                               : D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;*/
         for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)
         {
             if (!rootSignatures[itemType][passType])

@@ -35,7 +35,7 @@ float3 GetNormal(PSInput input, bool useNormalMap)
         normal = 2.0 * normal - 1.0; // 범위 조절 [-1.0, 1.0]
 
         // OpenGL 용 노멀맵일 경우에는 y 방향을 뒤집어줍니다.
-        // normal.y = -normal.y;
+        normal.y = -normal.y;
 
         float3 N = normalWorld;
         float3 T = normalize(input.tangentWorld - dot(input.tangentWorld, N) * N);

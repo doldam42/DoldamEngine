@@ -17,10 +17,12 @@ BOOL Terrain::InitMesh(const WCHAR *heightFilename, const int numSlice, const in
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
     uint8_t *pVertices = new uint8_t[(numStack + 1) * (numSlice + 1)];
-    UINT    *pIndices = new UINT[numStack * numSlice * 4];
+    //UINT    *pIndices = new UINT[numStack * numSlice * 4];
+    UINT    *pIndices = new UINT[numStack * numSlice * 6];
 
     ZeroMemory(pVertices, sizeof(uint8_t) * (numStack + 1) * (numSlice + 1));
-    ZeroMemory(pIndices, sizeof(UINT) * numStack * numSlice * 4);
+    //ZeroMemory(pIndices, sizeof(UINT) * numStack * numSlice * 4);
+    ZeroMemory(pIndices, sizeof(UINT) * numStack * numSlice * 6);
 
     UINT numVertices = 0;
     UINT numIndices = 0;
@@ -60,9 +62,18 @@ BOOL Terrain::InitMesh(const WCHAR *heightFilename, const int numSlice, const in
     {
         for (int i = 0; i < numSlice; i++)
         {
+            /*pIndices[numIndices++] = (numSlice + 1) * j + i;
+            pIndices[numIndices++] = (numSlice + 1) * j + i + 1;
+            pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
+            pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i + 1;*/
+
+            // 0,1,2 - 0, 2, 3
             pIndices[numIndices++] = (numSlice + 1) * j + i;
             pIndices[numIndices++] = (numSlice + 1) * j + i + 1;
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
+
+            pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
+            pIndices[numIndices++] = (numSlice + 1) * j + i + 1;
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i + 1;
         }
     }
@@ -199,7 +210,8 @@ void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
     pCommandList->SetPipelineState(pPSO);
-    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+    //pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 

@@ -14,7 +14,6 @@ BOOL CreateD3D12Renderer(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, IRe
         goto lb_return;
     }
 
-
     *ppRenderer = pD3DRenderer;
     g_pRenderer = pD3DRenderer;
 

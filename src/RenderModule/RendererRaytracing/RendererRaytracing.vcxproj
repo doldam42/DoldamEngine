@@ -141,8 +141,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\lib\$(Configuration)\;$(SolutionDir)..\bin\$(Configuration)\;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)Client\Shaders\DXR\*.*" "$(SolutionDir)..\bin\$(Configuration)\Shaders\DXR\" /E /Y;
-copy "$(SolutionDir)Client\Shaders\DeferredPS.hlsl" "$(SolutionDir)..\bin\$(Configuration)\Shaders\";</Command>
+      <Command>xcopy "$(SolutionDir)Client\Shaders\*" "$(SolutionDir)..\bin\$(Configuration)\Shaders\" /y /e /d</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

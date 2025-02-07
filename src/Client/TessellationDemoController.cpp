@@ -32,16 +32,17 @@ BOOL TessellationDemoController::Start()
     wcscpy_s(groundMaterial.metallicTextureName, L"ao_roughness_metallic.jpg");
     wcscpy_s(groundMaterial.heightTextureName, L"height.png");
 
-    //wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\terrain\\rocky\\");
-    //wcscpy_s(groundMaterial.albedoTextureName, L"diffuse.dds");
-    //wcscpy_s(groundMaterial.normalTextureName, L"normal.dds");
-    //wcscpy_s(groundMaterial.aoTextureName, L"ao_roughness_metallic.jpg");
-    //wcscpy_s(groundMaterial.roughnessTextureName, L"ao_roughness_metallic.jpg");
-    //wcscpy_s(groundMaterial.metallicTextureName, L"ao_roughness_metallic.jpg");
-    //wcscpy_s(groundMaterial.heightTextureName, L"height.jpg");
+    /*wcscpy_s(groundMaterial.basePath, L"..\\..\\assets\\textures\\terrain\\rocky\\");
+    wcscpy_s(groundMaterial.albedoTextureName, L"diffuse.dds");
+    wcscpy_s(groundMaterial.normalTextureName, L"normal.dds");
+    wcscpy_s(groundMaterial.aoTextureName, L"ao_roughness_metallic.jpg");
+    wcscpy_s(groundMaterial.roughnessTextureName, L"ao_roughness_metallic.jpg");
+    wcscpy_s(groundMaterial.metallicTextureName, L"ao_roughness_metallic.jpg");
+    wcscpy_s(groundMaterial.heightTextureName, L"height.jpg");*/
 
     Vector3 scale(20.0f, 1.0f, 20.0f);
-    pGame->CreateTerrain(&groundMaterial, &scale, 64, 64);
+    //pGame->CreateTerrain(&groundMaterial, &scale, 64, 64);
+    pGame->CreateTerrain(&groundMaterial, &scale, 256, 256);
 
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -3.0f);
