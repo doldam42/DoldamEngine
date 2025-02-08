@@ -100,6 +100,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererRaytracing", "Rende
 		{AE40AE55-B9AB-4D88-AC04-6E406D084E50} = {AE40AE55-B9AB-4D88-AC04-6E406D084E50}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DoldamEditor", "DoldamEditor\DoldamEditor.vcxproj", "{B0547F1F-E215-40A8-B968-C78B945CABC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -172,6 +174,14 @@ Global
 		{FD70066F-9CD3-4AAA-8672-1004EE5422E6}.Release|x64.Build.0 = Release|x64
 		{FD70066F-9CD3-4AAA-8672-1004EE5422E6}.Release|x86.ActiveCfg = Release|Win32
 		{FD70066F-9CD3-4AAA-8672-1004EE5422E6}.Release|x86.Build.0 = Release|Win32
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Debug|x64.ActiveCfg = Debug|x64
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Debug|x64.Build.0 = Debug|x64
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Debug|x86.ActiveCfg = Debug|Win32
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Debug|x86.Build.0 = Debug|Win32
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x64.ActiveCfg = Release|x64
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x64.Build.0 = Release|x64
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x86.ActiveCfg = Release|Win32
+		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
