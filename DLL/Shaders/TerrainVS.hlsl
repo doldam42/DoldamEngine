@@ -63,10 +63,10 @@ PSInput VSMainWithoutHS(VSCPInput input)
     const float y = dy * j;
     const float height = input.height * 2.0 - 1.0;
 
-    const float U = heightTex.SampleLevel(linearClampSampler, float2(x, y + dy), 0).r * scaleY;
-    const float D = heightTex.SampleLevel(linearClampSampler, float2(x, y - dy), 0).r * scaleY;
-    const float R = heightTex.SampleLevel(linearClampSampler, float2(x + dx, y), 0).r * scaleY;
-    const float L = heightTex.SampleLevel(linearClampSampler, float2(x - dx, y), 0).r * scaleY;
+    const float U = heightTex.SampleLevel(linearClampSampler, float2(x, y + dy), 0).r;
+    const float D = heightTex.SampleLevel(linearClampSampler, float2(x, y - dy), 0).r;
+    const float R = heightTex.SampleLevel(linearClampSampler, float2(x + dx, y), 0).r;
+    const float L = heightTex.SampleLevel(linearClampSampler, float2(x - dx, y), 0).r;
 
     const float3 T = float3(1.0, (R - L), 0.0);
     const float3 B = float3(0.0, (U - D), 1.0);

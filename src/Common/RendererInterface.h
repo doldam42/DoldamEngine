@@ -23,6 +23,12 @@ interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
 
+interface IRenderGUI : public IUnknown
+{
+    virtual void BeginRender() = 0;
+    virtual void EndRender() = 0;
+};
+
 interface IRenderMaterial : public IUnknown
 {
     virtual BOOL UpdateMetallicRoughness(float metallic, float roughness) = 0;

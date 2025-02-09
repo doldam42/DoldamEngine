@@ -102,6 +102,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererRaytracing", "Rende
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DoldamEditor", "DoldamEditor\DoldamEditor.vcxproj", "{B0547F1F-E215-40A8-B968-C78B945CABC1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A5B322FB-7008-49C4-BBED-A2B52408EEF0}"
+	ProjectSection(SolutionItems) = preProject
+		Common\EngineInterface.h = Common\EngineInterface.h
+		Common\ModelExporterInterface.h = Common\ModelExporterInterface.h
+		Common\RendererInterface.h = Common\RendererInterface.h
+		Common\typedef.h = Common\typedef.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
