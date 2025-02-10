@@ -38,5 +38,4 @@ class FontManager
                                    int *pOutHeight, FONT_HANDLE *pFontHandle, const WCHAR *inStr, UINT len);
     FontManager() = default;
     ~FontManager();
-
 };

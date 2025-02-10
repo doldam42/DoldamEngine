@@ -234,7 +234,6 @@ namespace BxDF
                 {
                     directSpecular = BxDF::Specular::GGX::F(Roughness, N, V, L, Fo);
                 }
-
                 directLighting = NoL * Radiance * (directDiffuse + directSpecular);
             }
             

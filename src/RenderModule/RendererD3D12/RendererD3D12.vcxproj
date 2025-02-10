@@ -126,11 +126,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_PIXDEBUG;_DEBUG;RENDERERMODULE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PIXDEBUG;_DEBUG;RENDERERMODULE_EXPORTS;_WINDOWS;_USRDLL;RENDERER_D3D12;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;..\Common</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -176,48 +176,69 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\RendererInterface.h" />
+    <ClInclude Include="..\Common\CommandListPool.h" />
+    <ClInclude Include="..\Common\ConstantBufferManager.h" />
+    <ClInclude Include="..\Common\ConstantBufferPool.h" />
+    <ClInclude Include="..\Common\ConstantBuffers.h" />
+    <ClInclude Include="..\Common\D3D12ResourceManager.h" />
+    <ClInclude Include="..\Common\DescriptorAllocator.h" />
+    <ClInclude Include="..\Common\DescriptorPool.h" />
+    <ClInclude Include="..\Common\FontManager.h" />
+    <ClInclude Include="..\Common\MaterialManager.h" />
+    <ClInclude Include="..\Common\PostProcessor.h" />
+    <ClInclude Include="..\Common\RendererTypedef.h" />
+    <ClInclude Include="..\Common\RenderThread.h" />
+    <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="CascadedShadowsManager.h" />
-    <ClInclude Include="CommandListPool.h" />
-    <ClInclude Include="ConstantBufferManager.h" />
-    <ClInclude Include="ConstantBufferPool.h" />
-    <ClInclude Include="ConstantBuffers.h" />
     <ClInclude Include="Cubemap.h" />
     <ClInclude Include="D3D12Renderer.h" />
-    <ClInclude Include="D3D12ResourceManager.h" />
     <ClInclude Include="D3DUtil.h" />
-    <ClInclude Include="DescriptorAllocator.h" />
-    <ClInclude Include="DescriptorPool.h" />
-    <ClInclude Include="PostProcessor.h" />
-    <ClInclude Include="FontManager.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GraphicsCommon.h" />
-    <ClInclude Include="MaterialManager.h" />
     <ClInclude Include="D3DMeshObject.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RendererTypedef.h" />
     <ClInclude Include="RenderQueue.h" />
-    <ClInclude Include="RenderThread.h" />
     <ClInclude Include="ShadowManager.h" />
     <ClInclude Include="SpriteObject.h" />
     <ClInclude Include="Terrain.h" />
-    <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\CommandListPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\ConstantBufferManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\ConstantBufferPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\D3D12ResourceManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\DescriptorAllocator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\DescriptorPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\FontManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\MaterialManager.cpp" />
+    <ClCompile Include="..\Common\PostProcessor.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\RenderThread.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="CascadedShadowsManager.cpp" />
-    <ClCompile Include="CommandListPool.cpp" />
-    <ClCompile Include="ConstantBufferManager.cpp" />
-    <ClCompile Include="ConstantBufferPool.cpp" />
     <ClCompile Include="Cubemap.cpp" />
     <ClCompile Include="D3D12Renderer.cpp" />
-    <ClCompile Include="D3D12ResourceManager.cpp" />
     <ClCompile Include="D3DUtil.cpp" />
-    <ClCompile Include="DescriptorAllocator.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="DescriptorPool.cpp" />
-    <ClCompile Include="PostProcessor.cpp" />
-    <ClCompile Include="FontManager.cpp" />
     <ClCompile Include="GraphicsCommon.cpp" />
-    <ClCompile Include="MaterialManager.cpp" />
     <ClCompile Include="D3DMeshObject.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -226,14 +247,12 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="RenderQueue.cpp" />
-    <ClCompile Include="RenderThread.cpp" />
     <ClCompile Include="ShadowManager.cpp" />
     <ClCompile Include="SpriteObject.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Terrain.cpp" />
-    <ClCompile Include="TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

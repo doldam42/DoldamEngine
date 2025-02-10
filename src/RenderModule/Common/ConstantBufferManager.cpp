@@ -1,9 +1,7 @@
 #include "pch.h"
 
 #include "ConstantBufferPool.h"
-
 #include "ConstantBufferManager.h"
-
 
 CONSTANT_BUFFER_PROPERTY g_pConstantBufferPropList[] = {{CONSTANT_BUFFER_TYPE_GLOBAL, sizeof(GlobalConstants)},
                                                         {CONSTANT_BUFFER_TYPE_MESH, sizeof(MeshConstants)},

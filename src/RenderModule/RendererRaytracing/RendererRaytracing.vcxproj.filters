@@ -11,9 +11,6 @@
     <Filter Include="D3DUtil">
       <UniqueIdentifier>{7ff8e894-362b-4330-8600-4ad361d8d407}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3DResourceManager">
-      <UniqueIdentifier>{76b9ef41-75f3-4683-a162-e4734f78929c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="typedef">
       <UniqueIdentifier>{863a41f3-517d-4dc2-80fe-ac139d429692}</UniqueIdentifier>
     </Filter>
@@ -26,50 +23,20 @@
     <Filter Include="pch">
       <UniqueIdentifier>{defdd1db-f3fd-4708-97c4-865fde917474}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ConstantBufferPool">
-      <UniqueIdentifier>{3523c70e-218c-42af-b93a-edfbcd9fcee5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DescriptorAllocator">
-      <UniqueIdentifier>{b8f93c67-8894-4327-bdb3-c0ef7e652a81}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SpriteObject">
       <UniqueIdentifier>{f0d7cd95-371b-45ae-b73e-adc2291f48b9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="FontManager">
-      <UniqueIdentifier>{662c1661-6e5a-435c-a787-68387bda2b53}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="TextureManager">
-      <UniqueIdentifier>{f277fbf2-0175-4b43-8bee-d6e0beaa981b}</UniqueIdentifier>
     </Filter>
     <Filter Include="RenderQueue">
       <UniqueIdentifier>{2694e82c-79a9-45ed-8016-346ba274e3f2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="CommandListPool">
-      <UniqueIdentifier>{84a5eb71-7144-4ade-b8db-ade728d794e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RenderThread">
-      <UniqueIdentifier>{fadfb507-8647-4c5b-8cd6-7c74adad509e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="DXRUtils">
       <UniqueIdentifier>{c2238c1b-b07f-4c94-822b-a9e3b331363d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DescriptorPool">
-      <UniqueIdentifier>{1e50e0be-c373-4e2f-9b0c-0f8cfe0d6b08}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MaterialManager">
-      <UniqueIdentifier>{ba3f981f-ed06-43c0-ae4d-5c5eda916d60}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ConstantBufferManager">
-      <UniqueIdentifier>{a6769bfc-c9f8-47c1-95a5-927381dc9e98}</UniqueIdentifier>
     </Filter>
     <Filter Include="LightObject">
       <UniqueIdentifier>{0437eff0-29c1-4e1b-bce5-43f7f8e100d9}</UniqueIdentifier>
     </Filter>
     <Filter Include="RaytracingManager">
       <UniqueIdentifier>{5f548d57-2750-4ce0-bf9b-25b7b065f75f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="PostProcessor">
-      <UniqueIdentifier>{30b89509-4661-4a9e-9741-59540a513d60}</UniqueIdentifier>
     </Filter>
     <Filter Include="PSOLibrary">
       <UniqueIdentifier>{72e2a590-38ed-4fb6-bf01-0a85033d916d}</UniqueIdentifier>
@@ -79,6 +46,9 @@
     </Filter>
     <Filter Include="Shader">
       <UniqueIdentifier>{5373ca9b-388a-4b31-aa16-ac1c107727de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{1c7fc63d-212e-4bfc-a585-c0d52db5966c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -91,38 +61,17 @@
     <ClInclude Include="RendererTypedef.h">
       <Filter>typedef</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorAllocator.h">
-      <Filter>DescriptorAllocator</Filter>
-    </ClInclude>
-    <ClInclude Include="D3D12ResourceManager.h">
-      <Filter>D3DResourceManager</Filter>
-    </ClInclude>
-    <ClInclude Include="DescriptorPool.h">
-      <Filter>DescriptorPool</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsCommon.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBufferPool.h">
-      <Filter>ConstantBufferPool</Filter>
-    </ClInclude>
     <ClInclude Include="SpriteObject.h">
       <Filter>SpriteObject</Filter>
     </ClInclude>
-    <ClInclude Include="FontManager.h">
-      <Filter>FontManager</Filter>
-    </ClInclude>
     <ClInclude Include="RenderQueue.h">
       <Filter>RenderQueue</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandListPool.h">
-      <Filter>CommandListPool</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderThread.h">
-      <Filter>RenderThread</Filter>
     </ClInclude>
     <ClInclude Include="RaytracingManager.h">
       <Filter>RaytracingManager</Filter>
@@ -130,23 +79,8 @@
     <ClInclude Include="ShaderTable.h">
       <Filter>DXRUtils</Filter>
     </ClInclude>
-    <ClInclude Include="MaterialManager.h">
-      <Filter>MaterialManager</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureManager.h">
-      <Filter>TextureManager</Filter>
-    </ClInclude>
-    <ClInclude Include="ConstantBufferManager.h">
-      <Filter>ConstantBufferManager</Filter>
-    </ClInclude>
-    <ClInclude Include="ConstantBufferManager.h">
-      <Filter>ConstantBufferManager</Filter>
-    </ClInclude>
     <ClInclude Include="RaytracingMeshObject.h">
       <Filter>MeshObject</Filter>
-    </ClInclude>
-    <ClInclude Include="PostProcessor.h">
-      <Filter>PostProcessor</Filter>
     </ClInclude>
     <ClInclude Include="MemoryMappedFile.h">
       <Filter>PSOLibrary</Filter>
@@ -165,6 +99,45 @@
     <ClInclude Include="framework.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CommandListPool.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ConstantBufferManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ConstantBufferPool.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\D3D12ResourceManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DescriptorAllocator.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DescriptorPool.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\FontManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\PostProcessor.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\RenderThread.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ConstantBuffers.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\RendererTypedef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\MaterialManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\TextureManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -173,41 +146,17 @@
     <ClCompile Include="D3DUtil.cpp">
       <Filter>D3DUtil</Filter>
     </ClCompile>
-    <ClCompile Include="DescriptorAllocator.cpp">
-      <Filter>DescriptorAllocator</Filter>
-    </ClCompile>
-    <ClCompile Include="D3D12ResourceManager.cpp">
-      <Filter>D3DResourceManager</Filter>
-    </ClCompile>
-    <ClCompile Include="DescriptorPool.cpp">
-      <Filter>DescriptorPool</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsCommon.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
-    <ClCompile Include="ConstantBufferPool.cpp">
-      <Filter>ConstantBufferPool</Filter>
-    </ClCompile>
     <ClCompile Include="SpriteObject.cpp">
       <Filter>SpriteObject</Filter>
     </ClCompile>
-    <ClCompile Include="FontManager.cpp">
-      <Filter>FontManager</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureManager.cpp">
-      <Filter>TextureManager</Filter>
-    </ClCompile>
     <ClCompile Include="RenderQueue.cpp">
       <Filter>RenderQueue</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandListPool.cpp">
-      <Filter>CommandListPool</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderThread.cpp">
-      <Filter>RenderThread</Filter>
     </ClCompile>
     <ClCompile Include="RaytracingManager.cpp">
       <Filter>RaytracingManager</Filter>
@@ -215,18 +164,9 @@
     <ClCompile Include="ShaderTable.cpp">
       <Filter>DXRUtils</Filter>
     </ClCompile>
-    <ClCompile Include="MaterialManager.cpp">
-      <Filter>MaterialManager</Filter>
-    </ClCompile>
-    <ClCompile Include="ConstantBufferManager.cpp">
-      <Filter>ConstantBufferManager</Filter>
-    </ClCompile>
     <ClCompile Include="RendererInterface.cpp" />
     <ClCompile Include="RaytracingMeshObject.cpp">
       <Filter>MeshObject</Filter>
-    </ClCompile>
-    <ClCompile Include="PostProcessor.cpp">
-      <Filter>PostProcessor</Filter>
     </ClCompile>
     <ClCompile Include="MemoryMappedFile.cpp">
       <Filter>PSOLibrary</Filter>
@@ -243,6 +183,39 @@
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="dllmain.cpp">
       <Filter>DLLMain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CommandListPool.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\ConstantBufferManager.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\ConstantBufferPool.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\D3D12ResourceManager.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\DescriptorAllocator.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\DescriptorPool.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\FontManager.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\PostProcessor.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\RenderThread.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MaterialManager.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\TextureManager.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

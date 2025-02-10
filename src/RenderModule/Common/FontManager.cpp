@@ -1,5 +1,11 @@
 #include "pch.h"
-#include "D3D12Renderer.h"
+
+#ifdef RENDERER_RAYTRACING
+#include "../RendererRaytracing/D3D12Renderer.h"
+#elif defined(RENDERER_D3D12)
+#include "../RendererD3D12/D3D12Renderer.h"
+#endif
+
 #include "FontManager.h"
 
 BOOL FontManager::CreateD2D(ID3D12Device *pD3DDevice, ID3D12CommandQueue *pCommandQueue, BOOL bEnableDebugLayer)

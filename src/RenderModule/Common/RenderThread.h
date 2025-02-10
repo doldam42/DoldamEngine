@@ -1,6 +1,11 @@
 #pragma once
 
-#include "D3D12Renderer.h"
+#ifdef RENDERER_RAYTRACING
+#include "../RendererRaytracing/D3D12Renderer.h"
+#elif defined(RENDERER_D3D12)
+#include "../RendererD3D12/D3D12Renderer.h"
+#endif
+
 enum RENDER_THREAD_EVENT_TYPE
 {
 	RENDER_THREAD_EVENT_TYPE_PROCESS = 0,

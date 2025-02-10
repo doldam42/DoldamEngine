@@ -6,6 +6,7 @@
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
 #include "ConstantBuffers.h"
+#include "D3DUtil.h"
 #include "D3D12ResourceManager.h"
 #include "DescriptorPool.h"
 #include "FontManager.h"

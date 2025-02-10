@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ConstantBuffers.h"
+
 struct CB_CONTAINER {
   D3D12_CPU_DESCRIPTOR_HANDLE CBVHandle;
   D3D12_GPU_VIRTUAL_ADDRESS   pGPUMemAddr;

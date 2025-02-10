@@ -3,7 +3,12 @@
 #include "../GenericModule/HashTable.h"
 #include "../GenericModule/LinkedList.h"
 
-#include "D3D12Renderer.h"
+#ifdef RENDERER_RAYTRACING
+#include "../RendererRaytracing/D3D12Renderer.h"
+#elif defined(RENDERER_D3D12)
+#include "../RendererD3D12/D3D12Renderer.h"
+#endif
+
 #include "D3D12ResourceManager.h"
 
 #include "TextureManager.h"

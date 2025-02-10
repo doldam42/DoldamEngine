@@ -1,10 +1,15 @@
 #include "pch.h"
 
-#include "D3D12Renderer.h"
+#ifdef RENDERER_RAYTRACING
+#include "../RendererRaytracing/D3D12Renderer.h"
+#include "../RendererRaytracing/GraphicsCommon.h"
+#elif defined(RENDERER_D3D12)
+#include "../RendererD3D12/D3D12Renderer.h"
+#include "../RendererD3D12/GraphicsCommon.h"
+#endif
+
 #include "DescriptorPool.h"
 #include "D3D12ResourceManager.h"
-
-#include "GraphicsCommon.h"
 
 #include "PostProcessor.h"
 

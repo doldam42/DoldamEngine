@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "ConstantBufferPool.h"
 
 void ConstantBufferPool::Cleanup() {
