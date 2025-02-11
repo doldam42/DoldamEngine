@@ -9,4 +9,7 @@ class TimeController : public IController
     void Update(float dt) override;
 
     ~TimeController(){};
+
+    // Inherited via IController
+    void Render() override;
 };

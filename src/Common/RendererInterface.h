@@ -7,6 +7,7 @@
 #endif
 
 #include <combaseapi.h>
+#include "../MathModule/MathHeaders.h"
 
 enum TEXTURE_TYPE
 {
@@ -23,10 +24,19 @@ interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
 
+// v mean variable
 interface IRenderGUI : public IUnknown
-{
-    virtual void BeginRender() = 0;
-    virtual void EndRender() = 0;
+{ 
+    virtual void Begin(const char *name, bool showAnotherWindow = false) = 0;
+    virtual void End() = 0;
+
+    virtual void Text(const char *txt) = 0;
+    virtual void CheckBox(const char *label, bool *v) = 0;
+    virtual void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt = "%.3f") = 0;
+    virtual void Button(const char *label) = 0;
+
+    // For ImGUI Win32 Event Handle
+    virtual LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;
 };
 
 interface IRenderMaterial : public IUnknown
@@ -131,6 +141,8 @@ interface IRenderer : public IUnknown
     // For Debugging
     // virtual void UpdateTextureWithShadowMap(ITextureHandle * pTexHandle, UINT lightIndex) = 0;
     virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;
+
+    virtual IRenderGUI *GetRenderGUI() = 0;
 
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;

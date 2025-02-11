@@ -6,8 +6,8 @@
 #include "ConstantBufferManager.h"
 #include "ConstantBufferPool.h"
 #include "ConstantBuffers.h"
-#include "D3DUtil.h"
 #include "D3D12ResourceManager.h"
+#include "D3DUtil.h"
 #include "DescriptorPool.h"
 #include "FontManager.h"
 #include "GraphicsCommon.h"
@@ -21,6 +21,8 @@
 
 #include "PostProcessor.h"
 
+#include "GUIManager.h"
+#include "SingleDescriptorAllocator.h"
 // #include "PSOLibrary.h"
 
 #include <process.h>
@@ -230,7 +232,21 @@ lb_exit:
     m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
     m_ppCommandListPool[m_curContextIndex][0]->CloseAndExecute(m_pCommandQueue);
 
+    m_pSingleDescriptorAllocator = new SingleDescriptorAllocator;
+    m_pSingleDescriptorAllocator->Initialize(m_pD3DDevice, 32);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+    m_pSingleDescriptorAllocator->Alloc(&cpuHandle, &gpuHandle);
+
+    m_pGUIManager = new GUIManager;
+    m_pGUIManager->Initialize(m_hWnd, m_pD3DDevice, m_pCommandQueue, m_pSingleDescriptorAllocator->GetDescriptorHeap(),
+                              cpuHandle, gpuHandle, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT,
+                              SWAP_CHAIN_FRAME_COUNT);
+
     CreateDefaultTex();
+
+    m_pEnv = GetDefaultTex();
 
     g_pRenderer = this;
 
@@ -257,6 +273,8 @@ lb_return:
 
 void D3D12Renderer::BeginRender()
 {
+    // GUI Begin
+    m_pGUIManager->BeginRender();
 
     CommandListPool           *pCommandListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
@@ -341,6 +359,9 @@ void D3D12Renderer::EndRender()
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 
     m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
+
+    m_pGUIManager->EndRender(pCommandList);
+
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
@@ -1100,12 +1121,18 @@ void D3D12Renderer::WaitForGPU()
     }
 }
 
+IRenderGUI *D3D12Renderer::GetRenderGUI()
+{
+    m_pGUIManager->AddRef();
+    return m_pGUIManager;
+}
+
 D3D12Renderer::~D3D12Renderer()
 {
     Cleanup();
-#ifdef _DEBUG 
+#ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());
-#endif 
+#endif
 }
 
 HRESULT __stdcall D3D12Renderer::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
@@ -1178,6 +1205,7 @@ BOOL D3D12Renderer::CreateDescriptorTables()
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
         m_pResourceManager->AllocRTVDescriptorTable(&m_backRTVDescriptorTables[i]);
+
         m_pResourceManager->AllocRTVDescriptorTable(&m_intermediateRTVDescriptorTables[i]);
 
         m_pResourceManager->AllocDescriptorTable(&m_intermediateSRVDescriptorTables[i], 1);
@@ -1211,7 +1239,6 @@ void D3D12Renderer::CleanupDescriptorTables()
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
         // FORWARD RENDERING
-        m_pResourceManager->DeallocRTVDescriptorTable(&m_backRTVDescriptorTables[i]);
         m_pResourceManager->DeallocRTVDescriptorTable(&m_intermediateRTVDescriptorTables[i]);
         m_pResourceManager->DeallocDescriptorTable(&m_intermediateSRVDescriptorTables[i]);
 
@@ -1511,6 +1538,17 @@ void D3D12Renderer::Cleanup()
 #ifdef USE_DEFERRED_RENDERING
     CleanupRenderThreadPool();
 #endif
+
+    if (m_pSingleDescriptorAllocator)
+    {
+        delete m_pSingleDescriptorAllocator;
+        m_pSingleDescriptorAllocator = nullptr;
+    }
+    if (m_pGUIManager)
+    {
+        delete m_pGUIManager;
+        m_pGUIManager = nullptr;
+    }
 
     if (m_pDefaultTexHandle)
     {

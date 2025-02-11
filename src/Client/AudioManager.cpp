@@ -66,6 +66,8 @@ void AudioManager::SoundPlay(SOUND_HANDLE *pAudio, bool isLoop)
 
 AudioManager::~AudioManager() { Cleanup(); }
 
+void AudioManager::Render() {}
+
 BOOL AudioManager::Start() { return 0; }
 
 void AudioManager::Update(float dt) { m_pSystem->update();}

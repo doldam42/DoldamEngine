@@ -14,4 +14,7 @@ class RaytracingDemoController : public IController
 
     RaytracingDemoController() = default;
     ~RaytracingDemoController();
+
+    // Inherited via IController
+    void Render() override;
 };

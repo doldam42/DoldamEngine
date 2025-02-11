@@ -12,4 +12,7 @@ class TessellationDemoController : public IController
 
     TessellationDemoController() = default;
     ~TessellationDemoController();
+
+    // Inherited via IController
+    void Render() override;
 };

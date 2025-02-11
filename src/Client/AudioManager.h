@@ -31,4 +31,7 @@ class AudioManager : public IController
 
     AudioManager() = default;
     ~AudioManager();
+
+    // Inherited via IController
+    void Render() override;
 };

@@ -18,6 +18,7 @@ class ControllerManager
     void Register(IController *pController);
 
     void Update(float dt);
+    void Render();
     void Start();
 
     ControllerManager() { m_controllers.reserve(DEFAULT_SCRIPT_COUNT); };

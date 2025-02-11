@@ -39,6 +39,7 @@ interface IScriptable
 {
     virtual BOOL Start() = 0;
     virtual void Update(float dt) = 0;
+    virtual void Render() = 0;
 };
 
 interface IController : public IScriptable{};

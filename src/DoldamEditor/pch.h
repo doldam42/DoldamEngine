@@ -16,3 +16,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <tchar.h>
+
+#include "../Common/typedef.h"
+#include "../Common/RendererInterface.h"
+#include "../Common/EngineInterface.h"

@@ -47,6 +47,8 @@ class GameManager : public IGameManager
     IRenderer        *m_pRenderer = nullptr;
     InputManager     *m_pInputManager = nullptr;
 
+    IRenderGUI *m_pRenderGUI = nullptr;
+
     // GameObjects
     SORT_LINK *m_pGameObjLinkHead = nullptr;
     SORT_LINK *m_pGameObjLinkTail = nullptr;

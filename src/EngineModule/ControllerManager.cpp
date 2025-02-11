@@ -11,6 +11,14 @@ void ControllerManager::Update(float dt)
     }
 }
 
+void ControllerManager::Render() 
+{
+    for (int i = 0; i < m_controllers.size(); i++)
+    {
+        m_controllers[i]->Render();
+    }
+}
+
 void ControllerManager::Start()
 {
     for (int i = 0; i < m_controllers.size(); i++)

@@ -53,3 +53,5 @@ BOOL TessellationDemoController::Start()
 void TessellationDemoController::Update(float dt) {}
 
 TessellationDemoController::~TessellationDemoController() { Cleanup(); }
+
+void TessellationDemoController::Render() {}

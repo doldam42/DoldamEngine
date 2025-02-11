@@ -1,64 +1,93 @@
 #include "pch.h"
 
-#include "../../imgui/imgui.h"
-#include "../../imgui/backends/imgui_impl_win32.h"
-#include "../../imgui/backends/imgui_impl_dx12.h"
+#include "GUIController.h"
+
 #include "GameEditor.h"
 
-bool GameEditor::InitGUI() 
-{ return false; }
-
-void GameEditor::UpdateGUI() 
+BOOL GameEditor::LoadModules(HWND hWnd) 
 {
-    const ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    BOOL                 result = FALSE;
+    CREATE_INSTANCE_FUNC pCreateFunc;
 
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+    const WCHAR *rendererFileName = nullptr;
+    const WCHAR *engineFileName = nullptr;
+    const WCHAR *exporterFileName = nullptr;
+#ifdef _DEBUG
+    // rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
+    rendererFileName = L"../../DLL/RendererRaytracing_x64_debug.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_debug.dll";
+#else
+    rendererFileName = L"../../DLL/RendererD3D12_x64_release.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_release.dll";
+#endif
 
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to
-    // learn more about Dear ImGui!).
-    if (m_show_demo_window)
-        ImGui::ShowDemoWindow(&m_show_demo_window);
+    WCHAR wchErrTxt[128] = {};
+    DWORD dwErrCode = 0;
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+    m_hRendererDLL = LoadLibrary(rendererFileName);
+    if (!m_hRendererDLL)
     {
-        static float f = 0.0f;
-        static int   counter = 0;
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", rendererFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hRendererDLL, "DllCreateInstance");
+    pCreateFunc(&m_pRenderer);
 
-        ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+    m_hEngineDLL = LoadLibrary(engineFileName);
+    if (!m_hEngineDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", engineFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hEngineDLL, "DllCreateInstance");
+    pCreateFunc(&m_pGame);
 
-        ImGui::Text("This is some useful text.");          // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &m_show_demo_window); // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &m_show_another_window);
+    result = m_pRenderer->Initialize(hWnd, TRUE, FALSE);
+    result = m_pGame->Initialize(hWnd, m_pRenderer);
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float *)&clear_color); // Edit 3 floats representing a color
+    if (!result)
+        __debugbreak();
 
-        if (ImGui::Button(
-                "Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
+    return result;
+}
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / m_io.Framerate, m_io.Framerate);
-        ImGui::End();
+void GameEditor::CleanupModules() 
+{
+    if (m_pGame)
+    {
+        m_pGame->Release();
+        m_pGame = nullptr;
+    }
+    if (m_pRenderer)
+    {
+        m_pRenderer->Release();
+        m_pRenderer = nullptr;
     }
 
-    // 3. Show another simple window.
-    if (m_show_another_window)
+    if (m_hEngineDLL)
     {
-        ImGui::Begin("Another Window",
-                     &m_show_another_window); // Pass a pointer to our bool variable (the window will have a closing
-                                              // button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            m_show_another_window = false;
-        ImGui::End();
+        FreeLibrary(m_hEngineDLL);
+        m_hEngineDLL = nullptr;
+    }
+    if (m_hRendererDLL)
+    {
+        FreeLibrary(m_hRendererDLL);
+        m_hRendererDLL = nullptr;
     }
 }
 
-void GameEditor::Cleanup() {
-    
+void GameEditor::Cleanup()
+{
+    if (m_pGUIController)
+    {
+        delete m_pGUIController;
+        m_pGUIController = nullptr;
+    }
+    CleanupModules();
 }
 
 BOOL GameEditor::Initialize(HWND hWnd) 
@@ -67,25 +96,26 @@ BOOL GameEditor::Initialize(HWND hWnd)
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    LoadModules(hWnd);
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    // ImGui::StyleColorsLight();
+    m_pGUIController = new GUIController;
+    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI());
+    m_pGame->Register(m_pGUIController);
 
-    // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hWnd);
-    
-    m_io = io;
-
+    m_hWnd = hWnd;
     return TRUE;
 }
 
-void GameEditor::Process() { UpdateGUI(); }
+void GameEditor::Process() 
+{ 
+    m_pGame->Update();
+
+    m_pGame->Render();
+}
+
+LRESULT GameEditor::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    return m_pRenderer->GetRenderGUI()->WndProcHandler(hWnd, msg, wParam, lParam);
+}
 
 GameEditor::~GameEditor() { Cleanup(); }

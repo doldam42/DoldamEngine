@@ -18,5 +18,6 @@ BOOL TimeController::Start()
 }
 
 void TimeController::Update(float dt)
-{
-}
+{}
+
+void TimeController::Render() {}

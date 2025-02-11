@@ -28,6 +28,8 @@ class CommandListPool;
 class Cubemap;
 class RaytracingManager;
 class Terrain;
+class GUIManager;
+class SingleDescriptorAllocator;
 
 class PostProcessor;
 
@@ -68,6 +70,10 @@ class D3D12Renderer : public IRenderer
     TextureManager       *m_pTextureManager = nullptr;
     MaterialManager      *m_pMaterialManager = nullptr;
     FontManager          *m_pFontManager = nullptr;
+
+    SingleDescriptorAllocator *m_pSingleDescriptorAllocator = nullptr;
+
+    GUIManager *m_pGUIManager = nullptr;
 
     // #DXR
     RaytracingManager *m_pRaytracingManager = nullptr;
@@ -306,6 +312,8 @@ class D3D12Renderer : public IRenderer
     void ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType);
 
     void WaitForGPU();
+
+    IRenderGUI *GetRenderGUI() override;
 
     D3D12Renderer() = default;
     ~D3D12Renderer();

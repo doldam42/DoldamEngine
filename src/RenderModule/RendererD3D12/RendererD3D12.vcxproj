@@ -130,7 +130,7 @@
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;..\Common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;..\Common;$(SolutionDir)..\imgui;$(SolutionDir)..\imgui\backends</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -175,6 +175,14 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\..\imgui\imconfig.h" />
+    <ClInclude Include="..\..\..\imgui\imgui.h" />
+    <ClInclude Include="..\..\..\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\..\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\..\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\..\imgui\imstb_truetype.h" />
     <ClInclude Include="..\..\Common\RendererInterface.h" />
     <ClInclude Include="..\Common\CommandListPool.h" />
     <ClInclude Include="..\Common\ConstantBufferManager.h" />
@@ -184,6 +192,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="..\Common\DescriptorAllocator.h" />
     <ClInclude Include="..\Common\DescriptorPool.h" />
     <ClInclude Include="..\Common\FontManager.h" />
+    <ClInclude Include="..\Common\GUIManager.h" />
     <ClInclude Include="..\Common\MaterialManager.h" />
     <ClInclude Include="..\Common\PostProcessor.h" />
     <ClInclude Include="..\Common\RendererTypedef.h" />
@@ -204,6 +213,27 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="Terrain.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_dx12.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_win32.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\imgui_demo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\Common\CommandListPool.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
@@ -224,6 +254,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     </ClCompile>
     <ClCompile Include="..\Common\FontManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\GUIManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Common\MaterialManager.cpp" />
     <ClCompile Include="..\Common\PostProcessor.cpp">

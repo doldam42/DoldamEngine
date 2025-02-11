@@ -315,6 +315,8 @@ class D3D12Renderer : public IRenderer
 
     void WaitForGPU();
 
+    IRenderGUI *GetRenderGUI() override { return nullptr; }
+
     D3D12Renderer() = default;
     ~D3D12Renderer();
 

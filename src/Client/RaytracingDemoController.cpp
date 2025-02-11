@@ -135,3 +135,5 @@ BOOL RaytracingDemoController::Start()
 void RaytracingDemoController::Update(float dt) {}
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }
+
+void RaytracingDemoController::Render() {}

@@ -337,6 +337,8 @@ void GameManager::Render()
     // begin
     m_pRenderer->BeginRender();
 
+    m_pControllerManager->Render();
+
     if (m_pTerrain)
     {
         m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);

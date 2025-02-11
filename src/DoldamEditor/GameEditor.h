@@ -1,24 +1,30 @@
 #pragma once
 #include <Windows.h>
-#include "../../imgui/imgui.h"
 
+class GUIController;
 class GameEditor
 {
   private:
-    ImGuiIO m_io;
+    HMODULE m_hRendererDLL = nullptr;
+    HMODULE m_hEngineDLL = nullptr;
+
     HWND m_hWnd = nullptr;
-    bool m_show_demo_window = true;
-    bool m_show_another_window = false;
 
-    bool InitGUI();
+    IGameManager *m_pGame = nullptr;
+    IRenderer *m_pRenderer = nullptr;
 
-    void UpdateGUI();
+    GUIController *m_pGUIController = nullptr;
+
+    BOOL LoadModules(HWND hWnd);
+    void CleanupModules();
 
     void Cleanup();
 
   public:
     BOOL Initialize(HWND hWnd);
     void Process();
+
+    LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     GameEditor() = default;
     ~GameEditor();

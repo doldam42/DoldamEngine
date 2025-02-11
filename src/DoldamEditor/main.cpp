@@ -2,16 +2,25 @@
 //
 
 #include "pch.h"
+
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+
 #include "DoldamEditor.h"
+#include "GUIController.h"
 #include "GameEditor.h"
 
 #define MAX_LOADSTRING 100
+
+#pragma comment(lib, "DirectXTK12.lib")
+#pragma comment(lib, "GenericModule.lib")
+#pragma comment(lib, "MathModule.lib")
 
 // Global Variables:
 
 HINSTANCE hInst = nullptr; // current instance
 
-GameEditor* g_pEditor = nullptr;
+GameEditor *g_pEditor = nullptr;
 
 HWND  g_hMainWindow = nullptr;
 WCHAR szTitle[MAX_LOADSTRING];       // The title bar text
@@ -152,12 +161,11 @@ HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - post a quit message and return
 //
 //
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+    if (g_pEditor != nullptr && g_pEditor->WndProcHandler(hWnd, message, wParam, lParam))
         return true;
-
     switch (message)
     {
     case WM_COMMAND: {
@@ -199,6 +207,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (!(lParam & 0x40000000))
         {
             // TODO
+            if (vkCode == VK_ESCAPE)
+            {
+                DestroyWindow(hWnd);
+                break;
+            }
         }
     }
     break;
@@ -241,6 +254,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
+
     return 0;
 }
 

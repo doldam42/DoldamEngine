@@ -74,6 +74,7 @@ class D3D12ResourceManager
 
     UINT GetDescriptorSize() const { return m_descriptorSize; }
 
+
     D3D12ResourceManager() = default;
     ~D3D12ResourceManager();
 };
