@@ -113,6 +113,16 @@ void GameEditor::Process()
     m_pGame->Render();
 }
 
+void GameEditor::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }
+
+void GameEditor::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyUp(nChar, uiScanCode); }
+
+void GameEditor::OnMouseMove(int mouseX, int mouseY) { m_pGame->OnMouseMove(mouseX, mouseY); }
+
+void GameEditor::OnMouseWheel(float deltaWheel) { m_pGame->OnMouseWheel(deltaWheel); }
+
+BOOL GameEditor::OnUpdateWindowSize(UINT width, UINT height) { return m_pGame->OnUpdateWindowSize(width, height); }
+
 LRESULT GameEditor::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return m_pRenderer->GetRenderGUI()->WndProcHandler(hWnd, msg, wParam, lParam);

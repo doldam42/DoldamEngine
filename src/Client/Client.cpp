@@ -174,7 +174,6 @@ BOOL Client::Initialize(HWND hWnd)
      //m_pGame->Register(m_pTessellationDemoController);
 
     Start();
-    m_pGame->Start();
 
     return result;
 }
@@ -197,6 +196,8 @@ BOOL Client::Start()
     LoadScene();
 
     m_pGame->BuildScene();
+
+    m_pGame->Start();
 
     return TRUE;
 }

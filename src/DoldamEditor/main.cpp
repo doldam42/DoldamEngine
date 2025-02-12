@@ -3,15 +3,15 @@
 
 #include "pch.h"
 
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-
 #include "DoldamEditor.h"
 #include "GUIController.h"
 #include "GameEditor.h"
 
 #define MAX_LOADSTRING 100
 
+#pragma comment(lib, "Propsys.lib")
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "GenericModule.lib")
 #pragma comment(lib, "MathModule.lib")
@@ -186,7 +186,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
 
     case WM_SIZE: {
-        // TODO
+        if (g_pEditor)
+        {
+            RECT rect;
+            GetClientRect(hWnd, &rect);
+            DWORD width = rect.right - rect.left;
+            DWORD height = rect.bottom - rect.top;
+            g_pEditor->OnUpdateWindowSize(width, height);
+        }
     }
 
     break;
@@ -207,10 +214,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (!(lParam & 0x40000000))
         {
             // TODO
-            if (vkCode == VK_ESCAPE)
+            if (g_pEditor)
             {
-                DestroyWindow(hWnd);
-                break;
+                g_pEditor->OnKeyDown(vkCode, uiScanCode);
             }
         }
     }
@@ -219,7 +225,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_KEYUP: {
         UINT uiScanCode = (0x00ff0000 & lParam) >> 16;
         UINT vkCode = MapVirtualKey(uiScanCode, MAPVK_VSC_TO_VK);
-        // TODO
+        if (g_pEditor)
+        {
+            g_pEditor->OnKeyUp(vkCode, uiScanCode);
+        }
     }
     break;
 

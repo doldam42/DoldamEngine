@@ -37,20 +37,20 @@ BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGB
     m_DPI = GetDpiForWindow(hWnd);
     RECT rect;
     ::GetClientRect(hWnd, &rect);
-    UINT dwWndWidth = rect.right - rect.left;
-    UINT dwWndHeight = rect.bottom - rect.top;
-    UINT dwBackBufferWidth = rect.right - rect.left;
-    UINT dwBackBufferHeight = rect.bottom - rect.top;
+    UINT wndWidth = rect.right - rect.left;
+    UINT wndHeight = rect.bottom - rect.top;
+    UINT backBufferWidth = rect.right - rect.left;
+    UINT backBufferHeight = rect.bottom - rect.top;
 
-    m_Viewport.Width = (float)dwWndWidth;
-    m_Viewport.Height = (float)dwWndHeight;
+    m_Viewport.Width = (float)wndWidth;
+    m_Viewport.Height = (float)wndHeight;
     m_Viewport.MinDepth = 0.0f;
     m_Viewport.MaxDepth = 1.0f;
 
     m_ScissorRect.left = 0;
     m_ScissorRect.top = 0;
-    m_ScissorRect.right = dwWndWidth;
-    m_ScissorRect.bottom = dwWndHeight;
+    m_ScissorRect.right = wndWidth;
+    m_ScissorRect.bottom = wndHeight;
 
     HRESULT            hr = S_OK;
     ID3D12Debug       *pDebugController = nullptr;
@@ -141,8 +141,8 @@ lb_exit:
     // Describe and create the swap chain.
     {
         DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-        swapChainDesc.Width = dwBackBufferWidth;
-        swapChainDesc.Height = dwBackBufferHeight;
+        swapChainDesc.Width = backBufferWidth;
+        swapChainDesc.Height = backBufferHeight;
         swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         // swapChainDesc.BufferDesc.RefreshRate.Numerator = m_uiRefreshRate;
         // swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
@@ -445,6 +445,8 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
     m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
     CreateBuffers();
+
+    m_pGUIManager->OnUpdateWindowSize(width, height);
 }
 
 IRenderMesh *D3D12Renderer::CreateSkinnedObject()

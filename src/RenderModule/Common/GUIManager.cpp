@@ -22,6 +22,11 @@ BOOL GUIManager::Initialize(HWND hWnd, ID3D12Device *pD3DDevice, ID3D12CommandQu
                             D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
                             UINT frameCount)
 {
+    RECT rect;
+    ::GetClientRect(hWnd, &rect);
+    m_width = rect.right - rect.left;
+    m_height = rect.bottom - rect.top;
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -30,7 +35,7 @@ BOOL GUIManager::Initialize(HWND hWnd, ID3D12Device *pD3DDevice, ID3D12CommandQu
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // 게임패드 지원
 
     // Setup Dear ImGui style
-    //ImGui::StyleColorsDark();
+    // ImGui::StyleColorsDark();
     ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
@@ -94,23 +99,83 @@ void GUIManager::EndRender(ID3D12GraphicsCommandList *pCommandList)
 
 GUIManager::~GUIManager() { Cleanup(); }
 
-void GUIManager::Begin(const char *name, bool showAnotherWindow) { ImGui::Begin(name, &showAnotherWindow); }
+BOOL GUIManager::Begin(const char *name, bool showAnotherWindow, GUI_WINDOW_FLAGS flags)
+{
+    return ImGui::Begin(name, &showAnotherWindow, flags);
+}
 
 void GUIManager::End() { ImGui::End(); }
+
+BOOL GUIManager::TreeNode(const char *name) { return ImGui::TreeNode(name); }
+
+void GUIManager::TreePop() { ImGui::TreePop(); }
 
 void GUIManager::Text(const char *txt) { ImGui::Text(txt); }
 
 void GUIManager::SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt)
 {
-    ImGui::SliderFloat(label, v, vMin, vMax, fmt);
+    if (!label || !strlen(label))
+    {
+        ImGui::SliderFloat(EMPTY_LABEL, v, vMin, vMax, fmt);
+    }
+    else
+    {
+        ImGui::SliderFloat(label, v, vMin, vMax, fmt);
+    }
 }
 
-void GUIManager::CheckBox(const char *label, bool *v) { ImGui::Checkbox(label, v); }
+void GUIManager::CheckBox(const char *label, bool *v)
+{
+    if (!label || !strlen(label))
+    {
+        ImGui::Checkbox(EMPTY_LABEL, v);
+    }
+    else
+    {
+        ImGui::Checkbox(label, v);
+    }
+}
 
-void GUIManager::Button(const char *label) { ImGui::Button(label); }
+BOOL GUIManager::Button(const char *label)
+{
+    if (!label || !strlen(label))
+    {
+        return ImGui::Button(EMPTY_LABEL);
+    }
+    else
+    {
+        return ImGui::Button(label);
+    }
+}
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT GUIManager::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+LRESULT                       GUIManager::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+}
+
+void GUIManager::OnUpdateWindowSize(UINT width, UINT height)
+{
+    m_width = width;
+    m_height = height;
+}
+
+void GUIManager::SetNextWindowPosA(UINT posX, UINT posY) { ImGui::SetNextWindowPos(ImVec2(posX, posY)); }
+
+void GUIManager::SetNextWindowSizeA(UINT width, UINT height) { ImGui::SetNextWindowSize(ImVec2(width, height)); }
+
+void GUIManager::SetNextWindowPosR(float fPosX, float fPosY)
+{
+    UINT posX = m_width * fPosX;
+    UINT posY = m_height * fPosY;
+
+    SetNextWindowPosA(posX, posY);
+}
+
+void GUIManager::SetNextWindowSizeR(float fWidth, float fHeight)
+{
+    UINT width = m_width * fWidth;
+    UINT height = m_height * fHeight;
+
+    SetNextWindowSizeA(width, height);
 }

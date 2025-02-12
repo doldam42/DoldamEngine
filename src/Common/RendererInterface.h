@@ -24,16 +24,40 @@ interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
 
-// v mean variable
+typedef int GUI_WINDOW_FLAGS;
+enum GUI_WINDOW_FLAGS_ : UINT
+{
+    GUI_WINDOW_FLAG_NONE = 0,
+    GUI_WINDOW_FLAG_NO_TITLE_BAR = 1 << 0,
+    GUI_WINDOW_FLAG_NO_RESIZE = 1 << 1,
+    GUI_WINDOW_FLAG_NO_MOVE = 1 << 2,
+    GUI_WINDOW_FLAG_NO_SCROLLBAR = 1 << 3,
+    GUI_WINDOW_FLAG_NO_SCROLL_WITH_MOUSE = 1 << 4,
+    GUI_WINDOW_FLAG_NO_COLLAPSE = 1 << 5,
+};
+
+// v mean ui variable
 interface IRenderGUI : public IUnknown
 { 
-    virtual void Begin(const char *name, bool showAnotherWindow = false) = 0;
+    virtual BOOL Begin(const char *name, bool showAnotherWindow = false,
+                       GUI_WINDOW_FLAGS flags = GUI_WINDOW_FLAG_NONE) = 0;
     virtual void End() = 0;
+
+    virtual BOOL TreeNode(const char *name) = 0;
+    virtual void TreePop() = 0;
 
     virtual void Text(const char *txt) = 0;
     virtual void CheckBox(const char *label, bool *v) = 0;
     virtual void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt = "%.3f") = 0;
-    virtual void Button(const char *label) = 0;
+    virtual BOOL Button(const char *label) = 0;
+
+    // per pixel (Absolute)
+    virtual void SetNextWindowPosA(UINT posX, UINT posY) = 0;
+    virtual void SetNextWindowSizeA(UINT width, UINT height) = 0;
+    
+    // per percent (Relative)
+    virtual void SetNextWindowPosR(float posX, float posY) = 0;
+    virtual void SetNextWindowSizeR(float width, float height) = 0;
 
     // For ImGUI Win32 Event Handle
     virtual LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;

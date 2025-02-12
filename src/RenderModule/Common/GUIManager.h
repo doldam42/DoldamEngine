@@ -7,6 +7,9 @@
 struct ImGuiIO;
 class GUIManager : public IRenderGUI
 {
+  public:
+    const char* EMPTY_LABEL = "##xx";
+
   private:
     ID3D12Device         *m_pD3DDevice = nullptr;
     ID3D12CommandQueue   *pCmdQueue = nullptr;
@@ -14,6 +17,9 @@ class GUIManager : public IRenderGUI
 
     DXGI_FORMAT m_rtvFormat;
     DXGI_FORMAT m_dsvFormat;
+
+    UINT m_width = 0;
+    UINT m_height = 0;
 
     ULONG m_refCount = 1;
 
@@ -35,12 +41,26 @@ class GUIManager : public IRenderGUI
     ~GUIManager();
 
     // Inherited via IRenderGUI
-    void Begin(const char *name, bool showAnotherWindow) override;
+    BOOL Begin(const char *name, bool showAnotherWindow, GUI_WINDOW_FLAGS flags) override;
     void End() override;
+
+    BOOL TreeNode(const char *name);
+    void TreePop();
+
     void Text(const char *txt) override;
     void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt) override;
     void CheckBox(const char *label, bool *v) override;
-    void Button(const char *label) override;
+    BOOL Button(const char *label) override;
 
     LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+    void OnUpdateWindowSize(UINT width, UINT height);
+
+    // Inherited via IRenderGUI
+    void SetNextWindowPosA(UINT posX, UINT posY) override;
+    void SetNextWindowSizeA(UINT width, UINT height) override;
+
+    // Inherited via IRenderGUI
+    void SetNextWindowPosR(float posX, float posY) override;
+    void SetNextWindowSizeR(float width, float height) override;
 };

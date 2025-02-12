@@ -24,6 +24,12 @@ class GameEditor
     BOOL Initialize(HWND hWnd);
     void Process();
 
+    void OnKeyDown(UINT nChar, UINT uiScanCode);
+    void OnKeyUp(UINT nChar, UINT uiScanCode);
+    void OnMouseMove(int mouseX, int mouseY);
+    void OnMouseWheel(float deltaWheel);
+    BOOL OnUpdateWindowSize(UINT width, UINT height);
+
     LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     GameEditor() = default;
