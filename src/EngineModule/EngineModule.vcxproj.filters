@@ -107,9 +107,6 @@
     <Filter Include="DLLMain">
       <UniqueIdentifier>{1cb27210-4505-493d-b9f0-2be852a6d1bd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameObject">
-      <UniqueIdentifier>{9c64e1f9-0974-47ed-9ef1-56b8ed09e298}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Model">
       <UniqueIdentifier>{4e3be451-fbaf-4b2c-a8d0-143c8b9d3d0f}</UniqueIdentifier>
     </Filter>
@@ -118,6 +115,9 @@
     </Filter>
     <Filter Include="Physics">
       <UniqueIdentifier>{894be68f-dfa3-41d8-814f-5df68a4c3692}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameObject">
+      <UniqueIdentifier>{9c64e1f9-0974-47ed-9ef1-56b8ed09e298}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

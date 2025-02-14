@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include <DirectXTK/CommonStates.h>
 #include <d3dcompiler.h>
 
 #include "D3D12Renderer.h"
@@ -821,8 +820,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     psoDesc.SampleDesc.Count = 1;
-    psoDesc.BlendState = DirectX::CommonStates::Opaque;
-    psoDesc.DepthStencilState = DirectX::CommonStates::DepthDefault;
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
@@ -861,7 +860,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 }
                 else if (fillMode == FILL_MODE_WIRED)
                 {
-                    psoDesc.RasterizerState = DirectX::CommonStates::Wireframe;
+                    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+                    psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
                 }
 
                 if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc,

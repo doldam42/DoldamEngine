@@ -4,12 +4,16 @@
 #include "AssimpLoader.h"
 #include "FBXLoader.h"
 
-#pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "assimp-vc143-mt.lib")
 #pragma comment(lib, "libfbxsdk.lib")
 
-#pragma comment(lib, "GenericModule.lib")
-#pragma comment(lib, "MathModule.lib")
+#ifdef _DEBUG
+#pragma comment(lib, "MathModule_x64_Debug.lib")
+#pragma comment(lib, "GenericModule_x64_Debug.lib")
+#else
+#pragma comment(lib, "MathModule_x64_Release.lib")
+#pragma comment(lib, "GenericModule_x64_Release.lib")
+#endif // _DEBUG
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,

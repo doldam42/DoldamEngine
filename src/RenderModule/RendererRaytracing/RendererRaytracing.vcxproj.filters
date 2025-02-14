@@ -53,6 +53,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{ac632cfe-0e4c-465f-9d01-3cba1c0abcb4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DirectXTex">
+      <UniqueIdentifier>{6ab5c538-cd9a-4c0f-b0d2-18bec8071ce8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h">
@@ -171,6 +174,15 @@
     <ClInclude Include="..\Common\SingleDescriptorAllocator.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\DirectXTex\WICTextureLoader\WICTextureLoader12.h">
+      <Filter>DirectXTex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\DirectXTex\DDSTextureLoader\DDSTextureLoader12.h">
+      <Filter>DirectXTex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\DirectXTex\DirectXTex\DirectXTex.h">
+      <Filter>DirectXTex</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D12Renderer.cpp">
@@ -275,6 +287,12 @@
     </ClCompile>
     <ClCompile Include="..\Common\SingleDescriptorAllocator.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\DirectXTex\WICTextureLoader\WICTextureLoader12.cpp">
+      <Filter>DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\DirectXTex\DDSTextureLoader\DDSTextureLoader12.cpp">
+      <Filter>DirectXTex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

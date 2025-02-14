@@ -87,7 +87,7 @@ BOOL GUIManager::Initialize(HWND hWnd, ID3D12Device5 *pD3DDevice, ID3D12CommandQ
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 키보드 지원
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // 게임패드 지원
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // 도킹 지원
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // 도킹 지원
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

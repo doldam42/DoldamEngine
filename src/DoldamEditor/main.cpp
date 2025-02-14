@@ -12,9 +12,14 @@
 #pragma comment(lib, "Propsys.lib")
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
-#pragma comment(lib, "DirectXTK12.lib")
-#pragma comment(lib, "GenericModule.lib")
-#pragma comment(lib, "MathModule.lib")
+
+#ifdef _DEBUG
+#pragma comment(lib, "MathModule_x64_Debug.lib")
+#pragma comment(lib, "GenericModule_x64_Debug.lib")
+#else
+#pragma comment(lib, "MathModule_x64_Release.lib")
+#pragma comment(lib, "GenericModule_x64_Release.lib")
+#endif // _DEBUG
 
 // Global Variables:
 

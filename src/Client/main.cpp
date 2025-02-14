@@ -55,16 +55,13 @@ extern "C"
 #pragma comment(lib, "fmodL_vc.lib")
 #pragma comment(lib, "fmodstudioL_vc.lib")
 
-#pragma comment(lib, "DirectXTK12.lib")
-#pragma comment(lib, "GenericModule.lib")
-#pragma comment(lib, "MathModule.lib")
-
 #ifdef _DEBUG
-#pragma comment(lib, "../../DLL/RendererD3D12_x64_debug.lib")
+#pragma comment(lib, "MathModule_x64_Debug.lib")
+#pragma comment(lib, "GenericModule_x64_Debug.lib")
 #else
-#pragma comment(lib, "../../DLL/RendererD3D12_x64_release.lib")
+#pragma comment(lib, "MathModule_x64_Release.lib")
+#pragma comment(lib, "GenericModule_x64_Release.lib")
 #endif // _DEBUG
-
 
 // Global Variables:
 

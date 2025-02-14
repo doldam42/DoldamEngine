@@ -3,9 +3,13 @@
 #include "pch.h"
 #include "GameManager.h"
 
-#pragma comment(lib, "DirectXTK12.lib")
-#pragma comment(lib, "MathModule.lib")
-#pragma comment(lib, "GenericModule.lib")
+#ifdef _DEBUG
+#pragma comment(lib, "MathModule_x64_Debug.lib")
+#pragma comment(lib, "GenericModule_x64_Debug.lib")
+#else
+#pragma comment(lib, "MathModule_x64_Release.lib")
+#pragma comment(lib, "GenericModule_x64_Release.lib")
+#endif // _DEBUG
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {

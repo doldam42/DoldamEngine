@@ -1,7 +1,11 @@
 #include "pch.h"
 
-#include <DirectXTK/DDSTextureLoader.h>
-#include <DirectXTK/WICTextureLoader.h>
+#include <d3d12.h>
+#include <d3dx12.h>
+
+#include <DirectXTex/DirectXTex.h>
+#include <DDSTextureLoader/DDSTextureLoader12.h>
+#include <WICTextureLoader/WICTextureLoader12.h>
 
 #include "DescriptorAllocator.h"
 

@@ -12,10 +12,16 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 
-#pragma comment(lib, "DirectXTK12.lib")
+#ifdef _DEBUG
+#pragma comment(lib, "../../../lib/Debug/DirectXTex.lib")
+#pragma comment(lib, "../../../DLL/MathModule_x64_Debug.lib")
+#pragma comment(lib, "../../../DLL/GenericModule_x64_Debug.lib")
+#else
+#pragma comment(lib, "../../../lib/Release/DirectXTex.lib")
+#pragma comment(lib, "../../../DLL/MathModule_x64_Release.lib")
+#pragma comment(lib, "../../../DLL/GenericModule_x64_Release.lib")
+#endif // _DEBUG
 
-#pragma comment(lib, "MathModule.lib")
-#pragma comment(lib, "GenericModule.lib")
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,

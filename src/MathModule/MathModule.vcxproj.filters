@@ -7,6 +7,9 @@
     <Filter Include="Shape">
       <UniqueIdentifier>{67ae1203-e691-4c94-b43f-15c76b79bd51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SimpleMath">
+      <UniqueIdentifier>{bb904fbd-8580-4f27-aca9-65eade86f0bc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -29,6 +32,9 @@
     </ClInclude>
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="SimpleMath.h">
+      <Filter>SimpleMath</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -41,5 +47,13 @@
       <Filter>Shape</Filter>
     </ClCompile>
     <ClCompile Include="MathUtils.cpp" />
+    <ClCompile Include="SimpleMath.cpp">
+      <Filter>SimpleMath</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SimpleMath.inl">
+      <Filter>SimpleMath</Filter>
+    </None>
   </ItemGroup>
 </Project>
