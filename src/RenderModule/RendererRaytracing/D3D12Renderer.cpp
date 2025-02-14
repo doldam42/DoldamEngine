@@ -1155,7 +1155,7 @@ ULONG __stdcall D3D12Renderer::Release(void)
 
 void D3D12Renderer::CreateDefaultTex()
 {
-    DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    /*DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     UINT        width = 256;
     UINT        height = 256;
     UINT        channel = 4;
@@ -1166,7 +1166,9 @@ void D3D12Renderer::CreateDefaultTex()
     m_pDefaultTexHandle = m_pTextureManager->CreateImmutableTexture(width, height, TexFormat, defaultTex);
 
     delete[] defaultTex;
-    defaultTex = nullptr;
+    defaultTex = nullptr;*/
+
+    m_pDefaultTexHandle = (TEXTURE_HANDLE*)CreateTiledTexture(32, 32, 255, 255, 255);
 }
 
 void D3D12Renderer::CreateFence()
