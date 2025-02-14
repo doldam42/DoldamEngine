@@ -2,7 +2,6 @@
 
 #include <d3d12.h>
 #include <dwrite_3.h>
-#include "../GenericModule/GenericHeaders.h"
 #include "../Common/RendererInterface.h"
 
 enum LIGHT_FLAGS : UINT

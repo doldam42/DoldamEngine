@@ -55,6 +55,26 @@ struct MATERIAL_HANDLE : IRenderMaterial
     // Inherited via IRenderMaterial
     BOOL UpdateMetallicRoughness(float metallic, float roughness) override;
     BOOL UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type) override;
+    ITextureHandle* GetTexture(TEXTURE_TYPE type) override
+    {
+        switch (type)
+        {
+        case TEXTURE_TYPE_ALBEDO:
+            return pAlbedoTexHandle;
+        case TEXTURE_TYPE_NORMAL:
+            return pNormalTexHandle;
+        case TEXTURE_TYPE_AO:
+            return pAOTexHandle;
+        case TEXTURE_TYPE_EMISSIVE:
+            return pEmissiveTexHandle;
+        case TEXTURE_TYPE_METALLIC_ROUGHNESS:
+            return pMetallicRoughnessTexHandle;
+        case TEXTURE_TYPE_HEIGHT:
+            return pHeightTexHandle;
+        default:
+            return nullptr;
+        }
+    }
 
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;

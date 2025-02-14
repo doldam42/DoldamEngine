@@ -195,6 +195,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="..\Common\PostProcessor.h" />
     <ClInclude Include="..\Common\RendererTypedef.h" />
     <ClInclude Include="..\Common\RenderThread.h" />
+    <ClInclude Include="..\Common\SingleDescriptorAllocator.h" />
     <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="D3D12Renderer.h" />
     <ClInclude Include="D3DUtil.h" />
@@ -222,7 +223,6 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="ShaderTable.h" />
-    <ClInclude Include="SingleDescriptorAllocator.h" />
     <ClInclude Include="SpriteObject.h" />
     <ClInclude Include="Terrain.h" />
   </ItemGroup>
@@ -279,6 +279,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClCompile Include="..\Common\RenderThread.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\Common\SingleDescriptorAllocator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="D3D12Renderer.cpp" />
     <ClCompile Include="D3DUtil.cpp" />
@@ -310,7 +313,6 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ShaderTable.cpp" />
-    <ClCompile Include="SingleDescriptorAllocator.cpp" />
     <ClCompile Include="SpriteObject.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

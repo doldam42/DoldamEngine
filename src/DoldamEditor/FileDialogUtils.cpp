@@ -341,11 +341,13 @@ HRESULT AddItemsToCommonPlaces()
         {
             // Get the known folder.
             IKnownFolder *pKnownFolder = NULL;
-            hr = pkfm->GetFolder(FOLDERID_PublicMusic, &pKnownFolder);
+
+            hr = pkfm->GetFolder(FOLDERID_Documents, &pKnownFolder);
             if (SUCCEEDED(hr))
             {
                 // File Dialog APIs need an IShellItem that represents the location.
                 IShellItem *psi = NULL;
+
                 hr = pKnownFolder->GetShellItem(0, IID_PPV_ARGS(&psi));
                 if (SUCCEEDED(hr))
                 {
@@ -803,5 +805,161 @@ HRESULT WritePropertiesWithoutUsingHandlers()
         }
         pfsd->Release();
     }
+    return hr;
+}
+
+HRESULT FileDialog::SelectFile(HANDLE hEvent, WCHAR *pOutFullPath, size_t sizeInWords, const WCHAR *currentPath)
+{
+    // CoCreate the File Open Dialog object.
+    IFileDialog *pfd = NULL;
+    HRESULT      hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+    if (SUCCEEDED(hr))
+    {
+        IShellItem *psi;
+        hr = SHCreateItemFromParsingName(currentPath, nullptr, IID_PPV_ARGS(&psi));
+        if (SUCCEEDED(hr))
+        {
+            pfd->SetFolder(psi);
+            psi->Release();
+        }
+        // Create an event handling object, and hook it up to the dialog.
+        IFileDialogEvents *pfde = NULL;
+        hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
+        if (SUCCEEDED(hr))
+        {
+            // Hook up the event handler.
+            DWORD dwCookie;
+            hr = pfd->Advise(pfde, &dwCookie);
+            if (SUCCEEDED(hr))
+            {
+                // Set the options on the dialog.
+                DWORD dwFlags;
+
+                // Before setting, always get the options first in order not to override existing options.
+                hr = pfd->GetOptions(&dwFlags);
+                if (SUCCEEDED(hr))
+                {
+                    // In this case, get shell items only for file system items.
+                    hr = pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM);
+                    if (SUCCEEDED(hr))
+                    {
+                        // Set the file types to display only. Notice that, this is a 1-based array.
+                        hr = pfd->SetFileTypes(ARRAYSIZE(c_rgSaveTypes), c_rgSaveTypes);
+                        if (SUCCEEDED(hr))
+                        {
+                            // Set the selected file type index to Word Docs for this example.
+                            hr = pfd->SetFileTypeIndex(INDEX_WORDDOC);
+                            if (SUCCEEDED(hr))
+                            {
+                                // Set the default extension to be ".doc" file.
+                                hr = pfd->SetDefaultExtension(L"doc");
+                                if (SUCCEEDED(hr))
+                                {
+                                    // Show the dialog
+                                    hr = pfd->Show(NULL);
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        // Obtain the result, once the user clicks the 'Open' button.
+                                        // The result is an IShellItem object.
+                                        IShellItem *psiResult;
+                                        hr = pfd->GetResult(&psiResult);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            // We are just going to print out the name of the file for sample sake.
+                                            PWSTR pszFilePath = NULL;
+                                            hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+                                            if (SUCCEEDED(hr))
+                                            {
+                                                wcscpy_s(pOutFullPath, sizeInWords, pszFilePath);
+                                                CoTaskMemFree(pszFilePath);
+                                            }
+                                            psiResult->Release();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Unhook the event handler.
+                pfd->Unadvise(dwCookie);
+            }
+            pfde->Release();
+        }
+        pfd->Release();
+    }
+    SetEvent(hEvent);
+    CoUninitialize();
+    return hr;
+}
+
+HRESULT FileDialog::SelectFolder(HANDLE hEvent, WCHAR *pOutFullPath, size_t sizeInWords, const WCHAR *currentPath)
+{
+    // CoCreate the File Open Dialog object.
+    IFileDialog *pfd = NULL;
+    HRESULT      hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+    if (SUCCEEDED(hr))
+    {
+        // Create an event handling object, and hook it up to the dialog.
+        IFileDialogEvents *pfde = NULL;
+        hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
+        if (SUCCEEDED(hr))
+        {
+            // Hook up the event handler.
+            DWORD dwCookie;
+            hr = pfd->Advise(pfde, &dwCookie);
+            if (SUCCEEDED(hr))
+            {
+                IShellItem *psi;
+                hr = SHCreateItemFromParsingName(currentPath, nullptr, IID_PPV_ARGS(&psi));
+                if (SUCCEEDED(hr))
+                {
+                    pfd->SetFolder(psi);
+                    psi->Release();
+                }
+                // Set the options on the dialog.
+                DWORD dwFlags;
+
+                // Before setting, always get the options first in order not to override existing options.
+                hr = pfd->GetOptions(&dwFlags);
+                if (SUCCEEDED(hr))
+                {
+                    // In this case, get shell items only for file system items.
+                    hr = pfd->SetOptions(dwFlags | FOS_PICKFOLDERS);
+                    if (SUCCEEDED(hr))
+                    {
+
+                        // Show the dialog
+                        hr = pfd->Show(NULL);
+                        if (SUCCEEDED(hr))
+                        {
+                            // Obtain the result, once the user clicks the 'Open' button.
+                            // The result is an IShellItem object.
+                            IShellItem *psiResult;
+                            hr = pfd->GetResult(&psiResult);
+                            if (SUCCEEDED(hr))
+                            {
+                                // We are just going to print out the name of the file for sample sake.
+                                PWSTR pszFilePath = NULL;
+                                hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+                                if (SUCCEEDED(hr))
+                                {
+                                    wcscpy_s(pOutFullPath, sizeInWords, pszFilePath);
+                                    CoTaskMemFree(pszFilePath);
+                                }
+                                psiResult->Release();
+                            }
+                        }
+                    }
+                }
+                // Unhook the event handler.
+                pfd->Unadvise(dwCookie);
+            }
+            pfde->Release();
+        }
+        pfd->Release();
+    }
+    SetEvent(hEvent);
+    CoUninitialize();
     return hr;
 }

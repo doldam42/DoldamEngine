@@ -240,8 +240,7 @@ lb_exit:
     m_pSingleDescriptorAllocator->Alloc(&cpuHandle, &gpuHandle);
 
     m_pGUIManager = new GUIManager;
-    m_pGUIManager->Initialize(m_hWnd, m_pD3DDevice, m_pCommandQueue, m_pSingleDescriptorAllocator->GetDescriptorHeap(),
-                              cpuHandle, gpuHandle, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT,
+    m_pGUIManager->Initialize(m_hWnd, m_pD3DDevice, m_pCommandQueue, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT,
                               SWAP_CHAIN_FRAME_COUNT);
 
     CreateDefaultTex();

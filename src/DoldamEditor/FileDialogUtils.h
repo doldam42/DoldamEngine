@@ -60,3 +60,9 @@ HRESULT SetDefaultValuesForProperties();
 HRESULT WritePropertiesUsingHandlers();
 
 HRESULT WritePropertiesWithoutUsingHandlers();
+
+namespace FileDialog
+{
+HRESULT SelectFile(HANDLE hEvent, WCHAR* pOutFullPath, size_t sizeInWords, const WCHAR* currentPath = nullptr);
+HRESULT SelectFolder(HANDLE hEvent, WCHAR *pOutFullPath, size_t sizeInWords, const WCHAR *currentPath = nullptr);
+}

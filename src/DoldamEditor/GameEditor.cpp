@@ -1,8 +1,11 @@
 #include "pch.h"
 
 #include "GUIController.h"
+#include "SceneViewerController.h"
 
 #include "GameEditor.h"
+
+GameEditor* g_pEditor = nullptr;
 
 BOOL GameEditor::LoadModules(HWND hWnd) 
 {
@@ -82,6 +85,11 @@ void GameEditor::CleanupModules()
 
 void GameEditor::Cleanup()
 {
+    if (m_pSceneViewerController)
+    {
+        delete m_pSceneViewerController;
+        m_pSceneViewerController = nullptr;
+    }
     if (m_pGUIController)
     {
         delete m_pGUIController;
@@ -101,6 +109,11 @@ BOOL GameEditor::Initialize(HWND hWnd)
     m_pGUIController = new GUIController;
     m_pGUIController->Initilize(m_pRenderer->GetRenderGUI());
     m_pGame->Register(m_pGUIController);
+
+    /*m_pSceneViewerController = new SceneViewerController;
+    m_pGame->Register(m_pSceneViewerController);*/
+
+    m_pGame->Start();
 
     m_hWnd = hWnd;
     return TRUE;

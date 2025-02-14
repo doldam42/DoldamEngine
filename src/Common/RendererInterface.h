@@ -39,9 +39,24 @@ enum GUI_WINDOW_FLAGS_ : UINT
 // v mean ui variable
 interface IRenderGUI : public IUnknown
 { 
-    virtual BOOL Begin(const char *name, bool showAnotherWindow = false,
+    virtual void DockSpace(const char *label) = 0;
+
+    virtual BOOL Begin(const char *name, bool* pOpen = nullptr,
                        GUI_WINDOW_FLAGS flags = GUI_WINDOW_FLAG_NONE) = 0;
     virtual void End() = 0;
+
+    virtual BOOL BeginMenuBar() = 0;
+    virtual void EndMenuBar() = 0;
+
+    virtual BOOL BeginMenu(const char *label) = 0;
+    virtual void EndMenu() = 0;
+    virtual BOOL MenuItem(const char *label, const char* shortcut) = 0;
+
+    virtual BOOL BeginChild(const char *label) = 0;
+    virtual void EndChild() = 0;
+
+    virtual void BeginGroup() = 0;
+    virtual void EndGroup() = 0;
 
     virtual BOOL TreeNode(const char *name) = 0;
     virtual void TreePop() = 0;
@@ -50,14 +65,15 @@ interface IRenderGUI : public IUnknown
     virtual void CheckBox(const char *label, bool *v) = 0;
     virtual void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt = "%.3f") = 0;
     virtual BOOL Button(const char *label) = 0;
+    virtual void Image(ITextureHandle * pTexHanlde) = 0;
 
     // per pixel (Absolute)
-    virtual void SetNextWindowPosA(UINT posX, UINT posY) = 0;
-    virtual void SetNextWindowSizeA(UINT width, UINT height) = 0;
+    virtual void SetNextWindowPosA(UINT posX, UINT posY, bool onlyAtFirst = false) = 0;
+    virtual void SetNextWindowSizeA(UINT width, UINT height, bool onlyAtFirst = false) = 0;
     
     // per percent (Relative)
-    virtual void SetNextWindowPosR(float posX, float posY) = 0;
-    virtual void SetNextWindowSizeR(float width, float height) = 0;
+    virtual void SetNextWindowPosR(float posX, float posY, bool onlyAtFirst = false) = 0;
+    virtual void SetNextWindowSizeR(float width, float height, bool onlyAtFirst = false) = 0;
 
     // For ImGUI Win32 Event Handle
     virtual LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;
@@ -67,6 +83,8 @@ interface IRenderMaterial : public IUnknown
 {
     virtual BOOL UpdateMetallicRoughness(float metallic, float roughness) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
+
+    virtual ITextureHandle* GetTexture(TEXTURE_TYPE type) = 0;
 };
 
 interface IRenderableObject : public IUnknown{};

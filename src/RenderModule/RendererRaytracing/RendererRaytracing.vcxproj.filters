@@ -168,7 +168,7 @@
     <ClInclude Include="..\..\..\imgui\backends\imgui_impl_win32.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="SingleDescriptorAllocator.h">
+    <ClInclude Include="..\Common\SingleDescriptorAllocator.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -273,7 +273,7 @@
     <ClCompile Include="..\..\..\imgui\backends\imgui_impl_win32.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="SingleDescriptorAllocator.cpp">
+    <ClCompile Include="..\Common\SingleDescriptorAllocator.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

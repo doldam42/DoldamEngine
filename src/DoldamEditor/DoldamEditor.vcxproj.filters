@@ -11,6 +11,9 @@
     <Filter Include="pch">
       <UniqueIdentifier>{d9b92656-5221-4740-a042-0c3dbdfa458d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{4cb508bf-8f30-4ceb-9f8c-b4fa704d2f2c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -25,6 +28,7 @@
     </ClInclude>
     <ClInclude Include="GUIController.h" />
     <ClInclude Include="FileDialogUtils.h" />
+    <ClInclude Include="SceneViewerController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameEditor.cpp" />
@@ -36,6 +40,7 @@
     </ClCompile>
     <ClCompile Include="GUIController.cpp" />
     <ClCompile Include="FileDialogUtils.cpp" />
+    <ClCompile Include="SceneViewerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc">

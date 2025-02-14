@@ -20,8 +20,6 @@
 
 HINSTANCE hInst = nullptr; // current instance
 
-GameEditor *g_pEditor = nullptr;
-
 HWND  g_hMainWindow = nullptr;
 WCHAR szTitle[MAX_LOADSTRING];       // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING]; // the main window class name

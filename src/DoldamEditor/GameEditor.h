@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 
+class SceneViewerController;
 class GUIController;
 class GameEditor
 {
@@ -14,6 +15,8 @@ class GameEditor
     IRenderer *m_pRenderer = nullptr;
 
     GUIController *m_pGUIController = nullptr;
+
+    SceneViewerController *m_pSceneViewerController = nullptr;
 
     BOOL LoadModules(HWND hWnd);
     void CleanupModules();
@@ -32,6 +35,10 @@ class GameEditor
 
     LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+    IGameManager *GetGameManager() { return m_pGame; }
+
     GameEditor() = default;
     ~GameEditor();
 };
+
+extern GameEditor *g_pEditor;

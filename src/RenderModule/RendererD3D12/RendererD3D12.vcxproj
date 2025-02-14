@@ -197,6 +197,7 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     <ClInclude Include="..\Common\PostProcessor.h" />
     <ClInclude Include="..\Common\RendererTypedef.h" />
     <ClInclude Include="..\Common\RenderThread.h" />
+    <ClInclude Include="..\Common\SingleDescriptorAllocator.h" />
     <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="CascadedShadowsManager.h" />
     <ClInclude Include="Cubemap.h" />
@@ -264,6 +265,9 @@ copy "..\..\lib\$(Configuration)\dxil.dll" "$(TargetDir)" /Y;</Command>
     </ClCompile>
     <ClCompile Include="..\Common\RenderThread.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\SingleDescriptorAllocator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="CascadedShadowsManager.cpp" />

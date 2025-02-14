@@ -145,6 +145,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="FileDialogUtils.cpp" />
+    <ClCompile Include="SceneViewerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc" />
@@ -158,6 +159,7 @@
     <ClInclude Include="GUIController.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SceneViewerController.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="FileDialogUtils.h" />
   </ItemGroup>
