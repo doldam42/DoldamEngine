@@ -9,7 +9,8 @@
 #include "D3D12ResourceManager.h"
 #include "MaterialManager.h"
 
-void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const Material *pInMaterial)
+void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, MaterialConstants *pOutConsts,
+                                           const Material *pInMaterial)
 {
     wchar_t path[MAX_PATH];
 
@@ -65,6 +66,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     wcscat_s(path, pInMaterial->heightTextureName);
     pHeightTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
 
+    pOutConsts->flags = ~0;
     if (!pAlbedoTexHandle)
     {
         pAlbedoTexHandle = m_pRenderer->GetDefaultTex();
@@ -72,24 +74,29 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const 
     if (!pNormalTexHandle)
     {
         pNormalTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~MATERIAL_USE_NORMAL_MAP;
     }
     if (!pAOTexHandle)
     {
         pAOTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~MATERIAL_USE_AO_MAP;
     }
     if (!pEmissiveTexHandle)
     {
         pEmissiveTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~MATERIAL_USE_EMISSIVE_MAP;
     }
     if (!pMetallicRoughnessTexHandle)
     {
         pMetallicRoughnessTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~(MATERIAL_USE_METALLIC_MAP | MATERIAL_USE_ROUGHNESS_MAP);
     }
     if (!pHeightTexHandle)
     {
         pHeightTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~MATERIAL_USE_HEIGHT_MAP;
     }
-
+    
     pOutMaterial->pAlbedoTexHandle = pAlbedoTexHandle;
     pOutMaterial->pNormalTexHandle = pNormalTexHandle;
     pOutMaterial->pAOTexHandle = pAOTexHandle;
@@ -170,20 +177,11 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.opacityFactor = pMaterial->opacityFactor;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
     
-    materialCB.flags = MATERIAL_USE_DEFAULT;
-    materialCB.flags |= wcslen(pMaterial->albedoTextureName) == 0 ? 0 : MATERIAL_USE_ALBEDO_MAP;
-    materialCB.flags |= wcslen(pMaterial->normalTextureName) == 0 ? 0 : MATERIAL_USE_NORMAL_MAP;
-    materialCB.flags |= wcslen(pMaterial->aoTextureName) == 0 ? 0 : MATERIAL_USE_AO_MAP;
-    materialCB.flags |= wcslen(pMaterial->metallicTextureName) == 0 ? 0 : MATERIAL_USE_METALLIC_MAP;
-    materialCB.flags |= wcslen(pMaterial->roughnessTextureName) == 0 ? 0 : MATERIAL_USE_ROUGHNESS_MAP; 
-    materialCB.flags |= wcslen(pMaterial->emissiveTextureName) == 0 ? 0 : MATERIAL_USE_EMISSIVE_MAP;
-    materialCB.flags |= wcslen(pMaterial->heightTextureName) == 0 ? 0 : MATERIAL_USE_HEIGHT_MAP;
+    InitMaterialTextures(pMatHandle, &materialCB, pMaterial);
 
     memcpy(sysMemAddr, &materialCB, m_sizePerMat);
 
     pMatHandle->pSysMemAddr = sysMemAddr;
-
-    InitMaterialTextures(pMatHandle, pMaterial);
 
     return pMatHandle;
 }

@@ -803,37 +803,24 @@ void D3D12Renderer::UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix 
     memcpy(m_pGlobalCB->pSystemMemAddr, &m_globalConsts, sizeof(GlobalConstants));
 }
 
-ITextureHandle *D3D12Renderer::CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b)
+ITextureHandle *D3D12Renderer::CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b, UINT tileSize)
 {
     DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     BYTE *pImage = (BYTE *)malloc(texWidth * texHeight * 4);
     memset(pImage, 0, texWidth * texHeight * 4);
 
-    BOOL bFirstColorIsWhite = TRUE;
+    BOOL isBlackTile = TRUE;
 
     for (UINT y = 0; y < texHeight; y++)
     {
         for (UINT x = 0; x < texWidth; x++)
         {
             RGBA *pDest = (RGBA *)(pImage + (x + y * texWidth) * 4);
+            isBlackTile = ((x / tileSize + y / tileSize) % 2 == 0);
 
-            if ((bFirstColorIsWhite + x) % 2)
-            {
-                pDest->r = r;
-                pDest->g = g;
-                pDest->b = b;
-            }
-            else
-            {
-                pDest->r = 0;
-                pDest->g = 0;
-                pDest->b = 0;
-            }
-            pDest->a = 255;
+            *pDest = isBlackTile ? RGBA{(BYTE)r, (BYTE)g, (BYTE)b, 255} : RGBA{0, 0, 0, 255};
         }
-        bFirstColorIsWhite++;
-        bFirstColorIsWhite %= 2;
     }
     TEXTURE_HANDLE *pTexHandle = m_pTextureManager->CreateImmutableTexture(texWidth, texHeight, TexFormat, pImage);
     free(pImage);
@@ -1168,7 +1155,7 @@ void D3D12Renderer::CreateDefaultTex()
     delete[] defaultTex;
     defaultTex = nullptr;*/
 
-    m_pDefaultTexHandle = (TEXTURE_HANDLE*)CreateTiledTexture(32, 32, 255, 255, 255);
+    m_pDefaultTexHandle = (TEXTURE_HANDLE*)CreateTiledTexture(512, 512, 255, 255, 255, 16);
 }
 
 void D3D12Renderer::CreateFence()

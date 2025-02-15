@@ -231,7 +231,7 @@ class D3D12Renderer : public IRenderer
     void UpdateTextureWithTexture(ITextureHandle *pDestTex, ITextureHandle *pSrcTex, UINT srcWidth,
                                   UINT srcHeight) override;
 
-    ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b);
+    ITextureHandle *CreateTiledTexture(UINT texWidth, UINT texHeight, UINT r, UINT g, UINT b, UINT tileSize);
     ITextureHandle *CreateDynamicTexture(UINT texWidth, UINT texHeight);
     ITextureHandle *CreateTextureFromFile(const WCHAR *fileName);
     ITextureHandle *CreateMetallicRoughnessTexture(const WCHAR *metallicFilename, const WCHAR *roughneessFilename);

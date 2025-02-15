@@ -101,7 +101,7 @@ class MaterialManager
     UINT m_maxMatNum = 0;
 
   private:
-    void InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, const Material *pInMaterial);
+    void InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, MaterialConstants* pOutConsts, const Material *pInMaterial);
     void CleanupMaterial(MATERIAL_HANDLE *pMaterial);
 
     MATERIAL_HANDLE *AllocMaterialHandle(const Material *pMaterial);

@@ -14,14 +14,14 @@ BOOL GameEditor::LoadModules(HWND hWnd)
 
     const WCHAR *rendererFileName = nullptr;
     const WCHAR *engineFileName = nullptr;
-    const WCHAR *exporterFileName = nullptr;
 #ifdef _DEBUG
-    // rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
-    rendererFileName = L"../../DLL/RendererRaytracing_x64_debug.dll";
-    engineFileName = L"../../DLL/EngineModule_x64_debug.dll";
+    // rendererFileName = L"../../DLL/RendererD3D12_x64_Debug.dll";
+    rendererFileName = L"../../DLL/RendererRaytracing_x64_Debug.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
 #else
-    rendererFileName = L"../../DLL/RendererD3D12_x64_release.dll";
-    engineFileName = L"../../DLL/EngineModule_x64_release.dll";
+    rendererFileName = L"../../DLL/RendererRaytracing_x64_Release.dll";
+    //rendererFileName = L"../../DLL/RendererD3D12_x64_Release.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_Release.dll";
 #endif
 
     WCHAR wchErrTxt[128] = {};
@@ -138,7 +138,11 @@ BOOL GameEditor::OnUpdateWindowSize(UINT width, UINT height) { return m_pGame->O
 
 LRESULT GameEditor::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return m_pRenderer->GetRenderGUI()->WndProcHandler(hWnd, msg, wParam, lParam);
+    if (m_pRenderer)
+    {
+        return m_pRenderer->GetRenderGUI()->WndProcHandler(hWnd, msg, wParam, lParam);
+    }
+    return 0;
 }
 
 GameEditor::~GameEditor() { Cleanup(); }
