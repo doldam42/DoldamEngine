@@ -51,6 +51,8 @@ Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
 
 Vector3 Character::GetScale() { return GameObject::GetScale(); }
 
+Vector3 Character::GetForward() { return GameObject::GetForward(); }
+
 float Character::GetRotationX() { return GameObject::GetRotationX(); }
 
 float Character::GetRotationY() { return GameObject::GetRotationY(); }

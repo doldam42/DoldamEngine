@@ -2,9 +2,7 @@
 
 #include "../Common/EngineInterface.h"
 
-#include "CameraController.h"
 #include "GameUtils.h"
-#include "InputManager.h"
 
 class AnimationClip;
 class Character;
@@ -42,10 +40,9 @@ class GameManager : public IGameManager
     bool  m_isPaused = false;
     float m_timeSpeed = 1.0f;
 
-    PhysicsManager   *m_pPhysicsManager = nullptr;
-    CameraController *m_pMainCamera = nullptr;
-    IRenderer        *m_pRenderer = nullptr;
-    InputManager     *m_pInputManager = nullptr;
+    PhysicsManager *m_pPhysicsManager = nullptr;
+    Camera         *m_pMainCamera = nullptr;
+    IRenderer      *m_pRenderer = nullptr;
 
     IRenderGUI *m_pRenderGUI = nullptr;
 
@@ -99,11 +96,7 @@ class GameManager : public IGameManager
     // Derived from IRenderer
     BOOL Initialize(HWND hWnd, IRenderer *pRnd) override;
 
-    void OnKeyDown(UINT nChar, UINT uiScanCode) override;
-    void OnKeyUp(UINT nChar, UINT uiScanCode) override;
-    void OnMouseMove(int mouseX, int mouseY) override;
     BOOL OnUpdateWindowSize(UINT width, UINT height) override;
-    void OnMouseWheel(float deltaWheel) override;
 
     IGameMesh *CreateGameMesh() override;
     void       DeleteGameMesh(IGameMesh *pGameMesh) override;
@@ -159,19 +152,21 @@ class GameManager : public IGameManager
 
     void ToggleCamera();
 
-    void    SetCameraFollowTarget(IGameObject *pObj) override { m_pMainCamera->SetFollowTarget((GameObject *)pObj); }
-    Vector3 GetCameraPos() override { return m_pMainCamera->Eye(); }
-    Vector3 GetCameraLookAt() override { return m_pMainCamera->LookAt(); }
+    Vector3 GetCameraPos() override { return m_pMainCamera->GetPosition(); }
+    Vector3 GetCameraLookTo() override { return m_pMainCamera->GetForwardDir(); }
 
     void SetCameraPosition(float x, float y, float z) override
     {
         Vector3 pos(x, y, z);
-        m_pMainCamera->SetCameraPos(&pos);
+        m_pMainCamera->SetPosition(pos);
     }
+    void SetCameraYawPitchRoll(float yaw, float pitch, float roll) override
+    {
+        m_pMainCamera->SetYawPitchRoll(yaw, pitch, roll);
+    }
+    void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) override { m_pMainCamera->SetEyeAtUp(eye, at, up); }
 
-    inline IRenderer        *GetRenderer() const { return m_pRenderer; }
-    inline IInputManager    *GetInputManager() const { return m_pInputManager; }
-    inline CameraController *GetCamera() const { return m_pMainCamera; }
+    inline IRenderer     *GetRenderer() const { return m_pRenderer; }
 
     GameManager() = default;
     ~GameManager();
@@ -180,6 +175,7 @@ class GameManager : public IGameManager
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
+
 };
 
 extern GameManager *g_pGame;

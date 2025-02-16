@@ -151,7 +151,7 @@
       <AdditionalIncludeDirectories>..\..\include\;..\MathModule\;..\RenderModule\;..\GenericModule\;..\EngineModule\;</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -170,6 +170,7 @@
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="BadAppleController.cpp" />
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -188,6 +189,7 @@
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="BadAppleController.h" />
     <ClInclude Include="Client.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RaytracingDemoController.h" />
     <ClInclude Include="Resource.h" />

@@ -159,7 +159,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\include\;$(SolutionDir)MathModule\;$(SolutionDir)GenericModule;..\Common;$(SolutionDir)..\imgui;$(SolutionDir)..\imgui\backends;$(SolutionDir)..\DirectXTex;..\..\Common</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

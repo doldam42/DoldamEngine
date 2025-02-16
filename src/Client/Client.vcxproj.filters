@@ -24,6 +24,7 @@
     <ClCompile Include="TessellationDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
+    <ClCompile Include="InputManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -64,6 +65,7 @@
     <ClInclude Include="..\Common\RendererInterface.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="InputManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

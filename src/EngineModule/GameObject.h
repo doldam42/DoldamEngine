@@ -43,6 +43,7 @@ class GameObject : public IGameObject
 
     inline Vector3    GetPosition() override { return m_transform.GetPosition(); }
     inline Vector3    GetScale() override { return m_transform.GetScale(); }
+    inline Vector3    GetForward() override { return m_transform.GetForward(); }
     inline float      GetRotationX() override { return m_transform.GetRotation().ToEuler().x; }
     inline float      GetRotationY() override { return m_transform.GetRotation().ToEuler().y; }
     inline float      GetRotationZ() override { return m_transform.GetRotation().ToEuler().z; }

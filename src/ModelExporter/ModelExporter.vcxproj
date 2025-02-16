@@ -158,6 +158,7 @@ copy "..\..\lib\$(Configuration)\assimp-vc143-mt.dll" "$(TargetDir)" /Y;</Comman
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\..\include\;..\MathModule\;..\RenderModule\;..\GenericModule\;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

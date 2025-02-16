@@ -84,10 +84,11 @@ interface IGameObject
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
+    virtual Vector3 GetForward() = 0;
     virtual float   GetRotationX() = 0;
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
-
+   
     virtual Quaternion GetRotation() = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
@@ -162,11 +163,7 @@ interface IGameManager : public IUnknown
 
     virtual void BuildScene() = 0;
 
-    virtual void OnKeyDown(UINT nChar, UINT uiScanCode) = 0;
-    virtual void OnKeyUp(UINT nChar, UINT uiScanCode) = 0;
-    virtual void OnMouseMove(int mouseX, int mouseY) = 0;
     virtual BOOL OnUpdateWindowSize(UINT width, UINT height) = 0;
-    virtual void OnMouseWheel(float deltaWheel) = 0;
 
     virtual IGameMesh *CreateGameMesh() = 0;
     virtual void       DeleteGameMesh(IGameMesh* pGameMesh) = 0;
@@ -199,13 +196,13 @@ interface IGameManager : public IUnknown
 
     virtual void Register(IController * pController) = 0;
 
-    virtual void SetCameraFollowTarget(IGameObject * pObj) = 0;
-
     virtual Vector3 GetCameraPos() = 0;
-    virtual Vector3 GetCameraLookAt() = 0;
+    virtual Vector3 GetCameraLookTo() = 0;
 
     virtual void SetCameraPosition(float x, float y, float z) = 0;
-
+    virtual void SetCameraYawPitchRoll(float yaw, float pitch, float roll) = 0;
+    virtual void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) = 0;
+    
     virtual float DeltaTime() const = 0;
     virtual UINT  FPS() const = 0;
 
@@ -213,5 +210,4 @@ interface IGameManager : public IUnknown
     virtual void TogglePause() = 0;
 
     virtual IRenderer     *GetRenderer() const = 0;
-    virtual IInputManager *GetInputManager() const = 0;
 };

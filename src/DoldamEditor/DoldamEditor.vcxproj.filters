@@ -29,6 +29,8 @@
     <ClInclude Include="GUIController.h" />
     <ClInclude Include="FileDialogUtils.h" />
     <ClInclude Include="SceneViewerController.h" />
+    <ClInclude Include="CameraController.h" />
+    <ClInclude Include="InputManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameEditor.cpp" />
@@ -41,6 +43,8 @@
     <ClCompile Include="GUIController.cpp" />
     <ClCompile Include="FileDialogUtils.cpp" />
     <ClCompile Include="SceneViewerController.cpp" />
+    <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="InputManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc">

@@ -1,6 +1,8 @@
 #pragma once
 #include <Windows.h>
 
+class CameraController;
+class InputManager;
 class SceneViewerController;
 class GUIController;
 class GameEditor
@@ -14,12 +16,17 @@ class GameEditor
     IGameManager *m_pGame = nullptr;
     IRenderer *m_pRenderer = nullptr;
 
+    CameraController *m_pCameraController = nullptr;
     GUIController *m_pGUIController = nullptr;
 
     SceneViewerController *m_pSceneViewerController = nullptr;
 
+    InputManager *m_pInputManager = nullptr;
+
     BOOL LoadModules(HWND hWnd);
     void CleanupModules();
+
+    void ProcessInput();
 
     void Cleanup();
 
@@ -36,6 +43,8 @@ class GameEditor
     LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     IGameManager *GetGameManager() { return m_pGame; }
+
+    InputManager *GetInputManager() { return m_pInputManager; }
 
     GameEditor() = default;
     ~GameEditor();

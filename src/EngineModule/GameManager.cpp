@@ -108,11 +108,6 @@ void GameManager::Cleanup()
         delete m_pMainCamera;
         m_pMainCamera = nullptr;
     }
-    if (m_pInputManager)
-    {
-        delete m_pInputManager;
-        m_pInputManager = nullptr;
-    }
 }
 
 BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
@@ -135,17 +130,13 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
     DWORD width = rect.right - rect.left;
     DWORD height = rect.bottom - rect.top;
 
-    m_pInputManager = new InputManager();
-    m_pInputManager->Initialize(width, height);
-
     m_renderThreadCount = m_pRenderer->GetRenderThreadCount();
 
     m_pPhysicsManager = new PhysicsManager;
     m_pPhysicsManager->Initialize();
 
-    m_pMainCamera = new CameraController;
+    m_pMainCamera = new Camera;
     m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 1000.0f);
-    m_pMainCamera->m_useFirstPersonView = true;
 
     m_hWnd = hWnd;
 
@@ -154,7 +145,7 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
 
     m_pControllerManager = new ControllerManager;
 
-    m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
+    //m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
 
     m_pWorld = new World;
     m_pWorld->Initialize();
@@ -186,18 +177,9 @@ BOOL GameManager::LoadResources()
     return TRUE;
 }
 
-void GameManager::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
-
-void GameManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
-
-void GameManager::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
-
 void GameManager::ProcessInput()
 {
-    if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
-    {
-        DestroyWindow(m_hWnd);
-    }
+    
 }
 
 void GameManager::Start()
@@ -287,12 +269,6 @@ void GameManager::Update(ULONGLONG curTick)
         dt = 0.03f; // 30 FPS
     }
 
-    // Camera Update
-    if (m_activateCamera)
-    {
-        m_pMainCamera->Update(dt);
-    }
-
     if (m_isPaused)
     {
         return;
@@ -332,7 +308,9 @@ void GameManager::LateUpdate(ULONGLONG curTick)
 
 void GameManager::Render()
 {
-    m_pRenderer->UpdateCamera(m_pMainCamera->Eye(), m_pMainCamera->GetViewRow(), m_pMainCamera->GetProjRow());
+    // Update Camera
+    m_pMainCamera->Update();
+    m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(), m_pMainCamera->GetProjMatrix());
 
     // begin
     m_pRenderer->BeginRender();
@@ -373,7 +351,6 @@ void GameManager::Render()
 
 BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
 {
-    m_pInputManager->SetWindowSize(width, height);
     m_pMainCamera->SetAspectRatio(float(width) / height);
 
     if (m_pRenderer)
@@ -382,8 +359,6 @@ BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
     }
     return TRUE;
 }
-
-void GameManager::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
 IGameMesh *GameManager::CreateGameMesh()
 {

@@ -15,7 +15,6 @@ class Character : public IGameCharacter, public GameObject
     void Cleanup();
 
   public:
-
     void Initialize(GameManager *pGameEngine, UINT maxClipCount);
     void Update(float dt) override;
 
@@ -30,22 +29,25 @@ class Character : public IGameCharacter, public GameObject
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;
-    float   GetRotationX() override;
-    float   GetRotationY() override;
-    float   GetRotationZ() override;
+    Vector3 GetForward() override;
+
+    float GetRotationX() override;
+    float GetRotationY() override;
+    float GetRotationZ() override;
+
     Quaternion GetRotation() override;
 
-    void    SetModel(IGameModel *pModel) override;
-    void    SetPosition(float x, float y, float z) override;
-    void    SetScale(float x, float y, float z) override;
-    void    SetScale(float s) override;
-    void    SetRotationX(float rotX) override;
-    void    SetRotationY(float rotY) override;
-    void    SetRotationZ(float rotZ) override;
-    void    SetRotation(const Quaternion *pInQuaternion) override;
+    void SetModel(IGameModel *pModel) override;
+    void SetPosition(float x, float y, float z) override;
+    void SetScale(float x, float y, float z) override;
+    void SetScale(float s) override;
+    void SetRotationX(float rotX) override;
+    void SetRotationY(float rotY) override;
+    void SetRotationZ(float rotZ) override;
+    void SetRotation(const Quaternion *pInQuaternion) override;
 
     void AddPosition(const Vector3 *pInDeltaPos) override;
-    
+
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
     Bounds GetBounds() const;

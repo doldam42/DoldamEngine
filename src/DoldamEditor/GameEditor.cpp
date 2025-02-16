@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "CameraController.h"
+#include "InputManager.h"
 #include "GUIController.h"
 #include "SceneViewerController.h"
 
@@ -83,8 +85,26 @@ void GameEditor::CleanupModules()
     }
 }
 
+void GameEditor::ProcessInput() 
+{ 
+    if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
+    {
+        DestroyWindow(m_hWnd);
+    }
+}
+
 void GameEditor::Cleanup()
 {
+    if (m_pCameraController)
+    {
+        delete m_pCameraController;
+        m_pCameraController = nullptr;
+    }
+    if (m_pInputManager)
+    {
+        delete m_pInputManager;
+        m_pInputManager = nullptr;
+    }
     if (m_pSceneViewerController)
     {
         delete m_pSceneViewerController;
@@ -106,13 +126,24 @@ BOOL GameEditor::Initialize(HWND hWnd)
 
     LoadModules(hWnd);
 
+    RECT rect;
+    GetClientRect(hWnd, &rect);
+    DWORD width = rect.right - rect.left;
+    DWORD height = rect.bottom - rect.top;
+
+    m_pInputManager = new InputManager;
+    m_pInputManager->Initialize(width, height);
+
     m_pGUIController = new GUIController;
     m_pGUIController->Initilize(m_pRenderer->GetRenderGUI());
     m_pGame->Register(m_pGUIController);
-
     /*m_pSceneViewerController = new SceneViewerController;
     m_pGame->Register(m_pSceneViewerController);*/
 
+    m_pCameraController = new CameraController;
+    m_pCameraController->Initialize(this);
+    m_pGame->Register(m_pCameraController);
+    
     m_pGame->Start();
 
     m_hWnd = hWnd;
@@ -121,20 +152,26 @@ BOOL GameEditor::Initialize(HWND hWnd)
 
 void GameEditor::Process() 
 { 
+    ProcessInput();
+
     m_pGame->Update();
 
     m_pGame->Render();
 }
 
-void GameEditor::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }
+void GameEditor::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
 
-void GameEditor::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyUp(nChar, uiScanCode); }
+void GameEditor::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
 
-void GameEditor::OnMouseMove(int mouseX, int mouseY) { m_pGame->OnMouseMove(mouseX, mouseY); }
+void GameEditor::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
 
-void GameEditor::OnMouseWheel(float deltaWheel) { m_pGame->OnMouseWheel(deltaWheel); }
+void GameEditor::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
-BOOL GameEditor::OnUpdateWindowSize(UINT width, UINT height) { return m_pGame->OnUpdateWindowSize(width, height); }
+BOOL GameEditor::OnUpdateWindowSize(UINT width, UINT height)
+{
+    m_pInputManager->SetWindowSize(width, height);
+    return m_pGame->OnUpdateWindowSize(width, height);
+}
 
 LRESULT GameEditor::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
