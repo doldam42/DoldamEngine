@@ -3,11 +3,12 @@
 
 class CameraController;
 class InputManager;
-class SceneViewerController;
 class GUIController;
 class GameEditor
 {
   private:
+    WCHAR m_assetPath[MAX_PATH] = {L'\0'};
+
     HMODULE m_hRendererDLL = nullptr;
     HMODULE m_hEngineDLL = nullptr;
 
@@ -19,12 +20,12 @@ class GameEditor
     CameraController *m_pCameraController = nullptr;
     GUIController *m_pGUIController = nullptr;
 
-    SceneViewerController *m_pSceneViewerController = nullptr;
-
     InputManager *m_pInputManager = nullptr;
 
     BOOL LoadModules(HWND hWnd);
     void CleanupModules();
+
+    BOOL LoadConfigs();
 
     void ProcessInput();
 
@@ -45,6 +46,8 @@ class GameEditor
     IGameManager *GetGameManager() { return m_pGame; }
 
     InputManager *GetInputManager() { return m_pInputManager; }
+
+    const WCHAR *GetAssetPath() { return m_assetPath; }
 
     GameEditor() = default;
     ~GameEditor();

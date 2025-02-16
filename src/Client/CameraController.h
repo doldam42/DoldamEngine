@@ -2,23 +2,20 @@
 
 #include "../MathModule/MathHeaders.h"
 
-class GameObject;
-
-class CameraController
+class Client;
+class CameraController : public IController
 {
-    Camera     *m_pCamera = nullptr;
-    GameObject *m_pTarget = nullptr;
+    IGameManager *m_pGame = nullptr;
+    IGameObject  *m_pTarget = nullptr;
 
     float m_speed = 3.0f; // 움직이는 속도
 
     float m_prevCursorNDCX = 0.0f;
     float m_prevcursorNDCY = 0.0f;
-
-    BoundingFrustum m_frustumVS;
-    BoundingFrustum m_frustumWS;
-
+    
   public:
     BOOL m_useFirstPersonView = TRUE;
+    BOOL m_isFreezed = FALSE;
 
   private:
     void UpdateKeyboard(const float dt);
@@ -27,32 +24,20 @@ class CameraController
     void Cleanup();
 
   public:
-    void Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ);
+    void Initialize(Client *pClient);
 
-    const Vector3 &Eye() const { return m_pCamera->GetPosition(); }
-    const Vector3 &LookAt() const { return m_pCamera->GetForwardDir(); }
-
-    const Matrix &GetViewRow() const { return m_pCamera->GetViewMatrix(); }
-    const Matrix &GetProjRow() const { return m_pCamera->GetProjMatrix(); }
-    const Matrix &GetViewProjRow() const { return m_pCamera->GetViewProjMatrix(); }
-
-    const BoundingFrustum &GetViewSpaceFrustum() const { return m_frustumVS; }
-    const BoundingFrustum &GetWorldSpaceFrustum() const { return m_frustumWS; }
-
-    void Update(const float dt);
+    void Update(const float dt) override;
 
     void MoveForward(float dt);
     void MoveRight(float dt);
     void MoveUp(float dt);
 
-    void SetAspectRatio(float aspect);
-    void SetFollowTarget(GameObject *pTarget);
-    void SetCameraPos(const Vector3 *pos);
-
-    GameObject *GetFollowTarget() const { return m_pTarget; }
-
-    void ToggleProjectionSetting();
+    void SetFollowTarget(IGameObject *pTarget);
 
     CameraController();
     ~CameraController();
+
+    // Inherited via IController
+    BOOL Start() override;
+    void Render() override;
 };

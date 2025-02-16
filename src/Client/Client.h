@@ -1,9 +1,11 @@
 #pragma once
 
+class CameraController;
 class TimeController;
 class BadAppleController;
 class RaytracingDemoController;
 class TessellationDemoController;
+class InputManager;
 class AudioManager;
 class Client
 {
@@ -12,9 +14,9 @@ class Client
     HMODULE m_hEngineDLL = nullptr;
     HMODULE m_hModelExporterDLL = nullptr;
 
-    HWND            m_hWnd = nullptr;
-    IGameManager   *m_pGame = nullptr;
-    AudioManager   *m_pAudio = nullptr;
+    HWND          m_hWnd = nullptr;
+    IGameManager *m_pGame = nullptr;
+    AudioManager *m_pAudio = nullptr;
 
     IRenderer      *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
@@ -23,15 +25,20 @@ class Client
     IModelExporter *m_pFbxExporter = nullptr;
     IModelExporter *m_pAssimpExporter = nullptr;
 
+    InputManager *m_pInputManager = nullptr;
+
     // Controllers
-    TimeController* m_pTimeController = nullptr;
-    BadAppleController* m_pDemoController = nullptr;
-    RaytracingDemoController *m_pRaytracingDemoController = nullptr;
+    TimeController             *m_pTimeController = nullptr;
+    CameraController           *m_pCameraController = nullptr;
+    BadAppleController         *m_pDemoController = nullptr;
+    RaytracingDemoController   *m_pRaytracingDemoController = nullptr;
     TessellationDemoController *m_pTessellationDemoController = nullptr;
 
   private:
     BOOL LoadModules(HWND hWnd);
-      
+
+    void ProcessInput();
+
     void CleanupControllers();
     void Cleanup();
 
@@ -58,6 +65,8 @@ class Client
 
     IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }
     IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }
+
+    InputManager *GetInputManager() { return m_pInputManager; }
 
     Client() = default;
     ~Client();

@@ -6,8 +6,8 @@
 #define RENDERERMODULE_API __declspec(dllimport)
 #endif
 
-#include <combaseapi.h>
 #include "../MathModule/MathHeaders.h"
+#include <combaseapi.h>
 
 enum TEXTURE_TYPE
 {
@@ -39,11 +39,10 @@ enum GUI_WINDOW_FLAGS_ : UINT
 
 // v mean ui variable
 interface IRenderGUI : public IUnknown
-{ 
+{
     virtual void DockSpace(const char *label) = 0;
 
-    virtual BOOL Begin(const char *name, bool* pOpen = nullptr,
-                       GUI_WINDOW_FLAGS flags = GUI_WINDOW_FLAG_NONE) = 0;
+    virtual BOOL Begin(const char *name, bool *pOpen = nullptr, GUI_WINDOW_FLAGS flags = GUI_WINDOW_FLAG_NONE) = 0;
     virtual void End() = 0;
 
     virtual BOOL BeginMenuBar() = 0;
@@ -51,27 +50,37 @@ interface IRenderGUI : public IUnknown
 
     virtual BOOL BeginMenu(const char *label) = 0;
     virtual void EndMenu() = 0;
-    virtual BOOL MenuItem(const char *label, const char* shortcut) = 0;
+    virtual BOOL MenuItem(const char *label, const char *shortcut) = 0;
 
-    virtual BOOL BeginChild(const char *label) = 0;
+    virtual BOOL BeginChild(const char *label, float width = 0.0f, float height = 0.0f) = 0;
     virtual void EndChild() = 0;
 
     virtual void BeginGroup() = 0;
     virtual void EndGroup() = 0;
 
+    virtual BOOL BeginTabBar(const char* label) = 0;
+    virtual void EndTabBar() = 0;
+
+    virtual BOOL BeginTabItem(const char *label) = 0;
+    virtual void EndTabItem() = 0;
+
     virtual BOOL TreeNode(const char *name) = 0;
     virtual void TreePop() = 0;
 
-    virtual void Text(const char *txt) = 0;
+    virtual void SameLine() = 0;
+
+    virtual void Text(const char *fmt) = 0;
     virtual void CheckBox(const char *label, bool *v) = 0;
+    virtual BOOL DragFloat3(const char *label, Vector3 *v, float delta = 0.1f) = 0;
     virtual void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt = "%.3f") = 0;
     virtual BOOL Button(const char *label) = 0;
+    virtual BOOL ColoredButton(const char *label, RGBA color) = 0;
     virtual void Image(ITextureHandle * pTexHanlde) = 0;
 
     // per pixel (Absolute)
     virtual void SetNextWindowPosA(UINT posX, UINT posY, bool onlyAtFirst = false) = 0;
     virtual void SetNextWindowSizeA(UINT width, UINT height, bool onlyAtFirst = false) = 0;
-    
+
     // per percent (Relative)
     virtual void SetNextWindowPosR(float posX, float posY, bool onlyAtFirst = false) = 0;
     virtual void SetNextWindowSizeR(float width, float height, bool onlyAtFirst = false) = 0;
@@ -85,7 +94,7 @@ interface IRenderMaterial : public IUnknown
     virtual BOOL UpdateMetallicRoughness(float metallic, float roughness) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
 
-    virtual ITextureHandle* GetTexture(TEXTURE_TYPE type) = 0;
+    virtual ITextureHandle *GetTexture(TEXTURE_TYPE type) = 0;
 };
 
 interface IRenderableObject : public IUnknown{};
@@ -100,7 +109,6 @@ interface IRenderMesh : public IRenderableObject
 
     virtual BOOL UpdateMaterial(IRenderMaterial * pInMaterial, UINT faceGroupIndex) = 0;
 };
-
 
 interface IRenderer : public IUnknown
 {
@@ -143,7 +151,7 @@ interface IRenderer : public IUnknown
                               float Z) = 0;
     virtual void RenderSpriteWithTex(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                                      const RECT *pRect, float Z, ITextureHandle *pTexHandle) = 0;
-    virtual void RenderTerrain(IRenderTerrain* pTerrain, const Vector3* pScale, bool isWired = false) = 0;
+    virtual void RenderTerrain(IRenderTerrain * pTerrain, const Vector3 *pScale, bool isWired = false) = 0;
 
     virtual IFontHandle *CreateFontObject(const WCHAR *fontFamilyName, float fontSize) = 0;
     virtual void         DeleteFontObject(IFontHandle * pFontHandle) = 0;

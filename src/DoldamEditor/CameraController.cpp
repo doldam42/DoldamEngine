@@ -38,7 +38,7 @@ void CameraController::UpdateKeyboard(const float dt)
 {
     if (m_useFirstPersonView)
     {
-        IInputManager *pInputManager = g_pEditor->GetInputManager();
+        InputManager *pInputManager = g_pEditor->GetInputManager();
 
         float x = pInputManager->GetXAxis();
         float y = pInputManager->GetYAxis();

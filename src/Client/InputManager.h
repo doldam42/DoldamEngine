@@ -1,6 +1,6 @@
 #pragma once
 
-class InputManager : public IInputManager
+class InputManager
 {
     float m_cursorNdcX = 0;
     float m_cursorNdcY = 0;
@@ -31,7 +31,7 @@ class InputManager : public IInputManager
     BOOL IsKeyPressed(UINT nChar) const;
     
     GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
-                              size_t sizeOfArg = 0) override;
+                              size_t sizeOfArg = 0);
     void       DeleteKeyListener(UINT nChar, GameEvent *pEvent);
 
     float GetXAxis() const;

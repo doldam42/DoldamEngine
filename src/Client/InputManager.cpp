@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include "GameManager.h"
 #include "InputManager.h"
 
 void InputManager::Initialize(UINT width, UINT height) { SetWindowSize(width, height); }
@@ -32,13 +31,14 @@ void InputManager::OnMouseMove(int mouseX, int mouseY)
 
 void InputManager::OnMouseWheel(float wheelDelta)
 {
-    m_lastWheelTime = g_pGame->DeltaTime();
+    // TODO
+    /*m_lastWheelTime = g_pGame->DeltaTime();
     if (m_isWheelStopped)
     {
         m_isWheelStopped = false;
     }
 
-    m_deltaWheel = wheelDelta;
+    m_deltaWheel = wheelDelta;*/
 }
 
 void InputManager::SetWindowSize(UINT width, UINT height)

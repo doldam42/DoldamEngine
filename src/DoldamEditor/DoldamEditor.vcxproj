@@ -148,13 +148,16 @@
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="GameEditor.cpp" />
     <ClCompile Include="GUIController.cpp" />
+    <ClCompile Include="GUIViewHierarchy.cpp" />
+    <ClCompile Include="GUIViewInspector.cpp" />
+    <ClCompile Include="GUIViewProject.cpp" />
+    <ClCompile Include="GUIViewSceneView.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="FileDialogUtils.cpp" />
-    <ClCompile Include="SceneViewerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc" />
@@ -167,12 +170,15 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="GameEditor.h" />
     <ClInclude Include="GUIController.h" />
+    <ClInclude Include="GUIView.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SceneViewerController.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="FileDialogUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Config.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

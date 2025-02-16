@@ -35,6 +35,7 @@
     <ClInclude Include="SimpleMath.h">
       <Filter>SimpleMath</Filter>
     </ClInclude>
+    <ClInclude Include="ColorUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -50,6 +51,7 @@
     <ClCompile Include="SimpleMath.cpp">
       <Filter>SimpleMath</Filter>
     </ClCompile>
+    <ClCompile Include="ColorUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

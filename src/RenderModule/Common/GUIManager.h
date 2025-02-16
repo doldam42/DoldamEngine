@@ -56,10 +56,13 @@ class GUIManager : public IRenderGUI
     BOOL TreeNode(const char *name) override;
     void TreePop() override;
 
-    void Text(const char *txt) override;
+    void SameLine() override;
+    void Text(const char *fmt) override;
     void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt) override;
+    BOOL DragFloat3(const char *label, Vector3 *v, float delta = 0.1f) override;
     void CheckBox(const char *label, bool *v) override;
     BOOL Button(const char *label) override;
+    BOOL ColoredButton(const char *label, RGBA color) override;
 
     void Image(ITextureHandle *pTexHanlde) override;
 
@@ -84,7 +87,7 @@ class GUIManager : public IRenderGUI
     BOOL MenuItem(const char *label, const char *shortcut) override;
 
     // Inherited via IRenderGUI
-    BOOL BeginChild(const char *label) override;
+    BOOL BeginChild(const char *label, float width = 0.0f, float height = 0.0f) override;
     void EndChild() override;
 
     void DockSpace(const char *label) override;
@@ -92,4 +95,10 @@ class GUIManager : public IRenderGUI
     // Inherited via IRenderGUI
     void BeginGroup() override;
     void EndGroup() override;
+
+    // Inherited via IRenderGUI
+    BOOL BeginTabBar(const char *label) override;
+    void EndTabBar() override;
+    BOOL BeginTabItem(const char *label) override;
+    void EndTabItem() override;
 };

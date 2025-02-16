@@ -61,4 +61,5 @@ inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilo
 #include "Transform.h"
 #include "Vertex.h"
 
+#include "ColorUtils.h"
 #include "MathUtils.h"

@@ -3,7 +3,6 @@
 #include "CameraController.h"
 #include "InputManager.h"
 #include "GUIController.h"
-#include "SceneViewerController.h"
 
 #include "GameEditor.h"
 
@@ -85,6 +84,17 @@ void GameEditor::CleanupModules()
     }
 }
 
+BOOL GameEditor::LoadConfigs() 
+{
+    GetPrivateProfileString(L"path", L"asset_path", L"\0", m_assetPath, MAX_PATH, L".\\Config.ini");
+    if (!wcslen(m_assetPath))
+    {
+        __debugbreak();
+        return FALSE;
+    }
+    return TRUE;
+}
+
 void GameEditor::ProcessInput() 
 { 
     if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
@@ -105,11 +115,6 @@ void GameEditor::Cleanup()
         delete m_pInputManager;
         m_pInputManager = nullptr;
     }
-    if (m_pSceneViewerController)
-    {
-        delete m_pSceneViewerController;
-        m_pSceneViewerController = nullptr;
-    }
     if (m_pGUIController)
     {
         delete m_pGUIController;
@@ -124,6 +129,8 @@ BOOL GameEditor::Initialize(HWND hWnd)
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
 
+    LoadConfigs();
+
     LoadModules(hWnd);
 
     RECT rect;
@@ -135,11 +142,9 @@ BOOL GameEditor::Initialize(HWND hWnd)
     m_pInputManager->Initialize(width, height);
 
     m_pGUIController = new GUIController;
-    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI());
+    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI(), m_assetPath);
     m_pGame->Register(m_pGUIController);
-    /*m_pSceneViewerController = new SceneViewerController;
-    m_pGame->Register(m_pSceneViewerController);*/
-
+    
     m_pCameraController = new CameraController;
     m_pCameraController->Initialize(this);
     m_pGame->Register(m_pCameraController);
@@ -152,6 +157,7 @@ BOOL GameEditor::Initialize(HWND hWnd)
 
 void GameEditor::Process() 
 { 
+
     ProcessInput();
 
     m_pGame->Update();

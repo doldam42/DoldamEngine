@@ -60,14 +60,6 @@ enum RENDER_TARGET_TYPE : UINT
     RENDER_TARGET_TYPE_COUNT,
 };
 
-struct RGBA
-{
-    BYTE r;
-    BYTE g;
-    BYTE b;
-    BYTE a;
-};
-
 struct DESCRIPTOR_HANDLE
 {
     UINT                        descriptorCount;

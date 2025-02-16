@@ -63,6 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     MSG msg;
 
     g_pEditor = new GameEditor;
+
     g_pEditor->Initialize(g_hMainWindow);
 
     // Main message loop:

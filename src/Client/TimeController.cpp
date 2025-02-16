@@ -1,13 +1,14 @@
 #include "pch.h"
 
 #include "Client.h"
+#include "InputManager.h"
 
 #include "TimeController.h"
 
 BOOL TimeController::Start() 
 {
     IGameManager  *pG = g_pClient->GetGameManager();
-    IInputManager *pI = pG->GetInputManager();
+    InputManager *pI = g_pClient->GetInputManager();
 
     pI->AddKeyListener(VK_SPACE, [pG](void *) { pG->TogglePause(); });
     pI->AddKeyListener('1', [pG](void *) { pG->SetTimeSpeed(0.5f); });

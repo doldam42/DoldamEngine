@@ -33,7 +33,7 @@ BOOL GUIManager::Alloc(D3D12_CPU_DESCRIPTOR_HANDLE *pOutCPUHandle, D3D12_GPU_DES
     return TRUE;
 }
 
-BOOL GUIManager::InitDescriptorHeap() 
+BOOL GUIManager::InitDescriptorHeap()
 {
     BOOL result = FALSE;
     m_pD3DDevice = m_pD3DDevice;
@@ -87,7 +87,7 @@ BOOL GUIManager::Initialize(HWND hWnd, ID3D12Device5 *pD3DDevice, ID3D12CommandQ
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 키보드 지원
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // 게임패드 지원
-    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // 도킹 지원
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // 도킹 지원
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -142,6 +142,8 @@ void GUIManager::BeginRender()
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
 }
 
 void GUIManager::EndRender(ID3D12GraphicsCommandList *pCommandList)
@@ -169,7 +171,12 @@ BOOL GUIManager::TreeNode(const char *name) { return ImGui::TreeNode(name); }
 
 void GUIManager::TreePop() { ImGui::TreePop(); }
 
-void GUIManager::Text(const char *txt) { ImGui::Text(txt); }
+void GUIManager::SameLine() { ImGui::SameLine(); }
+
+void GUIManager::Text(const char *fmt)
+{
+    ImGui::Text(fmt);
+}
 
 void GUIManager::SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt)
 {
@@ -181,6 +188,15 @@ void GUIManager::SliderFloat(const char *label, float *v, float vMin, float vMax
     {
         ImGui::SliderFloat(label, v, vMin, vMax, fmt);
     }
+}
+
+BOOL GUIManager::DragFloat3(const char *label, Vector3 *v, float delta) 
+{ 
+    if (!label || !strlen(label))
+    {
+        return ImGui::DragFloat3(EMPTY_LABEL, (float *)v, delta);
+    }
+    return ImGui::DragFloat3(label, (float *)v, delta);
 }
 
 void GUIManager::CheckBox(const char *label, bool *v)
@@ -207,16 +223,36 @@ BOOL GUIManager::Button(const char *label)
     }
 }
 
-void GUIManager::Image(ITextureHandle *pTexHanlde) 
+BOOL GUIManager::ColoredButton(const char *label, RGBA color)
 { 
+    RGBA hoverColor = BrightenColor(color, 0.1f);
+    RGBA activeColor = DarkenColor(color, 0.1f);
+
+    ImVec4 idleCol(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
+    ImVec4 hoverCol(hoverColor.r / 255.f, hoverColor.g / 255.f, hoverColor.b / 255.f, hoverColor.a / 255.f);
+    ImVec4 activeCol(activeColor.r / 255.f, activeColor.g / 255.f, activeColor.b / 255.f, activeColor.a / 255.f);
+
+    ImGui::PushID(0);
+    ImGui::PushStyleColor(ImGuiCol_Button, idleCol);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverCol);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeCol);
+    bool isPressed = ImGui::Button(label);
+    ImGui::PopStyleColor(3);
+    ImGui::PopID();
+
+    return isPressed;
+}
+
+void GUIManager::Image(ITextureHandle *pTexHanlde)
+{
     TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHanlde;
 
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
     Alloc(&cpuHandle, &gpuHandle);
-    
+
     D3D12_RESOURCE_DESC desc = pTex->pTexture->GetDesc();
-    
+
     m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, pTex->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     ImGui::Image((ImTextureID)gpuHandle.ptr, ImVec2((float)desc.Width, (float)desc.Height));
@@ -270,9 +306,11 @@ void GUIManager::EndMenu() { ImGui::EndMenu(); }
 
 BOOL GUIManager::MenuItem(const char *label, const char *shortcut) { return ImGui::MenuItem(label, shortcut); }
 
-BOOL GUIManager::BeginChild(const char *label)
-{
-    return ImGui::BeginChild(label, ImVec2(0, 0), ImGuiChildFlags_FrameStyle);
+BOOL GUIManager::BeginChild(const char *label, float width, float height)
+{   
+    ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail();
+    return ImGui::BeginChild(label, ImVec2(contentRegionAvail.x * width, contentRegionAvail.y * height),
+                             ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeX);
 }
 
 void GUIManager::EndChild() { ImGui::EndChild(); }
@@ -289,3 +327,12 @@ void GUIManager::DockSpace(const char *label)
 void GUIManager::BeginGroup() { ImGui::BeginGroup(); }
 
 void GUIManager::EndGroup() { ImGui::EndGroup(); }
+
+BOOL GUIManager::BeginTabBar(const char *label) 
+{ return ImGui::BeginTabBar(label, ImGuiTabBarFlags_None); }
+
+void GUIManager::EndTabBar() { ImGui::EndTabBar(); }
+
+BOOL GUIManager::BeginTabItem(const char *label) { return ImGui::BeginTabItem(label); }
+
+void GUIManager::EndTabItem() { ImGui::EndTabItem(); }

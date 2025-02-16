@@ -5,6 +5,8 @@
 #include "AudioManager.h"
 #include "VideoManager.h"
 
+#include "InputManager.h"
+
 #include "BadAppleController.h"
 
 void BadAppleController::Cleanup()
@@ -59,7 +61,7 @@ BOOL BadAppleController::Start()
     {
         __debugbreak();
     }
-    pGame->GetInputManager()->AddKeyListener(VK_SPACE, [pBadAppleAudio](void *) {
+    g_pClient->GetInputManager()->AddKeyListener(VK_SPACE, [pBadAppleAudio](void *) {
         pBadAppleAudio->isPaused = !pBadAppleAudio->isPaused;
         pBadAppleAudio->pChannel->setPaused(pBadAppleAudio->isPaused);
     });

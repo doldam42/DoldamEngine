@@ -14,6 +14,9 @@
     <Filter Include="Components">
       <UniqueIdentifier>{4cb508bf-8f30-4ceb-9f8c-b4fa704d2f2c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUIView">
+      <UniqueIdentifier>{88bd798a-09b2-4f26-a40e-2a0e435bd562}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -28,9 +31,11 @@
     </ClInclude>
     <ClInclude Include="GUIController.h" />
     <ClInclude Include="FileDialogUtils.h" />
-    <ClInclude Include="SceneViewerController.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="GUIView.h">
+      <Filter>GUIView</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameEditor.cpp" />
@@ -42,9 +47,20 @@
     </ClCompile>
     <ClCompile Include="GUIController.cpp" />
     <ClCompile Include="FileDialogUtils.cpp" />
-    <ClCompile Include="SceneViewerController.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="GUIViewHierarchy.cpp">
+      <Filter>GUIView</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIViewSceneView.cpp">
+      <Filter>GUIView</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIViewInspector.cpp">
+      <Filter>GUIView</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIViewProject.cpp">
+      <Filter>GUIView</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc">
@@ -58,5 +74,8 @@
     <Image Include="DoldamEditor.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Config.ini" />
   </ItemGroup>
 </Project>

@@ -4,7 +4,9 @@
 
 #include "AudioManager.h"
 #include "VideoManager.h"
+#include "InputManager.h"
 
+#include "CameraController.h"
 #include "BadAppleController.h"
 #include "RaytracingDemoController.h"
 #include "TessellationDemoController.h"
@@ -85,6 +87,14 @@ BOOL Client::LoadModules(HWND hWnd)
     return result;
 }
 
+void Client::ProcessInput() 
+{
+    if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
+    {
+        DestroyWindow(m_hWnd);
+    }
+}
+
 void Client::CleanupControllers()
 {
     if (m_pDemoController)
@@ -160,8 +170,20 @@ BOOL Client::Initialize(HWND hWnd)
 
     result = LoadModules(hWnd);
 
+    RECT rect;
+    GetClientRect(hWnd, &rect);
+    DWORD width = rect.right - rect.left;
+    DWORD height = rect.bottom - rect.top;
+
+    m_pInputManager = new InputManager;
+    m_pInputManager->Initialize(width, height);
+
     m_pAudio = new AudioManager;
     m_pAudio->Initialize();
+
+    m_pCameraController = new CameraController;
+    m_pCameraController->Initialize(this);
+    m_pGame->Register(m_pCameraController);
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
@@ -175,6 +197,8 @@ BOOL Client::Initialize(HWND hWnd)
 
     Start();
 
+    m_hWnd = hWnd;
+
     return result;
 }
 
@@ -184,6 +208,8 @@ void Client::LoadScene() {}
 
 void Client::Process()
 {
+    ProcessInput();
+
     m_pGame->Update();
 
     m_pGame->Render();
@@ -202,14 +228,18 @@ BOOL Client::Start()
     return TRUE;
 }
 
-void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyDown(nChar, uiScanCode); }
+void Client::OnKeyDown(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyDown(nChar, uiScanCode); }
 
-void Client::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pGame->OnKeyUp(nChar, uiScanCode); }
+void Client::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nChar, uiScanCode); }
 
-void Client::OnMouseMove(int mouseX, int mouseY) { m_pGame->OnMouseMove(mouseX, mouseY); }
+void Client::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
 
-void Client::OnMouseWheel(float deltaWheel) { m_pGame->OnMouseWheel(deltaWheel); }
+void Client::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
 
-BOOL Client::OnUpdateWindowSize(UINT width, UINT height) { return m_pGame->OnUpdateWindowSize(width, height); }
+BOOL Client::OnUpdateWindowSize(UINT width, UINT height)
+{
+    m_pInputManager->SetWindowSize(width, height);
+    return m_pGame->OnUpdateWindowSize(width, height);
+}
 
 Client::~Client() { Cleanup(); }

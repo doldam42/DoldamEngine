@@ -139,20 +139,6 @@ interface IGameSprite
     virtual void SetZ(float z) = 0;
 };
 
-interface IInputManager
-{
-    virtual float GetXAxis() const = 0;
-    virtual float GetYAxis() const = 0;
-    virtual float GetZAxis() const = 0;
-
-    virtual float GetCursorNDCX() const = 0;
-    virtual float GetCursorNDCY() const = 0;
-
-    virtual BOOL       IsKeyPressed(UINT nChar) const = 0;
-    virtual GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
-                                      size_t sizeOfArg = 0) = 0;
-};
-
 interface IGameManager : public IUnknown
 {
     virtual BOOL Initialize(HWND hWnd, IRenderer* pRnd) = 0;

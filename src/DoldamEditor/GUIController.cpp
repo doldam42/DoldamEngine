@@ -1,22 +1,24 @@
 #include "pch.h"
 
 #include "GameEditor.h"
+#include "GUIView.h"
 #include "FileDialogUtils.h"
 
 #include "GUIController.h"
 
 void GUIController::Cleanup()
 {
-    if (m_pGUI)
+    if (m_pGUIView)
     {
-        m_pGUI->Release();
-        m_pGUI = nullptr;
+        delete m_pGUIView;
+        m_pGUIView = nullptr;
     }
 }
 
-BOOL GUIController::Initilize(IRenderGUI *pGUI)
+BOOL GUIController::Initilize(IRenderGUI *pGUI, const WCHAR *assetPath)
 {
-    m_pGUI = pGUI;
+    m_pGUIView = new GUIView(pGUI, assetPath);
+    
     return TRUE;
 }
 
@@ -94,61 +96,12 @@ BOOL GUIController::Start()
 
 void GUIController::Update(float dt) {}
 
-void GUIController::ShowSceneView()
-{
-    m_pGUI->SetNextWindowPosR(SceneViewPos.x, SceneViewPos.y);
-    m_pGUI->SetNextWindowSizeR(SceneViewSize.x, SceneViewSize.y);
-
-    if (m_pGUI->Begin("Scene View", nullptr, m_windowFlags))
-    {
-        m_pGUI->Text("Scene Rendering...");
-    }
-    m_pGUI->End();
-}
-
-// Left SideBar
-void GUIController::ShowHierarchy()
-{
-    m_pGUI->SetNextWindowPosR(HierarchyPos.x, HierarchyPos.y);
-    m_pGUI->SetNextWindowSizeR(HierarchySize.x, HierarchySize.y);
-
-    if (m_pGUI->Begin("Hierarchy", nullptr, m_windowFlags))
-    {
-        m_pGUI->Text("Game Objects List");
-    }
-    m_pGUI->End();
-}
-
-void GUIController::ShowInspector()
-{
-    m_pGUI->SetNextWindowPosR(InspectorPos.x, InspectorPos.y);
-    m_pGUI->SetNextWindowSizeR(InspectorSize.x, InspectorSize.y);
-
-    if (m_pGUI->Begin("Inspector", nullptr, m_windowFlags))
-    {
-        m_pGUI->Text("Object Properties");
-    }
-    m_pGUI->End();
-}
-
-void GUIController::ShowProject() 
-{
-    m_pGUI->SetNextWindowPosR(ProjectPos.x, ProjectPos.y);
-    m_pGUI->SetNextWindowSizeR(ProjectSize.x, ProjectSize.y);
-
-    if (m_pGUI->Begin("Project", nullptr, m_windowFlags))
-    {
-        m_pGUI->Text("Project & Assets");
-    }
-    m_pGUI->End();
-}
-
 void GUIController::Render()
 {
     //ShowSceneView();
-    ShowHierarchy();
-    ShowProject();
-    ShowInspector();
+    m_pGUIView->ShowHierarchy();
+    m_pGUIView->ShowProject();
+    m_pGUIView->ShowInspector();
 }
 
 GUIController::~GUIController() { Cleanup(); }

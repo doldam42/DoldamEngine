@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="BadAppleController.cpp" />
+    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="..\Common\typedef.h" />
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="BadAppleController.h" />
+    <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />

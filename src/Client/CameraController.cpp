@@ -1,32 +1,31 @@
 #include "pch.h"
 
-#include "GameManager.h"
-#include "GameObject.h"
-#include "PhysicsComponent.h"
+#include "Client.h"
+#include "InputManager.h"
 
 #include "Camera.h"
 #include "CameraController.h"
 
 void CameraController::Update(const float dt)
 {
+    if (m_isFreezed)
+        return;
     if (m_pTarget && !m_useFirstPersonView)
     {
         float offset = 2.f;
 
-        const Transform &targetTM = m_pTarget->GetTransform();
-
         Vector3 up = Vector3::UnitY;
-        Vector3 viewDir = targetTM.GetForward();
-        Vector3 eye = targetTM.GetPosition() + up * offset - viewDir * offset;
+        Vector3 viewDir = m_pTarget->GetForward();
+        Vector3 eye = m_pTarget->GetPosition() + up * offset - viewDir * offset;
 
-        m_pCamera->SetEyeAtUp(eye, targetTM.GetPosition(), up);
+        m_pGame->SetCameraEyeAtUp(eye, m_pTarget->GetPosition(), up);
     }
     else
     {
         UpdateKeyboard(dt);
 
-        float cursorNDCX = g_pGame->GetInputManager()->GetCursorNDCX();
-        float cursorNDCY = g_pGame->GetInputManager()->GetCursorNDCY();
+        float cursorNDCX = g_pClient->GetInputManager()->GetCursorNDCX();
+        float cursorNDCY = g_pClient->GetInputManager()->GetCursorNDCY();
 
         if (m_prevCursorNDCX != cursorNDCX || m_prevcursorNDCY != cursorNDCY)
         {
@@ -35,15 +34,13 @@ void CameraController::Update(const float dt)
             m_prevcursorNDCY = cursorNDCY;
         }
     }
-
-    m_pCamera->Update();
 }
 
 void CameraController::UpdateKeyboard(const float dt)
 {
     if (m_useFirstPersonView)
     {
-        IInputManager *pInputManager = g_pGame->GetInputManager();
+        InputManager *pInputManager = g_pClient->GetInputManager();
 
         float x = pInputManager->GetXAxis();
         float y = pInputManager->GetYAxis();
@@ -53,15 +50,15 @@ void CameraController::UpdateKeyboard(const float dt)
         {
             Vector3 v(x, y, z);
 
-            Vector3 forward = m_pCamera->GetForwardDir();
-            Vector3 right = m_pCamera->GetRightDir();
+            Vector3 forward = m_pGame->GetCameraLookTo();
+            Vector3 right = -forward.Cross(Vector3::Up);
 
-            Vector3 pos = m_pCamera->GetPosition();
+            Vector3 pos = m_pGame->GetCameraPos();
 
             Matrix m(right, Vector3::Up, forward);
             pos += Vector3::Transform(v, m) * m_speed * dt;
 
-            m_pCamera->SetPosition(pos);
+            m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
         }
     }
 }
@@ -74,86 +71,57 @@ void CameraController::UpdateMouse(float mouseNdcX, float mouseNdcY)
         float yaw = mouseNdcX * XM_2PI;      // 좌우 360도
         float pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
 
-        m_pCamera->SetYawPitchRoll(yaw, -pitch, 0.0f);
+        m_pGame->SetCameraYawPitchRoll(yaw, -pitch, 0.0f);
     }
 }
 
-void CameraController::Cleanup()
-{
-    if (m_pCamera)
-    {
-        delete m_pCamera;
-        m_pCamera = nullptr;
-    }
-}
+void CameraController::Cleanup() {}
 
 void CameraController::MoveForward(float dt)
 {
-    Vector3 forward = m_pCamera->GetForwardDir();
+    Vector3 forward = m_pGame->GetCameraLookTo();
 
-    Vector3 pos = m_pCamera->GetPosition();
-    m_pCamera->SetPosition(pos + forward * m_speed * dt);
+    Vector3 pos = m_pGame->GetCameraPos();
+    pos += forward * m_speed * dt;
+    m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
 }
 
 void CameraController::MoveUp(float dt)
 {
-    Vector3 up = m_pCamera->GetUpDir();
+    Vector3 up = Vector3::Up;
 
-    Vector3 pos = m_pCamera->GetPosition();
-    m_pCamera->SetPosition(pos + up * m_speed * dt);
+    Vector3 pos = m_pGame->GetCameraPos();
+    pos += up * m_speed * dt;
+    m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
 }
 
 void CameraController::MoveRight(float dt)
 {
-    Vector3 right = m_pCamera->GetRightDir();
+    Vector3 forward = m_pGame->GetCameraLookTo();
+    Vector3 right = -forward.Cross(Vector3::Up);
 
-    Vector3 pos = m_pCamera->GetPosition();
-    m_pCamera->SetPosition(pos + right * m_speed * dt);
+    Vector3 pos = m_pGame->GetCameraPos();
+    pos += right * m_speed * dt;
+    m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
 }
 
-void CameraController::SetAspectRatio(float aspect) { m_pCamera->SetAspectRatio(aspect); }
-
-static void Jump(void *)
+void CameraController::SetFollowTarget(IGameObject *pTarget)
 {
-    float       dt = g_pGame->DeltaTime();
-    GameObject *pTarget = g_pGame->GetCamera()->GetFollowTarget();
-
-    pTarget->GetPhysicsComponent()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 0.0f));
-}
-
-void CameraController::SetFollowTarget(GameObject *pTarget)
-{
-    InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
-    pInputManager->AddKeyListener(VK_SPACE, Jump);
     m_useFirstPersonView = FALSE;
     m_pTarget = pTarget;
 }
 
-void CameraController::SetCameraPos(const Vector3 *pos) { m_pCamera->SetPosition(*pos); }
-
-void CameraController::ToggleProjectionSetting()
-{
-    if (m_pCamera->m_usePerspectiveProjection)
-    {
-        m_pCamera->DisablePerspectiveProjection();
-    }
-    else
-    {
-        m_pCamera->EnablePerspectiveProjection();
-    }
-}
-
-CameraController::CameraController() { m_pCamera = new Camera; }
+CameraController::CameraController() {}
 
 CameraController::~CameraController() { Cleanup(); }
 
-void CameraController::Initialize(float verticalFovRadians, float aspectRatio, float nearZ, float farZ)
-{
-    m_pCamera->Initialize(verticalFovRadians, aspectRatio, nearZ, farZ);
-
-    InputManager *pInputManager = (InputManager *)g_pGame->GetInputManager();
-    pInputManager->AddKeyListener(
-        'G', [this](void *) { this->ToggleProjectionSetting(); }, nullptr);
-    pInputManager->AddKeyListener(
-        'F', [this](void *) { g_pGame->ToggleCamera(); }, nullptr);
+BOOL CameraController::Start() 
+{ 
+    InputManager* pI = g_pClient->GetInputManager();
+    pI->AddKeyListener('F', [this](void *) { this->m_isFreezed = !this->m_isFreezed; });
+    return TRUE;
 }
+
+void CameraController::Render() {}
+
+void CameraController::Initialize(Client *pClient) { m_pGame = pClient->GetGameManager(); }
