@@ -2,6 +2,25 @@
 
 #include "ColorUtils.h"
 
+const RGBA RGBA::RED = {237, 10, 63, 255};
+const RGBA RGBA::ORANGE = {255, 136, 100, 255};
+const RGBA RGBA::YELLOW = {252, 232, 131, 255};
+const RGBA RGBA::GREEN = {58, 166, 85, 255};
+const RGBA RGBA::AQUAMARINE = {149, 224, 232, 255};
+const RGBA RGBA::BLUE_I = {46, 180, 230, 255};
+const RGBA RGBA::BLUE_II = {69, 112, 230, 255};
+const RGBA RGBA::BLUE_III = {0, 102, 255, 255};
+const RGBA RGBA::DEEP_BLUE = {0, 0, 89, 255};
+const RGBA RGBA::VIOLET_I = {115, 46, 108, 255};
+const RGBA RGBA::VIOLET_II = {131, 89, 163, 255};
+const RGBA RGBA::LAVENDER = {251, 174, 210, 255};
+const RGBA RGBA::BROWN = {175, 89, 62, 255};
+const RGBA RGBA::GOLD_II = {230, 190, 138, 255};
+const RGBA RGBA::SILVER = {201, 192, 187, 255};
+const RGBA RGBA::BLACK = {0, 0, 0, 255};
+const RGBA RGBA::GRAY = {139, 134, 128, 255};
+const RGBA RGBA::WHITE = {255, 255, 255, 255};
+
 BYTE HSLtoRGB_SubFunction(const float &temp1, const float &temp2, const float temp3)
 {
     if ((temp3 * 6) < 1)

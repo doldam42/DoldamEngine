@@ -21,9 +21,31 @@ void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, const fs::path &directory)
         }
         else
         {
-            RGBA color{0, 149, 183, 255};
-            pGUI->ColoredButton(entry.path().filename().string().c_str(), color);
-            //pGUI->Text(entry.path().filename().string().c_str());
+            RGBA buttonColor = RGBA::BLACK;
+
+            const fs::path ext = entry.path().filename().extension();
+            if (ext == L".dca")
+            {
+                buttonColor = RGBA::ORANGE;
+            }
+            else if (ext == L".png" || ext == L".jpg" || ext == L".dds" || ext == L".DDS" || ext == L".bmp" ||
+                     ext == L".BMP" || ext == L"hdr")
+            {
+                buttonColor = RGBA::GREEN;
+            }
+            else if (ext == L".dom" || ext == L".fbx" || ext == L".gltf")
+            {
+                buttonColor = RGBA::BLUE_II;
+            }
+            else
+            {
+                buttonColor = RGBA::VIOLET_I;
+            }
+
+            if (pGUI->ColoredButton(entry.path().filename().string().c_str(), buttonColor))
+            {
+
+            }
         }
     }
 }
