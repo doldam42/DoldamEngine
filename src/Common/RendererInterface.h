@@ -24,6 +24,12 @@ interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
 
+struct RENDER_GUI_PAYLOAD
+{
+    void *data;
+    int   dataSize;
+};
+
 typedef int GUI_WINDOW_FLAGS;
 enum GUI_WINDOW_FLAGS_ : UINT
 {
@@ -63,6 +69,14 @@ interface IRenderGUI : public IUnknown
 
     virtual BOOL BeginTabItem(const char *label) = 0;
     virtual void EndTabItem() = 0;
+
+    // Drag and Drop
+    virtual BOOL BeginDragDropSource() = 0;
+    virtual void EndDragDropSource() = 0;
+    virtual BOOL BeginDragDropTarget() = 0;
+    virtual void EndDragDropTarget() = 0;
+    virtual void SetDragDropPayload(const char *type, const void *data, size_t dataSize) = 0;
+    virtual BOOL AcceptDragDropPayload(const char *type, RENDER_GUI_PAYLOAD* pOutPayload) = 0;
 
     virtual BOOL TreeNode(const char *name) = 0;
     virtual void TreePop() = 0;

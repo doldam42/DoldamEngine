@@ -128,7 +128,7 @@ HRESULT CDialogEventHandler::OnItemSelected(IFileDialogCustomize *pfdc, DWORD dw
 HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
 {
     *ppv = NULL;
-    CDialogEventHandler *pDialogEventHandler = new (std::nothrow) CDialogEventHandler();
+    CDialogEventHandler *pDialogEventHandler = new CDialogEventHandler();
     HRESULT              hr = pDialogEventHandler ? S_OK : E_OUTOFMEMORY;
     if (SUCCEEDED(hr))
     {
@@ -151,7 +151,7 @@ HRESULT _WriteDataToFile(HANDLE hFile, PCWSTR pszDataIn)
     if (SUCCEEDED(hr))
     {
         // Now allocate a buffer of the required size, and call WideCharToMultiByte again to do the actual conversion.
-        char *pszData = new (std::nothrow) CHAR[cbData];
+        char *pszData = new CHAR[cbData];
         hr = pszData ? S_OK : E_OUTOFMEMORY;
         if (SUCCEEDED(hr))
         {
@@ -193,7 +193,7 @@ HRESULT _WritePropertyToCustomFile(PCWSTR pszFileName, PCWSTR pszPropertyName, P
         const static DWORD cchPropertyEndTag = (DWORD)wcslen(wszPropertyEndTag);
         DWORD const        cchPropertyLine = cchPropertyStartTag + cchPropertyEndTag + (DWORD)wcslen(pszPropertyName) +
                                       (DWORD)wcslen(pszValue) + 2; // 1 for '=' + 1 for NULL terminator.
-        PWSTR pszPropertyLine = new (std::nothrow) WCHAR[cchPropertyLine];
+        PWSTR pszPropertyLine = new WCHAR[cchPropertyLine];
         hr = pszPropertyLine ? S_OK : E_OUTOFMEMORY;
         if (SUCCEEDED(hr))
         {

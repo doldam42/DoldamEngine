@@ -3,6 +3,7 @@
 #include "GameEditor.h"
 #include "GUIView.h"
 #include "FileDialogUtils.h"
+#include "FileManager.h"
 
 #include "GUIController.h"
 
@@ -15,9 +16,9 @@ void GUIController::Cleanup()
     }
 }
 
-BOOL GUIController::Initilize(IRenderGUI *pGUI, const WCHAR *assetPath)
+BOOL GUIController::Initilize(IRenderGUI *pGUI, FileNode* assetDir, const WCHAR* basePath)
 {
-    m_pGUIView = new GUIView(pGUI, assetPath);
+    m_pGUIView = new GUIView(pGUI, assetDir, basePath);
     
     return TRUE;
 }

@@ -2,56 +2,74 @@
 
 #include <filesystem>
 
+#include "FileManager.h"
+
 #include "GUIView.h"
 
 namespace fs = std::filesystem;
 
-void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, const fs::path &directory)
+static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNode *pNode, fs::path &parentPath)
 {
-    for (const auto &entry : fs::directory_iterator(directory))
+    char name[MAX_NAME] = {'\0'};
+    ws2s(pNode->name, name);
+
+    if (pNode->isDirectory)
     {
-        if (entry.is_directory())
+        if (pGUI->TreeNode(name))
         {
-            if (pGUI->TreeNode(entry.path().filename().string().c_str()))
+            parentPath /= pNode->name;
+            // Recursive call for nested directories
+            SORT_LINK *pCur = pNode->childrenLinkHead;
+            while (pCur)
             {
-                // Recursive call for nested directories
-                ShowDirectoryTreeRecursive(pGUI, entry.path());
-                pGUI->TreePop();
+                FileNode *pChild = (FileNode *)pCur->pItem;
+
+                ShowDirectoryTreeRecursive(pGUI, pView, pChild, parentPath);
+
+                pCur = pCur->pNext;
             }
+            pGUI->TreePop();
         }
-        else
+    }
+    else
+    {
+        RGBA buttonColor = RGBA::BLACK;
+
+        switch (pNode->itemType)
         {
-            RGBA buttonColor = RGBA::BLACK;
+        case FILE_ITEM_TYPE_TEXTURE:
+            buttonColor = RGBA::GREEN;
+            break;
+        case FILE_ITEM_TYPE_MESH:
+            buttonColor = RGBA::BLUE_II;
+            break;
+        case FILE_ITEM_TYPE_ANIMATION:
+            buttonColor = RGBA::ORANGE;
+            break;
+        default:
+            buttonColor = buttonColor = RGBA::VIOLET_I;
+            break;
+        }
 
-            const fs::path ext = entry.path().filename().extension();
-            if (ext == L".dca")
-            {
-                buttonColor = RGBA::ORANGE;
-            }
-            else if (ext == L".png" || ext == L".jpg" || ext == L".dds" || ext == L".DDS" || ext == L".bmp" ||
-                     ext == L".BMP" || ext == L"hdr")
-            {
-                buttonColor = RGBA::GREEN;
-            }
-            else if (ext == L".dom" || ext == L".fbx" || ext == L".gltf")
-            {
-                buttonColor = RGBA::BLUE_II;
-            }
-            else
-            {
-                buttonColor = RGBA::VIOLET_I;
-            }
-
-            if (pGUI->ColoredButton(entry.path().filename().string().c_str(), buttonColor))
-            {
-
-            }
+        if (pGUI->ColoredButton(name, buttonColor))
+        {
+            ZeroMemory(pView->selectedItemName, sizeof(pView->selectedItemName));
+            wcscpy_s(pView->selectedItemName, MAX_NAME, (parentPath / pNode->name).c_str());
+        }
+        if (pGUI->BeginDragDropSource())
+        {
+            ZeroMemory(pView->selectedItemName, sizeof(pView->selectedItemName));
+            wcscpy_s(pView->selectedItemName, MAX_NAME, (parentPath / pNode->name).c_str());
+            pGUI->SetDragDropPayload("SELECT_FILE_PAYLOAD", NULL, 0);
+            pGUI->EndDragDropSource();
         }
     }
 }
 
 void GUIView::ShowProject()
 {
+    fs::path fullPath(basePath);
+
     pGUI->SetNextWindowPosR(ProjectPos.x, ProjectPos.y);
     pGUI->SetNextWindowSizeR(ProjectSize.x, ProjectSize.y);
 
@@ -60,18 +78,32 @@ void GUIView::ShowProject()
         pGUI->Text("Project & Assets");
 
         pGUI->BeginChild("AssetNode", WINDOW_WIDTH, 0.0f);
-        if (pGUI->TreeNode("Assets"))
-        {
-            ShowDirectoryTreeRecursive(pGUI, fs::path(assetPath));
-            pGUI->TreePop();
-        }
+
+        ShowDirectoryTreeRecursive(pGUI, this, assetDir, fullPath);
+
         pGUI->EndChild();
         pGUI->SameLine();
 
-        pGUI->BeginChild("Images");
-        for (int i = 0; i < 100; i++)
-            pGUI->Text("scrollable Images");
-        pGUI->Text("End");
+        pGUI->BeginChild("Selected Item");
+
+        static char selected[MAX_NAME] = {'\0'};
+        if (pGUI->TreeNode("Selected Item"))
+        {
+            if (pGUI->BeginDragDropTarget())
+            {
+                RENDER_GUI_PAYLOAD payload;
+
+                if (pGUI->AcceptDragDropPayload("SELECT_FILE_PAYLOAD", &payload))
+                {
+                    ZeroMemory(selected, sizeof(selected));
+                    ws2s(selectedItemName, selected);
+                }
+                pGUI->EndDragDropTarget();
+            }
+            pGUI->Text(selected);
+            pGUI->TreePop();
+        }
+        
         pGUI->EndChild();
         pGUI->End();
     }

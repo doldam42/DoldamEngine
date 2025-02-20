@@ -4,6 +4,7 @@
 class CameraController;
 class InputManager;
 class GUIController;
+class FileManager;
 class GameEditor
 {
   private:
@@ -21,6 +22,8 @@ class GameEditor
     GUIController *m_pGUIController = nullptr;
 
     InputManager *m_pInputManager = nullptr;
+
+    FileManager *m_pFileManager = nullptr;
 
     BOOL LoadModules(HWND hWnd);
     void CleanupModules();
@@ -46,6 +49,8 @@ class GameEditor
     IGameManager *GetGameManager() { return m_pGame; }
 
     InputManager *GetInputManager() { return m_pInputManager; }
+
+    FileManager *GetFileManager() { return m_pFileManager; }
 
     const WCHAR *GetAssetPath() { return m_assetPath; }
 

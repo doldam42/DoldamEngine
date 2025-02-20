@@ -1,14 +1,15 @@
 #include "pch.h"
 
 #include "CameraController.h"
-#include "InputManager.h"
+#include "FileManager.h"
 #include "GUIController.h"
+#include "InputManager.h"
 
 #include "GameEditor.h"
 
-GameEditor* g_pEditor = nullptr;
+GameEditor *g_pEditor = nullptr;
 
-BOOL GameEditor::LoadModules(HWND hWnd) 
+BOOL GameEditor::LoadModules(HWND hWnd)
 {
     BOOL                 result = FALSE;
     CREATE_INSTANCE_FUNC pCreateFunc;
@@ -21,7 +22,7 @@ BOOL GameEditor::LoadModules(HWND hWnd)
     engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
 #else
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Release.dll";
-    //rendererFileName = L"../../DLL/RendererD3D12_x64_Release.dll";
+    // rendererFileName = L"../../DLL/RendererD3D12_x64_Release.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Release.dll";
 #endif
 
@@ -59,7 +60,7 @@ BOOL GameEditor::LoadModules(HWND hWnd)
     return result;
 }
 
-void GameEditor::CleanupModules() 
+void GameEditor::CleanupModules()
 {
     if (m_pGame)
     {
@@ -84,7 +85,7 @@ void GameEditor::CleanupModules()
     }
 }
 
-BOOL GameEditor::LoadConfigs() 
+BOOL GameEditor::LoadConfigs()
 {
     GetPrivateProfileString(L"path", L"asset_path", L"\0", m_assetPath, MAX_PATH, L".\\Config.ini");
     if (!wcslen(m_assetPath))
@@ -95,8 +96,8 @@ BOOL GameEditor::LoadConfigs()
     return TRUE;
 }
 
-void GameEditor::ProcessInput() 
-{ 
+void GameEditor::ProcessInput()
+{
     if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
     {
         DestroyWindow(m_hWnd);
@@ -120,10 +121,15 @@ void GameEditor::Cleanup()
         delete m_pGUIController;
         m_pGUIController = nullptr;
     }
+    if (m_pFileManager)
+    {
+        delete m_pFileManager;
+        m_pFileManager = nullptr;
+    }
     CleanupModules();
 }
 
-BOOL GameEditor::Initialize(HWND hWnd) 
+BOOL GameEditor::Initialize(HWND hWnd)
 {
     // Show the window
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
@@ -141,22 +147,26 @@ BOOL GameEditor::Initialize(HWND hWnd)
     m_pInputManager = new InputManager;
     m_pInputManager->Initialize(width, height);
 
+    m_pFileManager = new FileManager;
+    m_pFileManager->Initialize(m_assetPath);
+
     m_pGUIController = new GUIController;
-    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI(), m_assetPath);
+    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI(), m_pFileManager->GetRootDir(),
+                                m_pFileManager->GetBasePath());
     m_pGame->Register(m_pGUIController);
-    
+
     m_pCameraController = new CameraController;
     m_pCameraController->Initialize(this);
     m_pGame->Register(m_pCameraController);
-    
+
     m_pGame->Start();
 
     m_hWnd = hWnd;
     return TRUE;
 }
 
-void GameEditor::Process() 
-{ 
+void GameEditor::Process()
+{
 
     ProcessInput();
 

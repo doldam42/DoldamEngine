@@ -173,10 +173,7 @@ void GUIManager::TreePop() { ImGui::TreePop(); }
 
 void GUIManager::SameLine() { ImGui::SameLine(); }
 
-void GUIManager::Text(const char *fmt)
-{
-    ImGui::Text(fmt);
-}
+void GUIManager::Text(const char *fmt) { ImGui::Text(fmt); }
 
 void GUIManager::SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt)
 {
@@ -190,8 +187,8 @@ void GUIManager::SliderFloat(const char *label, float *v, float vMin, float vMax
     }
 }
 
-BOOL GUIManager::DragFloat3(const char *label, Vector3 *v, float delta) 
-{ 
+BOOL GUIManager::DragFloat3(const char *label, Vector3 *v, float delta)
+{
     if (!label || !strlen(label))
     {
         return ImGui::DragFloat3(EMPTY_LABEL, (float *)v, delta);
@@ -224,7 +221,7 @@ BOOL GUIManager::Button(const char *label)
 }
 
 BOOL GUIManager::ColoredButton(const char *label, RGBA color)
-{ 
+{
     RGBA hoverColor = BrightenColor(color, 0.1f);
     RGBA activeColor = DarkenColor(color, 0.1f);
 
@@ -307,7 +304,7 @@ void GUIManager::EndMenu() { ImGui::EndMenu(); }
 BOOL GUIManager::MenuItem(const char *label, const char *shortcut) { return ImGui::MenuItem(label, shortcut); }
 
 BOOL GUIManager::BeginChild(const char *label, float width, float height)
-{   
+{
     ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail();
     return ImGui::BeginChild(label, ImVec2(contentRegionAvail.x * width, contentRegionAvail.y * height),
                              ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeX);
@@ -328,11 +325,36 @@ void GUIManager::BeginGroup() { ImGui::BeginGroup(); }
 
 void GUIManager::EndGroup() { ImGui::EndGroup(); }
 
-BOOL GUIManager::BeginTabBar(const char *label) 
-{ return ImGui::BeginTabBar(label, ImGuiTabBarFlags_None); }
+BOOL GUIManager::BeginTabBar(const char *label) { return ImGui::BeginTabBar(label, ImGuiTabBarFlags_None); }
 
 void GUIManager::EndTabBar() { ImGui::EndTabBar(); }
 
 BOOL GUIManager::BeginTabItem(const char *label) { return ImGui::BeginTabItem(label); }
 
 void GUIManager::EndTabItem() { ImGui::EndTabItem(); }
+
+BOOL GUIManager::BeginDragDropSource() { return ImGui::BeginDragDropSource(); }
+
+void GUIManager::EndDragDropSource() { ImGui::EndDragDropSource(); }
+
+BOOL GUIManager::BeginDragDropTarget() { return ImGui::BeginDragDropTarget(); }
+
+void GUIManager::EndDragDropTarget() { ImGui::EndDragDropTarget(); }
+
+void GUIManager::SetDragDropPayload(const char *type, const void *data, size_t dataSize)
+{
+    ImGui::SetDragDropPayload(type, data, dataSize);
+}
+
+BOOL GUIManager::AcceptDragDropPayload(const char *type, RENDER_GUI_PAYLOAD *pOutPayload)
+{
+    const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(type);
+
+    if (!payload)
+        return FALSE;
+
+    pOutPayload->data = payload->Data;
+    pOutPayload->dataSize = payload->DataSize;
+
+    return TRUE;
+}

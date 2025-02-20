@@ -101,4 +101,12 @@ class GUIManager : public IRenderGUI
     void EndTabBar() override;
     BOOL BeginTabItem(const char *label) override;
     void EndTabItem() override;
+
+    // Inherited via IRenderGUI
+    BOOL BeginDragDropSource() override;
+    void EndDragDropSource() override;
+    BOOL BeginDragDropTarget() override;
+    void EndDragDropTarget() override;
+    void SetDragDropPayload(const char *type, const void *data, size_t dataSize) override;
+    BOOL AcceptDragDropPayload(const char *type, RENDER_GUI_PAYLOAD *pOutPayload) override;
 };

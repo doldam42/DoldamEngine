@@ -35,6 +35,17 @@ HWND             InitInstance(HINSTANCE hInstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 
+static constexpr void ASSERT(bool expr)
+{
+#ifdef _DEBUG
+    if (!expr)
+    {
+        std::cerr << "Assertion, file " << __FILE__ << ", line " << __LINE__ << std::endl;
+        __debugbreak();
+    }
+#endif // _DEBUG
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
@@ -53,10 +64,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     // Perform application initialization:
     g_hMainWindow = InitInstance(hInstance, nCmdShow);
-    if (!g_hMainWindow)
-    {
-        return FALSE;
-    }
+    ASSERT(g_hMainWindow);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_DOLDAMEDITOR));
 

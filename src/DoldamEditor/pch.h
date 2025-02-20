@@ -4,7 +4,7 @@
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #include <stdlib.h>
-#define DEBUG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new new (_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
 #include "targetver.h"
@@ -16,6 +16,8 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <tchar.h>
+
+#include <iostream>
 
 // For Windows File Dialog
 #define STRICT_TYPED_ITEMIDS

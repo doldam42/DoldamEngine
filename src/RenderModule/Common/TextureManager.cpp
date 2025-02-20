@@ -2,6 +2,7 @@
 
 #include "../GenericModule/HashTable.h"
 #include "../GenericModule/LinkedList.h"
+#include "../GenericModule/StringUtil.h"
 
 #ifdef RENDERER_RAYTRACING
 #include "../RendererRaytracing/D3D12Renderer.h"
@@ -96,9 +97,9 @@ TEXTURE_HANDLE *TextureManager::CreateTextureFromFile(const WCHAR *filename, BOO
     D3D12_RESOURCE_DESC desc = {};
     TEXTURE_HANDLE     *pTexHandle = nullptr;
 
-    wchar_t ext[8] = {0};
+    wchar_t ext[MAX_PATH] = {0};
 
-    UINT fileNameLen = (DWORD)wcslen(filename);
+    UINT fileNameLen = wcslen(filename);
     UINT keySize = fileNameLen * sizeof(WCHAR);
 
     if (m_pHashTable->Select((void **)&pTexHandle, 1, filename, keySize))

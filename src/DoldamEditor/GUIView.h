@@ -1,8 +1,11 @@
 #pragma once
 
+struct FileNode;
 struct GUIView
 {
     IRenderGUI *pGUI;
+
+    WCHAR selectedItemName[MAX_NAME] = {L'\0'};
 
     static constexpr float WINDOW_WIDTH = 0.2f;
     static constexpr float WINDOW_HEIGHT = 0.7f;
@@ -29,10 +32,14 @@ struct GUIView
     // bottom
     Vector2 ProjectPos = Vector2(0.0f, WINDOW_HEIGHT);
     Vector2 ProjectSize = Vector2(1.0f - WINDOW_WIDTH, 1.0f - WINDOW_HEIGHT);
-    const WCHAR  *assetPath;
+    WCHAR     basePath[MAX_PATH] = {L'\0'};
+    FileNode *assetDir = nullptr;
     void    ShowProject();
 
-    GUIView(IRenderGUI *gui, const WCHAR *pAssetPath) : pGUI(gui), assetPath(pAssetPath) {}
+    GUIView(IRenderGUI *gui, FileNode *assetDir_, const WCHAR* basePath_) : pGUI(gui), assetDir(assetDir_) 
+    {
+        wcscpy_s(basePath, MAX_PATH, basePath_);
+    }
     ~GUIView()
     {
         if (pGUI)

@@ -170,8 +170,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\DLL\;$(SolutionDir)..\lib\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy "$(SolutionDir)Client\Shaders\*" "$(SolutionDir)..\bin\$(Configuration)\Shaders\" /y /e /d</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="GameEditor.cpp" />
     <ClCompile Include="GUIController.cpp" />
     <ClCompile Include="GUIViewHierarchy.cpp" />
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="FileManager.h" />
     <ClInclude Include="GameEditor.h" />
     <ClInclude Include="GUIController.h" />
     <ClInclude Include="GUIView.h" />

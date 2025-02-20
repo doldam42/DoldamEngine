@@ -36,6 +36,7 @@
     <ClInclude Include="GUIView.h">
       <Filter>GUIView</Filter>
     </ClInclude>
+    <ClInclude Include="FileManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameEditor.cpp" />
@@ -61,6 +62,7 @@
     <ClCompile Include="GUIViewProject.cpp">
       <Filter>GUIView</Filter>
     </ClCompile>
+    <ClCompile Include="FileManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DoldamEditor.rc">

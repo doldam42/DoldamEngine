@@ -20,16 +20,28 @@ void ws2s(const wchar_t *inWStr, char *outStr)
 
 bool TryGetExtension(const wchar_t *filename, wchar_t *outExtension)
 {
-    const std::wstring ext = std::filesystem::path(filename).extension();
-    for (size_t index = 0; index < ext.size(); index++)
+    size_t len = wcslen(filename);
+    
+    int idx = 0;
+    for (int i = 0; i < len; i++)
     {
-        outExtension[index] = towlower(ext[index]);
+        if (filename[i] == L'.')
+        {
+            idx = i;
+        }
     }
 
-    return !ext.empty();
+    int outLen = 0;
+    for (int i = idx; i < len; i++)
+    {
+        outExtension[outLen] = towlower(filename[i]);
+        outLen++;
+    }
+
+    return outLen != 0;
 }
 
-bool IsFile(const wchar_t *filename) \
+bool IsFile(const wchar_t *filename)
 { 
     std::filesystem::path p(filename);
     return std::filesystem::is_regular_file(p) && p.has_filename();

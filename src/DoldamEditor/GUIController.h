@@ -1,5 +1,6 @@
 #pragma once
 struct GUIView;
+struct FileNode;
 class GUIController : public IController
 {
     GUIView *m_pGUIView = nullptr;
@@ -9,7 +10,7 @@ class GUIController : public IController
     void Cleanup();
 
   public:
-    BOOL Initilize(IRenderGUI* pGUI, const WCHAR* assetPath);
+    BOOL Initilize(IRenderGUI* pGUI, FileNode* assetDir, const WCHAR* basePath);
 
     // Inherited via IController
     BOOL Start() override;

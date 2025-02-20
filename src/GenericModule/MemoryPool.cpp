@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "MemoryPool.h"
-#include "pch.h"
 
 void MemoryPool::Cleanup()
 {
