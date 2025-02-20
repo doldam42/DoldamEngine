@@ -240,6 +240,11 @@ BOOL GUIManager::ColoredButton(const char *label, RGBA color)
     return isPressed;
 }
 
+BOOL GUIManager::InvisibleButton()
+{
+    return ImGui::InvisibleButton("InvisibleButton", ImGui::GetContentRegionAvail(), ImGuiButtonFlags_FlattenChildren);
+}
+
 void GUIManager::Image(ITextureHandle *pTexHanlde)
 {
     TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHanlde;

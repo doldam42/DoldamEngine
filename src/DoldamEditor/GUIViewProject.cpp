@@ -68,6 +68,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
 
 void GUIView::ShowProject()
 {
+    static char selected[MAX_NAME] = {"Drop Here"};
     fs::path fullPath(basePath);
 
     pGUI->SetNextWindowPosR(ProjectPos.x, ProjectPos.y);
@@ -86,25 +87,22 @@ void GUIView::ShowProject()
 
         pGUI->BeginChild("Selected Item");
 
-        static char selected[MAX_NAME] = {'\0'};
-        if (pGUI->TreeNode("Selected Item"))
-        {
-            if (pGUI->BeginDragDropTarget())
-            {
-                RENDER_GUI_PAYLOAD payload;
+        pGUI->Text(selected);
 
-                if (pGUI->AcceptDragDropPayload("SELECT_FILE_PAYLOAD", &payload))
-                {
-                    ZeroMemory(selected, sizeof(selected));
-                    ws2s(selectedItemName, selected);
-                }
-                pGUI->EndDragDropTarget();
+        if (pGUI->BeginDragDropTarget())
+        {
+            RENDER_GUI_PAYLOAD payload;
+
+            if (pGUI->AcceptDragDropPayload("SELECT_FILE_PAYLOAD", &payload))
+            {
+                ZeroMemory(selected, sizeof(selected));
+                ws2s(selectedItemName, selected);
             }
-            pGUI->Text(selected);
-            pGUI->TreePop();
+            pGUI->EndDragDropTarget();
         }
-        
+
         pGUI->EndChild();
+
         pGUI->End();
     }
 }

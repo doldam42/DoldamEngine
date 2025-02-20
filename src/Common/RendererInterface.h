@@ -89,6 +89,7 @@ interface IRenderGUI : public IUnknown
     virtual void SliderFloat(const char *label, float *v, float vMin, float vMax, const char *fmt = "%.3f") = 0;
     virtual BOOL Button(const char *label) = 0;
     virtual BOOL ColoredButton(const char *label, RGBA color) = 0;
+    virtual BOOL InvisibleButton() = 0;
     virtual void Image(ITextureHandle * pTexHanlde) = 0;
 
     // per pixel (Absolute)

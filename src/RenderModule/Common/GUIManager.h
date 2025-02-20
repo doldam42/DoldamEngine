@@ -63,6 +63,7 @@ class GUIManager : public IRenderGUI
     void CheckBox(const char *label, bool *v) override;
     BOOL Button(const char *label) override;
     BOOL ColoredButton(const char *label, RGBA color) override;
+    BOOL InvisibleButton() override;
 
     void Image(ITextureHandle *pTexHanlde) override;
 
