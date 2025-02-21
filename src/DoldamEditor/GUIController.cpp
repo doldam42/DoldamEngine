@@ -16,11 +16,18 @@ void GUIController::Cleanup()
     }
 }
 
-BOOL GUIController::Initilize(IRenderGUI *pGUI, FileNode* assetDir, const WCHAR* basePath)
+BOOL GUIController::Initialize(IRenderer *pRnd, FileNode *assetDir, const WCHAR *basePath, UINT width, UINT height)
 {
-    m_pGUIView = new GUIView(pGUI, assetDir, basePath);
+    m_pGUIView = new GUIView(pRnd->GetRenderGUI(), pRnd->GetRenderTargetTexture(), assetDir, basePath, width, height);
     
+    m_pRenderer = pRnd;
     return TRUE;
+}
+
+void GUIController::OnUpdateWindowSize(UINT width, UINT height) 
+{
+    m_pGUIView->width = width;
+    m_pGUIView->height = height;
 }
 
 BOOL GUIController::Start()
@@ -99,10 +106,13 @@ void GUIController::Update(float dt) {}
 
 void GUIController::Render()
 {
-    //ShowSceneView();
+    m_pGUIView->pSceneViewTex = m_pRenderer->GetRenderTargetTexture();
+    m_pGUIView->ShowSceneView();
     m_pGUIView->ShowHierarchy();
     m_pGUIView->ShowProject();
     m_pGUIView->ShowInspector();
 }
+
+Vector2 GUIController::GetViewportSizeRatio() { return m_pGUIView->SceneViewSize; }
 
 GUIController::~GUIController() { Cleanup(); }

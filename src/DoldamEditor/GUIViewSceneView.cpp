@@ -8,7 +8,7 @@ void GUIView::ShowSceneView()
 
     if (pGUI->Begin("Scene View", nullptr, g_windowFlags))
     {
-        pGUI->Text("Scene Rendering...");
+        pGUI->Image(pSceneViewTex, width * SceneViewSize.x, height * SceneViewSize.y);
     }
     pGUI->End();
 }

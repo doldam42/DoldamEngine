@@ -245,7 +245,7 @@ BOOL GUIManager::InvisibleButton()
     return ImGui::InvisibleButton("InvisibleButton", ImGui::GetContentRegionAvail(), ImGuiButtonFlags_FlattenChildren);
 }
 
-void GUIManager::Image(ITextureHandle *pTexHanlde)
+void GUIManager::Image(ITextureHandle *pTexHanlde, UINT width, UINT height)
 {
     TEXTURE_HANDLE *pTex = (TEXTURE_HANDLE *)pTexHanlde;
 
@@ -257,7 +257,7 @@ void GUIManager::Image(ITextureHandle *pTexHanlde)
 
     m_pD3DDevice->CopyDescriptorsSimple(1, cpuHandle, pTex->srv.cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    ImGui::Image((ImTextureID)gpuHandle.ptr, ImVec2((float)desc.Width, (float)desc.Height));
+    ImGui::Image((ImTextureID)gpuHandle.ptr, ImVec2(width, height));
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

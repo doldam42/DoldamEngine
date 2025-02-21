@@ -141,7 +141,7 @@ interface IGameSprite
 
 interface IGameManager : public IUnknown
 {
-    virtual BOOL Initialize(HWND hWnd, IRenderer* pRnd) = 0;
+    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, bool useGUIEditor = false, UINT viewportWidth = 0, UINT viewportHeight = 0) = 0;
 
     virtual void Start() = 0;
     virtual void Update() = 0;
@@ -149,7 +149,7 @@ interface IGameManager : public IUnknown
 
     virtual void BuildScene() = 0;
 
-    virtual BOOL OnUpdateWindowSize(UINT width, UINT height) = 0;
+    virtual BOOL OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeight = 0) = 0;
 
     virtual IGameMesh *CreateGameMesh() = 0;
     virtual void       DeleteGameMesh(IGameMesh* pGameMesh) = 0;

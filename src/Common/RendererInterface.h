@@ -90,7 +90,7 @@ interface IRenderGUI : public IUnknown
     virtual BOOL Button(const char *label) = 0;
     virtual BOOL ColoredButton(const char *label, RGBA color) = 0;
     virtual BOOL InvisibleButton() = 0;
-    virtual void Image(ITextureHandle * pTexHanlde) = 0;
+    virtual void Image(ITextureHandle * pTexHanlde, UINT width, UINT height) = 0;
 
     // per pixel (Absolute)
     virtual void SetNextWindowPosA(UINT posX, UINT posY, bool onlyAtFirst = false) = 0;
@@ -127,14 +127,15 @@ interface IRenderMesh : public IRenderableObject
 
 interface IRenderer : public IUnknown
 {
-    virtual BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV) = 0;
+    virtual BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, BOOL enableTexOutput = FALSE,
+                            UINT viewportWidth = 0, UINT viewportHeigh = 0) = 0;
     virtual void BeginRender() = 0;
     virtual void EndRender() = 0;
     virtual void Present() = 0;
 
     virtual void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow) = 0;
 
-    virtual void OnUpdateWindowSize(UINT width, UINT height) = 0;
+    virtual void OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeigh = 0) = 0;
 
     virtual IRenderMesh *CreateSkinnedObject() = 0;
     virtual IRenderMesh *CreateMeshObject() = 0;
@@ -209,6 +210,8 @@ interface IRenderer : public IUnknown
     virtual ITextureHandle *GetShadowMapTexture(UINT lightIndex) = 0;
 
     virtual IRenderGUI *GetRenderGUI() = 0;
+
+    virtual ITextureHandle *GetRenderTargetTexture() = 0;
 
     virtual float GetAspectRatio() const = 0;
     virtual float GetDPI() const = 0;

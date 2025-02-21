@@ -61,6 +61,8 @@ class D3D12Renderer : public IRenderer
 
     Camera *m_pMainCamera = nullptr;
 
+    BOOL  m_useTextureOutput = FALSE;
+
     ULONG m_refCount = 1;
 
     HWND                  m_hWnd = nullptr;
@@ -125,6 +127,10 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_raytracingUAVDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
 
     DESCRIPTOR_HANDLE m_depthStencilDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
+
+    TEXTURE_HANDLE* m_renderableTextureHanldes[SWAP_CHAIN_FRAME_COUNT];
+    DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
+    DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
     
     // Global
     Matrix  m_camViewRow;
@@ -184,11 +190,12 @@ class D3D12Renderer : public IRenderer
 
   public:
     // Inherited via IRenderer
-    BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV) override;
+    BOOL Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, BOOL enableTexOutput = FALSE,
+                    UINT viewportWidth = 0, UINT viewportHeigh = 0) override;
     void BeginRender() override;
     void EndRender() override;
     void Present() override;
-    void OnUpdateWindowSize(UINT width, UINT height) override;
+    void OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeigh = 0) override;
 
     IRenderMesh *CreateSkinnedObject() override;
     IRenderMesh *CreateMeshObject() override;
@@ -260,6 +267,8 @@ class D3D12Renderer : public IRenderer
     void SetProjectionTextureViewProj(const Matrix *pViewRow, const Matrix *pProjRow) override;
 
     ITextureHandle *GetShadowMapTexture(UINT lightIndex) override { return nullptr; }
+
+    ITextureHandle *GetRenderTargetTexture() override { return m_renderableTextureHanldes[m_curContextIndex]; }
 
     UINT GetCommandListCount();
 

@@ -29,7 +29,8 @@
 
 D3D12Renderer *g_pRenderer = nullptr;
 
-BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV)
+BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, BOOL enableTexOutput,
+                               UINT viewportWidth, UINT viewportHeight)
 {
     BOOL result = FALSE;
     m_DPI = GetDpiForWindow(hWnd);
@@ -40,15 +41,32 @@ BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGB
     UINT dwBackBufferWidth = rect.right - rect.left;
     UINT dwBackBufferHeight = rect.bottom - rect.top;
 
-    m_Viewport.Width = (float)dwWndWidth;
-    m_Viewport.Height = (float)dwWndHeight;
-    m_Viewport.MinDepth = 0.0f;
-    m_Viewport.MaxDepth = 1.0f;
+    if (enableTexOutput)
+    {
+        m_Viewport.Width = (float)viewportWidth;
+        m_Viewport.Height = (float)viewportHeight;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
 
-    m_ScissorRect.left = 0;
-    m_ScissorRect.top = 0;
-    m_ScissorRect.right = dwWndWidth;
-    m_ScissorRect.bottom = dwWndHeight;
+        m_ScissorRect.left = 0;
+        m_ScissorRect.top = 0;
+        m_ScissorRect.right = viewportWidth;
+        m_ScissorRect.bottom = viewportHeight;
+
+        m_useTextureOutput = enableTexOutput;
+    }
+    else
+    {
+        m_Viewport.Width = (float)dwWndWidth;
+        m_Viewport.Height = (float)dwWndHeight;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
+
+        m_ScissorRect.left = 0;
+        m_ScissorRect.top = 0;
+        m_ScissorRect.right = dwWndWidth;
+        m_ScissorRect.bottom = dwWndHeight;
+    }
 
     HRESULT            hr = S_OK;
     ID3D12Debug       *pDebugController = nullptr;
@@ -363,16 +381,36 @@ void D3D12Renderer::EndRender()
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
+    if (m_useTextureOutput)
+    {
+        TEXTURE_HANDLE *pTexHandle = m_renderableTextureHanldes[m_uiFrameIndex];
 
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                                           D3D12_RESOURCE_STATE_PRESENT));
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
+                                                                               D3D12_RESOURCE_STATE_PRESENT,
+                                                                               D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-    m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
-    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
-                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                                           D3D12_RESOURCE_STATE_PRESENT));
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_TEXTURE);
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
+
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
+                                                                               D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                                               D3D12_RESOURCE_STATE_PRESENT));
+    }
+    else
+    {
+        pCommandList->ResourceBarrier(
+            1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIntermediateRenderTargets[m_uiFrameIndex],
+                                                     D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
+
+         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
+                                                                               D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                                               D3D12_RESOURCE_STATE_PRESENT));
+    }
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
@@ -426,20 +464,26 @@ void D3D12Renderer::Present()
     m_curContextIndex = dwNextContextIndex;
 }
 
-void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
+void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth, UINT viewportHeight)
 {
     WaitForGPU();
 
-    BOOL result = FALSE;
+    if (m_useTextureOutput)
+    {
+        m_Viewport.Width = (float)viewportWidth;
+        m_Viewport.Height = (float)viewportHeight;
 
-    if (width == 0 || height == 0)
-        __debugbreak();
+        m_ScissorRect.right = viewportWidth;
+        m_ScissorRect.bottom = viewportHeight;
+    }
+    else
+    {
+        m_Viewport.Width = (float)width;
+        m_Viewport.Height = (float)height;
 
-    m_Viewport.Width = (float)width;
-    m_Viewport.Height = (float)height;
-
-    m_ScissorRect.right = width;
-    m_ScissorRect.bottom = height;
+        m_ScissorRect.right = width;
+        m_ScissorRect.bottom = height;
+    }
 
     CleanupBuffers();
 

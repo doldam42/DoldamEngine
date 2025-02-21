@@ -3,6 +3,7 @@
 #include "CameraController.h"
 #include "FileManager.h"
 #include "GUIController.h"
+#include "GUIView.h"
 #include "InputManager.h"
 
 #include "GameEditor.h"
@@ -51,8 +52,15 @@ BOOL GameEditor::LoadModules(HWND hWnd)
     pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hEngineDLL, "DllCreateInstance");
     pCreateFunc(&m_pGame);
 
-    result = m_pRenderer->Initialize(hWnd, TRUE, FALSE);
-    result = m_pGame->Initialize(hWnd, m_pRenderer);
+    RECT rect;
+    GetClientRect(hWnd, &rect);
+    DWORD width = rect.right - rect.left;
+    DWORD height = rect.bottom - rect.top;
+    UINT  viewportWidth = width * GUIView::SCENE_VIEW_WIDTH;
+    UINT  viewportHeight = height * GUIView::SCENE_VIEW_HEIGHT;
+
+    result = m_pRenderer->Initialize(hWnd, TRUE, FALSE, TRUE, viewportWidth, viewportHeight);
+    result = m_pGame->Initialize(hWnd, m_pRenderer, TRUE, viewportWidth, viewportHeight);
 
     if (!result)
         __debugbreak();
@@ -144,16 +152,18 @@ BOOL GameEditor::Initialize(HWND hWnd)
     DWORD width = rect.right - rect.left;
     DWORD height = rect.bottom - rect.top;
 
-    m_pInputManager = new InputManager;
-    m_pInputManager->Initialize(width, height);
-
     m_pFileManager = new FileManager;
     m_pFileManager->Initialize(m_assetPath);
 
     m_pGUIController = new GUIController;
-    m_pGUIController->Initilize(m_pRenderer->GetRenderGUI(), m_pFileManager->GetRootDir(),
-                                m_pFileManager->GetBasePath());
+    m_pGUIController->Initialize(m_pRenderer, m_pFileManager->GetRootDir(), m_pFileManager->GetBasePath(), width, height);
     m_pGame->Register(m_pGUIController);
+
+    UINT viewportWidth = width * GUIView::SCENE_VIEW_WIDTH;
+    UINT viewportHeight = height * GUIView::SCENE_VIEW_HEIGHT;
+
+    m_pInputManager = new InputManager;
+    m_pInputManager->Initialize(viewportWidth, viewportHeight);
 
     m_pCameraController = new CameraController;
     m_pCameraController->Initialize(this);
@@ -185,8 +195,14 @@ void GameEditor::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(
 
 BOOL GameEditor::OnUpdateWindowSize(UINT width, UINT height)
 {
-    m_pInputManager->SetWindowSize(width, height);
-    return m_pGame->OnUpdateWindowSize(width, height);
+    Vector2 viewportSizeR = m_pGUIController->GetViewportSizeRatio();
+    UINT    viewportWidth = width * viewportSizeR.x;
+    UINT    viewportHeight = height * viewportSizeR.y;
+
+    m_pGUIController->OnUpdateWindowSize(width, height);
+    m_pInputManager->SetWindowSize(viewportWidth, viewportHeight);
+    
+    return m_pGame->OnUpdateWindowSize(width, height, viewportWidth, viewportHeight);
 }
 
 LRESULT GameEditor::WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

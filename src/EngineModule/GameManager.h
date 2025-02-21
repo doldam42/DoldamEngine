@@ -40,6 +40,8 @@ class GameManager : public IGameManager
     bool  m_isPaused = false;
     float m_timeSpeed = 1.0f;
 
+    bool m_useGUIEditor = false;
+
     PhysicsManager *m_pPhysicsManager = nullptr;
     Camera         *m_pMainCamera = nullptr;
     IRenderer      *m_pRenderer = nullptr;
@@ -94,9 +96,10 @@ class GameManager : public IGameManager
 
   public:
     // Derived from IRenderer
-    BOOL Initialize(HWND hWnd, IRenderer *pRnd) override;
+    BOOL Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor = false, UINT viewportWidth = 0,
+                    UINT viewportHeight = 0) override;
 
-    BOOL OnUpdateWindowSize(UINT width, UINT height) override;
+    BOOL OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeight = 0) override;
 
     IGameMesh *CreateGameMesh() override;
     void       DeleteGameMesh(IGameMesh *pGameMesh) override;

@@ -3,6 +3,7 @@ struct GUIView;
 struct FileNode;
 class GUIController : public IController
 {
+    IRenderer *m_pRenderer = nullptr;
     GUIView *m_pGUIView = nullptr;
 
     ITextureHandle *m_pTex = nullptr;
@@ -10,12 +11,16 @@ class GUIController : public IController
     void Cleanup();
 
   public:
-    BOOL Initilize(IRenderGUI* pGUI, FileNode* assetDir, const WCHAR* basePath);
+    BOOL Initialize(IRenderer* pRnd, FileNode* assetDir, const WCHAR* basePath, UINT width, UINT height);
+
+    void OnUpdateWindowSize(UINT width, UINT height);
 
     // Inherited via IController
     BOOL Start() override;
     void Update(float dt) override;
     void Render() override;
+
+    Vector2 GetViewportSizeRatio();
 
     GUIController() = default;
     ~GUIController();

@@ -31,7 +31,8 @@
 
 D3D12Renderer *g_pRenderer = nullptr;
 
-BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV)
+BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, BOOL enableTexOutput,
+                               UINT viewportWidth, UINT viewportHeight)
 {
     BOOL result = FALSE;
     m_DPI = GetDpiForWindow(hWnd);
@@ -42,15 +43,32 @@ BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGB
     UINT backBufferWidth = rect.right - rect.left;
     UINT backBufferHeight = rect.bottom - rect.top;
 
-    m_Viewport.Width = (float)wndWidth;
-    m_Viewport.Height = (float)wndHeight;
-    m_Viewport.MinDepth = 0.0f;
-    m_Viewport.MaxDepth = 1.0f;
+    if (enableTexOutput)
+    {
+        m_Viewport.Width = (float)viewportWidth;
+        m_Viewport.Height = (float)viewportHeight;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
 
-    m_ScissorRect.left = 0;
-    m_ScissorRect.top = 0;
-    m_ScissorRect.right = wndWidth;
-    m_ScissorRect.bottom = wndHeight;
+        m_ScissorRect.left = 0;
+        m_ScissorRect.top = 0;
+        m_ScissorRect.right = viewportWidth;
+        m_ScissorRect.bottom = viewportHeight;
+
+        m_useTextureOutput = enableTexOutput;
+    }
+    else
+    {
+        m_Viewport.Width = (float)wndWidth;
+        m_Viewport.Height = (float)wndHeight;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
+
+        m_ScissorRect.left = 0;
+        m_ScissorRect.top = 0;
+        m_ScissorRect.right = wndWidth;
+        m_ScissorRect.bottom = wndHeight;
+    }
 
     HRESULT            hr = S_OK;
     ID3D12Debug       *pDebugController = nullptr;
@@ -354,11 +372,32 @@ void D3D12Renderer::EndRender()
 
     // PostProcessing
     pCommandList = pCommandListPool->GetCurrentCommandList();
+
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+    if (m_useTextureOutput)
+    {
+        TEXTURE_HANDLE *pTexHandle = m_renderableTextureHanldes[m_uiFrameIndex];
 
-    m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
+                                                                               D3D12_RESOURCE_STATE_PRESENT,
+                                                                               D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_TEXTURE);
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
+
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
+                                                                               D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                                               D3D12_RESOURCE_STATE_PRESENT));
+    }
+    else
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
+    }
+
+    pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
     m_pGUIManager->EndRender(pCommandList);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
@@ -418,20 +457,18 @@ void D3D12Renderer::Present()
     m_curContextIndex = nextContextIndex;
 }
 
-void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height)
+void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth, UINT viewportHeigh)
 {
+    if (width == 0 || height == 0)
+        return;
+
     WaitForGPU();
 
-    BOOL result = FALSE;
+    m_Viewport.Width = (float)viewportWidth;
+    m_Viewport.Height = (float)viewportHeigh;
 
-    if (width == 0 || height == 0)
-        __debugbreak();
-
-    m_Viewport.Width = (float)width;
-    m_Viewport.Height = (float)height;
-
-    m_ScissorRect.right = width;
-    m_ScissorRect.bottom = height;
+    m_ScissorRect.right = viewportWidth;
+    m_ScissorRect.bottom = viewportHeigh;
 
     CleanupBuffers();
 
@@ -1035,6 +1072,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetRTVHandle(RENDER_TARGET_TYPE type)
         return m_intermediateRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
     case RENDER_TARGET_TYPE_DEFERRED:
         return m_deferredRTVDescriptorTables[m_uiFrameIndex].cpuHandle;
+    case RENDER_TARGET_TYPE_TEXTURE:
+        return m_renderableTextureRTVTables[m_uiFrameIndex].cpuHandle;
     default:
         __debugbreak();
         break;
@@ -1155,7 +1194,7 @@ void D3D12Renderer::CreateDefaultTex()
     delete[] defaultTex;
     defaultTex = nullptr;*/
 
-    m_pDefaultTexHandle = (TEXTURE_HANDLE*)CreateTiledTexture(512, 512, 255, 255, 255, 16);
+    m_pDefaultTexHandle = (TEXTURE_HANDLE *)CreateTiledTexture(512, 512, 255, 255, 255, 16);
 }
 
 void D3D12Renderer::CreateFence()
@@ -1201,6 +1240,11 @@ BOOL D3D12Renderer::CreateDescriptorTables()
         m_pResourceManager->AllocDescriptorTable(&m_intermediateSRVDescriptorTables[i], 1);
 
         m_pResourceManager->AllocDSVDescriptorTable(&m_depthStencilDescriptorTables[i]);
+
+        if (m_useTextureOutput)
+        {
+            m_pResourceManager->AllocRTVDescriptorTable(&m_renderableTextureRTVTables[i]);
+        }
     }
 
     // 레이트레이싱용 디스크립터 테이블
@@ -1437,6 +1481,7 @@ void D3D12Renderer::CreateBuffers()
         m_pD3DDevice->CreateShaderResourceView(m_pIntermediateRenderTargets[n], nullptr, srvHandle);
     }
 
+    // Create Raytracing OutputBuffer
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = m_raytracingUAVDescriptorTables[n].cpuHandle;
@@ -1486,6 +1531,19 @@ void D3D12Renderer::CreateBuffers()
                                              m_depthStencilDescriptorTables[n].cpuHandle);
     }
 
+    if (m_useTextureOutput)
+    {
+        for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
+        {
+            // Create Texture Output
+            m_renderableTextureHanldes[n] = m_pTextureManager->CreateRenderableTexture(
+                m_Viewport.Width, m_Viewport.Height, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+            m_pD3DDevice->CreateRenderTargetView(m_renderableTextureHanldes[n]->pTexture, nullptr,
+                                                 m_renderableTextureRTVTables[n].cpuHandle);
+        }
+    }
+
     CreateDeferredBuffers();
 }
 
@@ -1517,6 +1575,12 @@ void D3D12Renderer::CleanupBuffers()
         {
             m_pDepthStencils[i]->Release();
             m_pDepthStencils[i] = nullptr;
+        }
+
+        if (m_renderableTextureHanldes[i])
+        {
+            m_pTextureManager->DeleteTexture(m_renderableTextureHanldes[i]);
+            m_renderableTextureHanldes[i] = nullptr;
         }
     }
 }

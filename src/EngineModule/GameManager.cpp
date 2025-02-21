@@ -110,7 +110,7 @@ void GameManager::Cleanup()
     }
 }
 
-BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
+BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT viewportWidth, UINT viewportHeight)
 {
     BOOL result = FALSE;
 
@@ -136,7 +136,16 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
     m_pPhysicsManager->Initialize();
 
     m_pMainCamera = new Camera;
-    m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 1000.0f);
+    if (useGUIEditor)
+    {
+        m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(viewportWidth) / viewportHeight, 0.01f,
+                                  1000.0f);
+        m_useGUIEditor = useGUIEditor;
+    }
+    else
+    {
+        m_pMainCamera->Initialize(XMConvertToRadians(90.0f), static_cast<float>(width) / height, 0.01f, 1000.0f);
+    }
 
     m_hWnd = hWnd;
 
@@ -145,7 +154,7 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd)
 
     m_pControllerManager = new ControllerManager;
 
-    //m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
+    // m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
 
     m_pWorld = new World;
     m_pWorld->Initialize();
@@ -177,10 +186,7 @@ BOOL GameManager::LoadResources()
     return TRUE;
 }
 
-void GameManager::ProcessInput()
-{
-    
-}
+void GameManager::ProcessInput() {}
 
 void GameManager::Start()
 {
@@ -310,7 +316,8 @@ void GameManager::Render()
 {
     // Update Camera
     m_pMainCamera->Update();
-    m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(), m_pMainCamera->GetProjMatrix());
+    m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(),
+                              m_pMainCamera->GetProjMatrix());
 
     // begin
     m_pRenderer->BeginRender();
@@ -349,14 +356,27 @@ void GameManager::Render()
     m_pRenderer->Present();
 }
 
-BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height)
+BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth, UINT viewportHeight)
 {
-    m_pMainCamera->SetAspectRatio(float(width) / height);
-
-    if (m_pRenderer)
+    if (m_useGUIEditor)
     {
-        m_pRenderer->OnUpdateWindowSize(width, height);
+        m_pMainCamera->SetAspectRatio(float(viewportWidth) / viewportHeight);
+
+        if (m_pRenderer)
+        {
+            m_pRenderer->OnUpdateWindowSize(width, height, viewportWidth, viewportHeight);
+        }
     }
+    else
+    {
+        m_pMainCamera->SetAspectRatio(float(width) / height);
+
+        if (m_pRenderer)
+        {
+            m_pRenderer->OnUpdateWindowSize(width, height);
+        }
+    }
+
     return TRUE;
 }
 
@@ -598,7 +618,7 @@ void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 GameManager::~GameManager()
 {
     Cleanup();
-#ifdef _DEBUG 
+#ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());
 #endif
 }

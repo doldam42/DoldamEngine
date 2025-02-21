@@ -65,7 +65,7 @@ class GUIManager : public IRenderGUI
     BOOL ColoredButton(const char *label, RGBA color) override;
     BOOL InvisibleButton() override;
 
-    void Image(ITextureHandle *pTexHanlde) override;
+    void Image(ITextureHandle *pTexHanlde, UINT width, UINT height) override;
 
     LRESULT WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
