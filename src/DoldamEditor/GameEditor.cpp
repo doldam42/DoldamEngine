@@ -17,14 +17,17 @@ BOOL GameEditor::LoadModules(HWND hWnd)
 
     const WCHAR *rendererFileName = nullptr;
     const WCHAR *engineFileName = nullptr;
+    const WCHAR *exporterFileName = nullptr;
 #ifdef _DEBUG
     // rendererFileName = L"../../DLL/RendererD3D12_x64_Debug.dll";
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Debug.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_debug.dll";
 #else
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Release.dll";
     // rendererFileName = L"../../DLL/RendererD3D12_x64_Release.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Release.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_release.dll";
 #endif
 
     WCHAR wchErrTxt[128] = {};
@@ -52,6 +55,20 @@ BOOL GameEditor::LoadModules(HWND hWnd)
     pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hEngineDLL, "DllCreateInstance");
     pCreateFunc(&m_pGame);
 
+    m_hModelExporterDLL = LoadLibrary(exporterFileName);
+    if (!m_hModelExporterDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", exporterFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hModelExporterDLL, "DllCreateAssimpLoader");
+    pCreateFunc(&m_pAssimpExporter);
+
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hModelExporterDLL, "DllCreateFbxLoader");
+    pCreateFunc(&m_pFbxExporter);
+
     RECT rect;
     GetClientRect(hWnd, &rect);
     DWORD width = rect.right - rect.left;
@@ -61,6 +78,8 @@ BOOL GameEditor::LoadModules(HWND hWnd)
 
     result = m_pRenderer->Initialize(hWnd, TRUE, FALSE, TRUE, viewportWidth, viewportHeight);
     result = m_pGame->Initialize(hWnd, m_pRenderer, TRUE, viewportWidth, viewportHeight);
+    result = m_pAssimpExporter->Initialize(m_pGame);
+    result = m_pFbxExporter->Initialize(m_pGame);
 
     if (!result)
         __debugbreak();

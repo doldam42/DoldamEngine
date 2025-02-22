@@ -84,6 +84,8 @@ void Character::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMateri
     GameObject::SetMaterials(ppMaterials, numMaterials);
 }
 
+size_t Character::GetID() { return GameObject::GetID(); }
+
 Bounds Character::GetBounds() const { return GameObject::GetBounds(); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)

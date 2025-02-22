@@ -36,3 +36,4 @@
 #include "../Common/typedef.h"
 #include "../Common/RendererInterface.h"
 #include "../Common/EngineInterface.h"
+#include "../Common/ModelExporterInterface.h"

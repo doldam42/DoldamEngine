@@ -50,5 +50,7 @@ class Character : public IGameCharacter, public GameObject
 
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
+    size_t GetID() override;
+
     Bounds GetBounds() const;
 };

@@ -1,11 +1,46 @@
 #include "pch.h"
 
-#include "GameEditor.h"
-#include "GUIView.h"
 #include "FileDialogUtils.h"
 #include "FileManager.h"
+#include "GUIView.h"
+#include "GameEditor.h"
 
 #include "GUIController.h"
+
+void GUIController::CreateModel(const WCHAR *basePath, const WCHAR *filename)
+{
+    IGameManager   *pGame = g_pEditor->GetGameManager();
+    IModelExporter *pExporter = g_pEditor->GetFBXModelExporter();
+
+    WCHAR ext[20] = {L'\0'};
+    WCHAR tmp[MAX_NAME] = {'\0'};
+    wcscpy_s(tmp, filename);
+
+    TryGetExtension(filename, ext);
+    if (!wcscmp(ext, L".fbx"))
+    {
+        std::filesystem::path p(basePath);
+        p /= filename;
+        
+        pExporter->Load(basePath, filename);
+        pExporter->ExportModel();
+
+        ChangeExtension(L".dom", tmp);
+    }
+
+    IGameModel *pModel = pGame->CreateModelFromFile(basePath, filename);
+    m_pGUIView->models.push_back(pModel);
+}
+
+void GUIController::CreateGameObject(IGameModel *pModel)
+{
+    IGameManager *pGame = g_pEditor->GetGameManager();
+
+    IGameObject *pObj = pGame->CreateGameObject();
+    pObj->SetModel(pModel);
+
+    m_pGUIView->objects.push_back(pObj);
+}
 
 void GUIController::Cleanup()
 {
@@ -19,12 +54,12 @@ void GUIController::Cleanup()
 BOOL GUIController::Initialize(IRenderer *pRnd, FileNode *assetDir, const WCHAR *basePath, UINT width, UINT height)
 {
     m_pGUIView = new GUIView(pRnd->GetRenderGUI(), pRnd->GetRenderTargetTexture(), assetDir, basePath, width, height);
-    
+
     m_pRenderer = pRnd;
     return TRUE;
 }
 
-void GUIController::OnUpdateWindowSize(UINT width, UINT height) 
+void GUIController::OnUpdateWindowSize(UINT width, UINT height)
 {
     m_pGUIView->width = width;
     m_pGUIView->height = height;
@@ -102,7 +137,24 @@ BOOL GUIController::Start()
     return TRUE;
 }
 
-void GUIController::Update(float dt) {}
+void GUIController::Update(float dt)
+{
+    if (m_pGUIView->isItemSelected && m_pGUIView->shouldCreateItem)
+    {
+        switch (m_pGUIView->selectedItemType)
+        {
+        case GAME_ITEM_TYPE_MODEL:
+            CreateModel(m_pGUIView->basePath, m_pGUIView->filename);
+            break;
+        default:
+            break;
+        }
+
+        m_pGUIView->isItemSelected = false;
+        m_pGUIView->shouldCreateItem = false;
+        m_pGUIView->selectedItemType = GAME_ITEM_TYPE_NONE;
+    }
+}
 
 void GUIController::Render()
 {

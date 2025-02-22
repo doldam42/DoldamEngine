@@ -7,6 +7,8 @@ class Model;
 class PhysicsComponent;
 class GameObject : public IGameObject
 {
+    static size_t g_id;
+    size_t    m_id;
     Transform m_transform;
     Matrix    m_worldMatrix;
 
@@ -23,6 +25,7 @@ class GameObject : public IGameObject
   public:
     SORT_LINK m_LinkInGame;
     SORT_LINK m_LinkInWorld;
+    void *m_pSearchHandleInGame = nullptr;
 
   private:
     void Cleanup();
@@ -63,6 +66,8 @@ class GameObject : public IGameObject
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
     Bounds GetBounds() const;
+
+    virtual size_t GetID() override { return m_id; }
 
     GameObject();
     virtual ~GameObject();

@@ -6,6 +6,8 @@
 
 #include "Model.h"
 
+size_t Model::g_id = 0;
+
 void Model::Cleanup()
 {
     if (m_pBoneMatrices)
@@ -273,6 +275,8 @@ Model::Model()
     m_LinkInGame.pPrev = nullptr;
     m_LinkInGame.pNext = nullptr;
     m_LinkInGame.pItem = this;
+
+    m_id = InterlockedIncrement(&g_id);
 }
 
 Model::~Model() { Cleanup(); }

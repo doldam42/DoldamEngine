@@ -36,6 +36,8 @@ class AnimationClip : public IGameAnimation
 {
     wchar_t m_name[MAX_NAME] = {L'\0'};
 
+    size_t m_id;
+
     static const size_t MAX_KEY_COUNT = 86400;
 
     uint32_t   m_curKeyframeCount = 0;
@@ -70,6 +72,8 @@ class AnimationClip : public IGameAnimation
     AnimationClip() = default;
     AnimationClip(const WCHAR *name) { SetName(name); }
     ~AnimationClip();
+
+    size_t GetID() override { return m_id; }
 
     // Inherited via IAnimationClip
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

@@ -62,7 +62,9 @@ class GameManager : public IGameManager
     SORT_LINK *m_pSpriteLinkHead = nullptr;
     SORT_LINK *m_pSpriteLinkTail = nullptr;
 
-    // Animation
+    // Hash Tables
+    HashTable *m_pModelHashTable = nullptr;
+    HashTable *m_pGameObjectHashTable = nullptr;
     HashTable *m_pAnimationHashTable = nullptr;
 
     // Terrain
@@ -121,7 +123,7 @@ class GameManager : public IGameManager
     void         DeleteAllSprite() override;
 
     IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) override;
-    IGameAnimation *CreateEmptyAnimation() override;
+    IGameAnimation *CreateEmptyAnimation(const WCHAR *name) override;
     IGameAnimation *GetAnimationByName(const WCHAR *name) override;
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;

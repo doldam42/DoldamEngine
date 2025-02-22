@@ -41,6 +41,33 @@ bool TryGetExtension(const wchar_t *filename, wchar_t *outExtension)
     return outLen != 0;
 }
 
+bool ChangeExtension(const WCHAR *ext, WCHAR *filename) 
+{ 
+    size_t len = wcslen(filename);
+    size_t extLen = wcslen(ext);
+
+    int idx = 0;
+    for (int i = 0; i < len; i++)
+    {
+        if (filename[i] == L'.')
+        {
+            idx = i;
+        }
+    }
+
+    int outLen = 0;
+    for (int i = idx; i < len; i++)
+    {
+        if (i < extLen)
+        {
+            filename[i] = ext[outLen];
+        }
+        outLen++;
+    }
+
+    return outLen != 0;
+}
+
 bool IsFile(const wchar_t *filename)
 { 
     std::filesystem::path p(filename);

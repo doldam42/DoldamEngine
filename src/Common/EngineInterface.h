@@ -15,6 +15,15 @@
 struct Material;
 struct Joint;
 struct Transform;
+
+enum GAME_ITEM_TYPE : UINT
+{
+    GAME_ITEM_TYPE_NONE = 0,
+    GAME_ITEM_TYPE_MODEL,
+    GAME_ITEM_TYPE_GAME_OBJECT,
+    GAME_ITEM_TYPE_GAME_CHARACTER,
+};
+
 enum PRIMITIVE_MODEL_TYPE : UINT
 {
     PRIMITIVE_MODEL_TYPE_SQUARE = 0,
@@ -28,6 +37,8 @@ enum MESH_TYPE : UINT
     MESH_TYPE_DEFAULT,
     MESH_TYPE_SKINNED,
 };
+
+interface IIdentifiable { virtual size_t GetID() = 0; };
 
 interface ISerializable
 {
@@ -62,7 +73,7 @@ interface IGameMesh : public IBaseObject
     virtual BOOL UpdateMaterial(IRenderMaterial * pMaterial, UINT faceGroupIndex) = 0;
 };
 
-interface IGameModel : public IUnknown, public ISerializable
+interface IGameModel : public IUnknown, public ISerializable, public IIdentifiable
 {
     virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                             Joint *pInJoints = nullptr, int jointCount = 0) = 0;
@@ -78,7 +89,7 @@ interface IPhysicsComponent
     virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
-interface IGameObject
+interface IGameObject : public IIdentifiable
 {
     virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) = 0;
 
@@ -105,7 +116,7 @@ interface IGameObject
     virtual void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) = 0;
 };
 
-interface IGameAnimation : public IUnknown, public ISerializable
+interface IGameAnimation : public IUnknown, public ISerializable, public IIdentifiable
 {
     virtual void SetName(const WCHAR *name) = 0;
     virtual void BeginCreateAnim(int jointCount) = 0;
@@ -172,7 +183,7 @@ interface IGameManager : public IUnknown
     virtual void         DeleteAllSprite() = 0;
 
     virtual IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
-    virtual IGameAnimation *CreateEmptyAnimation() = 0;
+    virtual IGameAnimation *CreateEmptyAnimation(const WCHAR* name) = 0;
     virtual IGameAnimation *GetAnimationByName(const WCHAR *name) = 0;
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;

@@ -26,16 +26,27 @@ void GameManager::LoadPrimitiveMeshes()
     {
         BoxMesh = GeometryGenerator::MakeBox();
         BoxMesh->InitRenderComponents(m_pRenderer);
+
+        size_t id = BoxMesh->GetID();
+        BoxMesh->m_pSearchHandleInGame = m_pModelHashTable->Insert((void *)&BoxMesh, (void *)(&id), sizeof(size_t));
     }
     if (!SquareMesh)
     {
         SquareMesh = GeometryGenerator::MakeSquare();
         SquareMesh->InitRenderComponents(m_pRenderer);
+
+        size_t id = SquareMesh->GetID();
+        SquareMesh->m_pSearchHandleInGame =
+            m_pModelHashTable->Insert((void *)&SquareMesh, (void *)(&id), sizeof(size_t));
     }
     if (!SphereMesh)
     {
         SphereMesh = GeometryGenerator::MakeSphere(1.0f, 32, 32);
         SphereMesh->InitRenderComponents(m_pRenderer);
+
+        size_t id = SphereMesh->GetID();
+        SphereMesh->m_pSearchHandleInGame =
+            m_pModelHashTable->Insert((void *)&SphereMesh, (void *)(&id), sizeof(size_t));
     }
 }
 
@@ -148,6 +159,13 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT
     }
 
     m_hWnd = hWnd;
+
+    // Hash Table Initialize
+    m_pModelHashTable = new HashTable;
+    m_pModelHashTable->Initialize(283, sizeof(size_t), 128);
+
+    m_pGameObjectHashTable = new HashTable;
+    m_pGameObjectHashTable->Initialize(283, sizeof(size_t), 128);
 
     m_pAnimationHashTable = new HashTable();
     m_pAnimationHashTable->Initialize(13, MAX_NAME, 128); // TODO: 최적의 버킷 개수 정하기
@@ -399,6 +417,9 @@ IGameCharacter *GameManager::CreateCharacter()
 
     LinkToLinkedListFIFO(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pGameObj->m_LinkInGame);
 
+    size_t id = pGameObj->GetID();
+    pGameObj->m_pSearchHandleInGame = m_pGameObjectHashTable->Insert((void *)pGameObj, (void *)(&id), sizeof(size_t));
+
     return pGameObj;
 }
 
@@ -407,6 +428,9 @@ IGameObject *GameManager::CreateGameObject()
     GameObject *pGameObj = new GameObject;
     pGameObj->Initialize(this);
     LinkToLinkedListFIFO(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pGameObj->m_LinkInGame);
+
+    size_t id = pGameObj->GetID();
+    pGameObj->m_pSearchHandleInGame = m_pGameObjectHashTable->Insert((void *)pGameObj, (void *)(&id), sizeof(size_t));
 
     return pGameObj;
 }
@@ -420,6 +444,12 @@ void GameManager::DeleteGameObject(IGameObject *pGameObj)
 
 void GameManager::DeleteAllGameObject()
 {
+    if (m_pGameObjectHashTable)
+    {
+        m_pGameObjectHashTable->DeleteAll();
+        delete m_pGameObjectHashTable;
+        m_pGameObjectHashTable = nullptr;
+    }
     while (m_pGameObjLinkHead)
     {
         GameObject *pGameObj = (GameObject *)(m_pGameObjLinkHead->pItem);
@@ -452,7 +482,10 @@ IGameModel *GameManager::CreateModelFromFile(const WCHAR *basePath, const WCHAR 
     pModel->InitRenderComponents(m_pRenderer);
 
     LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
-    pModel->AddRef();
+
+    size_t id = pModel->GetID();
+    pModel->m_pSearchHandleInGame = m_pGameObjectHashTable->Insert((void *)pModel, (void *)(&id), sizeof(size_t));
+
     return pModel;
 }
 
@@ -461,7 +494,10 @@ IGameModel *GameManager::CreateEmptyModel()
     Model *pModel = new Model;
 
     LinkToLinkedListFIFO(&m_pModelLinkHead, &m_pModelLinkTail, &pModel->m_LinkInGame);
-    pModel->AddRef();
+
+    size_t id = pModel->GetID();
+    pModel->m_pSearchHandleInGame = m_pGameObjectHashTable->Insert((void *)pModel, (void *)(&id), sizeof(size_t));
+
     return pModel;
 }
 
@@ -474,6 +510,12 @@ void GameManager::DeleteModel(IGameModel *pModel)
 
 void GameManager::DeleteAllModel()
 {
+    if (m_pModelHashTable)
+    {
+        m_pModelHashTable->DeleteAll();
+        delete m_pModelHashTable;
+        m_pModelHashTable = nullptr;
+    }
     while (m_pModelLinkHead)
     {
         Model *pModel = (Model *)(m_pModelLinkHead->pItem);
@@ -536,22 +578,12 @@ IGameAnimation *GameManager::CreateAnimationFromFile(const WCHAR *basePath, cons
     return pClip;
 }
 
-IGameAnimation *GameManager::CreateEmptyAnimation()
+IGameAnimation *GameManager::CreateEmptyAnimation(const WCHAR *name)
 {
-    const WCHAR   *filename = L"EmptyAnimation";
-    AnimationClip *pClip = nullptr;
-    UINT           keySize = wcslen(filename) * sizeof(WCHAR);
+    AnimationClip *pClip = new AnimationClip;
+    pClip->SetName(name);
 
-    if (m_pAnimationHashTable->Select((void **)&pClip, 1, filename, keySize))
-    {
-        pClip->AddRef();
-    }
-    else
-    {
-        pClip = new AnimationClip;
-
-        pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, filename, keySize);
-    }
+    pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, (void *)(pClip->GetName()), sizeof(size_t));
 
     return pClip;
 }

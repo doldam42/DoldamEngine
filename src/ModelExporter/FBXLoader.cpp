@@ -254,12 +254,12 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
 {
     if (!m_pAnim)
     {
-        m_pAnim = m_pGame->CreateEmptyAnimation();
+        m_pAnim = m_pGame->CreateEmptyAnimation(filename);
     }
     else
     {
         m_pGame->DeleteAnimation(m_pAnim);
-        m_pAnim = m_pGame->CreateEmptyAnimation();
+        m_pAnim = m_pGame->CreateEmptyAnimation(filename);
     }
 
     if (!m_isSkinned)
@@ -273,8 +273,7 @@ BOOL FBXLoader::LoadAnimation(const WCHAR *filename)
         m_pAnim->Release();
         m_pAnim = nullptr;
     }
-    m_pAnim = m_pGame->CreateEmptyAnimation();
-    m_pAnim->SetName(filename);
+    m_pAnim = m_pGame->CreateEmptyAnimation(filename);
 
     WCHAR wcsPath[MAX_PATH] = {0};
     char  path[MAX_PATH] = {0};

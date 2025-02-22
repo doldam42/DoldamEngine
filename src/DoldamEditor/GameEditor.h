@@ -12,6 +12,7 @@ class GameEditor
 
     HMODULE m_hRendererDLL = nullptr;
     HMODULE m_hEngineDLL = nullptr;
+    HMODULE m_hModelExporterDLL = nullptr;
 
     HWND m_hWnd = nullptr;
 
@@ -20,6 +21,9 @@ class GameEditor
 
     CameraController *m_pCameraController = nullptr;
     GUIController *m_pGUIController = nullptr;
+
+    IModelExporter *m_pFbxExporter = nullptr;
+    IModelExporter *m_pAssimpExporter = nullptr;
 
     InputManager *m_pInputManager = nullptr;
 
@@ -53,6 +57,9 @@ class GameEditor
     FileManager *GetFileManager() { return m_pFileManager; }
 
     const WCHAR *GetAssetPath() { return m_assetPath; }
+
+    IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }
+    IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }
 
     GameEditor() = default;
     ~GameEditor();

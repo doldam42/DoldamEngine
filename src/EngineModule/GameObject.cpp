@@ -6,6 +6,8 @@
 
 #include "GameObject.h"
 
+size_t GameObject::g_id = 0;
+
 void GameObject::Cleanup()
 {
     if (m_ppMaterials)
@@ -111,6 +113,8 @@ GameObject::GameObject()
     m_LinkInWorld.pPrev = nullptr;
 
     m_worldMatrix = Matrix::Identity;
+
+    m_id = InterlockedIncrement(&g_id);
 }
 
 GameObject::~GameObject() { Cleanup(); }

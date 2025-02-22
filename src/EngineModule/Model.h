@@ -6,6 +6,9 @@
 class GameObject;
 class Model : public IGameModel
 {
+    static size_t g_id;
+    size_t m_id = 0;
+
     static const UINT MAX_INSTANCE_COUNT = 256;
     IRenderer        *m_pRenderer = nullptr;
 
@@ -13,7 +16,7 @@ class Model : public IGameModel
     Matrix *m_pBoneMatrices = nullptr;
 
     WCHAR m_basePath[MAX_PATH] = {L'\0'};
-    ULONG ref_count = 0;
+    ULONG ref_count = 1;
 
     // File I/O
     UINT m_objectCount;
@@ -28,6 +31,7 @@ class Model : public IGameModel
 
   public:
     SORT_LINK m_LinkInGame;
+    void     *m_pSearchHandleInGame = nullptr;
 
   private:
     void Cleanup();
@@ -54,6 +58,8 @@ class Model : public IGameModel
 
     // Setter
     void SetBasePath(const WCHAR *basePath);
+
+    size_t GetID() override { return m_id; }
 
     // Inherited via IModel
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

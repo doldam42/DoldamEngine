@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNode *pNode, fs::path &parentPath)
+static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNode *pNode, fs::path parentPath)
 {
     char name[MAX_NAME] = {'\0'};
     ws2s(pNode->name, name);
@@ -35,6 +35,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
     {
         RGBA buttonColor = RGBA::BLACK;
 
+        GAME_ITEM_TYPE gameItemType = GAME_ITEM_TYPE_NONE;
         switch (pNode->itemType)
         {
         case FILE_ITEM_TYPE_TEXTURE:
@@ -42,6 +43,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
             break;
         case FILE_ITEM_TYPE_MESH:
             buttonColor = RGBA::BLUE_II;
+            gameItemType = GAME_ITEM_TYPE_MODEL;
             break;
         case FILE_ITEM_TYPE_ANIMATION:
             buttonColor = RGBA::ORANGE;
@@ -53,14 +55,29 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
 
         if (pGUI->ColoredButton(name, buttonColor))
         {
-            ZeroMemory(pView->selectedItemName, sizeof(pView->selectedItemName));
-            wcscpy_s(pView->selectedItemName, MAX_NAME, (parentPath / pNode->name).c_str());
+            /*pView->isItemSelected = true;
+
+            ZeroMemory(pView->basePath, sizeof(pView->basePath));
+            ZeroMemory(pView->filename, sizeof(pView->filename));
+
+            wcscpy_s(pView->basePath, MAX_PATH, parentPath.c_str());
+            wcscpy_s(pView->filename, MAX_PATH, pNode->name);*/
         }
         if (pGUI->BeginDragDropSource())
         {
-            ZeroMemory(pView->selectedItemName, sizeof(pView->selectedItemName));
-            wcscpy_s(pView->selectedItemName, MAX_NAME, (parentPath / pNode->name).c_str());
             pGUI->SetDragDropPayload("SELECT_FILE_PAYLOAD", NULL, 0);
+
+            pView->isItemSelected = true;
+
+            ZeroMemory(pView->basePath, sizeof(pView->basePath));
+            ZeroMemory(pView->filename, sizeof(pView->filename));
+
+            wcscpy_s(pView->basePath, parentPath.c_str());
+            wcscat_s(pView->basePath, L"\\");
+            wcscpy_s(pView->filename, pNode->name);
+
+            pView->selectedItemType = gameItemType;
+
             pGUI->EndDragDropSource();
         }
     }
@@ -68,8 +85,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
 
 void GUIView::ShowProject()
 {
-    static char selected[MAX_NAME] = {"Drop Here"};
-    fs::path fullPath(basePath);
+    fs::path fullPath(assetPath);
 
     pGUI->SetNextWindowPosR(ProjectPos.x, ProjectPos.y);
     pGUI->SetNextWindowSizeR(ProjectSize.x, ProjectSize.y);
@@ -86,21 +102,28 @@ void GUIView::ShowProject()
         pGUI->SameLine();
 
         pGUI->BeginChild("Selected Item");
-
-        pGUI->Text(selected);
-
+        pGUI->Text("Drop Here");
         if (pGUI->BeginDragDropTarget())
         {
             RENDER_GUI_PAYLOAD payload;
-
             if (pGUI->AcceptDragDropPayload("SELECT_FILE_PAYLOAD", &payload))
             {
-                ZeroMemory(selected, sizeof(selected));
-                ws2s(selectedItemName, selected);
+                shouldCreateItem = true;
             }
             pGUI->EndDragDropTarget();
         }
 
+        if (pGUI->TreeNode("Assets"))
+        {
+            for (IGameModel* pModel : models)
+            {
+                char buff[10] = {L'\0'};
+                sprintf_s(buff, "%d", pModel->GetID());
+                pGUI->Text(buff);
+            }
+            pGUI->TreePop();
+        }
+        
         pGUI->EndChild();
 
         pGUI->End();
