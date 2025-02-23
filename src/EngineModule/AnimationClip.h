@@ -55,8 +55,8 @@ class AnimationClip : public IGameAnimation
   public:
     uint32_t GetRefCount() const { return ref_count; }
 
-    void WriteFile(FILE *fp);
-    void ReadFile(FILE *fp);
+    void WriteFile(const char *filename) override;
+    void ReadFile(const char *filename) override;
 
     void BeginCreateAnim(int jointCount);
     void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys);

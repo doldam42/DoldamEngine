@@ -62,6 +62,7 @@
     <ClInclude Include="KDTree.h">
       <Filter>KDTree</Filter>
     </ClInclude>
+    <ClInclude Include="MemoryStreamBuf.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">

@@ -14,3 +14,4 @@
 #include "ProcessInfo.h"
 #include "SpinLock.h"
 #include "StringUtil.h"
+#include "MemoryStreamBuf.h"

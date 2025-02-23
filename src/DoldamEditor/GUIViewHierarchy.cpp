@@ -9,7 +9,13 @@ void GUIView::ShowHierarchy()
 
     if (pGUI->Begin("Hierarchy", nullptr, g_windowFlags))
     {
-        pGUI->Text("Game Objects List");
+        pGUI->Text("Scene Hierarchy");
+        for (IGameObject* pObj : objects)
+        {
+            char buff[20] = {'\0'};
+            sprintf_s(buff, "%d", pObj->GetID());
+            pGUI->Text(buff);
+        }
         pGUI->End();
     }
 }

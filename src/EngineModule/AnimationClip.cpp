@@ -19,18 +19,30 @@ void AnimationClip::Cleanup()
     }
 }
 
-void AnimationClip::WriteFile(FILE *fp)
+void AnimationClip::WriteFile(const char *filename)
 {
+    FILE *fp = nullptr;
+    fopen_s(&fp, filename, "wb");
+    if (!fp)
+        __debugbreak();
+
     fwrite(&m_jointCount, sizeof(uint32_t), 1, fp);
     for (uint32_t i = 0; i < m_jointCount; i++)
     {
         Keyframe *pKeyframe = m_ppKeyframes[i];
         fwrite(pKeyframe, pKeyframe->GetSize(), 1, fp);
     }
+
+    fclose(fp);
 }
 
-void AnimationClip::ReadFile(FILE *fp)
+void AnimationClip::ReadFile(const char *filename)
 {
+    FILE *fp = nullptr;
+    fopen_s(&fp, filename, "rb");
+    if (!fp)
+        __debugbreak();
+
     uint32_t   jointCount;
     Keyframe **ppKeyframe = nullptr;
     Matrix    *pKeys = new Matrix[MAX_KEY_COUNT];
@@ -53,6 +65,8 @@ void AnimationClip::ReadFile(FILE *fp)
     m_ppKeyframes = ppKeyframe;
 
     delete[] pKeys;
+
+    fclose(fp);
 }
 
 void AnimationClip::BeginCreateAnim(int jointCount)

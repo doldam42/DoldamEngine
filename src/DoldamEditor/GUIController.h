@@ -9,7 +9,7 @@ class GUIController : public IController
     ITextureHandle *m_pTex = nullptr;
 
     void CreateModel(const WCHAR* basePath, const WCHAR* filename);
-    void CreateGameObject(IGameModel *pModel);
+    void CreateGameObject(const WCHAR *basePath, const WCHAR *filename);
 
     void Cleanup();
 

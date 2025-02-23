@@ -153,8 +153,13 @@ void Model::InitBoundary()
     m_boundingSphere = Sphere(center, maxRadius);*/
 }
 
-void Model::ReadFile(FILE *fp)
+void Model::ReadFile(const char *filename)
 {
+    FILE *fp = nullptr;
+    fopen_s(&fp, filename, "rb");
+    if (!fp)
+        __debugbreak();
+
     fread(&m_objectCount, sizeof(UINT), 1, fp);
     fread(&m_materialCount, sizeof(UINT), 1, fp);
     fread(&m_jointCount, sizeof(UINT), 1, fp);
@@ -183,10 +188,17 @@ void Model::ReadFile(FILE *fp)
 
     // bone matrices는 File IO 하지 않음
     m_pBoneMatrices = new Matrix[m_jointCount];
+
+    fclose(fp);
 }
 
-void Model::WriteFile(FILE *fp)
+void Model::WriteFile(const char *filename)
 {
+    FILE *fp = nullptr;
+    fopen_s(&fp, filename, "wb");
+    if (!fp)
+        __debugbreak();
+
     fwrite(&m_objectCount, sizeof(UINT), 1, fp);
     fwrite(&m_materialCount, sizeof(UINT), 1, fp);
     fwrite(&m_jointCount, sizeof(UINT), 1, fp);
@@ -198,6 +210,8 @@ void Model::WriteFile(FILE *fp)
         pMesh->WriteFile(fp);
     }
     fwrite(m_pJoints, sizeof(Joint), (size_t)m_jointCount, fp);
+
+    fclose(fp);
 }
 
 void Model::UpdateAnimation(AnimationClip *pClip, int frameCount)

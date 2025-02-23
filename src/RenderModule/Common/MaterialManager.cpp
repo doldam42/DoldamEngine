@@ -174,7 +174,8 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.emissive = pMaterial->emissive;
     materialCB.metallicFactor = pMaterial->metallicFactor;
     materialCB.roughnessFactor = pMaterial->roughnessFactor;
-    materialCB.opacityFactor = pMaterial->opacityFactor;
+    //materialCB.opacityFactor = pMaterial->opacityFactor;
+    materialCB.opacityFactor = 1.0f;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
     
     InitMaterialTextures(pMatHandle, &materialCB, pMaterial);

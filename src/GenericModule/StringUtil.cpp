@@ -58,9 +58,13 @@ bool ChangeExtension(const WCHAR *ext, WCHAR *filename)
     int outLen = 0;
     for (int i = idx; i < len; i++)
     {
-        if (i < extLen)
+        if (outLen < extLen)
         {
             filename[i] = ext[outLen];
+        }
+        else
+        {
+            filename[i] = '\0';
         }
         outLen++;
     }

@@ -170,6 +170,7 @@
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="LinkedList.h" />
     <ClInclude Include="MemoryPool.h" />
+    <ClInclude Include="MemoryStreamBuf.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="SpinLock.h" />

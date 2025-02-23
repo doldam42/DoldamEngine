@@ -8,9 +8,9 @@
 
 #include <combaseapi.h>
 
-#include "../MathModule/MathHeaders.h"
-#include "../GenericModule/GenericHeaders.h"
 #include "../Common/RendererInterface.h"
+#include "../GenericModule/GenericHeaders.h"
+#include "../MathModule/MathHeaders.h"
 
 struct Material;
 struct Joint;
@@ -42,8 +42,8 @@ interface IIdentifiable { virtual size_t GetID() = 0; };
 
 interface ISerializable
 {
-    virtual void WriteFile(FILE * fp) = 0;
-    virtual void ReadFile(FILE * fp) = 0;
+    virtual void WriteFile(const char *filename) = 0;
+    virtual void ReadFile(const char *filename) = 0;
 };
 
 interface IScriptable
@@ -99,7 +99,7 @@ interface IGameObject : public IIdentifiable
     virtual float   GetRotationX() = 0;
     virtual float   GetRotationY() = 0;
     virtual float   GetRotationZ() = 0;
-   
+
     virtual Quaternion GetRotation() = 0;
 
     virtual void SetModel(IGameModel * pModel) = 0;
@@ -113,7 +113,7 @@ interface IGameObject : public IIdentifiable
 
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
 
-    virtual void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) = 0;
+    virtual void SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
 };
 
 interface IGameAnimation : public IUnknown, public ISerializable, public IIdentifiable
@@ -152,7 +152,8 @@ interface IGameSprite
 
 interface IGameManager : public IUnknown
 {
-    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, bool useGUIEditor = false, UINT viewportWidth = 0, UINT viewportHeight = 0) = 0;
+    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, bool useGUIEditor = false, UINT viewportWidth = 0,
+                            UINT viewportHeight = 0) = 0;
 
     virtual void Start() = 0;
     virtual void Update() = 0;
@@ -163,7 +164,7 @@ interface IGameManager : public IUnknown
     virtual BOOL OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeight = 0) = 0;
 
     virtual IGameMesh *CreateGameMesh() = 0;
-    virtual void       DeleteGameMesh(IGameMesh* pGameMesh) = 0;
+    virtual void       DeleteGameMesh(IGameMesh * pGameMesh) = 0;
 
     virtual IGameCharacter *CreateCharacter() = 0;
     virtual IGameObject    *CreateGameObject() = 0;
@@ -183,13 +184,13 @@ interface IGameManager : public IUnknown
     virtual void         DeleteAllSprite() = 0;
 
     virtual IGameAnimation *CreateAnimationFromFile(const WCHAR *basePath, const WCHAR *filename) = 0;
-    virtual IGameAnimation *CreateEmptyAnimation(const WCHAR* name) = 0;
+    virtual IGameAnimation *CreateEmptyAnimation(const WCHAR *name) = 0;
     virtual IGameAnimation *GetAnimationByName(const WCHAR *name) = 0;
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
-    virtual BOOL CreateTerrain(const Material *pMaterial, const Vector3* pScale,
-                               const int numSlice = 1, const int numStack = 1) = 0;
+    virtual BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
+                               const int numStack = 1) = 0;
 
     virtual void Register(IController * pController) = 0;
 
@@ -199,12 +200,12 @@ interface IGameManager : public IUnknown
     virtual void SetCameraPosition(float x, float y, float z) = 0;
     virtual void SetCameraYawPitchRoll(float yaw, float pitch, float roll) = 0;
     virtual void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) = 0;
-    
+
     virtual float DeltaTime() const = 0;
     virtual UINT  FPS() const = 0;
 
     virtual void SetTimeSpeed(float speed) = 0;
     virtual void TogglePause() = 0;
 
-    virtual IRenderer     *GetRenderer() const = 0;
+    virtual IRenderer *GetRenderer() const = 0;
 };

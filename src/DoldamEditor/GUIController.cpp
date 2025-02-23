@@ -28,18 +28,40 @@ void GUIController::CreateModel(const WCHAR *basePath, const WCHAR *filename)
         ChangeExtension(L".dom", tmp);
     }
 
-    IGameModel *pModel = pGame->CreateModelFromFile(basePath, filename);
+    IGameModel *pModel = pGame->CreateModelFromFile(basePath, tmp);
     m_pGUIView->models.push_back(pModel);
 }
 
-void GUIController::CreateGameObject(IGameModel *pModel)
+void GUIController::CreateGameObject(const WCHAR *basePath, const WCHAR *filename)
 {
-    IGameManager *pGame = g_pEditor->GetGameManager();
+    IGameManager   *pGame = g_pEditor->GetGameManager();
+    IModelExporter *pExporter = g_pEditor->GetFBXModelExporter();
+
+    WCHAR ext[20] = {L'\0'};
+    WCHAR tmp[MAX_NAME] = {'\0'};
+    wcscpy_s(tmp, filename);
+
+    TryGetExtension(filename, ext);
+    if (!wcscmp(ext, L".fbx"))
+    {
+        std::filesystem::path p(basePath);
+        p /= filename;
+
+        pExporter->Load(basePath, filename);
+        pExporter->ExportModel();
+
+        ChangeExtension(L".dom", tmp);
+    }
+
+    IGameModel *pModel = pGame->CreateModelFromFile(basePath, tmp);
+    m_pGUIView->models.push_back(pModel);
 
     IGameObject *pObj = pGame->CreateGameObject();
     pObj->SetModel(pModel);
-
+    pObj->SetScale(2.0f);
     m_pGUIView->objects.push_back(pObj);
+
+    pObj->SetPosition(0.0f, 2.0f, 0.0f);
 }
 
 void GUIController::Cleanup()
@@ -139,20 +161,22 @@ BOOL GUIController::Start()
 
 void GUIController::Update(float dt)
 {
-    if (m_pGUIView->isItemSelected && m_pGUIView->shouldCreateItem)
+    if (m_pGUIView->isItemSelected)
     {
-        switch (m_pGUIView->selectedItemType)
+        switch (m_pGUIView->currentRequestType)
         {
-        case GAME_ITEM_TYPE_MODEL:
+        case GUI_REQUEST_TYPE_CREATE_MODEL:
             CreateModel(m_pGUIView->basePath, m_pGUIView->filename);
+            break;
+        case GUI_REQUEST_TYPE_CREATE_GAMEOBJECT:
+            CreateGameObject(m_pGUIView->basePath, m_pGUIView->filename);
             break;
         default:
             break;
         }
 
         m_pGUIView->isItemSelected = false;
-        m_pGUIView->shouldCreateItem = false;
-        m_pGUIView->selectedItemType = GAME_ITEM_TYPE_NONE;
+        m_pGUIView->currentRequestType = GUI_REQUEST_TYPE_NONE;
     }
 }
 

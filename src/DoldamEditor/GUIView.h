@@ -1,5 +1,13 @@
 #pragma once
 
+enum GUI_REQUEST_TYPE
+{
+    GUI_REQUEST_TYPE_NONE = 0,
+    GUI_REQUEST_TYPE_CREATE_MODEL,
+    GUI_REQUEST_TYPE_CREATE_ANIMATION,
+    GUI_REQUEST_TYPE_CREATE_GAMEOBJECT,
+};
+
 struct FileNode;
 struct GUIView
 {
@@ -43,14 +51,15 @@ struct GUIView
     bool isItemSelected = false;
     bool shouldCreateItem = false;
 
-    GAME_ITEM_TYPE selectedItemType = GAME_ITEM_TYPE_NONE;
+    GUI_REQUEST_TYPE currentRequestType = GUI_REQUEST_TYPE_NONE;
+
     std::vector<IGameModel *>  models;
     std::vector<IGameObject *> objects;
 
     WCHAR assetPath[MAX_PATH] = {L'\0'};
     WCHAR basePath[MAX_PATH] = {L'\0'};
     WCHAR filename[MAX_NAME] = {L'\0'};
-    
+
     GUIView(IRenderGUI *gui, ITextureHandle *pSceneViewTex_, FileNode *assetDir_, const WCHAR *assetPath_, UINT width_,
             UINT height_)
         : pGUI(gui), pSceneViewTex(pSceneViewTex_), assetDir(assetDir_), width(width_), height(height_)

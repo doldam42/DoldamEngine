@@ -43,8 +43,8 @@ class Model : public IGameModel
 
     void InitBoundary();
 
-    void ReadFile(FILE *fp);
-    void WriteFile(FILE *fp);
+    void ReadFile(const char *filename) override;
+    void WriteFile(const char *filename) override;
 
     void UpdateAnimation(AnimationClip *pClip, int frameCount);
     void Render(GameObject *pGameObj);

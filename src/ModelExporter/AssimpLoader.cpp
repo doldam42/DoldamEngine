@@ -420,15 +420,7 @@ void AssimpLoader::ExportModel()
         p.replace_extension("dom");
         GameUtils::ws2s(p.c_str(), outPath);
 
-        FILE *fp = nullptr;
-        fopen_s(&fp, outPath, "wb");
-        if (!fp)
-        {
-            __debugbreak();
-            return;
-        }
-        m_pModel->WriteFile(fp);
-        fclose(fp);
+        m_pModel->WriteFile(outPath);
     }
 }
 

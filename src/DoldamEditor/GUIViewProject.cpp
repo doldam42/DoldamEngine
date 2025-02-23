@@ -35,7 +35,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
     {
         RGBA buttonColor = RGBA::BLACK;
 
-        GAME_ITEM_TYPE gameItemType = GAME_ITEM_TYPE_NONE;
+        GUI_REQUEST_TYPE reqType = GUI_REQUEST_TYPE_NONE;
         switch (pNode->itemType)
         {
         case FILE_ITEM_TYPE_TEXTURE:
@@ -43,7 +43,7 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
             break;
         case FILE_ITEM_TYPE_MESH:
             buttonColor = RGBA::BLUE_II;
-            gameItemType = GAME_ITEM_TYPE_MODEL;
+            reqType = GUI_REQUEST_TYPE_CREATE_MODEL;
             break;
         case FILE_ITEM_TYPE_ANIMATION:
             buttonColor = RGBA::ORANGE;
@@ -76,8 +76,6 @@ static void ShowDirectoryTreeRecursive(IRenderGUI *pGUI, GUIView* pView, FileNod
             wcscat_s(pView->basePath, L"\\");
             wcscpy_s(pView->filename, pNode->name);
 
-            pView->selectedItemType = gameItemType;
-
             pGUI->EndDragDropSource();
         }
     }
@@ -108,7 +106,7 @@ void GUIView::ShowProject()
             RENDER_GUI_PAYLOAD payload;
             if (pGUI->AcceptDragDropPayload("SELECT_FILE_PAYLOAD", &payload))
             {
-                shouldCreateItem = true;
+                currentRequestType = GUI_REQUEST_TYPE_CREATE_MODEL;
             }
             pGUI->EndDragDropTarget();
         }

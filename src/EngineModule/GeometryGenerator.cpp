@@ -757,19 +757,8 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
 
     GameUtils::ws2s(wcsPath, path);
 
-    FILE *fp = nullptr;
-    fopen_s(&fp, path, "rb");
-    if (!fp)
-    {
-#ifdef _DEBUG
-        __debugbreak();
-#endif // _DEBUG
-        return nullptr;
-    }
-
     Model *pModel = new Model;
-    pModel->ReadFile(fp);
-    fclose(fp);
+    pModel->ReadFile(path);
 
     pModel->SetBasePath(basePath);
     Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
@@ -789,18 +778,8 @@ AnimationClip *GeometryGenerator::ReadAnimationFromFile(const wchar_t *basePath,
 
     GameUtils::ws2s(wcsPath, path);
 
-    FILE *fp = nullptr;
-
-    fopen_s(&fp, path, "rb");
-    if (!fp)
-    {
-        __debugbreak();
-        return nullptr;
-    }
-
     AnimationClip *pAnim = new AnimationClip(filename);
-    pAnim->ReadFile(fp);
-    fclose(fp);
+    pAnim->ReadFile(path);
 
     pAnim->ref_count = 1;
     return pAnim;
