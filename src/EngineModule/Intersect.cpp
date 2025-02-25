@@ -2,8 +2,8 @@
 
 #include "Intersect.h"
 
-static BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sphereCenter,
-                      const float sphereRadius, float *pOutT1, float *pOutT2)
+BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sphereCenter, const float sphereRadius,
+               float *pOutT1, float *pOutT2)
 {
     const Vector3 m = sphereCenter - rayStart;
 
@@ -26,8 +26,8 @@ static BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vect
     return TRUE;
 }
 
-static BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
-                               Vector3 *pOutContactPointA, Vector3 *pOutContactPointB, Vector3 *pOutNormal)
+BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+                        Vector3 *pOutContactPointA, Vector3 *pOutContactPointB, Vector3 *pOutNormal)
 {
     Vector3 ab = posB - posA;
 
@@ -49,9 +49,9 @@ static BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &
     return TRUE;
 }
 
-static BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
-                                const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
-                                Vector3 *pOutContactPointB, Vector3 *pOutNormal, float* pOutToi)
+BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+                         const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
+                         Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi)
 {
     const Vector3 relativeVelocity = velA - velB;
 
@@ -64,8 +64,8 @@ static BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 
     if (rayDir.LengthSquared() < 0.001f * 0.001f)
     {
         // Ray is too short, just check if already intersecting
-        Vector3  ab = posB - posA;
-        float radius = a.Radius + b.Radius + 0.001f;
+        Vector3 ab = posB - posA;
+        float   radius = a.Radius + b.Radius + 0.001f;
         if (ab.LengthSquared() > radius * radius)
         {
             return false;
@@ -130,8 +130,8 @@ BOOL Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Conta
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
         Vector3 normal;
-        if (SphereSphereDynamic(*pSphereA, *pSphereB, posA, posB, velA, velB, dt, &contactPointAWorldSpace, &contactPointBWorldSpace,
-                                &normal, &timeOfImpact))
+        if (SphereSphereDynamic(*pSphereA, *pSphereB, posA, posB, velA, velB, dt, &contactPointAWorldSpace,
+                                &contactPointBWorldSpace, &normal, &timeOfImpact))
         {
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);
@@ -157,7 +157,7 @@ BOOL Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Conta
             float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
 
             pOutContact->separationDistance = r;
-            
+
             return TRUE;
         }
         return FALSE;

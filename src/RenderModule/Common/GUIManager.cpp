@@ -143,7 +143,7 @@ void GUIManager::BeginRender()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    //ImGui::ShowDemoWindow();
 }
 
 void GUIManager::EndRender(ID3D12GraphicsCommandList *pCommandList)

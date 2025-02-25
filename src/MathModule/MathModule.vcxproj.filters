@@ -31,11 +31,13 @@
       <Filter>Shape</Filter>
     </ClInclude>
     <ClInclude Include="Bounds.h" />
-    <ClInclude Include="Ray.h" />
     <ClInclude Include="SimpleMath.h">
       <Filter>SimpleMath</Filter>
     </ClInclude>
     <ClInclude Include="ColorUtils.h" />
+    <ClInclude Include="RigidBody.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

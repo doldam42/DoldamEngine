@@ -464,12 +464,23 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWid
 
     WaitForGPU();
 
-    m_Viewport.Width = (float)viewportWidth;
-    m_Viewport.Height = (float)viewportHeigh;
+    if (m_useTextureOutput)
+    {
+        m_Viewport.Width = (float)viewportWidth;
+        m_Viewport.Height = (float)viewportHeigh;
 
-    m_ScissorRect.right = viewportWidth;
-    m_ScissorRect.bottom = viewportHeigh;
+        m_ScissorRect.right = viewportWidth;
+        m_ScissorRect.bottom = viewportHeigh;
+    }
+    else
+    {
+        m_Viewport.Width = (float)width;
+        m_Viewport.Height = (float)height;
 
+        m_ScissorRect.right = width;
+        m_ScissorRect.bottom = height;
+    }
+    
     CleanupBuffers();
 
     if (FAILED(m_pSwapChain->ResizeBuffers(SWAP_CHAIN_FRAME_COUNT, width, height, DXGI_FORMAT_R8G8B8A8_UNORM,

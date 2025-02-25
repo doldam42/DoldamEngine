@@ -5,6 +5,11 @@
 
 #include "Bounds.h"
 
+Bounds Bounds::SweptBounds(const Bounds &from, const Bounds &to)
+{
+    return Bounds(Vector3::Min(from.mins, to.mins), Vector3::Max(from.maxs, to.maxs));
+}
+
 /*
 ====================================================
 Bounds::operator =
@@ -41,8 +46,8 @@ bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1)
 
     float *pMin = (float *)&mins;
     float *pMax = (float *)&maxs;
-    float *pRayPos = (float *)&ray.pos;
-    float *pRayDir = (float *)&ray.dir;
+    float *pRayPos = (float *)&ray.position;
+    float *pRayDir = (float *)&ray.direction;
     for (int i = 0; i < 3; i++)
     {
         // Update interval for _i_th bounding box slab

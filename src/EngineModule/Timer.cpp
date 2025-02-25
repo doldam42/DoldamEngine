@@ -10,7 +10,7 @@ float Timer::Tick()
     ULONGLONG curTick = GetTickCount64();
 
     float dt = static_cast<float>(curTick - m_prevTick) / 1000.f;
-
+    
 #ifdef _DEBUG
     if (dt > 0.1f)
     {

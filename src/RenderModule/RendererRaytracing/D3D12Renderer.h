@@ -128,7 +128,7 @@ class D3D12Renderer : public IRenderer
 
     DESCRIPTOR_HANDLE m_depthStencilDescriptorTables[SWAP_CHAIN_FRAME_COUNT] = {};
 
-    TEXTURE_HANDLE* m_renderableTextureHanldes[SWAP_CHAIN_FRAME_COUNT];
+    TEXTURE_HANDLE   *m_renderableTextureHanldes[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
     
