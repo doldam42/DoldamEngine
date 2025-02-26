@@ -1,5 +1,6 @@
 #pragma once
 
+class KDTree;
 class GameObject;
 class World
 {
@@ -13,6 +14,8 @@ class World
     void BeginCreateWorld(UINT maxObjectCount);
     void InsertObject(GameObject *pObject);
     void EndCreateWorld();
+
+    bool Intersect(const Ray &ray);
 
     World(){}
     ~World();

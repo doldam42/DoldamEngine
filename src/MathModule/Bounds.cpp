@@ -40,7 +40,7 @@ bool Bounds::DoesIntersect(const Bounds &rhs) const
     return true;
 }
 
-bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) 
+bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
 {
     float t0 = 0, t1 = FLT_MAX;
 
@@ -161,6 +161,18 @@ Vector3 Bounds::Extends() const
 {
     using namespace DirectX;
     return XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
+}
+
+Vector3 Bounds::Offset(const Vector3 &p) const
+{
+    Vector3 o = p - mins;
+    if (maxs.x > mins.x)
+        o.x /= maxs.x - mins.x;
+    if (maxs.y > mins.y)
+        o.y /= maxs.y - mins.y;
+    if (maxs.z > mins.z)
+        o.z /= maxs.z - mins.z;
+    return o;
 }
 
 void Bounds::Transform(Bounds *pOutBounds, const Matrix m) const 

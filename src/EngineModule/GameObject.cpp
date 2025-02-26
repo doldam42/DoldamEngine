@@ -185,3 +185,31 @@ Bounds GameObject::GetBounds() const
 
     return m_pPhysicsComponent->GetBounds();
 }
+
+bool GameObject::Intersect(const Ray &ray) const
+{
+    if (!m_pPhysicsComponent)
+    {
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        return false;
+    }
+
+    float  dummyhitt0, dummyhitt1;
+    Bounds b = m_pPhysicsComponent->GetBounds();
+    return b.IntersectP(ray, &dummyhitt0, &dummyhitt1);
+}
+
+bool GameObject::Intersect(const Bounds b) const
+{
+    if (!m_pPhysicsComponent)
+    {
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        return false;
+    }
+
+    return m_pPhysicsComponent->GetBounds().DoesIntersect(b);
+}

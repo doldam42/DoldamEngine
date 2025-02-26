@@ -4,8 +4,8 @@
 
 #include "World.h"
 
-void World::Cleanup() 
-{ 
+void World::Cleanup()
+{
     if (m_pTree)
     {
         delete m_pTree;
@@ -13,22 +13,14 @@ void World::Cleanup()
     }
 }
 
-void World::Initialize() { m_pTree = new KDTree; }
+void World::Initialize() {}
 
-void World::BeginCreateWorld(UINT maxObjectCount) { m_pTree->BeginCreateTree(maxObjectCount); }
+void World::BeginCreateWorld(UINT maxObjectCount) { m_pTree = new KDTree(maxObjectCount); }
 
-void World::InsertObject(GameObject *pObject)
-{
-    Bounds b = pObject->GetBounds();
-    m_pTree->InsertObject(&b, &pObject->m_LinkInWorld);
-}
+void World::InsertObject(GameObject *pObject) { m_pTree->InsertObject(pObject); }
 
-void World::EndCreateWorld()
-{
-    m_pTree->EndCreateTree();
-#ifdef _DEBUG
-    // m_pTree->DebugPrintTree();
-#endif // _DEBUG
-}
+void World::EndCreateWorld() { m_pTree->Build(); }
+
+bool World::Intersect(const Ray &ray) { return m_pTree->IntersectP(ray); }
 
 World::~World() { Cleanup(); }

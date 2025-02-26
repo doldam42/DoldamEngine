@@ -5,7 +5,7 @@ class IRenderer;
 class GameManager;
 class Model;
 class PhysicsComponent;
-class GameObject : public IGameObject
+class GameObject : public IGameObject, public IBoundedObject
 {
     static size_t g_id;
     size_t    m_id;
@@ -65,10 +65,13 @@ class GameObject : public IGameObject
 
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
-    Bounds GetBounds() const;
-
     virtual size_t GetID() override { return m_id; }
 
     GameObject();
     virtual ~GameObject();
+
+    // Inherited via IBoundedObject
+    Bounds GetBounds() const override;
+    bool   Intersect(const Ray &ray) const override;
+    bool   Intersect(const Bounds b) const override;
 };

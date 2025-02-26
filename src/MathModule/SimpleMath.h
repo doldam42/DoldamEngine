@@ -259,6 +259,19 @@ namespace DirectX
             Vector3 operator+ () const noexcept { return *this; }
             Vector3 operator- () const noexcept;
 
+            float operator[](int axis) const noexcept 
+            {
+                if (axis < 0 || axis > 2)
+                    exit(-1);
+                return ((float *)this)[axis];
+            }
+            float &operator[](int axis) noexcept 
+            {
+                if (axis < 0 || axis > 2)
+                    exit(-1);
+                return ((float *)this)[axis];
+            }
+
             // Vector operations
             bool InBounds(const Vector3& Bounds) const noexcept;
 

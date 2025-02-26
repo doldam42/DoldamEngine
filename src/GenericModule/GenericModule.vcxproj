@@ -164,6 +164,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BVH.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="GenericHeaders.h" />
     <ClInclude Include="HashTable.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BVH.cpp" />
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="HashTable.cpp" />
     <ClCompile Include="KDTree.cpp" />

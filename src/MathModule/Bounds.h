@@ -8,6 +8,7 @@
 Bounds
 ====================================================
 */
+
 class Bounds
 {
   public:
@@ -28,7 +29,7 @@ class Bounds
         maxs = Vector3(FLT_MIN);
     }
     bool DoesIntersect(const Bounds &rhs) const;
-    bool IntersectP(const Ray &ray, float *hitt0, float *hitt1);
+    bool IntersectP(const Ray &ray, float *hitt0, float *hitt1) const;
 
     void Expand(const Vector3 *pts, const int num);
     void Expand(const Vector3 &rhs);
@@ -45,9 +46,19 @@ class Bounds
     Vector3 Center() const;
     Vector3 Extends() const;
 
+    Vector3 Offset(const Vector3 &p) const;
+
     void Transform(Bounds *pOutBounds, const Matrix m) const;
 
   public:
     Vector3 mins;
     Vector3 maxs;
+};
+
+interface IBoundedObject
+{
+    virtual Bounds GetBounds() const = 0;
+
+    virtual bool Intersect(const Ray &ray) const = 0;
+    virtual bool Intersect(const Bounds b) const = 0;
 };

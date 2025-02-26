@@ -25,8 +25,8 @@
     <Filter Include="ThreadPool">
       <UniqueIdentifier>{b45b9f94-ef01-4a41-b605-5b7ad7653b32}</UniqueIdentifier>
     </Filter>
-    <Filter Include="KDTree">
-      <UniqueIdentifier>{651d4d2a-912c-4149-97f9-304b30c5e89b}</UniqueIdentifier>
+    <Filter Include="DataStructure">
+      <UniqueIdentifier>{951ec261-2323-4906-bb52-b5476184372f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -59,10 +59,13 @@
       <Filter>ThreadPool</Filter>
     </ClInclude>
     <ClInclude Include="EventListener.h" />
-    <ClInclude Include="KDTree.h">
-      <Filter>KDTree</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryStreamBuf.h" />
+    <ClInclude Include="BVH.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="KDTree.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -90,8 +93,11 @@
       <Filter>pch</Filter>
     </ClCompile>
     <ClCompile Include="EventListener.cpp" />
+    <ClCompile Include="BVH.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
     <ClCompile Include="KDTree.cpp">
-      <Filter>KDTree</Filter>
+      <Filter>DataStructure</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

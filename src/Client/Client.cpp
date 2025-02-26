@@ -97,6 +97,11 @@ void Client::ProcessInput()
 
 void Client::CleanupControllers()
 {
+    if (m_pCameraController)
+    {
+        delete m_pCameraController;
+        m_pCameraController = nullptr;
+    }
     if (m_pDemoController)
     {
         delete m_pDemoController;
@@ -121,6 +126,12 @@ void Client::CleanupControllers()
 
 void Client::Cleanup()
 {
+    if (m_pInputManager)
+    {
+        delete m_pInputManager;
+        m_pInputManager = nullptr;
+    }
+
     CleanupControllers();
     if (m_pFbxExporter)
     {
