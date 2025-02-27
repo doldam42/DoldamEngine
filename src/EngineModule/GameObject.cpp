@@ -37,10 +37,14 @@ void GameObject::Initialize(GameManager *pGameEngine)
     m_pRenderer = pGameEngine->GetRenderer();
 }
 
-void GameObject::InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction)
+void GameObject::InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
 {
     m_pPhysicsComponent = new PhysicsComponent;
-    m_pPhysicsComponent->Initialize(this, pInShape, mass, elasticity, friction);
+    
+    if (shapeType == SHAPE_TYPE_SPHERE)
+    {
+        m_pPhysicsComponent->Initialize(this, &m_pModel->GetBoundingSphere(), mass, elasticity, friction);
+    }
 }
 
 void GameObject::Update(float dt)
@@ -173,32 +177,25 @@ void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMater
     }
 }
 
-Bounds GameObject::GetBounds() const
-{
-    if (!m_pPhysicsComponent)
+IRenderMaterial *GameObject::GetMaterialAt(UINT index) 
+{ 
+    if (m_ppMaterials)
     {
-#ifdef _DEBUG
-        __debugbreak();
-#endif // _DEBUG
-        return Bounds();
+        return m_ppMaterials[index];
     }
-
-    return m_pPhysicsComponent->GetBounds();
 }
 
-bool GameObject::Intersect(const Ray &ray) const
+Bounds GameObject::GetBounds() const
 {
-    if (!m_pPhysicsComponent)
-    {
-#ifdef _DEBUG
-        __debugbreak();
-#endif // _DEBUG
-        return false;
-    }
+    Bounds box;
+    m_pModel->GetBoundingBox().Transform(&box, m_transform.GetMatrix());
+    return box;
+}
 
-    float  dummyhitt0, dummyhitt1;
-    Bounds b = m_pPhysicsComponent->GetBounds();
-    return b.IntersectP(ray, &dummyhitt0, &dummyhitt1);
+bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+{
+    Bounds b = GetBounds();
+    return b.IntersectP(ray, hitt0, hitt1);
 }
 
 bool GameObject::Intersect(const Bounds b) const

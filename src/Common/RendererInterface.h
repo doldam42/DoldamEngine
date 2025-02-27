@@ -106,7 +106,9 @@ interface IRenderGUI : public IUnknown
 
 interface IRenderMaterial : public IUnknown
 {
+    virtual BOOL UpdateAlbedo(const Vector3 &albedo) = 0;
     virtual BOOL UpdateMetallicRoughness(float metallic, float roughness) = 0;
+    virtual BOOL UpdateEmissive(const Vector3& emisive) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
 
     virtual ITextureHandle *GetTexture(TEXTURE_TYPE type) = 0;

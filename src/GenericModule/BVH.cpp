@@ -534,7 +534,7 @@ int BVH::flattenBVHTree(BVHBuildNode *node, int *offset)
 
 Bounds BVH::GetBounds() const { return nodes ? nodes[0].bounds : Bounds(); }
 
-bool BVH::IntersectP(const Ray &ray) const
+bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const
 {
     if (!nodes)
         return false;
@@ -553,8 +553,10 @@ bool BVH::IntersectP(const Ray &ray) const
             {
                 for (int i = 0; i < node->nPrimitives; ++i)
                 {
-                    if (primitives[node->primitivesOffset + i]->Intersect(ray))
+                    if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax))
                     {
+                        *pOutHitt = tmin;
+                        *pHitted = primitives[node->primitivesOffset + i];
                         return true;
                     }
                 }
@@ -640,6 +642,8 @@ BOOL BVH::InsertObject(IBoundedObject *pObj)
 #endif
         return FALSE;
     }
+
+    primitives.push_back(pObj);
     return TRUE;
 }
 

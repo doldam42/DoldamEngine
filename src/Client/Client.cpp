@@ -230,11 +230,10 @@ BOOL Client::Start()
 {
     LoadResources();
 
-    LoadScene();
-
-    m_pGame->BuildScene();
-
     m_pGame->Start();
+
+    LoadScene();
+    m_pGame->BuildScene();
 
     return TRUE;
 }

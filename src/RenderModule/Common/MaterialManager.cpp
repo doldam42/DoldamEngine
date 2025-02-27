@@ -338,6 +338,16 @@ BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material
     return TRUE;
 }
 
+BOOL MaterialManager::UpdateMaterialAlbedo(MATERIAL_HANDLE *pMatHandle, const Vector3 &albedo)
+{
+    MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
+
+    pMatConst->albedo = albedo;
+
+    m_isUpdated = TRUE;
+    return TRUE;
+}
+
 BOOL MaterialManager::UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandle, float metallic, float roughness)
 {
     MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
@@ -345,6 +355,16 @@ BOOL MaterialManager::UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandl
     pMatConst->metallicFactor = metallic;
     pMatConst->roughnessFactor = roughness;
     
+    m_isUpdated = TRUE;
+    return TRUE;
+}
+
+BOOL MaterialManager::UpdateMaterialEmmisive(MATERIAL_HANDLE *pMatHandle, const Vector3 &emisive)
+{
+    MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
+
+    pMatConst->emissive = emisive;
+
     m_isUpdated = TRUE;
     return TRUE;
 }
@@ -426,10 +446,24 @@ void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 
 MaterialManager::~MaterialManager() { Cleanup(); }
 
+BOOL MATERIAL_HANDLE::UpdateAlbedo(const Vector3 &albedo) 
+{
+    MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
+    BOOL             result = pMaterialManager->UpdateMaterialAlbedo(this, albedo);
+    return result;
+}
+
 BOOL MATERIAL_HANDLE::UpdateMetallicRoughness(float metallic, float roughness)
 {
     MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
     BOOL             result = pMaterialManager->UpdateMaterialMetallicRoughness(this, metallic, roughness);
+    return result;
+}
+
+BOOL MATERIAL_HANDLE::UpdateEmissive(const Vector3 &emmisive)
+{
+    MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
+    BOOL             result = pMaterialManager->UpdateMaterialEmmisive(this, emmisive);
     return result;
 }
 

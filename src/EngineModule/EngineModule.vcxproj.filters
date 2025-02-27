@@ -2,10 +2,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
-    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
-    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
@@ -42,9 +40,6 @@
     <ClCompile Include="PhysicsManager.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Intersect.cpp">
-      <Filter>Physics</Filter>
-    </ClCompile>
     <ClCompile Include="BroadPhase.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
@@ -53,10 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
-    <ClInclude Include="CameraController.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="InputManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
@@ -88,9 +81,6 @@
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsManager.h">
-      <Filter>Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="Intersect.h">
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="BroadPhase.h">

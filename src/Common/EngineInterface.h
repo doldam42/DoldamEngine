@@ -38,8 +38,6 @@ enum MESH_TYPE : UINT
     MESH_TYPE_SKINNED,
 };
 
-interface IIdentifiable { virtual size_t GetID() = 0; };
-
 interface ISerializable
 {
     virtual void WriteFile(const char *filename) = 0;
@@ -73,11 +71,11 @@ interface IGameMesh : public IBaseObject
     virtual BOOL UpdateMaterial(IRenderMaterial * pMaterial, UINT faceGroupIndex) = 0;
 };
 
-interface IGameModel : public IUnknown, public ISerializable, public IIdentifiable
+interface IGameModel : public IUnknown, public ISerializable
 {
     virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
                             Joint *pInJoints = nullptr, int jointCount = 0) = 0;
-
+    virtual size_t     GetID() = 0;
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
@@ -89,9 +87,10 @@ interface IPhysicsComponent
     virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
-interface IGameObject : public IIdentifiable
+interface IGameObject : public IBoundedObject
 {
-    virtual void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) = 0;
+    virtual size_t GetID() = 0;
+    virtual void InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
@@ -114,10 +113,20 @@ interface IGameObject : public IIdentifiable
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
 
     virtual void SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
+    virtual IRenderMaterial* GetMaterialAt(UINT index) = 0;
+    /*virtual void SetTag(const WCHAR* tagName) = 0;
+    virtual void GetTag(WCHAR * outTagName) = 0;*/
 };
 
-interface IGameAnimation : public IUnknown, public ISerializable, public IIdentifiable
+struct RayHit
 {
+    float        tHit;
+    IGameObject *pHitted;
+};
+
+interface IGameAnimation : public IUnknown, public ISerializable
+{
+    virtual size_t GetID() = 0;
     virtual void SetName(const WCHAR *name) = 0;
     virtual void BeginCreateAnim(int jointCount) = 0;
     virtual void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
@@ -206,6 +215,8 @@ interface IGameManager : public IUnknown
 
     virtual void SetTimeSpeed(float speed) = 0;
     virtual void TogglePause() = 0;
+
+    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit* pOutHit) = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };

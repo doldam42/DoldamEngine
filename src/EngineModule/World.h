@@ -5,7 +5,7 @@ class GameObject;
 class World
 {
   private:
-    KDTree* m_pTree = nullptr;
+    BVH* m_pTree = nullptr;
 
   private:
     void Cleanup();
@@ -15,7 +15,7 @@ class World
     void InsertObject(GameObject *pObject);
     void EndCreateWorld();
 
-    bool Intersect(const Ray &ray);
+    bool Intersect(const Ray &ray, RayHit* pOutHit);
 
     World(){}
     ~World();

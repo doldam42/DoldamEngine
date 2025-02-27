@@ -2,20 +2,76 @@
 
 #include "GameObject.h"
 #include "BroadPhase.h"
-#include "Intersect.h"
 #include "PhysicsComponent.h"
 #include "PhysicsManager.h"
+
+BOOL PhysicsManager::Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Contact *pOutContact)
+{
+    if (!pA || !pB)
+        return FALSE;
+
+    pOutContact->pA = pA;
+    pOutContact->pB = pB;
+
+    Vector3 posA = pA->GetPosition();
+    Vector3 posB = pB->GetPosition();
+
+    Vector3 velA = pA->GetVelocity();
+    Vector3 velB = pB->GetVelocity();
+
+    if (pA->m_pShape->GetType() == SHAPE_TYPE_SPHERE && pB->m_pShape->GetType() == SHAPE_TYPE_SPHERE)
+    {
+        Sphere *pSphereA = (Sphere *)pA->m_pShape;
+        Sphere *pSphereB = (Sphere *)pB->m_pShape;
+
+        float   timeOfImpact;
+        Vector3 contactPointAWorldSpace;
+        Vector3 contactPointBWorldSpace;
+        Vector3 normal;
+        if (SphereSphereDynamic(*pSphereA, *pSphereB, posA, posB, velA, velB, dt, &contactPointAWorldSpace,
+                                &contactPointBWorldSpace, &normal, &timeOfImpact))
+        {
+            pA->Update(timeOfImpact);
+            pB->Update(timeOfImpact);
+
+            pOutContact->contactPointAWorldSpace = contactPointAWorldSpace;
+            pOutContact->contactPointBWorldSpace = contactPointBWorldSpace;
+
+            // Convert world space contacts to local space
+            pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
+            pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);
+
+            pOutContact->normal = pA->GetPosition() - pB->GetPosition();
+            pOutContact->normal.Normalize();
+
+            pOutContact->timeOfImpact = timeOfImpact;
+
+            // Unwind time step
+            pA->Update(-timeOfImpact);
+            pB->Update(-timeOfImpact);
+
+            // Calculate the separation distance
+            Vector3 ab = pB->GetPosition() - pA->GetPosition();
+            float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
+
+            pOutContact->separationDistance = r;
+
+            return TRUE;
+        }
+        return FALSE;
+    }
+}
 
 BOOL PhysicsManager::Initialize() { return 0; }
 
 BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
 {
-    SORT_LINK        *pCur = pObj->m_LinkInGame.pNext;
     PhysicsComponent *pCurComp = pObj->GetPhysicsComponent();
 
     m_pBodies[m_bodyCount] = pCurComp;
     m_bodyCount++;
 
+    SORT_LINK *pCur = pObj->m_LinkInGame.pNext;
     while (pCur)
     {
         GameObject       *pOther = (GameObject *)pCur->pItem;

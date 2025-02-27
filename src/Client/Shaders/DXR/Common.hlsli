@@ -18,6 +18,7 @@
 #define MATERIAL_USE_EMISSIVE_MAP 0x20
 #define MATERIAL_USE_HEIGHT_MAP 0x40
 
+
 struct HitInfo
 {
     float4 colorAndDistance;

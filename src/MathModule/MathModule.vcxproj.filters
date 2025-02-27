@@ -38,6 +38,9 @@
     <ClInclude Include="RigidBody.h">
       <Filter>Shape</Filter>
     </ClInclude>
+    <ClInclude Include="Collisions.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -54,6 +57,9 @@
       <Filter>SimpleMath</Filter>
     </ClCompile>
     <ClCompile Include="ColorUtils.cpp" />
+    <ClCompile Include="Collisions.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

@@ -323,7 +323,7 @@ bool KDTree::IntersectP(const Ray &ray) const
             if (nPrimitives == 1)
             {
                 IBoundedObject *p = primitives[node->onePrimitive];
-                if (p->Intersect(ray))
+                if (p->Intersect(ray, &tMin, &tMax))
                 {
                     return true;
                 }
@@ -334,7 +334,7 @@ bool KDTree::IntersectP(const Ray &ray) const
                 {
                     int             primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
                     IBoundedObject *prim = primitives[primitiveIndex];
-                    if (prim->Intersect(ray))
+                    if (prim->Intersect(ray, &tMin, &tMax))
                     {
                         return true;
                     }

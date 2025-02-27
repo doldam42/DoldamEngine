@@ -88,7 +88,7 @@ void Model::InitRenderComponents(IRenderer *pRenderer)
 
 void Model::InitBoundary()
 {
-    /*Vector3 minCorner(FLT_MAX);
+    Vector3 minCorner(FLT_MAX);
     Vector3 maxCorner(FLT_MIN);
 
     for (int i = 0; i < m_objectCount; i++)
@@ -149,8 +149,8 @@ void Model::InitBoundary()
         }
     }
     maxRadius += 1e-3f;
-    m_boundingBox = Box(minCorner, maxCorner);
-    m_boundingSphere = Sphere(center, maxRadius);*/
+    m_boundingBox = {minCorner, maxCorner};
+    m_boundingSphere = Sphere(maxRadius);
 }
 
 void Model::ReadFile(const char *filename)
@@ -284,7 +284,7 @@ ULONG __stdcall Model::Release(void)
     return newRefCount;
 }
 
-Model::Model()
+Model::Model() : m_boundingBox(), m_boundingSphere(0)
 {
     m_LinkInGame.pPrev = nullptr;
     m_LinkInGame.pNext = nullptr;

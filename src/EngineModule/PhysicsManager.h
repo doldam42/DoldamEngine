@@ -3,6 +3,7 @@
 #include "Contact.h"
 
 class GameObject;
+class PhysicsComponent;
 class PhysicsManager
 {
   private:
@@ -11,6 +12,8 @@ class PhysicsManager
 
     PhysicsComponent *m_pBodies[1024];
     UINT              m_bodyCount = 0;
+
+    BOOL Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Contact *pOutContact);
 
   public:
     BOOL Initialize();

@@ -24,8 +24,7 @@ class Character : public IGameCharacter, public GameObject
     Character() = default;
     ~Character() override;
 
-    // Inherited via GameObject
-    void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) override;
+    void InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) override;
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;
@@ -49,8 +48,11 @@ class Character : public IGameCharacter, public GameObject
     void AddPosition(const Vector3 *pInDeltaPos) override;
 
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
+    IRenderMaterial *GetMaterialAt(UINT index) override;
 
     size_t GetID() override;
 
-    Bounds GetBounds() const;
+    Bounds GetBounds() const override;
+    bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
+    bool   Intersect(const Bounds b) const override;
 };

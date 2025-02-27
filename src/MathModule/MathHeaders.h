@@ -12,7 +12,6 @@
 #include <DirectXMath.h>
 
 #include "SimpleMath.h"
-#include "SimpleMath.inl"
 
 #include "framework.h"
 
@@ -53,6 +52,7 @@ inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilo
 #include "Bounds.h"
 #include "ShapeBase.h"
 #include "Sphere.h"
+#include "Collisions.h"
 
 #include "Camera.h"
 #include "Frustum.h"
@@ -63,4 +63,5 @@ inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilo
 #include "Vertex.h"
 
 #include "ColorUtils.h"
+
 #include "MathUtils.h"

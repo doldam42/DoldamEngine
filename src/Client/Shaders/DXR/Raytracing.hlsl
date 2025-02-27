@@ -263,6 +263,8 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPo
     const float3 Kd = material.albedo;
     const float3 Ks = lerp(Fdielectric, Kd, metallic);
 
+    const float3 emissive = material.emissive;
+
     // Direct illumination
     if (!BxDF::IsBlack(Kd) || !BxDF::IsBlack(Ks))
     {
@@ -323,7 +325,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPo
         }
     }
 
-    return L;
+    return L + emissive;
 }
 
 float3 NormalMap(in float3 normal, in float2 texCoord, in Vertex vertices[3], in Attributes attr, in float lodLevel)
@@ -389,6 +391,11 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     material.albedo = (material.flags & MATERIAL_USE_ALBEDO_MAP)
                           ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
                           : material.albedo;
+
+    material.emissive = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
+                            ? l_emmisiveTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
+                            : material.emissive;
+
     // Find the world - space hit position
     float3 hitPosition = HitWorldPosition();
     float3 V = -WorldRayDirection();
@@ -452,11 +459,12 @@ void DeferredRayGen()
     material.metallicFactor = metallic;
     material.reflectionFactor = Kr;
     material.opacityFactor = 1.0; // TODO: transparancy
+    material.emissive = emission;
 
     // float3 color = Shade(payload, normalWorld, posWorld, material);
     float3 color = Shade(payload, normalWorld, V, posWorld, material);
 
-    gOutput[launchIndex] = float4(color + emission, 1.0);
+    gOutput[launchIndex] = float4(color, 1.0);
 }
 #endif
 [shader("raygeneration")] 

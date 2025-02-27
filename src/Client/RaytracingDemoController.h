@@ -4,6 +4,7 @@ class RaytracingDemoController : public IController
   private:
     IGameObject *m_pGround = nullptr;
     IGameObject *m_pBox = nullptr;
+    IGameObject *m_pGura = nullptr;
 
     void Cleanup();
 

@@ -42,9 +42,9 @@ void Character::Update(float dt)
 
 Character::~Character() { Cleanup(); }
 
-void Character::InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction)
+void Character::InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
 {
-    GameObject::InitPhysics(pInShape, mass, elasticity, friction);
+    GameObject::InitPhysics(shapeType, mass, elasticity, friction);
 }
 
 Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
@@ -84,9 +84,18 @@ void Character::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMateri
     GameObject::SetMaterials(ppMaterials, numMaterials);
 }
 
+IRenderMaterial *Character::GetMaterialAt(UINT index) { return GameObject::GetMaterialAt(index); }
+
 size_t Character::GetID() { return GameObject::GetID(); }
 
 Bounds Character::GetBounds() const { return GameObject::GetBounds(); }
+
+bool Character::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+{
+    return GameObject::Intersect(ray, hitt0, hitt1);
+}
+
+bool Character::Intersect(const Bounds b) const { return GameObject::Intersect(b); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)
 {

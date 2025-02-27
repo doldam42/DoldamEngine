@@ -48,7 +48,7 @@ class Bounds
 
     Vector3 Offset(const Vector3 &p) const;
 
-    void Transform(Bounds *pOutBounds, const Matrix m) const;
+    void Transform(Bounds *pOutBounds, const Matrix& m) const;
 
   public:
     Vector3 mins;
@@ -59,6 +59,6 @@ interface IBoundedObject
 {
     virtual Bounds GetBounds() const = 0;
 
-    virtual bool Intersect(const Ray &ray) const = 0;
+    virtual bool Intersect(const Ray &ray, float* hitt0, float* hitt1) const = 0;
     virtual bool Intersect(const Bounds b) const = 0;
 };

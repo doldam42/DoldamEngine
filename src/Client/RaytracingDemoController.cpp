@@ -111,6 +111,8 @@ BOOL RaytracingDemoController::Start()
     pGura->SetPosition(0.0f, 1.0f, -1.0f);
     Quaternion q = Quaternion::CreateFromYawPitchRoll(Vector3(-XM_PIDIV2, XM_PI, 0.0f));
     pGura->SetRotation(&q);
+
+    m_pGura = pGura;
     m_pBox = pBox;
     m_pGround = pGround;
     /*IModelExporter       *pExporter = g_pClient->GetAssimpExporter();
@@ -132,7 +134,22 @@ BOOL RaytracingDemoController::Start()
     return TRUE;
 }
 
-void RaytracingDemoController::Update(float dt) {}
+void RaytracingDemoController::Update(float dt)
+{
+    IGameManager *pGame = g_pClient->GetGameManager();
+    IRenderer    *pRenderer = pGame->GetRenderer();
+
+    Vector3 rayDir = pGame->GetCameraLookTo();
+    Vector3 rayPos = pGame->GetCameraPos();
+
+    RayHit hit;
+    if (pGame->Raycast(rayPos, rayDir, &hit))
+    {
+        IGameObject     *pHitted = hit.pHitted;
+        IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
+        pMaterial->UpdateEmissive(Vector3(0.2f, 0.0f, 0.0f)); // Red
+    }
+}
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }
 

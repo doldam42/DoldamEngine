@@ -5,7 +5,7 @@ class IRenderer;
 class GameManager;
 class Model;
 class PhysicsComponent;
-class GameObject : public IGameObject, public IBoundedObject
+class GameObject : public IGameObject
 {
     static size_t g_id;
     size_t    m_id;
@@ -33,7 +33,7 @@ class GameObject : public IGameObject, public IBoundedObject
   public:
     void Initialize(GameManager *pGameEngine);
 
-    void InitPhysics(const Shape *pInShape, float mass, float elasticity, float friction) override;
+    void InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) override;
 
     virtual void Update(float dt);
     void         Render();
@@ -64,6 +64,7 @@ class GameObject : public IGameObject, public IBoundedObject
     void AddPosition(const Vector3 *pInDeltaPos) override;
 
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
+    IRenderMaterial *GetMaterialAt(UINT index) override;
 
     virtual size_t GetID() override { return m_id; }
 
@@ -72,6 +73,6 @@ class GameObject : public IGameObject, public IBoundedObject
 
     // Inherited via IBoundedObject
     Bounds GetBounds() const override;
-    bool   Intersect(const Ray &ray) const override;
+    bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
     bool   Intersect(const Bounds b) const override;
 };

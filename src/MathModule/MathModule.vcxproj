@@ -166,6 +166,7 @@
   <ItemGroup>
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Collisions.h" />
     <ClInclude Include="ColorUtils.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Frustum.h" />
@@ -184,6 +185,7 @@
   <ItemGroup>
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Collisions.cpp" />
     <ClCompile Include="ColorUtils.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="pch.cpp">

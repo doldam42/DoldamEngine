@@ -27,7 +27,8 @@ class Model : public IGameModel
     MeshObject **m_ppMeshObjects = nullptr;
     Joint       *m_pJoints = nullptr;
 
-    // Sphere m_boundingSphere;
+    Sphere m_boundingSphere;
+    Bounds m_boundingBox;
 
   public:
     SORT_LINK m_LinkInGame;
@@ -67,6 +68,10 @@ class Model : public IGameModel
     ULONG __stdcall Release(void) override;
 
     inline IGameMesh *GetMeshAt(UINT index) override { return m_ppMeshObjects[index]; }
+
+    Bounds& GetBoundingBox() { return m_boundingBox; }
+    Sphere& GetBoundingSphere() { return m_boundingSphere; }
+
     Model();
     ~Model();
 };

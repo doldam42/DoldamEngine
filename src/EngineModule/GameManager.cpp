@@ -647,6 +647,14 @@ void GameManager::Register(IController *pController) { m_pControllerManager->Reg
 
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
+BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit)
+{
+    Ray ray;
+    ray.position = rayOrigin;
+    ray.direction = rayDir;
+    return m_pWorld->Intersect(ray, pOutHit);
+}
+
 GameManager::~GameManager()
 {
     Cleanup();

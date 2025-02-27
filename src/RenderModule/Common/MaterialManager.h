@@ -53,8 +53,12 @@ struct MATERIAL_HANDLE : IRenderMaterial
     }
 
     // Inherited via IRenderMaterial
+    BOOL UpdateAlbedo(const Vector3 &albedo) override;
     BOOL UpdateMetallicRoughness(float metallic, float roughness) override;
+    BOOL UpdateEmissive(const Vector3 &emmisive) override;
+
     BOOL UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type) override;
+
     ITextureHandle* GetTexture(TEXTURE_TYPE type) override
     {
         switch (type)
@@ -115,7 +119,9 @@ class MaterialManager
     void             DeleteMaterial(MATERIAL_HANDLE *pMatHandle);
 
     BOOL UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial);
+    BOOL UpdateMaterialAlbedo(MATERIAL_HANDLE *pMatHandle, const Vector3 &albedo);
     BOOL UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandle, float metallic, float roughness);
+    BOOL UpdateMaterialEmmisive(MATERIAL_HANDLE *pMatHandle, const Vector3 &emisive);
     BOOL UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE_HANDLE* pTexHandle, TEXTURE_TYPE type);
 
     void Update(ID3D12GraphicsCommandList *pCommandList);

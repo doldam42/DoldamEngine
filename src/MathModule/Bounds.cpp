@@ -175,7 +175,7 @@ Vector3 Bounds::Offset(const Vector3 &p) const
     return o;
 }
 
-void Bounds::Transform(Bounds *pOutBounds, const Matrix m) const 
+void Bounds::Transform(Bounds *pOutBounds, const Matrix& m) const 
 {
     using namespace DirectX;
     // Load center and extents.

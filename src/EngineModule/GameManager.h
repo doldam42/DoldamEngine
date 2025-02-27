@@ -173,6 +173,8 @@ class GameManager : public IGameManager
 
     inline IRenderer     *GetRenderer() const { return m_pRenderer; }
 
+    BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit) override;
+
     GameManager() = default;
     ~GameManager();
 
