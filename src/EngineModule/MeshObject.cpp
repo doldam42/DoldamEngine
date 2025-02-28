@@ -51,7 +51,7 @@ BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     return TRUE;
 }
 
-BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials, const WCHAR *basePath)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials)
 {
     if (IsSkinned())
     {
@@ -68,7 +68,7 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials
     {
         FaceGroup *pFace = m_pFaceGroups + i;
 
-        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials + pFace->materialIndex, basePath);
+        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials + pFace->materialIndex);
     }
     m_pMeshHandle->EndCreateMesh();
     return TRUE;

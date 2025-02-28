@@ -84,12 +84,10 @@ IRenderMesh *PrimitiveGenerator::MakeSquare(const float scale)
 
     CalcVerticeTangent(pVertices, 4, indices, 2);
 
-    Material     m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 4, 1);
-    pObj->InsertFaceGroup(indices, 2, &m, L"");
+    pObj->InsertFaceGroup(indices, 2, nullptr);
     pObj->EndCreateMesh();
-    pObj->AddRef();
 
     return pObj;
 }
@@ -135,12 +133,10 @@ IRenderMesh *PrimitiveGenerator::MakeSquareGrid(const int numSlices, const int n
         }
     }
 
-    Material m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(vertices.data(), vertices.size(), 1);
-    pObj->InsertFaceGroup(indices.data(), indices.size(), &m, L"");
+    pObj->InsertFaceGroup(indices.data(), indices.size(), nullptr);
     pObj->EndCreateMesh();
-    pObj->AddRef();
 
     return pObj;
 }
@@ -285,12 +281,10 @@ IRenderMesh *PrimitiveGenerator::MakeBox(const float scale)
 
     CalcVerticeTangent(pVertices, 24, indices, 12);
 
-    Material     m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 24, 1);
-    pObj->InsertFaceGroup(indices, 12, &m, L"");
+    pObj->InsertFaceGroup(indices, 12, nullptr);
     pObj->EndCreateMesh();
-    pObj->AddRef();
 
     return pObj;
 }
@@ -380,12 +374,10 @@ IRenderMesh *PrimitiveGenerator::MakeWireBox(const Vector3 center, const Vector3
     };
     CalcVerticeTangent(pVertices, 24, indices, 12);
 
-    Material     m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 24, 1);
-    pObj->InsertFaceGroup(indices, 12, &m, L"");
+    pObj->InsertFaceGroup(indices, 12, nullptr);
     pObj->EndCreateMesh();
-    pObj->AddRef();
 
     return pObj;
 }
@@ -530,9 +522,8 @@ IRenderMesh *PrimitiveGenerator::MakeSphere(const float radius, const int numsli
     Material     m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(vertices.data(), vertices.size(), 1);
-    pObj->InsertFaceGroup(indices.data(), indices.size() / 3, &m, L"");
+    pObj->InsertFaceGroup(indices.data(), indices.size() / 3, nullptr);
     pObj->EndCreateMesh();
-    pObj->AddRef();
 
     return pObj;
 }

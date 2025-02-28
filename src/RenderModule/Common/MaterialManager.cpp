@@ -44,7 +44,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, Materi
     wcscpy_s(path, pInMaterial->basePath);
     wcscat_s(path, pInMaterial->emissiveTextureName);
     pEmissiveTexHandle = (TEXTURE_HANDLE *)m_pRenderer->CreateTextureFromFile(path);
-    
+
     // Metallic-Roughness
     WCHAR metallicPath[MAX_PATH];
     WCHAR roughnessPath[MAX_PATH];
@@ -96,7 +96,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, Materi
         pHeightTexHandle = m_pRenderer->GetDefaultTex();
         pOutConsts->flags &= ~MATERIAL_USE_HEIGHT_MAP;
     }
-    
+
     pOutMaterial->pAlbedoTexHandle = pAlbedoTexHandle;
     pOutMaterial->pNormalTexHandle = pNormalTexHandle;
     pOutMaterial->pAOTexHandle = pAOTexHandle;
@@ -153,7 +153,7 @@ void MaterialManager::CleanupMaterial(MATERIAL_HANDLE *pMaterial)
 
 MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
 {
-    MATERIAL_HANDLE tmp;
+    MATERIAL_HANDLE  tmp;
     void            *pMemory = m_pMaterialHandlePool->Alloc();
     MATERIAL_HANDLE *pMatHandle = reinterpret_cast<MATERIAL_HANDLE *>(pMemory);
     memcpy(pMatHandle, &tmp, sizeof(MATERIAL_HANDLE)); // 함수 테이블 카피용
@@ -174,10 +174,10 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.emissive = pMaterial->emissive;
     materialCB.metallicFactor = pMaterial->metallicFactor;
     materialCB.roughnessFactor = pMaterial->roughnessFactor;
-    //materialCB.opacityFactor = pMaterial->opacityFactor;
+    // materialCB.opacityFactor = pMaterial->opacityFactor;
     materialCB.opacityFactor = 1.0f;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
-    
+
     InitMaterialTextures(pMatHandle, &materialCB, pMaterial);
 
     memcpy(sysMemAddr, &materialCB, m_sizePerMat);
@@ -293,22 +293,34 @@ lb_return:
     return result;
 }
 
-MATERIAL_HANDLE *MaterialManager::CreateMaterial(const void *pInMaterial, const wchar_t *pMaterialName)
+MATERIAL_HANDLE *MaterialManager::CreateMaterial(const Material *pInMaterial)
 {
     MATERIAL_HANDLE *pMatHandle = nullptr;
-    UINT             keySize = wcslen(pMaterialName) * sizeof(wchar_t);
 
-    if (m_pHashTable->Select((void **)&pMatHandle, 1, pMaterialName, keySize))
+    Material         m;
+    const WCHAR     *materialName;
+    if (!pInMaterial)
+    {
+        materialName = L"default";
+    }
+    else
+    {
+        materialName = pInMaterial->name;
+        m = *pInMaterial;
+    }
+
+    UINT keySize = wcslen(materialName) * sizeof(wchar_t);
+    if (m_pHashTable->Select((void **)&pMatHandle, 1, materialName, keySize))
     {
         pMatHandle->refCount++;
     }
     else
     {
-        pMatHandle = AllocMaterialHandle((Material *)pInMaterial);
+        pMatHandle = AllocMaterialHandle(&m);
 
         m_isUpdated = true;
 
-        pMatHandle->pSearchHandle = m_pHashTable->Insert((void *)pMatHandle, pMaterialName, keySize);
+        pMatHandle->pSearchHandle = m_pHashTable->Insert((void *)pMatHandle, materialName, keySize);
     }
 
     return pMatHandle;
@@ -330,7 +342,7 @@ BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material
         return FALSE;
 
     CleanupMaterial(pMatHandle);
-    MATERIAL_HANDLE *pNew = CreateMaterial(pInMaterial, pInMaterial->name);
+    MATERIAL_HANDLE *pNew = CreateMaterial(pInMaterial);
     *pMatHandle = *pNew;
     m_pMaterialHandlePool->Dealloc(pNew);
 
@@ -354,7 +366,7 @@ BOOL MaterialManager::UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandl
 
     pMatConst->metallicFactor = metallic;
     pMatConst->roughnessFactor = roughness;
-    
+
     m_isUpdated = TRUE;
     return TRUE;
 }
@@ -446,7 +458,7 @@ void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 
 MaterialManager::~MaterialManager() { Cleanup(); }
 
-BOOL MATERIAL_HANDLE::UpdateAlbedo(const Vector3 &albedo) 
+BOOL MATERIAL_HANDLE::UpdateAlbedo(const Vector3 &albedo)
 {
     MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
     BOOL             result = pMaterialManager->UpdateMaterialAlbedo(this, albedo);

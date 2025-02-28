@@ -336,13 +336,8 @@ lb_return:
 
 void RaytracingMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
 {
-    Material mat;
-    memcpy(&mat, pInMaterial, sizeof(Material));
-
     pFace->passType = DRAW_PASS_TYPE_DEFAULT;
-    // pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_TRANSPARENCY :
-    // DRAW_PASS_TYPE_DEFAULT;
-
+    
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }
 
@@ -355,12 +350,10 @@ void RaytracingMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
     }
 }
 
-BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
-                                           const wchar_t *path)
+BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
 {
-    if (wcsstr(pInMaterial->name, L"Outline"))
+    if (pInMaterial && wcsstr(pInMaterial->name, L"Outline"))
         return FALSE;
-
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
     D3D12ResourceManager *resourceManager = m_pRenderer->GetResourceManager();
@@ -368,9 +361,6 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
 
     ID3D12Resource         *pIndexBuffer = nullptr;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
-
-    Material mat = *pInMaterial;
-    wcscpy_s(mat.basePath, wcslen(path) + 1, path);
 
     if (m_faceGroupCount >= m_maxFaceGroupCount)
     {
@@ -388,7 +378,7 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
     pFaceGroup->IndexBufferView = IndexBufferView;
     pFaceGroup->numTriangles = numTriangles;
 
-    InitMaterial(pFaceGroup, &mat);
+    InitMaterial(pFaceGroup, pInMaterial);
 
     // root arg per geometry
     m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index;

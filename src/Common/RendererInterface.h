@@ -120,8 +120,7 @@ interface IRenderTerrain : public IRenderableObject{};
 interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
-    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
-                                 const wchar_t *path) = 0;
+    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) = 0;
     virtual void EndCreateMesh() = 0;
 
     virtual BOOL UpdateMaterial(IRenderMaterial * pInMaterial, UINT faceGroupIndex) = 0;

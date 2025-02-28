@@ -83,9 +83,14 @@ void Model::Initialize(const Material *pInMaterial, int materialCount, IGameMesh
 
 void Model::InitRenderComponents(IRenderer *pRenderer)
 {
+    for (UINT i = 0; i < m_materialCount; i++)
+    {
+        wcscpy_s(m_pMaterials[i].basePath, m_basePath);
+    }
+
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pMaterials, m_basePath);
+        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pMaterials);
     }
 
     m_pRenderer = pRenderer;

@@ -767,7 +767,7 @@ BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIn
                                     const Material *pInMaterial, const wchar_t *path)
 {
     RaytracingMeshObject *pMeshObj = dynamic_cast<RaytracingMeshObject *>(pMeshObjHandle);
-    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial, path);
+    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
 
     return result;
 }
@@ -1005,7 +1005,7 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
 
 IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
 {
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial, pInMaterial->name);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial);
     return pMatHandle;
 }
 
@@ -1013,7 +1013,7 @@ IRenderMaterial *D3D12Renderer::CreateDynamicMaterial(const WCHAR *name)
 {
     Material mat;
     wcscpy_s(mat.name, name);
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat, name);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat);
     return pMatHandle;
 }
 

@@ -115,7 +115,7 @@ class MaterialManager
   public:
     bool Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT maxMatNum);
 
-    MATERIAL_HANDLE *CreateMaterial(const void *pInMaterial, const wchar_t *pMaterialName);
+    MATERIAL_HANDLE *CreateMaterial(const Material *pInMaterial);
     void             DeleteMaterial(MATERIAL_HANDLE *pMatHandle);
 
     BOOL UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial);

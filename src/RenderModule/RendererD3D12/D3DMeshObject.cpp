@@ -271,12 +271,8 @@ lb_return:
 
 void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
 {
-    Material mat;
-    memcpy(&mat, pInMaterial, sizeof(Material));
-
     pFace->passType = DRAW_PASS_TYPE_DEFAULT;
-    //pFace->passType = (pInMaterial->opacityFactor + 1e-2 < 1.0f) ? DRAW_PASS_TYPE_TRANSPARENCY : DRAW_PASS_TYPE_DEFAULT;
-
+    
     pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
 }
 
@@ -289,8 +285,7 @@ void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
     }
 }
 
-BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial,
-                                    const wchar_t *path)
+BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -299,9 +294,6 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
 
     ID3D12Resource         *pIndexBuffer = nullptr;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
-
-    Material mat = *pInMaterial;
-    wcscpy_s(mat.basePath, wcslen(path) + 1, path);
 
     if (m_faceGroupCount >= m_maxFaceGroupCount)
     {
@@ -319,7 +311,7 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
     pFaceGroup->IndexBufferView = IndexBufferView;
     pFaceGroup->numTriangles = numTriangles;
 
-    InitMaterial(pFaceGroup, &mat);
+    InitMaterial(pFaceGroup, pInMaterial);
 
     m_faceGroupCount++;
     result = TRUE;
