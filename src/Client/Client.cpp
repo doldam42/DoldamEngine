@@ -93,6 +93,7 @@ void Client::ProcessInput()
     {
         DestroyWindow(m_hWnd);
     }
+    m_pInputManager->ProcessInput();
 }
 
 void Client::CleanupControllers()
@@ -245,6 +246,14 @@ void Client::OnKeyUp(UINT nChar, UINT uiScanCode) { m_pInputManager->OnKeyUp(nCh
 void Client::OnMouseMove(int mouseX, int mouseY) { m_pInputManager->OnMouseMove(mouseX, mouseY); }
 
 void Client::OnMouseWheel(float deltaWheel) { m_pInputManager->OnMouseWheel(deltaWheel); }
+
+void Client::OnMouseLButtonDown() { m_pInputManager->OnMouseLButtonDown(); }
+
+void Client::OnMouseLButtonUp() { m_pInputManager->OnMouseLButtonUp(); }
+
+void Client::OnMouseRButtonDown() { m_pInputManager->OnMouseRButtonDown(); }
+
+void Client::OnMouseRButtonUp() { m_pInputManager->OnMouseRButtonUp(); }
 
 BOOL Client::OnUpdateWindowSize(UINT width, UINT height)
 {

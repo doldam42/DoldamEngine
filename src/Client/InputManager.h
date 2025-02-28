@@ -9,15 +9,20 @@ class InputManager
     UINT m_screenHeight = 0;
 
     bool m_keyPressed[256] = {false};
-    
+
     bool  m_isWheelStopped = true;
     float m_lastWheelTime = 0.0f;
     float m_deltaWheel = 0.0f;
 
     EventListener m_eventListeners[256];
 
+    char m_pressedKey[256] = {false};
+    UINT m_pressedKeyCount = 0;
+
   public:
     void Initialize(UINT width, UINT height);
+
+    void ProcessInput();
 
     // Input Ã³¸®
     void OnKeyDown(UINT nChar, UINT uiScanCode);
@@ -25,11 +30,15 @@ class InputManager
     BOOL OnSysKeyDown(UINT nChar, UINT uiScanCode, BOOL bAltKeyDown);
     void OnMouseMove(int mouseX, int mouseY);
     void OnMouseWheel(float wheelDelta);
+    void OnMouseLButtonDown();
+    void OnMouseLButtonUp();
+    void OnMouseRButtonDown();
+    void OnMouseRButtonUp();
 
     void SetWindowSize(UINT width, UINT height);
 
     BOOL IsKeyPressed(UINT nChar) const;
-    
+
     GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
                               size_t sizeOfArg = 0);
     void       DeleteKeyListener(UINT nChar, GameEvent *pEvent);

@@ -4,11 +4,22 @@
 
 void InputManager::Initialize(UINT width, UINT height) { SetWindowSize(width, height); }
 
+void InputManager::ProcessInput() 
+{ 
+    for (UINT i = 0; i < m_pressedKeyCount; i++)
+    {
+        char nChar = m_pressedKey[i];
+        m_eventListeners[nChar].Run();
+    }
+    m_pressedKeyCount = 0;
+}
+
 void InputManager::OnKeyDown(UINT nChar, UINT uiScanCode)
 {
     m_keyPressed[nChar] = TRUE;
 
-    m_eventListeners[nChar].Run();
+    m_pressedKey[m_pressedKeyCount] = nChar;
+    m_pressedKeyCount++;
 }
 
 void InputManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_keyPressed[nChar] = FALSE; }
@@ -40,6 +51,28 @@ void InputManager::OnMouseWheel(float wheelDelta)
 
     m_deltaWheel = wheelDelta;*/
 }
+
+void InputManager::OnMouseLButtonDown() 
+{ 
+    m_keyPressed[VK_LBUTTON] = true;
+
+    m_pressedKey[m_pressedKeyCount] = VK_LBUTTON;
+    m_pressedKeyCount++;
+}
+
+void InputManager::OnMouseLButtonUp()
+{
+    m_keyPressed[VK_LBUTTON] = false;
+}
+
+void InputManager::OnMouseRButtonDown()
+{
+    m_keyPressed[VK_RBUTTON] = true;
+    m_pressedKey[m_pressedKeyCount] = VK_RBUTTON;
+    m_pressedKeyCount++;
+}
+
+void InputManager::OnMouseRButtonUp() { m_keyPressed[VK_RBUTTON] = false; }
 
 void InputManager::SetWindowSize(UINT width, UINT height)
 {

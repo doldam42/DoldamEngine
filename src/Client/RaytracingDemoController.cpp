@@ -1,7 +1,9 @@
 #include "pch.h"
 
-#include "Client.h"
 #include <filesystem>
+
+#include "Client.h"
+#include "InputManager.h"
 
 #include "RaytracingDemoController.h"
 
@@ -23,6 +25,7 @@ void RaytracingDemoController::Cleanup()
 
 BOOL RaytracingDemoController::Start()
 {
+    InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRenderer = pGame->GetRenderer();
 
@@ -130,25 +133,28 @@ BOOL RaytracingDemoController::Start()
 
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
+    
+    pI->AddKeyListener(VK_LBUTTON, [](void *) {
+        InputManager *pI = g_pClient->GetInputManager();
+        IGameManager *pGame = g_pClient->GetGameManager();
+
+        Vector3 rayDir = pGame->GetCameraLookTo();
+        Vector3 rayPos = pGame->GetCameraPos();
+
+        RayHit hit;
+        if (pGame->Raycast(rayPos, rayDir, &hit))
+        {
+            IGameObject     *pHitted = hit.pHitted;
+            IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
+            pMaterial->UpdateEmissive(Vector3(0.2f, 0.0f, 0.0f)); // Red
+        }
+    });
 
     return TRUE;
 }
 
 void RaytracingDemoController::Update(float dt)
 {
-    IGameManager *pGame = g_pClient->GetGameManager();
-    IRenderer    *pRenderer = pGame->GetRenderer();
-
-    Vector3 rayDir = pGame->GetCameraLookTo();
-    Vector3 rayPos = pGame->GetCameraPos();
-
-    RayHit hit;
-    if (pGame->Raycast(rayPos, rayDir, &hit))
-    {
-        IGameObject     *pHitted = hit.pHitted;
-        IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
-        pMaterial->UpdateEmissive(Vector3(0.2f, 0.0f, 0.0f)); // Red
-    }
 }
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }

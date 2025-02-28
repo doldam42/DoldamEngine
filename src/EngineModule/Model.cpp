@@ -3,13 +3,18 @@
 #include "AnimationClip.h"
 #include "GameManager.h"
 #include "GameObject.h"
-
+#include "GeometryGenerator.h"
 #include "Model.h"
 
 size_t Model::g_id = 0;
 
 void Model::Cleanup()
 {
+    if (m_pBoundingBoxMesh)
+    {
+        m_pBoundingBoxMesh->Release();
+        m_pBoundingBoxMesh = nullptr;
+    }
     if (m_pBoneMatrices)
     {
         delete[] m_pBoneMatrices;
@@ -82,8 +87,9 @@ void Model::InitRenderComponents(IRenderer *pRenderer)
     {
         m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pMaterials, m_basePath);
     }
-    InitBoundary();
+
     m_pRenderer = pRenderer;
+    InitBoundary();
 }
 
 void Model::InitBoundary()
@@ -151,6 +157,9 @@ void Model::InitBoundary()
     maxRadius += 1e-3f;
     m_boundingBox = {minCorner, maxCorner};
     m_boundingSphere = Sphere(maxRadius);
+
+    extents += Vector3(1e-3f);
+    m_pBoundingBoxMesh = m_pRenderer->CreateWireBoxMesh(center, extents);
 }
 
 void Model::ReadFile(const char *filename)
@@ -244,6 +253,7 @@ void Model::Render(GameObject *pGameObj)
     {
         m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount);
     }
+    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, true);
 }
 
 void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT numMaterials) 
@@ -254,6 +264,7 @@ void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMateri
         m_ppMeshObjects[i]->RenderWithMaterials(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, ppMaterials,
                                                 numMaterials);
     }
+    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, true);
 }
 
 void Model::SetBasePath(const WCHAR *basePath)

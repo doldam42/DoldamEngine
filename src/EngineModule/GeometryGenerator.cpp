@@ -761,7 +761,7 @@ Model *GeometryGenerator::ReadFromFile(const wchar_t *basePath, const wchar_t *f
     pModel->ReadFile(path);
 
     pModel->SetBasePath(basePath);
-    Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
+    //Normalize(Vector3(0.f, 0.f, 0.f), 1, pModel);
 
     return pModel;
 }

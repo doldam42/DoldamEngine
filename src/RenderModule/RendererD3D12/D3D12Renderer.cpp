@@ -20,6 +20,7 @@
 #include "TextureManager.h"
 
 #include "PostProcessor.h"
+#include "PrimitiveGenerator.h"
 
 // #include "PSOLibrary.h"
 
@@ -1238,6 +1239,20 @@ ULONG __stdcall D3D12Renderer::Release(void)
         delete this;
 
     return ref_count;
+}
+
+IRenderMesh *D3D12Renderer::CreateSquareMesh(const float scale) { return PrimitiveGenerator::MakeSquare(scale); }
+
+IRenderMesh *D3D12Renderer::CreateSphereMesh(const float radius, const int numSlices, const int numStacks)
+{
+    return PrimitiveGenerator::MakeSphere(radius, numSlices, numStacks);
+}
+
+IRenderMesh *D3D12Renderer::CreateBoxMesh(const float scale) { return PrimitiveGenerator::MakeBox(scale); }
+
+IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector3 extends)
+{
+    return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
 void D3D12Renderer::CreateDefaultTex()

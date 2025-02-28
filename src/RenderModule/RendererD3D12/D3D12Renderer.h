@@ -332,6 +332,12 @@ class D3D12Renderer : public IRenderer
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
+
+    // Inherited via IRenderer
+    IRenderMesh *CreateSquareMesh(const float scale) override;
+    IRenderMesh *CreateSphereMesh(const float radius, const int numSlices, const int numStacks) override;
+    IRenderMesh *CreateBoxMesh(const float scale) override;
+    IRenderMesh *CreateWireBoxMesh(const Vector3 center, const Vector3 extends) override;
 };
 
 extern D3D12Renderer *g_pRenderer;

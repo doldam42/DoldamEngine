@@ -306,7 +306,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
-
+    case WM_LBUTTONDOWN: {
+        g_pClient->OnMouseLButtonDown();
+        break;
+    }
+    case WM_LBUTTONUP: {
+        g_pClient->OnMouseLButtonUp();
+        break;
+    }
+    case WM_RBUTTONDOWN: {
+        g_pClient->OnMouseRButtonDown();
+        break;
+    }
+    case WM_RBUTTONUP: {
+        g_pClient->OnMouseRButtonUp();
+        break;
+    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

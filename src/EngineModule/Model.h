@@ -29,6 +29,7 @@ class Model : public IGameModel
 
     Sphere m_boundingSphere;
     Bounds m_boundingBox;
+    IRenderMesh *m_pBoundingBoxMesh;
 
   public:
     SORT_LINK m_LinkInGame;

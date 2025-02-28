@@ -18,6 +18,7 @@
 #include "SpriteObject.h"
 #include "Terrain.h"
 #include "TextureManager.h"
+#include "PrimitiveGenerator.h"
 
 #include "PostProcessor.h"
 
@@ -26,7 +27,6 @@
 // #include "PSOLibrary.h"
 
 #include <process.h>
-
 #include "D3D12Renderer.h"
 
 D3D12Renderer *g_pRenderer = nullptr;
@@ -34,6 +34,8 @@ D3D12Renderer *g_pRenderer = nullptr;
 BOOL D3D12Renderer::Initialize(HWND hWnd, BOOL bEnableDebugLayer, BOOL bEnableGBV, BOOL enableTexOutput,
                                UINT viewportWidth, UINT viewportHeight)
 {
+    g_pRenderer = this;
+
     BOOL result = FALSE;
     m_DPI = GetDpiForWindow(hWnd);
     RECT rect;
@@ -264,8 +266,6 @@ lb_exit:
     CreateDefaultTex();
 
     m_pEnv = GetDefaultTex();
-
-    g_pRenderer = this;
 
     result = TRUE;
 
@@ -1188,6 +1188,21 @@ ULONG __stdcall D3D12Renderer::Release(void)
         delete this;
 
     return ref_count;
+}
+
+IRenderMesh *D3D12Renderer::CreateSquareMesh(const float scale) { return PrimitiveGenerator::MakeSquare(scale); }
+
+IRenderMesh *D3D12Renderer::CreateSphereMesh(const float radius, const int numSlices, const int numStacks)
+{
+    return PrimitiveGenerator::MakeSphere(radius, numSlices, numStacks);
+}
+
+IRenderMesh *D3D12Renderer::CreateBoxMesh(const float scale) 
+{ return PrimitiveGenerator::MakeBox(scale); }
+
+IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector3 extends)
+{
+    return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
 void D3D12Renderer::CreateDefaultTex()

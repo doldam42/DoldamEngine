@@ -197,6 +197,7 @@
     <ClInclude Include="..\Common\GUIManager.h" />
     <ClInclude Include="..\Common\MaterialManager.h" />
     <ClInclude Include="..\Common\PostProcessor.h" />
+    <ClInclude Include="..\Common\PrimitiveGenerator.h" />
     <ClInclude Include="..\Common\RendererTypedef.h" />
     <ClInclude Include="..\Common\RenderThread.h" />
     <ClInclude Include="..\Common\SingleDescriptorAllocator.h" />
@@ -281,6 +282,7 @@
     <ClCompile Include="..\Common\PostProcessor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\Common\PrimitiveGenerator.cpp" />
     <ClCompile Include="..\Common\RenderThread.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>

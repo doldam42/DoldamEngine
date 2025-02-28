@@ -58,6 +58,11 @@ class Client
     void OnKeyUp(UINT nChar, UINT uiScanCode);
     void OnMouseMove(int mouseX, int mouseY);
     void OnMouseWheel(float deltaWheel);
+    void OnMouseLButtonDown();
+    void OnMouseLButtonUp();
+    void OnMouseRButtonDown();
+    void OnMouseRButtonUp();
+
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     IGameManager *GetGameManager() { return m_pGame; }

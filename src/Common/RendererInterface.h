@@ -142,6 +142,11 @@ interface IRenderer : public IUnknown
     virtual IRenderMesh *CreateSkinnedObject() = 0;
     virtual IRenderMesh *CreateMeshObject() = 0;
 
+    virtual IRenderMesh *CreateSquareMesh(const float scale = 1.0f) = 0;
+    virtual IRenderMesh *CreateSphereMesh(const float radius, const int numSlices, const int numStacks) = 0;
+    virtual IRenderMesh *CreateBoxMesh(const float scale = 1.0f) = 0;
+    virtual IRenderMesh *CreateWireBoxMesh(const Vector3 center, const Vector3 extends) = 0;
+    
     virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
                                  UINT numFaceGroup) = 0;
     virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,

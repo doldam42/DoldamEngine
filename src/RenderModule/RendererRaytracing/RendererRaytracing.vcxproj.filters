@@ -5,9 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="D3DRenderer">
-      <UniqueIdentifier>{1935d0ad-e574-4df3-8257-64e35d5cc83a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3DUtil">
       <UniqueIdentifier>{7ff8e894-362b-4330-8600-4ad361d8d407}</UniqueIdentifier>
     </Filter>
@@ -61,9 +58,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3D12Renderer.h">
-      <Filter>D3DRenderer</Filter>
-    </ClInclude>
     <ClInclude Include="D3DUtil.h">
       <Filter>D3DUtil</Filter>
     </ClInclude>
@@ -186,11 +180,12 @@
     <ClInclude Include="..\..\..\DirectXTex\DirectXTex\DirectXTex.h">
       <Filter>DirectXTex</Filter>
     </ClInclude>
+    <ClInclude Include="D3D12Renderer.h" />
+    <ClInclude Include="..\Common\PrimitiveGenerator.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D3D12Renderer.cpp">
-      <Filter>D3DRenderer</Filter>
-    </ClCompile>
     <ClCompile Include="D3DUtil.cpp">
       <Filter>D3DUtil</Filter>
     </ClCompile>
@@ -296,6 +291,10 @@
     </ClCompile>
     <ClCompile Include="..\..\..\DirectXTex\DDSTextureLoader\DDSTextureLoader12.cpp">
       <Filter>DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12Renderer.cpp" />
+    <ClCompile Include="..\Common\PrimitiveGenerator.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
