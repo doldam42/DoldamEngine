@@ -135,6 +135,8 @@ BOOL RaytracingDemoController::Start()
     pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
     
     pI->AddKeyListener(VK_LBUTTON, [](void *) {
+        static float delta = 0.1f;
+
         InputManager *pI = g_pClient->GetInputManager();
         IGameManager *pGame = g_pClient->GetGameManager();
 
@@ -146,8 +148,10 @@ BOOL RaytracingDemoController::Start()
         {
             IGameObject     *pHitted = hit.pHitted;
             IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
-            pMaterial->UpdateEmissive(Vector3(0.2f, 0.0f, 0.0f)); // Red
+            pMaterial->UpdateEmissive(Vector3(delta, 0.0f, 0.0f));
         }
+
+        delta += 0.1f;
     });
 
     return TRUE;

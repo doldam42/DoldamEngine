@@ -566,8 +566,9 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.pObjHandle = pObj;
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = (*pWorldMat);
-    item.meshObjParam.ppMaterials = ppMaterials;
-    item.meshObjParam.numMaterials = numMaterial;
+    item.meshObjParam.ppMaterials =
+        !ppMaterials ? reinterpret_cast<IRenderMaterial **>(&m_pDefaultMaterial) : ppMaterials;
+    item.meshObjParam.numMaterials = !numMaterial ? 1 : numMaterial;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
@@ -595,8 +596,9 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     item.charObjParam.worldTM = (*pWorldMat);
     item.charObjParam.pBones = pBoneMats;
     item.charObjParam.numBones = numBones;
-    item.charObjParam.ppMaterials = ppMaterials;
-    item.charObjParam.numMaterials = numMaterial;
+    item.charObjParam.ppMaterials =
+        !ppMaterials ? reinterpret_cast<IRenderMaterial **>(&m_pDefaultMaterial) : ppMaterials;
+    item.charObjParam.numMaterials = !numMaterial ? 1 : numMaterial;
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();

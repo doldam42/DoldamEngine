@@ -8,7 +8,7 @@
 
 size_t GameObject::g_id = 0;
 
-void GameObject::Cleanup()
+void GameObject::CleanupMaterials() 
 {
     if (m_ppMaterials)
     {
@@ -18,7 +18,13 @@ void GameObject::Cleanup()
             m_ppMaterials[i] = nullptr;
         }
         delete[] m_ppMaterials;
+        m_ppMaterials = nullptr;
     }
+}
+
+void GameObject::Cleanup()
+{
+    CleanupMaterials(); 
     if (m_pModel)
     {
         m_pModel->Release();
@@ -60,14 +66,7 @@ void GameObject::Render()
 {
     if (m_pModel)
     {
-        if (!m_ppMaterials)
-        {
-            m_pModel->Render(this);
-        }
-        else
-        {
-            m_pModel->RenderWithMaterials(this, m_ppMaterials, m_materialCount);
-        }
+        m_pModel->Render(this, m_ppMaterials, m_materialCount);
     }
 }
 
@@ -153,19 +152,12 @@ void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMater
     if (!m_ppMaterials)
     {
         m_ppMaterials = new IRenderMaterial *[numMaterials];
+        ZeroMemory(m_ppMaterials, sizeof(IRenderMaterial *) * numMaterials);
         m_materialCount = numMaterials;
-        for (UINT i = 0; i < numMaterials; i++)
-        {
-            m_ppMaterials[i] = nullptr;
-        }
     }
-    if (m_materialCount != numMaterials)
-    {
-#ifdef _DEBUG
-        __debugbreak();
-#endif
-        return;
-    }
+
+    assert(m_materialCount == numMaterials);
+    
     for (UINT i = 0; i < numMaterials; i++)
     {
         if (m_ppMaterials[i])
@@ -179,10 +171,18 @@ void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMater
 
 IRenderMaterial *GameObject::GetMaterialAt(UINT index) 
 { 
-    if (m_ppMaterials)
+    if (!m_ppMaterials)
     {
-        return m_ppMaterials[index];
+        const UINT      materialCount = m_pModel->GetMaterialCount();
+        const Material *pMaterials = m_pModel->GetMaterials();
+        m_ppMaterials = new IRenderMaterial *[materialCount];
+        m_materialCount = materialCount;
+        for (UINT i = 0; i < materialCount; i++)
+        {
+            m_ppMaterials[i] = m_pRenderer->CreateMaterialHandle(pMaterials + i);
+        }
     }
+    return m_ppMaterials[index];
 }
 
 Bounds GameObject::GetBounds() const

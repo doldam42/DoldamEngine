@@ -28,6 +28,8 @@ class GameObject : public IGameObject
     void *m_pSearchHandleInGame = nullptr;
 
   private:
+    void CleanupMaterials();
+
     void Cleanup();
 
   public:

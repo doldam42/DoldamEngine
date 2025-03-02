@@ -30,6 +30,15 @@ void Model::Cleanup()
         delete[] m_pJoints;
         m_pJoints = nullptr;
     }
+    if (m_ppMaterials)
+    {
+        for (int i = 0; i < m_materialCount; i++)
+        {
+            m_ppMaterials[i]->Release();
+            m_ppMaterials[i] = nullptr;
+        }
+        delete[] m_ppMaterials;
+    }
     if (m_ppMeshObjects)
     {
         for (UINT i = 0; i < m_objectCount; i++)
@@ -257,24 +266,26 @@ void Model::UpdateAnimation(AnimationClip *pClip, int frameCount)
     }
 }
 
-void Model::Render(GameObject *pGameObj)
+void Model::Render(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT numMaterials)
 {
-    const Matrix& worldMat = pGameObj->GetWorldMatrix();
-    for (UINT i = 0; i < m_objectCount; i++)
+    const Matrix &worldMat = pGameObj->GetWorldMatrix();
+    if (!ppMaterials)
     {
-        m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount);
+        for (UINT i = 0; i < m_objectCount; i++)
+        {
+            m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, m_ppMaterials, m_materialCount);
+        }
     }
-    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
-}
-
-void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT numMaterials) 
-{
-    const Matrix& worldMat = pGameObj->GetWorldMatrix();
-    for (UINT i = 0; i < m_objectCount; i++)
+    else
     {
-        m_ppMeshObjects[i]->RenderWithMaterials(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, ppMaterials,
-                                                numMaterials);
+        for (UINT i = 0; i < m_objectCount; i++)
+        {
+            m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, ppMaterials,
+                                       numMaterials);
+        }
     }
+    
+    // Render Bounding Box
     m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }
 

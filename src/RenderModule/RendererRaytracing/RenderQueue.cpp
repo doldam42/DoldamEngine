@@ -83,7 +83,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         pCommandList->RSSetViewports(1, pViewport);
         pCommandList->RSSetScissorRects(1, pScissorRect);
         pCommandList->OMSetRenderTargets(rtvCount, rtvs, FALSE, &dsv);
-
+        
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
@@ -97,9 +97,9 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
             RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
             pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
-                                   pItem->meshObjParam.ppMaterials,
-                           pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
-                           Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global,
+                                   pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials,
+                                   Graphics::GetRS(pItem->type, passType),
+                                   Graphics::GetPSO(pItem->type, passType, pItem->charObjParam.fillMode), global,
                            pItem->charObjParam.pBones, pItem->charObjParam.numBones);
         }
         break;

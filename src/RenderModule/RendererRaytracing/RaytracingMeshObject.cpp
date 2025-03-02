@@ -20,8 +20,7 @@
 #include "RaytracingMeshObject.h"
 
 // 레이트레이싱 SRV 디스크립터 구조
-// | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
-
+// | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... | 
 BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
     ID3D12Device5 *pDevice = pRenderer->GetD3DDevice();
@@ -88,6 +87,8 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
                                                              UINT threadIndex, IRenderMaterial **ppMaterials,
                                                              UINT numMaterial)
 {
+    assert(numMaterial == m_faceGroupCount);
+
     CB_CONTAINER       *pGeomCBs;
     ConstantBufferPool *pGeometryConstantBufferPool =
         m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
@@ -105,8 +106,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
         FaceGroupConstants *pGeometry = (FaceGroupConstants *)pGeomCB->pSystemMemAddr;
 
-        MATERIAL_HANDLE *pMatHandle =
-            (!ppMaterials) ? m_pRenderer->GetDefaultMaterial() : (MATERIAL_HANDLE *)ppMaterials[i];
+        MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
 
         pGeometry->materialIndex = pMatHandle->index;
         pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;

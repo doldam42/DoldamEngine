@@ -185,8 +185,15 @@ void MeshObject::WriteFile(FILE *fp)
     }
 }
 
-void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices, const UINT numJoints)
+void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
+                        const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
 {
+    for (UINT i = 0; i < m_faceGroupCount; i++)
+    {
+        FaceGroup *pFace = m_pFaceGroups + i;
+        m_ppMaterialHandles[i] = ppMaterials[pFace->materialIndex];
+    }
+
     Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
     switch (m_meshType)
     {
@@ -196,27 +203,6 @@ void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *
     case MESH_TYPE_SKINNED:
         pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, m_ppMaterialHandles,
                                     m_faceGroupCount);
-        break;
-    default:
-#ifdef _DEBUG
-        __debugbreak();
-#endif // _DEBUG
-        break;
-    }
-}
-
-void MeshObject::RenderWithMaterials(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
-                                     const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
-{
-    Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
-    switch (m_meshType)
-    {
-    case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, ppMaterials, numMaterial);
-        break;
-    case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
-                                                 numMaterial);
         break;
     default:
 #ifdef _DEBUG

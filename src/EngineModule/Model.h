@@ -51,8 +51,8 @@ class Model : public IGameModel
     void WriteFile(const char *filename) override;
 
     void UpdateAnimation(AnimationClip *pClip, int frameCount);
-    void Render(GameObject *pGameObj);
-    void RenderWithMaterials(GameObject* pGameObj, IRenderMaterial** ppMaterials, UINT numMaterials);
+
+    void Render(GameObject *pGameObj, IRenderMaterial **ppMaterials = nullptr, UINT numMaterials = 0);
 
     // Getter
     inline UINT        GetObjectCount() const { return m_objectCount; }
@@ -74,6 +74,9 @@ class Model : public IGameModel
 
     Bounds& GetBoundingBox() { return m_boundingBox; }
     Sphere& GetBoundingSphere() { return m_boundingSphere; }
+
+    const Material *GetMaterials() { return m_pMaterials; }
+    UINT            GetMaterialCount() { return m_materialCount; }
 
     Model();
     ~Model();
