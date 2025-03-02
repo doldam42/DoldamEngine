@@ -51,7 +51,7 @@ struct BoundEdge
 };
 
 // KDTree Method Definitions
-KDTree::KDTree(int maxObjectCount, int isectCost, int traversalCost, float emptyBonus, int maxPrims, int maxDepth)
+KDTree::KDTree(int maxObjectCount, int isectCost, int traversalCost, float emptyBonus, int maxPrims, int maxDepth_)
     : maxObjectCount(maxObjectCount), isectCost(isectCost), traversalCost(traversalCost), maxPrims(maxPrims),
       emptyBonus(emptyBonus)
 {
@@ -59,8 +59,8 @@ KDTree::KDTree(int maxObjectCount, int isectCost, int traversalCost, float empty
 
     // Build kd-tree for accelerator
     nextFreeNode = nAllocedNodes = 0;
-    if (maxDepth <= 0)
-        maxDepth = std::round(8 + 1.3f * int(log(int64_t(primitives.size()))));
+    if (maxDepth_ <= 0)
+        maxDepth = std::round(8 + 1.3f * int(log(int64_t(maxObjectCount))));
 }
 
 void KdAccelNode::InitLeaf(int *primNums, int np, std::vector<int> *primitiveIndices)
@@ -298,7 +298,7 @@ retrySplit:
 //	return hit;
 //}
 
-bool KDTree::IntersectP(const Ray &ray) const
+bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const
 {
     // Compute initial parametric range of ray inside kd-tree extent
     float tMin, tMax;
@@ -322,9 +322,11 @@ bool KDTree::IntersectP(const Ray &ray) const
             int nPrimitives = node->nPrimitives();
             if (nPrimitives == 1)
             {
-                IBoundedObject *p = primitives[node->onePrimitive];
-                if (p->Intersect(ray, &tMin, &tMax))
+                IBoundedObject *prim = primitives[node->onePrimitive];
+                if (prim->Intersect(ray, &tMin, &tMax))
                 {
+                    *pOutHitt = tMin;
+                    *pHitted = prim;
                     return true;
                 }
             }
@@ -336,6 +338,8 @@ bool KDTree::IntersectP(const Ray &ray) const
                     IBoundedObject *prim = primitives[primitiveIndex];
                     if (prim->Intersect(ray, &tMin, &tMax))
                     {
+                        *pOutHitt = tMin;
+                        *pHitted = prim;
                         return true;
                     }
                 }

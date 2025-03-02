@@ -67,8 +67,6 @@ interface IGameMesh : public IBaseObject
     virtual void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
     virtual void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIdx) = 0;
     virtual void EndCreateMesh() = 0;
-
-    virtual BOOL UpdateMaterial(IRenderMaterial * pMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IGameModel : public IUnknown, public ISerializable

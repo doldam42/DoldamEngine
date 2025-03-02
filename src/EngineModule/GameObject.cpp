@@ -176,11 +176,11 @@ IRenderMaterial *GameObject::GetMaterialAt(UINT index)
         const UINT      materialCount = m_pModel->GetMaterialCount();
         const Material *pMaterials = m_pModel->GetMaterials();
         m_ppMaterials = new IRenderMaterial *[materialCount];
-        m_materialCount = materialCount;
         for (UINT i = 0; i < materialCount; i++)
         {
             m_ppMaterials[i] = m_pRenderer->CreateMaterialHandle(pMaterials + i);
         }
+        m_materialCount = materialCount;
     }
     return m_ppMaterials[index];
 }

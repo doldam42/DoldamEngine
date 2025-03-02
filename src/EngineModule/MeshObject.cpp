@@ -51,10 +51,8 @@ BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     return TRUE;
 }
 
-BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, IRenderMaterial **pInMaterials)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd)
 {
-    m_ppMaterialHandles = new IRenderMaterial *[m_faceGroupCount];
-
     if (IsSkinned())
     {
         m_pMeshHandle = pRnd->CreateSkinnedObject();
@@ -69,11 +67,12 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, IRenderMaterial **pInMater
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
-
-        m_ppMaterialHandles[i] = pInMaterials[pFace->materialIndex];
         m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles);
     }
     m_pMeshHandle->EndCreateMesh();
+
+    m_ppMaterialHandles = new IRenderMaterial *[m_faceGroupCount];
+    ZeroMemory(m_ppMaterialHandles, sizeof(IRenderMaterial *) * m_faceGroupCount);
     return TRUE;
 }
 
@@ -113,18 +112,6 @@ void MeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int ma
 }
 
 void MeshObject::EndCreateMesh() {}
-
-BOOL MeshObject::UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex)
-{
-    if (m_ppMaterialHandles[faceGroupIndex])
-    {
-        m_ppMaterialHandles[faceGroupIndex]->Release();
-        m_ppMaterialHandles[faceGroupIndex] = nullptr;
-    }
-    m_ppMaterialHandles[faceGroupIndex] = pMaterial;
-
-    return TRUE;
-}
 
 void MeshObject::ReadFile(FILE *fp)
 {

@@ -13,7 +13,7 @@ class KDTree
     Bounds WorldBound() const { return bounds; }
     ~KDTree();
     // bool Intersect(const Ray& ray, SurfaceInteraction* isect) const;
-    bool IntersectP(const Ray &ray) const;
+    bool IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const;
     bool Intersect(const Bounds &b) const;
 
     BOOL InsertObject(IBoundedObject *pObj);

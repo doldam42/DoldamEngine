@@ -37,13 +37,11 @@ class MeshObject : public IGameMesh, public BaseObject
     BOOL Initialize(MESH_TYPE meshType) override;
     BOOL Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex, int childCount,
                     MESH_TYPE meshType);
-    BOOL InitRenderComponent(IRenderer *pRnd, IRenderMaterial** pInMaterials);
+    BOOL InitRenderComponent(IRenderer *pRnd);
 
     void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
     void EndCreateMesh() override;
-
-    BOOL UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex) override;
 
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;

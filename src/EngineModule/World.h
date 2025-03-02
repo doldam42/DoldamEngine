@@ -5,7 +5,7 @@ class GameObject;
 class World
 {
   private:
-    BVH* m_pTree = nullptr;
+    KDTree* m_pTree = nullptr;
 
   private:
     void Cleanup();

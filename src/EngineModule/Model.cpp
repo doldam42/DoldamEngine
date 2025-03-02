@@ -105,7 +105,7 @@ void Model::InitRenderComponents(IRenderer *pRenderer)
 
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_ppMaterials);
+        m_ppMeshObjects[i]->InitRenderComponent(pRenderer);
     }
 
     m_pRenderer = pRenderer;

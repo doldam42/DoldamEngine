@@ -15,7 +15,11 @@ void World::Cleanup()
 
 void World::Initialize() {}
 
-void World::BeginCreateWorld(UINT maxObjectCount) { m_pTree = new BVH(maxObjectCount); }
+void World::BeginCreateWorld(UINT maxObjectCount)
+{ 
+    /*m_pTree = new BVH(maxObjectCount);*/
+    m_pTree = new KDTree(maxObjectCount);
+}
 
 void World::InsertObject(GameObject *pObject) { m_pTree->InsertObject(pObject); }
 
