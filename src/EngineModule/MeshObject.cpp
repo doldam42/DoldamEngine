@@ -43,16 +43,18 @@ BOOL MeshObject::Initialize(MESH_TYPE meshType)
     return TRUE;
 }
 
-BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex,
-                            int childCount, MESH_TYPE meshType)
+BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex, int childCount,
+                            MESH_TYPE meshType)
 {
     BaseObject::Initialize(name, pLocalTransform, parentIndex, childCount);
     m_meshType = meshType;
     return TRUE;
 }
 
-BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, IRenderMaterial **pInMaterials)
 {
+    m_ppMaterialHandles = new IRenderMaterial *[m_faceGroupCount];
+
     if (IsSkinned())
     {
         m_pMeshHandle = pRnd->CreateSkinnedObject();
@@ -68,7 +70,8 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, const Material *pMaterials
     {
         FaceGroup *pFace = m_pFaceGroups + i;
 
-        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials + pFace->materialIndex);
+        m_ppMaterialHandles[i] = pInMaterials[pFace->materialIndex];
+        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles);
     }
     m_pMeshHandle->EndCreateMesh();
     return TRUE;
@@ -113,7 +116,14 @@ void MeshObject::EndCreateMesh() {}
 
 BOOL MeshObject::UpdateMaterial(IRenderMaterial *pMaterial, UINT faceGroupIndex)
 {
-    return m_pMeshHandle->UpdateMaterial(pMaterial, faceGroupIndex);
+    if (m_ppMaterialHandles[faceGroupIndex])
+    {
+        m_ppMaterialHandles[faceGroupIndex]->Release();
+        m_ppMaterialHandles[faceGroupIndex] = nullptr;
+    }
+    m_ppMaterialHandles[faceGroupIndex] = pMaterial;
+
+    return TRUE;
 }
 
 void MeshObject::ReadFile(FILE *fp)
@@ -181,10 +191,11 @@ void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix);
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, m_ppMaterialHandles, m_faceGroupCount);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints);
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, m_ppMaterialHandles,
+                                    m_faceGroupCount);
         break;
     default:
 #ifdef _DEBUG
@@ -201,10 +212,10 @@ void MeshObject::RenderWithMaterials(IRenderer *pRnd, const Matrix *pWorldMat, c
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObjectWithMaterials(m_pMeshHandle, &finalMatrix, ppMaterials, numMaterial);
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, ppMaterials, numMaterial);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObjectWithMaterials(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
                                                  numMaterial);
         break;
     default:

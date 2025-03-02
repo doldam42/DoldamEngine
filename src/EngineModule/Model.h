@@ -24,6 +24,8 @@ class Model : public IGameModel
     UINT m_jointCount;
 
     Material    *m_pMaterials = nullptr;
+    IRenderMaterial **m_ppMaterials = nullptr;
+
     MeshObject **m_ppMeshObjects = nullptr;
     Joint       *m_pJoints = nullptr;
 

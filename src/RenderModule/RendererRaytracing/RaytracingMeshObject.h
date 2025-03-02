@@ -59,7 +59,6 @@ class RaytracingMeshObject : public IRenderMesh
         ID3D12Resource         *pIndexBuffer = nullptr;
         D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
         UINT                    numTriangles = 0;
-        MATERIAL_HANDLE        *pMaterialHandle = nullptr;
     };
   public:
     static const UINT DESCRIPTOR_COUNT_PER_STATIC_OBJ = 1;  // | World TM |
@@ -129,9 +128,6 @@ class RaytracingMeshObject : public IRenderMesh
 
     void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
 
-    void InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial);
-    void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
-
     void CleanupMesh();
     void Cleanup();
 
@@ -155,11 +151,9 @@ class RaytracingMeshObject : public IRenderMesh
     ULONG __stdcall Release(void) override;
 
     BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) override;
+    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh() override;
     void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
-
-    BOOL UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex) override;
 
     RaytracingMeshObject() = default;
     ~RaytracingMeshObject();

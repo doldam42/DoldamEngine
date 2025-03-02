@@ -188,34 +188,17 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
         FaceGroupConstants *pGeometry = (FaceGroupConstants *)pGeomCB->pSystemMemAddr;
 
-        if (i < numMaterial) 
-        {
-            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
+        MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
 
-            pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
-            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+        pGeometry->materialIndex = pMatHandle->index;
+        pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+        pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            dest.Offset(m_descriptorSize);
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dest.Offset(m_descriptorSize);
 
-            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
-        }
-        else
-        {
-            MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
-
-            pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
-            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
-
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            dest.Offset(m_descriptorSize);
-
-            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
-        }
+        pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+        dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
     }
 }
 
@@ -269,23 +252,7 @@ lb_return:
     return result;
 }
 
-void D3DMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
-{
-    pFace->passType = DRAW_PASS_TYPE_DEFAULT;
-    
-    pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
-}
-
-void D3DMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
-{
-    if (pFace->pMaterialHandle)
-    {
-        pFace->pMaterialHandle->Release();
-        pFace->pMaterialHandle = nullptr;
-    }
-}
-
-BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
+BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -311,8 +278,6 @@ BOOL D3DMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, con
     pFaceGroup->IndexBufferView = IndexBufferView;
     pFaceGroup->numTriangles = numTriangles;
 
-    InitMaterial(pFaceGroup, pInMaterial);
-
     m_faceGroupCount++;
     result = TRUE;
 lb_return:
@@ -320,18 +285,6 @@ lb_return:
 }
 
 void D3DMeshObject::EndCreateMesh() {}
-
-BOOL D3DMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
-{
-    INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
-    MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE *)pInMaterial;
-
-    CleanupMaterial(pFace);
-
-    pFace->pMaterialHandle = pMaterial;
-
-    return TRUE;
-}
 
 void D3DMeshObject::CleanupMesh()
 {
@@ -344,7 +297,6 @@ void D3DMeshObject::CleanupMesh()
                 m_pFaceGroups[i].pIndexBuffer->Release();
                 m_pFaceGroups[i].pIndexBuffer = nullptr;
             }
-            CleanupMaterial(m_pFaceGroups + i);
         }
         delete[] m_pFaceGroups;
         m_pFaceGroups = nullptr;

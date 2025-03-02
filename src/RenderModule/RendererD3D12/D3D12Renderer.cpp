@@ -408,7 +408,7 @@ void D3D12Renderer::EndRender()
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_INTERMEDIATE);
         m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
 
-         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                                D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                                D3D12_RESOURCE_STATE_PRESENT));
     }
@@ -550,37 +550,12 @@ IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const Ve
     return pTerrain;
 }
 
-void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
+void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                     UINT numMaterial, bool isWired, UINT numInstance)
 {
     D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
 
     RENDER_ITEM item = {};
-    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
-    item.pObjHandle = pMeshObj;
-    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.meshObjParam.worldTM = (*pWorldMat);
-    item.meshObjParam.ppMaterials = nullptr;
-    item.meshObjParam.numMaterials = 0;
-
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-        __debugbreak();
-
-    if (!m_pShadowManager->Add(&item))
-    {
-        __debugbreak();
-    }
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-    // Shadow Map
-}
-
-void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat,
-                                                  IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired,
-                                                  UINT numInstance)
-{
-    D3DMeshObject *pMeshObject = static_cast<D3DMeshObject *>(pMeshObj);
-    RENDER_ITEM    item = {};
     item.type = RENDER_ITEM_TYPE_MESH_OBJ;
     item.pObjHandle = pMeshObj;
     item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
@@ -590,16 +565,6 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
 
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
-    /*if (pMeshObject->GetPassType() == DRAW_PASS_TYPE_TRANSPARENCY)
-    {
-        if (!m_pNonOpaqueRenderQueue->Add(&item))
-            __debugbreak();
-    }
-    else
-    {
-        if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-            __debugbreak();
-    }*/
 
     if (!m_pShadowManager->Add(&item))
     {
@@ -612,36 +577,7 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                          UINT numBones, bool isWired)
-{
-    D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
-
-    RENDER_ITEM item = {};
-    item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
-    item.pObjHandle = pCharObj;
-    item.charObjParam = {};
-    item.charObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.charObjParam.worldTM = (*pWorldMat);
-    item.charObjParam.pBones = pBoneMats;
-    item.charObjParam.numBones = numBones;
-    item.charObjParam.ppMaterials = nullptr;
-    item.charObjParam.numMaterials = 0;
-
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-        __debugbreak();
-
-    if (!m_pShadowManager->Add(&item))
-    {
-        __debugbreak();
-    }
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-}
-
-void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat,
-                                                       const Matrix *pBoneMats, UINT numBones,
-                                                       IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
+                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
 {
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
 
@@ -775,11 +711,10 @@ BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVe
     return result;
 }
 
-BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                                    const Material *pInMaterial, const wchar_t *path)
+BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles)
 {
-    D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL           result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
+    D3DMeshObject *pMeshObj = reinterpret_cast<D3DMeshObject *>(pMeshObjHandle);
+    BOOL           result = pMeshObj->InsertFaceGroup(pIndices, numTriangles);
 
     return result;
 }
@@ -1219,9 +1154,9 @@ void D3D12Renderer::WaitForGPU()
 D3D12Renderer::~D3D12Renderer()
 {
     Cleanup();
-#ifdef _DEBUG 
+#ifdef _DEBUG
     _ASSERT(_CrtCheckMemory());
-#endif 
+#endif
 }
 
 HRESULT __stdcall D3D12Renderer::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }

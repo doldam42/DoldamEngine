@@ -105,34 +105,18 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
         CB_CONTAINER       *pGeomCB = pGeomCBs + i;
         FaceGroupConstants *pGeometry = (FaceGroupConstants *)pGeomCB->pSystemMemAddr;
 
-        if (i < numMaterial)
-        {
-            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
+        MATERIAL_HANDLE *pMatHandle =
+            (!ppMaterials) ? m_pRenderer->GetDefaultMaterial() : (MATERIAL_HANDLE *)ppMaterials[i];
 
-            pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
-            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
+        pGeometry->materialIndex = pMatHandle->index;
+        pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
+        pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
 
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            dest.Offset(m_descriptorSize);
+        m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        dest.Offset(m_descriptorSize);
 
-            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
-        }
-        else
-        {
-            MATERIAL_HANDLE *pMatHandle = pFaceGroup->pMaterialHandle;
-
-            pGeometry->materialIndex = pMatHandle->index;
-            pGeometry->useHeightMap = !pMatHandle->pHeightTexHandle ? FALSE : TRUE;
-            pGeometry->useMaterial = !pMatHandle->pAlbedoTexHandle ? FALSE : TRUE;
-
-            m_pD3DDevice->CopyDescriptorsSimple(1, dest, pGeomCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            dest.Offset(m_descriptorSize);
-
-            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-            dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
-        }
+        pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
+        dest.Offset(m_descriptorSize, MATERIAL_HANDLE::DESCRIPTOR_SIZE);
     }
 }
 
@@ -219,18 +203,10 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         INDEXED_FACE_GROUP *pFace = m_pFaceGroups + i;
         m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(m_descriptorSize);
-
-        if (!ppMaterials)
-        {
-            m_pRootArgPerGeometries[i].cb.materialIndex = pFace->pMaterialHandle->index;
-            pFace->pMaterialHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-        }
-        else
-        {
-            MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
-            m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
-            pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-        }
+        
+        MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
+        m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
+        pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
 
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
         src.Offset(m_descriptorSize, 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
@@ -334,26 +310,8 @@ lb_return:
     return result;
 }
 
-void RaytracingMeshObject::InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial)
+BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles)
 {
-    pFace->passType = DRAW_PASS_TYPE_DEFAULT;
-    
-    pFace->pMaterialHandle = (MATERIAL_HANDLE *)m_pRenderer->CreateMaterialHandle(pInMaterial);
-}
-
-void RaytracingMeshObject::CleanupMaterial(INDEXED_FACE_GROUP *pFace)
-{
-    if (pFace->pMaterialHandle)
-    {
-        pFace->pMaterialHandle->Release();
-        pFace->pMaterialHandle = nullptr;
-    }
-}
-
-BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial)
-{
-    if (pInMaterial && wcsstr(pInMaterial->name, L"Outline"))
-        return FALSE;
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
     D3D12ResourceManager *resourceManager = m_pRenderer->GetResourceManager();
@@ -378,11 +336,6 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
     pFaceGroup->IndexBufferView = IndexBufferView;
     pFaceGroup->numTriangles = numTriangles;
 
-    InitMaterial(pFaceGroup, pInMaterial);
-
-    // root arg per geometry
-    m_pRootArgPerGeometries[m_faceGroupCount].cb.materialIndex = pFaceGroup->pMaterialHandle->index;
-
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
     AddBLASGeometry(m_faceGroupCount, pVertices, 0, m_vertexCount, sizeof(BasicVertex), pIndexBuffer, 0,
                     numTriangles * 3, 0, 0);
@@ -394,18 +347,6 @@ lb_return:
 }
 
 void RaytracingMeshObject::EndCreateMesh() { m_pRenderer->EndCreateMesh(this); }
-
-BOOL RaytracingMeshObject::UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex)
-{
-    INDEXED_FACE_GROUP *pFace = m_pFaceGroups + faceGroupIndex;
-    MATERIAL_HANDLE    *pMaterial = (MATERIAL_HANDLE *)pInMaterial;
-
-    CleanupMaterial(pFace);
-
-    pFace->pMaterialHandle = pMaterial;
-
-    return TRUE;
-}
 
 void RaytracingMeshObject::EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList)
 {
@@ -682,8 +623,6 @@ void RaytracingMeshObject::CreateRootArgsSRV()
         srvDesc.Buffer.NumElements = pFace->numTriangles * 3;
         m_pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
         cpuHandle.Offset(m_descriptorSize);
-
-        pFace->pMaterialHandle->CopyDescriptors(m_pD3DDevice, cpuHandle, m_descriptorSize);
         cpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
 }
@@ -730,7 +669,6 @@ void RaytracingMeshObject::CleanupMesh()
                 m_pFaceGroups[i].pIndexBuffer->Release();
                 m_pFaceGroups[i].pIndexBuffer = nullptr;
             }
-            CleanupMaterial(m_pFaceGroups + i);
         }
         delete[] m_pFaceGroups;
         m_pFaceGroups = nullptr;

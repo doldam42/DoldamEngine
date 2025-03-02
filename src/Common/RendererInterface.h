@@ -120,10 +120,8 @@ interface IRenderTerrain : public IRenderableObject{};
 interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) = 0;
-    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) = 0;
+    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) = 0;
     virtual void EndCreateMesh() = 0;
-
-    virtual BOOL UpdateMaterial(IRenderMaterial * pInMaterial, UINT faceGroupIndex) = 0;
 };
 
 interface IRenderer : public IUnknown
@@ -148,8 +146,7 @@ interface IRenderer : public IUnknown
     
     virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
                                  UINT numFaceGroup) = 0;
-    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                                 const Material *pInMaterial, const wchar_t *path) = 0;
+    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles) = 0;
     virtual void EndCreateMesh(IRenderMesh * pMeshObjHandle) = 0;
 
     virtual IRenderSprite *CreateSpriteObject() = 0;
@@ -158,16 +155,11 @@ interface IRenderer : public IUnknown
     virtual IRenderTerrain *CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
                                           const int numStack = 1) = 0;
 
-    virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, bool isWired = false,
-                                  UINT numInstance = 1) = 0;
-    virtual void RenderMeshObjectWithMaterials(IRenderMesh * pMeshObj, const Matrix *pWorldMat,
-                                               IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false,
-                                               UINT numInstance = 1) = 0;
+    virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                  UINT numMaterial, bool isWired = false, UINT numInstance = 1) = 0;
     virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                       UINT numBones, bool isWired = false) = 0;
-    virtual void RenderCharacterObjectWithMaterials(
-        IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
-        IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false) = 0;
+                                       UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
+                                       bool isWired = false) = 0;
 
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                               float Z) = 0;

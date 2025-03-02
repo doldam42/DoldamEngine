@@ -263,7 +263,7 @@ lb_exit:
     m_pGUIManager->Initialize(m_hWnd, m_pD3DDevice, m_pCommandQueue, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT,
                               SWAP_CHAIN_FRAME_COUNT);
 
-    CreateDefaultTex();
+    CreateDefaultResources();
 
     m_pEnv = GetDefaultTex();
 
@@ -551,39 +551,14 @@ IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const Ve
     return pTerrain;
 }
 
-void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired, UINT numInstance)
+void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                     UINT numMaterial, bool isWired, UINT numInstance)
 {
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
-    // TODO: ADD Material
-    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
-
-#ifdef USE_DEFERRED_RENDERING
-    RENDER_ITEM item = {};
-    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
-    item.pObjHandle = pObj;
-    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.meshObjParam.worldTM = (*pWorldMat);
-    item.meshObjParam.ppMaterials = nullptr;
-    item.meshObjParam.numMaterials = 0;
-
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-        __debugbreak();
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-#endif
-}
-
-void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat,
-                                                  IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired,
-                                                  UINT numInstance)
-{
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
-    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
-    pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, nullptr, 0);
+    //// TODO: ADD Material
+    //pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
 
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -603,41 +578,13 @@ void D3D12Renderer::RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const M
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                          UINT numBones, bool isWired)
+                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
+                                          bool isWired)
 {
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
-    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
-
-#ifdef USE_DEFERRED_RENDERING
-    RENDER_ITEM item = {};
-    item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
-    item.pObjHandle = pCharObj;
-    item.charObjParam = {};
-    item.charObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.charObjParam.worldTM = (*pWorldMat);
-    item.charObjParam.pBones = pBoneMats;
-    item.charObjParam.numBones = numBones;
-    item.charObjParam.ppMaterials = nullptr;
-    item.charObjParam.numMaterials = 0;
-
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
-        __debugbreak();
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
-#endif
-}
-
-void D3D12Renderer::RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat,
-                                                       const Matrix *pBoneMats, UINT numBones,
-                                                       IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
-{
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
-    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
-    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
+    //pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -763,11 +710,10 @@ BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVe
     return result;
 }
 
-BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                                    const Material *pInMaterial, const wchar_t *path)
+BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles)
 {
-    RaytracingMeshObject *pMeshObj = dynamic_cast<RaytracingMeshObject *>(pMeshObjHandle);
-    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pInMaterial);
+    RaytracingMeshObject *pMeshObj = reinterpret_cast<RaytracingMeshObject *>(pMeshObjHandle);
+    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles);
 
     return result;
 }
@@ -1063,6 +1009,12 @@ TEXTURE_HANDLE *D3D12Renderer::GetDefaultTex()
     return m_pDefaultTexHandle;
 }
 
+// TODO: Addref를 하면서 적절히 처리할 수 있는 방법 찾기
+MATERIAL_HANDLE *D3D12Renderer::GetDefaultMaterial() 
+{ 
+    return m_pDefaultMaterial;
+}
+
 D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT threadIndex)
 {
     return m_globalGpuDescriptorHandle[threadIndex];
@@ -1205,22 +1157,27 @@ IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector
     return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
-void D3D12Renderer::CreateDefaultTex()
+void D3D12Renderer::CreateDefaultResources()
 {
-    /*DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    UINT        width = 256;
-    UINT        height = 256;
-    UINT        channel = 4;
-
-    BYTE *defaultTex = new BYTE[width * height * channel];
-    memset(defaultTex, 0, sizeof(BYTE) * width * height * channel);
-
-    m_pDefaultTexHandle = m_pTextureManager->CreateImmutableTexture(width, height, TexFormat, defaultTex);
-
-    delete[] defaultTex;
-    defaultTex = nullptr;*/
-
     m_pDefaultTexHandle = (TEXTURE_HANDLE *)CreateTiledTexture(512, 512, 255, 255, 255, 16);
+
+    Material defaultMaterial;
+    m_pDefaultMaterial = m_pMaterialManager->CreateMaterial(&defaultMaterial);
+}
+
+void D3D12Renderer::CleanupDefaultResources() 
+{ 
+    if (m_pDefaultTexHandle)
+    {
+        DeleteTexture(m_pDefaultTexHandle);
+        m_pDefaultTexHandle = nullptr;
+    }
+
+    if (m_pDefaultMaterial)
+    {
+        m_pDefaultMaterial->Release();
+        m_pDefaultMaterial = nullptr;
+    }
 }
 
 void D3D12Renderer::CreateFence()
@@ -1615,6 +1572,8 @@ void D3D12Renderer::Cleanup()
 {
     WaitForGPU();
 
+    CleanupDefaultResources();
+
 #ifdef USE_DEFERRED_RENDERING
     CleanupRenderThreadPool();
 #endif
@@ -1628,12 +1587,6 @@ void D3D12Renderer::Cleanup()
     {
         delete m_pGUIManager;
         m_pGUIManager = nullptr;
-    }
-
-    if (m_pDefaultTexHandle)
-    {
-        DeleteTexture(m_pDefaultTexHandle);
-        m_pDefaultTexHandle = nullptr;
     }
 
     if (m_pEnv)

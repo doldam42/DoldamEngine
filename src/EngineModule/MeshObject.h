@@ -10,7 +10,7 @@ struct FaceGroup
 {
     UINT *pIndices = nullptr;
     UINT  numTriangles = 0;
-    int   materialIndex = -1;
+    UINT  materialIndex = 0;
 };
 
 class MeshObject : public IGameMesh, public BaseObject
@@ -24,7 +24,9 @@ class MeshObject : public IGameMesh, public BaseObject
 
     BasicVertex   *m_pBasicVertices = nullptr;
     SkinnedVertex *m_pSkinnedVertices = nullptr;
+    
     FaceGroup     *m_pFaceGroups = nullptr;
+    IRenderMaterial **m_ppMaterialHandles = nullptr;
 
     IRenderMesh *m_pMeshHandle = nullptr;
 
@@ -35,7 +37,7 @@ class MeshObject : public IGameMesh, public BaseObject
     BOOL Initialize(MESH_TYPE meshType) override;
     BOOL Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex, int childCount,
                     MESH_TYPE meshType);
-    BOOL InitRenderComponent(IRenderer *pRnd, const Material *pMaterials);
+    BOOL InitRenderComponent(IRenderer *pRnd, IRenderMaterial** pInMaterials);
 
     void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;

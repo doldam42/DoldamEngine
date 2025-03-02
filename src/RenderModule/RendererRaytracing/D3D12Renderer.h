@@ -33,6 +33,8 @@ class SingleDescriptorAllocator;
 
 class PostProcessor;
 
+struct MATERIAL_HANDLE;
+struct TEXTURE_HANDLE;
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
 //#define USE_FORWARD_RENDERING
 #define USE_DEFERRED_RENDERING
@@ -144,6 +146,7 @@ class D3D12Renderer : public IRenderer
     Light m_pLights[MAX_LIGHTS];
 
     TEXTURE_HANDLE *m_pDefaultTexHandle = nullptr;
+    MATERIAL_HANDLE *m_pDefaultMaterial = nullptr;
 
     // for IBL
     TEXTURE_HANDLE *m_pEnv = nullptr;
@@ -159,7 +162,8 @@ class D3D12Renderer : public IRenderer
     UINT m_curContextIndex = 0;
 
   private:
-    void CreateDefaultTex();
+    void CreateDefaultResources();
+    void CleanupDefaultResources();
 
     void CreateFence();
     void CleanupFence();
@@ -206,15 +210,10 @@ class D3D12Renderer : public IRenderer
     IRenderTerrain *CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
                                   const int numStack = 1) override;
 
-    void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
-                          UINT numInstance = 1) override;
-    void RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
-                                       UINT numMaterial, bool isWired = false, UINT numInstance = 1) override;
+    void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                          UINT numMaterial, bool isWired = false, UINT numInstance = 1) override;
     void RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
-                               bool isWired = false) override;
-    void RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                            UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
-                                            bool isWired = false) override;
+                               IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false) override;
     void RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                              const RECT *pRect, float Z, ITextureHandle *pTexHandle) override;
     void RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
@@ -228,8 +227,7 @@ class D3D12Renderer : public IRenderer
 
     BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
                          UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                         const Material *pInMaterial, const wchar_t *path) override;
+    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
 
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
@@ -284,6 +282,7 @@ class D3D12Renderer : public IRenderer
     // 함수 호출시 TEXTURE_HANDLE의 REF_COUNT를 1 올림
 
     TEXTURE_HANDLE *GetDefaultTex();
+    MATERIAL_HANDLE *GetDefaultMaterial();
 
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
 

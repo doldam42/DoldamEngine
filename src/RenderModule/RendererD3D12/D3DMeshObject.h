@@ -41,7 +41,6 @@ class D3DMeshObject : public IRenderMesh
         ID3D12Resource         *pIndexBuffer = nullptr;
         D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
         UINT                    numTriangles = 0;
-        MATERIAL_HANDLE        *pMaterialHandle = nullptr;
     };
 
   public:
@@ -81,10 +80,6 @@ class D3DMeshObject : public IRenderMesh
                                      const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                            IRenderMaterial **ppMaterials, UINT numMaterial);
-
-    void InitMaterial(INDEXED_FACE_GROUP *pFace, const Material *pInMaterial);
-    void CleanupMaterial(INDEXED_FACE_GROUP *pFace);
-
     void CleanupMesh();
     void Cleanup();
 
@@ -114,8 +109,6 @@ class D3DMeshObject : public IRenderMesh
     ULONG __stdcall Release(void) override;
 
     BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, const Material *pInMaterial) override;
+    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh() override;
-
-    BOOL UpdateMaterial(IRenderMaterial *pInMaterial, UINT faceGroupIndex) override;
 };

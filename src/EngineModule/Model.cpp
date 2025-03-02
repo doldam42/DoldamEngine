@@ -88,9 +88,15 @@ void Model::InitRenderComponents(IRenderer *pRenderer)
         wcscpy_s(m_pMaterials[i].basePath, m_basePath);
     }
 
+    m_ppMaterials = new IRenderMaterial *[m_materialCount];
+    for (UINT i = 0; i < m_materialCount; i++)
+    {
+        m_ppMaterials[i] = pRenderer->CreateMaterialHandle(m_pMaterials + i);
+    }
+
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pMaterials);
+        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_ppMaterials);
     }
 
     m_pRenderer = pRenderer;
@@ -258,7 +264,7 @@ void Model::Render(GameObject *pGameObj)
     {
         m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount);
     }
-    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, true);
+    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }
 
 void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT numMaterials) 
@@ -269,7 +275,7 @@ void Model::RenderWithMaterials(GameObject *pGameObj, IRenderMaterial **ppMateri
         m_ppMeshObjects[i]->RenderWithMaterials(m_pRenderer, &worldMat, m_pBoneMatrices, m_jointCount, ppMaterials,
                                                 numMaterials);
     }
-    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, true);
+    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }
 
 void Model::SetBasePath(const WCHAR *basePath)

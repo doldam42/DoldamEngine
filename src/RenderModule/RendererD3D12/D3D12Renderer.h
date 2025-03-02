@@ -205,15 +205,10 @@ class D3D12Renderer : public IRenderer
     IRenderTerrain *CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
                                   const int numStack = 1) override;
 
-    void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, bool isWired = false,
-                          UINT numInstance = 1) override;
-    void RenderMeshObjectWithMaterials(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
-                                       UINT numMaterial, bool isWired = false, UINT numInstance = 1) override;
+    void RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                          UINT numMaterial, bool isWired = false, UINT numInstance = 1) override;
     void RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats, UINT numBones,
-                               bool isWired = false) override;
-    void RenderCharacterObjectWithMaterials(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                            UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
-                                            bool isWired = false) override;
+                               IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired = false) override;
     void RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
                              const RECT *pRect, float Z, ITextureHandle *pTexHandle) override;
     void RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,
@@ -227,8 +222,7 @@ class D3D12Renderer : public IRenderer
 
     BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
                          UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
-                         const Material *pInMaterial, const wchar_t *path) override;
+    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
 
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);
