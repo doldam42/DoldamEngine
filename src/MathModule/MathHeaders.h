@@ -8,7 +8,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
 #include <DirectXMath.h>
 
 #include "SimpleMath.h"

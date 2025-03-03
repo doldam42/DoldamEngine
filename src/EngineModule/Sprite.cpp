@@ -24,10 +24,6 @@ BOOL Sprite::Initialize(IRenderer *pRnd, const WCHAR *filename, UINT width, UINT
     m_pRenderer = pRnd;
     m_pSprite = pSprite;
 
-    m_LinkInGame.pPrev = nullptr;
-    m_LinkInGame.pNext = nullptr;
-    m_LinkInGame.pItem = this;
-
     return TRUE;
 }
 
@@ -37,6 +33,13 @@ void Sprite::Render()
 }
 
 BOOL Sprite::UpdateTextureWithImage(const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight) { return FALSE; }
+
+Sprite::Sprite() 
+{
+    m_LinkInGame.pPrev = nullptr;
+    m_LinkInGame.pNext = nullptr;
+    m_LinkInGame.pItem = this;
+}
 
 Sprite::~Sprite() { Cleanup(); }
 

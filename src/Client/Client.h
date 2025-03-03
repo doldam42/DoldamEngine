@@ -27,6 +27,9 @@ class Client
 
     InputManager *m_pInputManager = nullptr;
 
+    UINT m_width = 0;
+    UINT m_height = 0;
+
     // Controllers
     TimeController             *m_pTimeController = nullptr;
     CameraController           *m_pCameraController = nullptr;
@@ -72,6 +75,9 @@ class Client
     IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }
 
     InputManager *GetInputManager() { return m_pInputManager; }
+
+    UINT GetScreenWidth() const { return m_width; }
+    UINT GetScreenHeight() const { return m_height; }
 
     Client() = default;
     ~Client();

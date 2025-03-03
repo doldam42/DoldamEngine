@@ -131,12 +131,20 @@ BOOL RaytracingDemoController::Start()
     pSponza->SetModel(pSponzaModel);
     pSponza->SetScale(20.f);*/
 
+    UINT width = g_pClient->GetScreenWidth();
+    UINT height = g_pClient->GetScreenHeight();
+
+    int posX = (width / 2) - 32;
+    int posY = (height / 2) - 32;
+
+    IGameSprite *pSprite = pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.png", 256, 256);
+    pSprite->SetScale(0.25);
+    pSprite->SetPosition(posX, posY);
+    
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
-    
-    pI->AddKeyListener(VK_LBUTTON, [](void *) {
-        static float delta = 0.1f;
 
+    pI->AddKeyListener(VK_LBUTTON, [](void *) {
         InputManager *pI = g_pClient->GetInputManager();
         IGameManager *pGame = g_pClient->GetGameManager();
 
@@ -148,18 +156,28 @@ BOOL RaytracingDemoController::Start()
         {
             IGameObject     *pHitted = hit.pHitted;
             IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
-            pMaterial->UpdateEmissive(Vector3(delta, 0.0f, 0.0f));
+            pMaterial->UpdateEmissive(Vector3(1.0f, 0.0f, 0.0f));
         }
-
-        delta += 0.1f;
     });
+    pI->AddKeyListener(VK_RBUTTON, [](void *) {
+        InputManager *pI = g_pClient->GetInputManager();
+        IGameManager *pGame = g_pClient->GetGameManager();
 
+        Vector3 rayDir = pGame->GetCameraLookTo();
+        Vector3 rayPos = pGame->GetCameraPos();
+
+        RayHit hit;
+        if (pGame->Raycast(rayPos, rayDir, &hit))
+        {
+            IGameObject     *pHitted = hit.pHitted;
+            IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
+            pMaterial->UpdateEmissive(Vector3(0.0f, 0.0f, 0.0f));
+        }
+    });
     return TRUE;
 }
 
-void RaytracingDemoController::Update(float dt)
-{
-}
+void RaytracingDemoController::Update(float dt) {}
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }
 

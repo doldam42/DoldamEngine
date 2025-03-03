@@ -26,6 +26,9 @@ PS_OUTPUT main(PSInput input)
     PS_OUTPUT output;
 
     float4 texColor = texDiffuse.Sample(samplerDiffuse, input.texcoord);
+    if (texColor.a < 0.001)
+        discard;
+
     output.diffues = texColor * input.color;
     output.normal = 0.0;
     output.elements = 0.0;

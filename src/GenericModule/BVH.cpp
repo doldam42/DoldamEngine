@@ -538,6 +538,9 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
 {
     if (!nodes)
         return false;
+
+    float closestHit = FLT_MAX;
+
     Vector3 invDir(1.f / ray.direction.x, 1.f / ray.direction.y, 1.f / ray.direction.z);
     int     dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
     int     nodesToVisit[64];
@@ -546,18 +549,19 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
     {
         const LinearBVHNode *node = &nodes[currentNodeIndex];
         float                tmin, tmax;
-        if (node->bounds.IntersectP(ray, &tmin, &tmax))
+        if (node->bounds.IntersectP(ray, &tmin, &tmax) && tmin < closestHit)
         {
             // Process BVH node _node_ for traversal
             if (node->nPrimitives > 0)
             {
                 for (int i = 0; i < node->nPrimitives; ++i)
                 {
-                    if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax))
+                    if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax) && tmin < closestHit)
                     {
                         *pOutHitt = tmin;
                         *pHitted = primitives[node->primitivesOffset + i];
-                        return true;
+                        closestHit = tmin;
+                        //return true;
                     }
                 }
                 if (toVisitOffset == 0)
@@ -566,16 +570,41 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
             }
             else
             {
-                if (dirIsNeg[node->axis])
+                float tmin0, tmin1, tmax0, tmax1;
+
+                const LinearBVHNode *l = &nodes[currentNodeIndex + 1];
+                const LinearBVHNode *r = &nodes[node->secondChildOffset];
+
+                bool intersectL = l->bounds.IntersectP(ray, &tmin0, &tmax0);
+                bool intersectR = r->bounds.IntersectP(ray, &tmin1, &tmax1);
+
+                if (intersectL && intersectR)
                 {
-                    /// second child first
-                    nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                    if (tmin0 < tmin1)
+                    {
+                        nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+                        currentNodeIndex = currentNodeIndex + 1;
+                    }
+                    else
+                    {
+                        /// second child first
+                        nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                        currentNodeIndex = node->secondChildOffset;
+                    }
+                }
+                else if (intersectL)
+                {
+                    currentNodeIndex = currentNodeIndex + 1;
+                }
+                else if (intersectR)
+                {
                     currentNodeIndex = node->secondChildOffset;
                 }
                 else
                 {
-                    nodesToVisit[toVisitOffset++] = node->secondChildOffset;
-                    currentNodeIndex = currentNodeIndex + 1;
+                    if (toVisitOffset == 0)
+                        break;
+                    currentNodeIndex = nodesToVisit[--toVisitOffset];
                 }
             }
         }
@@ -585,6 +614,11 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
                 break;
             currentNodeIndex = nodesToVisit[--toVisitOffset];
         }
+    }
+
+    if (closestHit < FLT_MAX)
+    {
+        return true;
     }
     return false;
 }
@@ -684,7 +718,7 @@ BVH::BVH(int maxObjectCount, int maxPrimsInNode, SplitMethod splitMethod_)
     primitives.reserve(maxObjectCount);
 }
 
-BVH::~BVH() 
+BVH::~BVH()
 {
     if (nodes)
     {

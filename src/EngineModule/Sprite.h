@@ -7,8 +7,8 @@ class Sprite : public IGameSprite
     IRenderSprite *m_pSprite = nullptr;
     IRenderer     *m_pRenderer = nullptr;
 
-    UINT m_width;
-    UINT m_height;
+    UINT m_width = 0;
+    UINT m_height = 0;
 
     int m_posX = 0;
     int m_posY = 0;
@@ -61,7 +61,7 @@ class Sprite : public IGameSprite
     void SetScale(float scale) override { m_scaleX = m_scaleY = scale; }
     void SetZ(float z) override { m_Z = z; }
 
-    Sprite() = default;
+    Sprite();
     virtual ~Sprite();
 };
 

@@ -339,5 +339,11 @@
     <CustomBuild Include="..\..\Client\Shaders\DeferredPS.hlsl">
       <Filter>Shader</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\SpriteDeferredPS.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\SpriteVS.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

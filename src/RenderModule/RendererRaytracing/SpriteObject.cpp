@@ -209,7 +209,14 @@ void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCom
     pConstantBufferSprite->alpha = 1.0f;
 
     // set RootSignature
+#ifdef USE_DEFERRED_RENDERING
+    pCommandList->SetGraphicsRootSignature(Graphics::GetRS(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFERRED));
+    pCommandList->SetPipelineState(Graphics::GetPSO(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFERRED, FILL_MODE_SOLID));
+#else
     pCommandList->SetGraphicsRootSignature(Graphics::GetRS(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFAULT));
+    pCommandList->SetPipelineState(Graphics::GetPSO(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFAULT, FILL_MODE_SOLID));
+#endif
+    
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
 
     // Descriptor Table ����
@@ -225,7 +232,6 @@ void SpriteObject::DrawWithTex(UINT threadIndex, ID3D12GraphicsCommandList *pCom
 
     pCommandList->SetGraphicsRootDescriptorTable(0, gpuDescriptorTable);
 
-    pCommandList->SetPipelineState(Graphics::GetPSO(RENDER_ITEM_TYPE_SPRITE, DRAW_PASS_TYPE_DEFAULT, FILL_MODE_SOLID));
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     pCommandList->IASetIndexBuffer(&m_indexBufferView);

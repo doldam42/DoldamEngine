@@ -239,8 +239,7 @@ lb_exit:
             m_ppCommandListPool[i][j]->Initialize(m_pD3DDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, 2048);
 
             m_ppDescriptorPool[i][j] = new DescriptorPool;
-            m_ppDescriptorPool[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME *
-                                                                   RaytracingMeshObject::MAX_DESCRIPTOR_COUNT_PER_BLAS);
+            m_ppDescriptorPool[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME);
 
             m_ppConstantBufferManager[i][j] = new ConstantBufferManager;
             m_ppConstantBufferManager[i][j]->Initialize(m_pD3DDevice, MAX_DRAW_COUNT_PER_FRAME);
@@ -248,9 +247,11 @@ lb_exit:
     }
 
     m_pRaytracingManager = new RaytracingManager;
-    ID3D12GraphicsCommandList4 *pCommandList = m_ppCommandListPool[m_curContextIndex][0]->GetCurrentCommandList();
+
+    CommandListPool            *pCommandListPool = GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
-    m_ppCommandListPool[m_curContextIndex][0]->CloseAndExecute(m_pCommandQueue);
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     m_pSingleDescriptorAllocator = new SingleDescriptorAllocator;
     m_pSingleDescriptorAllocator->Initialize(m_pD3DDevice, 32);
@@ -293,7 +294,7 @@ void D3D12Renderer::BeginRender()
     // GUI Begin
     m_pGUIManager->BeginRender();
 
-    CommandListPool           *pCommandListPool = m_ppCommandListPool[m_curContextIndex][0];
+    CommandListPool           *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     m_pTextureManager->Update(pCommandList);
@@ -333,9 +334,8 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    CommandListPool            *pCommandListPool = GetCommandListPool(0);
-    ID3D12GraphicsCommandList4 *pCommandList = nullptr;
-
+    CommandListPool            *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
+    
     UpdateGlobal();
 #ifdef USE_DEFERRED_RENDERING
     m_activeThreadCount = m_renderThreadCount;
@@ -345,7 +345,8 @@ void D3D12Renderer::EndRender()
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 #endif
-    pCommandList = pCommandListPool->GetCurrentCommandList();
+
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
     ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
@@ -363,15 +364,11 @@ void D3D12Renderer::EndRender()
                                              D3D12_RESOURCE_STATE_COMMON)};
     pCommandList->ResourceBarrier(_countof(barriers), barriers);
     D3D12_CPU_DESCRIPTOR_HANDLE gbufferHandle = GetSRVHandle(RENDER_TARGET_TYPE_DEFERRED);
-    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, uavHandle, gbufferHandle, 4);
+
+    m_pRaytracingManager->DispatchRay(GetCurrentThreadIndex(), pCommandList, pOutputView, uavHandle, gbufferHandle, 4);
 #else
-    m_pRaytracingManager->DispatchRay(pCommandList, pOutputView, uavHandle);
+    m_pRaytracingManager->DispatchRay(GetCurrentThreadIndex(), pCommandList, pOutputView, uavHandle);
 #endif
-
-    pCommandListPool->CloseAndExecute(m_pCommandQueue);
-
-    // PostProcessing
-    pCommandList = pCommandListPool->GetCurrentCommandList();
 
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     if (m_useTextureOutput)
@@ -385,7 +382,7 @@ void D3D12Renderer::EndRender()
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_TEXTURE);
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 
-        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
+        m_pPostProcessor->Draw(GetCurrentThreadIndex(), pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
 
         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
                                                                                D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -394,7 +391,8 @@ void D3D12Renderer::EndRender()
     else
     {
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
-        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
+        m_pPostProcessor->Draw(GetCurrentThreadIndex(), pCommandList, &m_Viewport, &m_ScissorRect, srvHandle,
+                               backBufferRTV);
     }
 
     pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
@@ -1085,8 +1083,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Renderer::GetDeferredSRV() const
 
 void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
 {
-
-    CommandListPool *pCommandListPool = m_ppCommandListPool[m_curContextIndex][threadIndex];
+    CommandListPool *pCommandListPool = GetCommandListPool(threadIndex);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
@@ -1284,7 +1281,6 @@ UINT64 D3D12Renderer::Fence()
 
 void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
 {
-
     // Wait until the previous frame is finished.
     if (m_pFence->GetCompletedValue() < ExpectedFenceValue)
     {

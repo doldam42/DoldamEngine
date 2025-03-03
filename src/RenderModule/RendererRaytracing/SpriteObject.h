@@ -48,7 +48,7 @@ class SpriteObject : public IRenderSprite
                      const Vector2 *pScale, const RECT *pRect, float Z, TEXTURE_HANDLE *pTexHandle);
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Vector2 *pPos, const Vector2 *pScale,
               float Z);
-
+    
     static const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() { return m_vertexBufferView; }
     static const D3D12_INDEX_BUFFER_VIEW  &GetIndexBufferView() { return m_indexBufferView; }
 

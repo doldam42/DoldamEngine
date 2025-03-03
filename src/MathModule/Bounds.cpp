@@ -29,49 +29,61 @@ Bounds::DoesIntersect
 */
 bool Bounds::DoesIntersect(const Bounds &rhs) const
 {
-    if (maxs.x < rhs.mins.x || maxs.y < rhs.mins.y || maxs.z < rhs.mins.z)
+    __m128 min0 = _mm_set_ps(mins.x, mins.y, mins.z, 0.0f);
+    __m128 min1 = _mm_set_ps(rhs.mins.x, rhs.mins.y, rhs.mins.z, 0.0f);
+    __m128 max0 = _mm_set_ps(maxs.x, maxs.y, maxs.z, 0.0f);
+    __m128 max1 = _mm_set_ps(rhs.maxs.x, rhs.maxs.y, rhs.maxs.z, 0.0f);
+
+    __m128 comp1 = _mm_cmplt_ps(max0, min1);
+    __m128 comp2 = _mm_cmplt_ps(max1, min0);
+
+    if (!_mm_testz_ps(comp1, comp1) && !_mm_testz_ps(comp2, comp2))
     {
-        return false;
+        return true;
     }
-    if (rhs.maxs.x < mins.x || rhs.maxs.y < mins.y || rhs.maxs.z < mins.z)
-    {
-        return false;
-    }
-    return true;
+    return false;
+
+    // if (maxs.x < rhs.mins.x || maxs.y < rhs.mins.y || maxs.z < rhs.mins.z)
+    //{
+    //     return false;
+    // }
+    // if (rhs.maxs.x < mins.x || rhs.maxs.y < mins.y || rhs.maxs.z < mins.z)
+    //{
+    //     return false;
+    // }
+    // return true;
 }
 
 bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
 {
-    float t0 = 0, t1 = FLT_MAX;
+    __m128 origin = _mm_set_ps(ray.position.x, ray.position.y, ray.position.z, 0.0f);
+    __m128 invDir = _mm_set_ps(1 / ray.direction.x, 1 / ray.direction.y, 1 / ray.direction.z, 0.0f);
 
-    float *pMin = (float *)&mins;
-    float *pMax = (float *)&maxs;
-    float *pRayPos = (float *)&ray.position;
-    float *pRayDir = (float *)&ray.direction;
-    for (int i = 0; i < 3; i++)
+    __m128 boundsMin = _mm_set_ps(mins.x, mins.y, mins.z, 0.0f);
+    __m128 boundsMax = _mm_set_ps(maxs.x, maxs.y, maxs.z, 0.0f);
+
+    __m128 t1 = _mm_mul_ps(_mm_sub_ps(boundsMin, origin), invDir);
+    __m128 t2 = _mm_mul_ps(_mm_sub_ps(boundsMax, origin), invDir);
+
+    __m128 tminVec = _mm_min_ps(t1, t2);
+    __m128 tmaxVec = _mm_max_ps(t1, t2);
+
+    float fMinVec[4];
+    float fMaxVec[4];
+
+    _mm_store_ps(fMinVec, tminVec);
+    _mm_store_ps(fMaxVec, tmaxVec);
+
+    float tmin = max(max(fMinVec[1], fMinVec[2]), fMinVec[3]);
+    float tmax = min(min(fMaxVec[1], fMaxVec[2]), fMaxVec[3]);
+
+    if (tmax >= tmin && tmax >= 0)
     {
-        // Update interval for _i_th bounding box slab
-        float invRayDir = 1 / pRayDir[i];
-        float tNear = (pMin[i] - pRayPos[i]) * invRayDir;
-        float tFar = (pMax[i] - pRayPos[i]) * invRayDir;
-
-        // Update parametric interval from slab intersection $t$ values
-        if (tNear > tFar)
-            std::swap(tNear, tFar);
-
-        // Update _tFar_ to ensure robust ray--bounds intersection
-        tFar *= 1 + 2 * gamma(3);
-        t0 = tNear > t0 ? tNear : t0;
-        t1 = tFar < t1 ? tFar : t1;
-        if (t0 > t1)
-            return false;
-        
+        *hitt0 = tmin;
+        *hitt1 = tmax;
+        return true;
     }
-    if (hitt0)
-        *hitt0 = t0;
-    if (hitt1)
-        *hitt1 = t1;
-    return true;
+    return false;
 }
 
 /*
@@ -151,13 +163,13 @@ int Bounds::MaximumExtent() const
         return 2;
 }
 
-Vector3 Bounds::Center() const 
-{ 
+Vector3 Bounds::Center() const
+{
     using namespace DirectX;
-    return XMVectorScale(XMVectorAdd(mins, maxs), 0.5f); 
+    return XMVectorScale(XMVectorAdd(mins, maxs), 0.5f);
 }
 
-Vector3 Bounds::Extends() const 
+Vector3 Bounds::Extends() const
 {
     using namespace DirectX;
     return XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
@@ -175,7 +187,7 @@ Vector3 Bounds::Offset(const Vector3 &p) const
     return o;
 }
 
-void Bounds::Transform(Bounds *pOutBounds, const Matrix& m) const 
+void Bounds::Transform(Bounds *pOutBounds, const Matrix &m) const
 {
     using namespace DirectX;
     // Load center and extents.

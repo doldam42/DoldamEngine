@@ -298,6 +298,13 @@ class D3D12Renderer : public IRenderer
         return m_ppCommandListPool[m_curContextIndex][threadIndex];
     }
 
+    UINT GetCurrentThreadIndex()
+    {
+        UINT index = m_curThreadIndex;
+        m_curThreadIndex = (m_curThreadIndex + 1) % m_renderThreadCount;
+        return index;
+    }
+
     ConstantBufferPool *GetConstantBufferPool(CONSTANT_BUFFER_TYPE type, UINT threadIndex);
 
     UINT GetSRVDescriptorSize() const { return m_srvDescriptorSize; }

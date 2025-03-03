@@ -28,13 +28,13 @@ BOOL Client::LoadModules(HWND hWnd)
     const WCHAR *exporterFileName = nullptr;
 #ifdef _DEBUG
     //rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
-    rendererFileName = L"../../DLL/RendererRaytracing_x64_debug.dll";
-    engineFileName = L"../../DLL/EngineModule_x64_debug.dll";
-    exporterFileName = L"../../DLL/ModelExporter_x64_debug.dll";
+    rendererFileName = L"../../DLL/RendererRaytracing_x64_Debug.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_Debug.dll";
 #else
-    rendererFileName = L"../../DLL/RendererD3D12_x64_release.dll";
-    engineFileName = L"../../DLL/EngineModule_x64_release.dll";
-    exporterFileName = L"../../DLL/ModelExporter_x64_release.dll";
+    rendererFileName = L"../../DLL/RendererRaytracing_x64_Release.dll";
+    engineFileName = L"../../DLL/EngineModule_x64_Release.dll";
+    exporterFileName = L"../../DLL/ModelExporter_x64_Release.dll";
 #endif
 
     WCHAR wchErrTxt[128] = {};
@@ -187,6 +187,9 @@ BOOL Client::Initialize(HWND hWnd)
     DWORD width = rect.right - rect.left;
     DWORD height = rect.bottom - rect.top;
 
+    m_width = width;
+    m_height = height;
+
     m_pInputManager = new InputManager;
     m_pInputManager->Initialize(width, height);
 
@@ -210,7 +213,7 @@ BOOL Client::Initialize(HWND hWnd)
     Start();
 
     m_hWnd = hWnd;
-
+    
     return result;
 }
 
@@ -257,7 +260,11 @@ void Client::OnMouseRButtonUp() { m_pInputManager->OnMouseRButtonUp(); }
 
 BOOL Client::OnUpdateWindowSize(UINT width, UINT height)
 {
+    m_width = width;
+    m_height = height;
+
     m_pInputManager->SetWindowSize(width, height);
+
     return m_pGame->OnUpdateWindowSize(width, height);
 }
 

@@ -274,11 +274,12 @@ void RaytracingManager::Reset()
 
 RaytracingManager::~RaytracingManager() { Cleanup(); }
 
-void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
+void RaytracingManager::DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
+                                    ID3D12Resource *pOutputView,
                                     D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav)
 {
     ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     UINT descriptorSize = pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -332,12 +333,13 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
                                                                            D3D12_RESOURCE_STATE_COPY_SOURCE));
 }
 
-void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
+void RaytracingManager::DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
+                                    ID3D12Resource *pOutputView,
                                     D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers,
                                     UINT gbufferCount)
 {
     ID3D12Device5        *pD3DDevice = m_pRenderer->GetD3DDevice();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(0);
+    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     UINT descriptorSize = m_pRenderer->GetSRVDescriptorSize();
@@ -359,7 +361,7 @@ void RaytracingManager::DispatchRay(ID3D12GraphicsCommandList4 *pCommandList, ID
     pCommandList->SetComputeRootSignature(Graphics::globalRS);
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
     pCommandList->SetComputeRootDescriptorTable(0, gpuHandles);
-    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(0));
+    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
 
     ID3D12Resource *pHitShaderTable = m_pHitShaderTables[m_curContextIndex]->GetResource();
     ID3D12Resource *pMissShaderTable = m_pMissShaderTable->GetResource();
