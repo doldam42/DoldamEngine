@@ -8,6 +8,12 @@
 
 void CameraController::Update(const float dt)
 {
+    InputManager *pI = g_pClient->GetInputManager();
+    if (pI->IsKeyPressed('F', false))
+    {
+        m_isFreezed = !m_isFreezed;
+    }
+
     if (m_isFreezed)
         return;
     if (m_pTarget && !m_useFirstPersonView)
@@ -98,7 +104,7 @@ void CameraController::MoveUp(float dt)
 void CameraController::MoveRight(float dt)
 {
     Vector3 forward = m_pGame->GetCameraLookTo();
-    Vector3 right = -forward.Cross(Vector3::Up);
+    Vector3 right = Vector3::Up.Cross(forward);
 
     Vector3 pos = m_pGame->GetCameraPos();
     pos += right * m_speed * dt;
@@ -116,9 +122,7 @@ CameraController::CameraController() {}
 CameraController::~CameraController() { Cleanup(); }
 
 BOOL CameraController::Start() 
-{ 
-    InputManager* pI = g_pClient->GetInputManager();
-    pI->AddKeyListener('F', [this](void *) { this->m_isFreezed = !this->m_isFreezed; });
+{
     return TRUE;
 }
 

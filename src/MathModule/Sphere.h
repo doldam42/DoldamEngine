@@ -7,6 +7,7 @@ struct Sphere : public Shape
 
   public:
     // Inherited via Shape
+    explicit Sphere(const Vector3 &center, const float radius) : Radius(radius) { m_centerOfMass = center; }
     explicit Sphere(const float radius) : Radius(radius) { m_centerOfMass = Vector3::Zero; }
     Sphere(const Sphere &rhs) : Radius(rhs.Radius) { m_centerOfMass = rhs.m_centerOfMass; }
 

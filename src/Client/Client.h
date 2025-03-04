@@ -37,6 +37,18 @@ class Client
     RaytracingDemoController   *m_pRaytracingDemoController = nullptr;
     TessellationDemoController *m_pTessellationDemoController = nullptr;
 
+    // Timer
+    ULONGLONG m_prevUpdateTick = 0;
+    ULONGLONG m_prevFrameCheckTick = 0;
+
+    UINT m_FPS = 0;
+    UINT m_frameCount = 0;
+
+    // Timer-For Debug
+    float m_loadingTime = 0.0f;
+    bool  m_isPaused = false;
+    float m_timeSpeed = 1.0f;
+
   private:
     BOOL LoadModules(HWND hWnd);
 

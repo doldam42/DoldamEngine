@@ -6,10 +6,10 @@ BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sp
 BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &v0, const Vector3 &v1,
                  const Vector3 &v2, const Vector3 &vertexNormal, Vector3* pOutNormal);
 
-BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                         Vector3 *pOutContactPointA, Vector3 *pOutContactPointB, Vector3 *pOutNormal);
 
-BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                          const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
                          Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi);
 

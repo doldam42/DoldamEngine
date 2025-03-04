@@ -35,10 +35,10 @@
       <Filter>SimpleMath</Filter>
     </ClInclude>
     <ClInclude Include="ColorUtils.h" />
-    <ClInclude Include="RigidBody.h">
+    <ClInclude Include="Collisions.h">
       <Filter>Shape</Filter>
     </ClInclude>
-    <ClInclude Include="Collisions.h">
+    <ClInclude Include="Ellipse.h">
       <Filter>Shape</Filter>
     </ClInclude>
   </ItemGroup>
@@ -58,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="ColorUtils.cpp" />
     <ClCompile Include="Collisions.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Ellipse.cpp">
       <Filter>Shape</Filter>
     </ClCompile>
   </ItemGroup>

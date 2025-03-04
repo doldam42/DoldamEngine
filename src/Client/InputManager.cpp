@@ -4,8 +4,8 @@
 
 void InputManager::Initialize(UINT width, UINT height) { SetWindowSize(width, height); }
 
-void InputManager::ProcessInput() 
-{ 
+void InputManager::ProcessInput()
+{
     for (UINT i = 0; i < m_pressedKeyCount; i++)
     {
         char nChar = m_pressedKey[i];
@@ -16,13 +16,13 @@ void InputManager::ProcessInput()
 
 void InputManager::OnKeyDown(UINT nChar, UINT uiScanCode)
 {
-    m_keyPressed[nChar] = TRUE;
+    m_keyPressed[nChar] = true;
 
     m_pressedKey[m_pressedKeyCount] = nChar;
     m_pressedKeyCount++;
 }
 
-void InputManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_keyPressed[nChar] = FALSE; }
+void InputManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_keyPressed[nChar] = false; }
 
 BOOL InputManager::OnSysKeyDown(UINT nChar, UINT uiScanCode, BOOL bAltKeyDown) { return 0; }
 
@@ -52,18 +52,15 @@ void InputManager::OnMouseWheel(float wheelDelta)
     m_deltaWheel = wheelDelta;*/
 }
 
-void InputManager::OnMouseLButtonDown() 
-{ 
+void InputManager::OnMouseLButtonDown()
+{
     m_keyPressed[VK_LBUTTON] = true;
 
     m_pressedKey[m_pressedKeyCount] = VK_LBUTTON;
     m_pressedKeyCount++;
 }
 
-void InputManager::OnMouseLButtonUp()
-{
-    m_keyPressed[VK_LBUTTON] = false;
-}
+void InputManager::OnMouseLButtonUp() { m_keyPressed[VK_LBUTTON] = false; }
 
 void InputManager::OnMouseRButtonDown()
 {
@@ -80,10 +77,10 @@ void InputManager::SetWindowSize(UINT width, UINT height)
     m_screenHeight = height;
 }
 
-BOOL InputManager::IsKeyPressed(UINT nChar) const
+BOOL InputManager::IsKeyPressed(UINT nChar, bool repeat) const
 {
     assert(nChar < 256);
-    return m_keyPressed[nChar];
+    return m_keyPressed[nChar] && (repeat || !m_prevKeyPressed[nChar]);
 }
 
 GameEvent *InputManager::AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg, size_t sizeOfArg)
@@ -123,6 +120,8 @@ float InputManager::GetZAxis() const
 float InputManager::GetCursorNDCX() const { return m_cursorNdcX; }
 
 float InputManager::GetCursorNDCY() const { return m_cursorNdcY; }
+
+void InputManager::Update() { memcpy(m_prevKeyPressed, m_keyPressed, sizeof(m_prevKeyPressed)); }
 
 InputManager::~InputManager()
 {

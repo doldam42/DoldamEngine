@@ -8,6 +8,7 @@ class InputManager
     UINT m_screenWidth = 0;
     UINT m_screenHeight = 0;
 
+    bool m_prevKeyPressed[256] = {false};
     bool m_keyPressed[256] = {false};
 
     bool  m_isWheelStopped = true;
@@ -37,7 +38,8 @@ class InputManager
 
     void SetWindowSize(UINT width, UINT height);
 
-    BOOL IsKeyPressed(UINT nChar) const;
+    // repeat = false : 처음 입력만 받음
+    BOOL IsKeyPressed(UINT nChar, bool repeat = true) const;
 
     GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
                               size_t sizeOfArg = 0);
@@ -49,6 +51,8 @@ class InputManager
 
     float GetCursorNDCX() const;
     float GetCursorNDCY() const;
+
+    void Update();
 
     InputManager() = default;
     ~InputManager();

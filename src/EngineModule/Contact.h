@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PhysicsComponent.h"
+#include "RigidBody.h"
 
 struct Contact
 {
@@ -15,8 +15,8 @@ struct Contact
     float timeOfImpact;
     float separationDistance;
     
-    PhysicsComponent *pA;
-    PhysicsComponent *pB;
+    RigidBody *pA;
+    RigidBody *pB;
 };
 
 void ResolveContact(Contact &contact);

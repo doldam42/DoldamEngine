@@ -24,7 +24,9 @@ class Character : public IGameCharacter, public GameObject
     Character() = default;
     ~Character() override;
 
-    void InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) override;
+    void InitBoxCollider(const Vector3 &center, const Vector3 &extent) override;
+    void InitSphereCollider(const Vector3 &center, const float radius) override;
+    void InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) override;
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;
@@ -55,4 +57,8 @@ class Character : public IGameCharacter, public GameObject
     Bounds GetBounds() const override;
     bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
     bool   Intersect(const Bounds b) const override;
+
+    // Inherited via IGameCharacter
+    ICollider *GetCollider() const override;
+    IRigidBody *GetRigidBody() const override;
 };

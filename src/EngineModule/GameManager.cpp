@@ -215,19 +215,30 @@ void GameManager::Start()
     LoadResources();
 
     m_pControllerManager->Start();
-
-    ULONGLONG curTick = GetTickCount64();
-    m_loadingTime = static_cast<float>(curTick - prevTick) / 1000.f;
-    m_prevUpdateTick = curTick;
-    m_prevFrameCheckTick = curTick;
 }
 
-void GameManager::Update()
+void GameManager::Update(float dt)
 {
-    ULONGLONG curTick = GetTickCount64();
-    PreUpdate(curTick);
-    Update(curTick);
-    LateUpdate(curTick);
+    m_deltaTime = dt;
+    PreUpdate(dt);
+
+    // Update Controller
+    m_pControllerManager->Update(dt);
+
+    UpdatePhysics(dt);
+
+    // Update Game Objects
+    SORT_LINK *pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pGameObj = (GameObject *)pCur->pItem;
+
+        pGameObj->Update(dt);
+
+        pCur = pCur->pNext;
+    }
+
+    LateUpdate(dt);
 }
 
 void GameManager::BuildScene()
@@ -245,7 +256,7 @@ void GameManager::BuildScene()
     m_pWorld->EndCreateWorld();
 }
 
-void GameManager::PreUpdate(ULONGLONG curTick) { ProcessInput(); }
+void GameManager::PreUpdate(float dt) { ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
@@ -253,7 +264,7 @@ void GameManager::UpdatePhysics(float dt)
     while (pCur)
     {
         GameObject       *pGameObj = (GameObject *)pCur->pItem;
-        PhysicsComponent *pComp = pGameObj->GetPhysicsComponent();
+        RigidBody  *pComp = (RigidBody *)pGameObj->GetRigidBody();
         if (pComp)
         {
             pComp->ApplyGravityImpulse(dt);
@@ -267,7 +278,7 @@ void GameManager::UpdatePhysics(float dt)
     {
         GameObject *pGameObj = (GameObject *)pCur->pItem;
 
-        if (pGameObj->GetPhysicsComponent())
+        if (pGameObj->GetRigidBody())
         {
             m_pPhysicsManager->CollisionTest(pGameObj, dt);
         }
@@ -278,65 +289,21 @@ void GameManager::UpdatePhysics(float dt)
     m_pPhysicsManager->ResolveContactsAll(dt);
 }
 
-void GameManager::Update(ULONGLONG curTick)
+void GameManager::LateUpdate(float dt)
 {
-    // Update Scene with 40FPS
-    if (curTick - m_prevUpdateTick < 25)
-    {
-        return;
-    }
-    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
-    m_prevUpdateTick = curTick;
-    // FPS가 너무 낮은 경우 30 FPS로 고정
-    if (dt > 0.1f) // 10 FPS
-    {
-        dt = 0.03f; // 30 FPS
-    }
-
-    if (m_isPaused)
-    {
-        return;
-    }
-    dt *= m_timeSpeed;
-
-    m_deltaTime = dt;
-
-    // Update Controller
-    m_pControllerManager->Update(dt);
-
-    UpdatePhysics(dt);
-
-    // Update Game Objects
-    SORT_LINK *pCur = m_pGameObjLinkHead;
-    while (pCur)
-    {
-        GameObject *pGameObj = (GameObject *)pCur->pItem;
-
-        pGameObj->Update(dt);
-
-        pCur = pCur->pNext;
-    }
-}
-
-void GameManager::LateUpdate(ULONGLONG curTick)
-{
-    // 성능 측정
-    m_frameCount++;
-    if (curTick - m_prevFrameCheckTick > 1000)
-    {
-        m_prevFrameCheckTick = curTick;
-        m_FPS = m_frameCount;
-        m_frameCount = 0;
-    }
+    
 }
 
 void GameManager::Render()
 {
     // Update Camera
-    m_pMainCamera->Update();
-    m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(),
-                              m_pMainCamera->GetProjMatrix());
-
+    if (m_pMainCamera->m_isUpdated)
+    {
+        m_pMainCamera->Update();
+        m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(),
+                                  m_pMainCamera->GetProjMatrix());
+    }
+    
     // begin
     m_pRenderer->BeginRender();
 

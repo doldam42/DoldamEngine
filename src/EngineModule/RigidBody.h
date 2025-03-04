@@ -1,7 +1,7 @@
 #pragma once
 
 class GameObject;
-class PhysicsComponent : public IPhysicsComponent
+class RigidBody : public IRigidBody
 {
   public:
     Vector3 m_linearVelocity = Vector3::Zero;
@@ -11,15 +11,15 @@ class PhysicsComponent : public IPhysicsComponent
     float m_elasticity = 1.0f;
     float m_friction = 0.0f;
 
-    Shape      *m_pShape = nullptr;
+    ICollider  *m_pCollider = nullptr;
     GameObject *m_pGameObject = nullptr;
 
   private:
     void Cleanup();
 
   public:
-    // Inherited via IPhysicsComponent
-    void Initialize(GameObject *pObj, const Shape *pInShape, float mass, float elasticity, float friction);
+    // Inherited via IRigidBody
+    void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
     Bounds  GetBounds() const;
@@ -46,6 +46,6 @@ class PhysicsComponent : public IPhysicsComponent
     Matrix GetInverseInertiaTensorWorldSpace() const;
     Matrix GetInverseInertiaTensorLocalSpace() const;
 
-    PhysicsComponent() = default;
-    ~PhysicsComponent();
+    RigidBody() = default;
+    ~RigidBody();
 };

@@ -71,24 +71,42 @@ interface IGameMesh : public IBaseObject
 
 interface IGameModel : public IUnknown, public ISerializable
 {
-    virtual void Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
-                            Joint *pInJoints = nullptr, int jointCount = 0) = 0;
+    virtual void       Initialize(const Material *pInMaterial, int materialCount, IGameMesh **ppInObjs, int objectCount,
+                                  Joint *pInJoints = nullptr, int jointCount = 0) = 0;
     virtual size_t     GetID() = 0;
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 };
 
-interface IPhysicsComponent
+enum COLLIDER_TYPE
+{
+    COLLIDER_TYPE_SPHERE = 0,
+    COLLIDER_TYPE_BOX,
+    COLLIDER_TYPE_CAPSULE,
+};
+interface ICollider
+{
+    virtual COLLIDER_TYPE GetType() const = 0;
+
+    virtual Vector3 GetCenter() const = 0;
+    virtual Bounds  GetBounds() const = 0;
+    virtual Bounds  GetWorldBounds() const = 0;
+
+    virtual Matrix InertiaTensor() const = 0;
+};
+interface IRigidBody
 {
     virtual Vector3 GetVelocity() const = 0;
-
-    virtual void ApplyImpulseLinear(const Vector3 &impulse) = 0;
-    virtual void ApplyImpulseAngular(const Vector3 &impulse) = 0;
+    virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
+    virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
 };
 
 interface IGameObject : public IBoundedObject
 {
     virtual size_t GetID() = 0;
-    virtual void InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) = 0;
+
+    virtual void InitBoxCollider(const Vector3 &center, const Vector3 &extent) = 0;
+    virtual void InitSphereCollider(const Vector3 &center, const float radius) = 0;
+    virtual void InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
@@ -110,10 +128,11 @@ interface IGameObject : public IBoundedObject
 
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
 
-    virtual void SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
-    virtual IRenderMaterial* GetMaterialAt(UINT index) = 0;
-    /*virtual void SetTag(const WCHAR* tagName) = 0;
-    virtual void GetTag(WCHAR * outTagName) = 0;*/
+    virtual void             SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
+    virtual IRenderMaterial *GetMaterialAt(UINT index) = 0;
+
+    virtual ICollider  *GetCollider() const = 0;
+    virtual IRigidBody *GetRigidBody() const = 0;
 };
 
 struct RayHit
@@ -125,10 +144,10 @@ struct RayHit
 interface IGameAnimation : public IUnknown, public ISerializable
 {
     virtual size_t GetID() = 0;
-    virtual void SetName(const WCHAR *name) = 0;
-    virtual void BeginCreateAnim(int jointCount) = 0;
-    virtual void InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
-    virtual void EndCreateAnim() = 0;
+    virtual void   SetName(const WCHAR *name) = 0;
+    virtual void   BeginCreateAnim(int jointCount) = 0;
+    virtual void   InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys) = 0;
+    virtual void   EndCreateAnim() = 0;
 };
 
 interface IGameCharacter : public IGameObject { virtual void InsertAnimation(IGameAnimation * pClip) = 0; };
@@ -163,7 +182,7 @@ interface IGameManager : public IUnknown
                             UINT viewportHeight = 0) = 0;
 
     virtual void Start() = 0;
-    virtual void Update() = 0;
+    virtual void Update(float dt) = 0;
     virtual void Render() = 0;
 
     virtual void BuildScene() = 0;
@@ -209,12 +228,8 @@ interface IGameManager : public IUnknown
     virtual void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) = 0;
 
     virtual float DeltaTime() const = 0;
-    virtual UINT  FPS() const = 0;
 
-    virtual void SetTimeSpeed(float speed) = 0;
-    virtual void TogglePause() = 0;
-
-    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit* pOutHit) = 0;
+    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit) = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };

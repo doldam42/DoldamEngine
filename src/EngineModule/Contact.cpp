@@ -4,8 +4,8 @@
 
 void ResolveContact(Contact &contact)
 {
-    PhysicsComponent *pA = contact.pA;
-    PhysicsComponent *pB = contact.pB;
+    RigidBody *pA = contact.pA;
+    RigidBody *pB = contact.pB;
 
     const Vector3 ptOnA = contact.contactPointAWorldSpace;
     const Vector3 ptOnB = contact.contactPointBWorldSpace;

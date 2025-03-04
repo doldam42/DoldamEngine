@@ -31,7 +31,7 @@
       <Filter>Model</Filter>
     </ClCompile>
     <ClCompile Include="DebugConsoleSprite.cpp" />
-    <ClCompile Include="PhysicsComponent.cpp">
+    <ClCompile Include="RigidBody.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="Contact.cpp">
@@ -45,6 +45,12 @@
     </ClCompile>
     <ClCompile Include="World.cpp" />
     <ClCompile Include="ControllerManager.cpp" />
+    <ClCompile Include="BoxCollider.cpp">
+      <Filter>Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereCollider.cpp">
+      <Filter>Collider</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -74,7 +80,7 @@
       <Filter>Model</Filter>
     </ClInclude>
     <ClInclude Include="DebugConsoleSprite.h" />
-    <ClInclude Include="PhysicsComponent.h">
+    <ClInclude Include="RigidBody.h">
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="Contact.h">
@@ -89,6 +95,12 @@
     <ClInclude Include="World.h" />
     <ClInclude Include="ControllerManager.h" />
     <ClInclude Include="..\Common\EngineInterface.h" />
+    <ClInclude Include="BoxCollider.h">
+      <Filter>Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="SphereCollider.h">
+      <Filter>Collider</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">
@@ -108,6 +120,9 @@
     </Filter>
     <Filter Include="GameObject">
       <UniqueIdentifier>{9c64e1f9-0974-47ed-9ef1-56b8ed09e298}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Collider">
+      <UniqueIdentifier>{291cb770-c317-44a2-b854-7fa734ec90ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

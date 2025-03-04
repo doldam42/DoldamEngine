@@ -26,21 +26,7 @@ class GameManager : public IGameManager
 
   private:
     ULONG m_refCount = 1;
-
-    // Timer
-    ULONGLONG m_prevUpdateTick = 0;
-    ULONGLONG m_prevFrameCheckTick = 0;
-
-    UINT m_FPS = 0;
-    UINT m_frameCount = 0;
-
     float m_deltaTime = 0.0f;
-    // Timer-For Debug
-    float m_loadingTime = 0.0f;
-    bool  m_isPaused = false;
-    float m_timeSpeed = 1.0f;
-
-    bool m_useGUIEditor = false;
 
     PhysicsManager *m_pPhysicsManager = nullptr;
     Camera         *m_pMainCamera = nullptr;
@@ -86,6 +72,7 @@ class GameManager : public IGameManager
 
     bool m_isInitialized = false;
     bool m_activateCamera = true;
+    bool m_useGUIEditor = false;
 
     // For Debugging
     // IRenderSprite *m_pShadowMapSprite = nullptr;
@@ -138,20 +125,15 @@ class GameManager : public IGameManager
     void ProcessInput();
     void UpdatePhysics(float dt);
 
-    void PreUpdate(ULONGLONG curTick);
-    void Update(ULONGLONG curTick);
-    void LateUpdate(ULONGLONG curTick);
+    void PreUpdate(float dt);
+    void LateUpdate(float dt);
 
     void Start() override;
-    void Update() override;
+    void Update(float dt) override;
 
     void BuildScene() override;
 
     float DeltaTime() const override { return m_deltaTime; }
-    UINT  FPS() const override { return m_FPS; }
-
-    void SetTimeSpeed(float speed) override { m_timeSpeed = speed; }
-    void TogglePause() override { m_isPaused = !m_isPaused; }
 
     void Render() override;
 

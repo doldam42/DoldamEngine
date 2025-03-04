@@ -1,11 +1,15 @@
 #include "pch.h"
 
-#include "GameObject.h"
 #include "BroadPhase.h"
-#include "PhysicsComponent.h"
+#include "GameObject.h"
+
+#include "BoxCollider.h"
+#include "RigidBody.h"
+#include "SphereCollider.h"
+
 #include "PhysicsManager.h"
 
-BOOL PhysicsManager::Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const float dt, Contact *pOutContact)
+BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact)
 {
     if (!pA || !pB)
         return FALSE;
@@ -19,17 +23,17 @@ BOOL PhysicsManager::Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const
     Vector3 velA = pA->GetVelocity();
     Vector3 velB = pB->GetVelocity();
 
-    if (pA->m_pShape->GetType() == SHAPE_TYPE_SPHERE && pB->m_pShape->GetType() == SHAPE_TYPE_SPHERE)
+    if (pA->m_pCollider->GetType() == SHAPE_TYPE_SPHERE && pB->m_pCollider->GetType() == SHAPE_TYPE_SPHERE)
     {
-        Sphere *pSphereA = (Sphere *)pA->m_pShape;
-        Sphere *pSphereB = (Sphere *)pB->m_pShape;
+        SphereCollider *pSphereA = (SphereCollider *)pA->m_pCollider;
+        SphereCollider *pSphereB = (SphereCollider *)pB->m_pCollider;
 
         float   timeOfImpact;
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
         Vector3 normal;
-        if (SphereSphereDynamic(*pSphereA, *pSphereB, posA, posB, velA, velB, dt, &contactPointAWorldSpace,
-                                &contactPointBWorldSpace, &normal, &timeOfImpact))
+        if (SphereSphereDynamic(pSphereA->GetRadius(), pSphereB->GetRadius(), posA, posB, velA, velB, dt,
+                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, &timeOfImpact))
         {
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);
@@ -52,7 +56,7 @@ BOOL PhysicsManager::Intersect(PhysicsComponent *pA, PhysicsComponent *pB, const
 
             // Calculate the separation distance
             Vector3 ab = pB->GetPosition() - pA->GetPosition();
-            float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
+            float   r = ab.Length() - (pSphereA->GetRadius() + pSphereB->GetRadius());
 
             pOutContact->separationDistance = r;
 
@@ -66,7 +70,9 @@ BOOL PhysicsManager::Initialize() { return 0; }
 
 BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
 {
-    PhysicsComponent *pCurComp = pObj->GetPhysicsComponent();
+    RigidBody *pCurComp = (RigidBody*)pObj->GetRigidBody();
+    if (!pCurComp)
+        return FALSE;
 
     m_pBodies[m_bodyCount] = pCurComp;
     m_bodyCount++;
@@ -74,8 +80,8 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
     SORT_LINK *pCur = pObj->m_LinkInGame.pNext;
     while (pCur)
     {
-        GameObject       *pOther = (GameObject *)pCur->pItem;
-        PhysicsComponent *pOtherComp = pOther->GetPhysicsComponent();
+        GameObject *pOther = (GameObject *)pCur->pItem;
+        RigidBody  *pOtherComp = (RigidBody *)pOther->GetRigidBody();
 
         Contact contact;
         if (Intersect(pCurComp, pOtherComp, dt, &contact))
@@ -118,7 +124,7 @@ void PhysicsManager::ResolveContactsAll(float dt)
     float accumulatedTime = 0.0f;
     for (UINT i = 0; i < m_contactCount; i++)
     {
-        Contact &contact = m_pContact[i];
+        Contact    &contact = m_pContact[i];
         const float dt_sec = contact.timeOfImpact - accumulatedTime;
 
         // position Update

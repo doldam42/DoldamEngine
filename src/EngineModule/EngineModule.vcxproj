@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="BaseObject.cpp" />
+    <ClCompile Include="BoxCollider.cpp" />
     <ClCompile Include="BroadPhase.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Contact.cpp" />
@@ -190,8 +191,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
+    <ClCompile Include="SphereCollider.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="World.cpp" />
@@ -200,6 +202,7 @@
     <ClInclude Include="..\Common\EngineInterface.h" />
     <ClInclude Include="AnimationClip.h" />
     <ClInclude Include="BaseObject.h" />
+    <ClInclude Include="BoxCollider.h" />
     <ClInclude Include="BroadPhase.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="Contact.h" />
@@ -212,8 +215,9 @@
     <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="PhysicsManager.h" />
+    <ClInclude Include="SphereCollider.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="World.h" />

@@ -30,7 +30,7 @@ static int CompareSAP(const void *a, const void *b)
 SortBodiesBounds
 ====================================================
 */
-static void SortBodiesBounds(const PhysicsComponent **bodies, const int num, PsuedoBody *sortedArray,
+static void SortBodiesBounds(const RigidBody **bodies, const int num, PsuedoBody *sortedArray,
                              const float dt_sec)
 {
     Vector3 axis = Vector3(1, 1, 1);
@@ -38,8 +38,8 @@ static void SortBodiesBounds(const PhysicsComponent **bodies, const int num, Psu
 
     for (int i = 0; i < num; i++)
     {
-        const PhysicsComponent &body = *bodies[i];
-        Bounds                  bounds = body.m_pShape->GetBounds(body.GetPosition(), body.GetOrient());
+        const RigidBody &body = *bodies[i];
+        Bounds           bounds = body.GetBounds();
 
         // Expand the bounds by the linear velocity
         bounds.Expand(bounds.mins + body.m_linearVelocity * dt_sec);
@@ -107,7 +107,7 @@ void BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *so
 SweepAndPrune1D
 ====================================================
 */
-void SweepAndPrune1D(const PhysicsComponent **bodies, const int num, std::vector<CollisionPair> &finalPairs,
+void SweepAndPrune1D(const RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
                      const float dt_sec)
 {
     PsuedoBody *sortedBodies = (PsuedoBody *)alloca(sizeof(PsuedoBody) * num * 2);
@@ -116,7 +116,7 @@ void SweepAndPrune1D(const PhysicsComponent **bodies, const int num, std::vector
     BuildPairs(finalPairs, sortedBodies, num);
 }
 
-void BroadPhase(const PhysicsComponent **bodies, const int num, std::vector<CollisionPair> &finalPairs,
+void BroadPhase(const RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
                 const float dt_sec)
 {
     finalPairs.clear();

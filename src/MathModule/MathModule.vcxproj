@@ -168,6 +168,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Collisions.h" />
     <ClInclude Include="ColorUtils.h" />
+    <ClInclude Include="Ellipse.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Joint.h" />
@@ -175,7 +176,6 @@
     <ClInclude Include="MathHeaders.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShapeBase.h" />
     <ClInclude Include="SimpleMath.h" />
     <ClInclude Include="Sphere.h" />
@@ -187,6 +187,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Collisions.cpp" />
     <ClCompile Include="ColorUtils.cpp" />
+    <ClCompile Include="Ellipse.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -42,9 +42,19 @@ void Character::Update(float dt)
 
 Character::~Character() { Cleanup(); }
 
-void Character::InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
+void Character::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
 {
-    GameObject::InitPhysics(shapeType, mass, elasticity, friction);
+    GameObject::InitBoxCollider(center, extent);
+}
+
+void Character::InitSphereCollider(const Vector3 &center, const float radius) 
+{
+    GameObject::InitSphereCollider(center, radius);
+}
+
+void Character::InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
+{
+    GameObject::InitRigidBody(shapeType, mass, elasticity, friction);
 }
 
 Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
@@ -96,6 +106,10 @@ bool Character::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
 }
 
 bool Character::Intersect(const Bounds b) const { return GameObject::Intersect(b); }
+
+ICollider *Character::GetCollider() const { return GameObject::GetCollider(); }
+
+IRigidBody *Character::GetRigidBody() const { return GameObject::GetRigidBody(); }
 
 void Character::InsertAnimation(IGameAnimation *pClip)
 {

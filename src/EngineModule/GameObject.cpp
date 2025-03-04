@@ -2,13 +2,16 @@
 
 #include "GameManager.h"
 #include "Model.h"
-#include "PhysicsComponent.h"
+
+#include "BoxCollider.h"
+#include "RigidBody.h"
+#include "SphereCollider.h"
 
 #include "GameObject.h"
 
 size_t GameObject::g_id = 0;
 
-void GameObject::CleanupMaterials() 
+void GameObject::CleanupMaterials()
 {
     if (m_ppMaterials)
     {
@@ -24,16 +27,16 @@ void GameObject::CleanupMaterials()
 
 void GameObject::Cleanup()
 {
-    CleanupMaterials(); 
+    CleanupMaterials();
     if (m_pModel)
     {
         m_pModel->Release();
         m_pModel = nullptr;
     }
-    if (m_pPhysicsComponent)
+    if (m_pRigidBody)
     {
-        delete m_pPhysicsComponent;
-        m_pPhysicsComponent = nullptr;
+        delete m_pRigidBody;
+        m_pRigidBody = nullptr;
     }
 }
 
@@ -43,13 +46,27 @@ void GameObject::Initialize(GameManager *pGameEngine)
     m_pRenderer = pGameEngine->GetRenderer();
 }
 
-void GameObject::InitPhysics(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
+void GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
 {
-    m_pPhysicsComponent = new PhysicsComponent;
-    
-    if (shapeType == SHAPE_TYPE_SPHERE)
+    BoxCollider *pBox = new BoxCollider;
+    pBox->Initialize(this, center, extent);
+    m_pCollider = pBox;
+}
+
+void GameObject::InitSphereCollider(const Vector3 &center, const float radius)
+{
+    SphereCollider *pSphere = new SphereCollider;
+    pSphere->Initialize(this, center, radius);
+    m_pCollider = pSphere;
+}
+
+void GameObject::InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
+{
+    m_pRigidBody = new RigidBody;
+
+    if (m_pCollider)
     {
-        m_pPhysicsComponent->Initialize(this, &m_pModel->GetBoundingSphere(), mass, elasticity, friction);
+        m_pRigidBody->Initialize(this, m_pCollider, mass, elasticity, friction);
     }
 }
 
@@ -157,7 +174,7 @@ void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMater
     }
 
     assert(m_materialCount == numMaterials);
-    
+
     for (UINT i = 0; i < numMaterials; i++)
     {
         if (m_ppMaterials[i])
@@ -169,8 +186,8 @@ void GameObject::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMater
     }
 }
 
-IRenderMaterial *GameObject::GetMaterialAt(UINT index) 
-{ 
+IRenderMaterial *GameObject::GetMaterialAt(UINT index)
+{
     if (!m_ppMaterials)
     {
         const UINT      materialCount = m_pModel->GetMaterialCount();
@@ -200,13 +217,14 @@ bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
 
 bool GameObject::Intersect(const Bounds b) const
 {
-    if (!m_pPhysicsComponent)
-    {
-#ifdef _DEBUG
-        __debugbreak();
-#endif // _DEBUG
-        return false;
-    }
+    //    if (!m_pCollider)
+    //    {
+    // #ifdef _DEBUG
+    //        __debugbreak();
+    // #endif // _DEBUG
+    //        return false;
+    //    }
+    //    return m_pCollider->GetBounds().DoesIntersect(b);
 
-    return m_pPhysicsComponent->GetBounds().DoesIntersect(b);
+    return GetBounds().DoesIntersect(b);
 }

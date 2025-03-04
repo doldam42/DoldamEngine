@@ -2,23 +2,15 @@
 
 #include "GameObject.h"
 
-#include "PhysicsComponent.h"
+#include "RigidBody.h"
 
-void PhysicsComponent::Cleanup()
+void RigidBody::Cleanup()
 {
-    if (m_pShape)
-    {
-        delete m_pShape;
-        m_pShape = nullptr;
-    }
 }
 
-void PhysicsComponent::Initialize(GameObject *pObj, const Shape *pInShape, float mass, float elasticity, float friction)
+void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction)
 {
-    if (pInShape->GetType() == SHAPE_TYPE_SPHERE)
-    {
-        m_pShape = new Sphere(*((Sphere *)pInShape));
-    }
+    m_pCollider = pCollider;
 
     m_invMass = (mass < 1e-4f) ? 0.0f : 1.0f / mass;
     m_elasticity = elasticity;
@@ -27,7 +19,7 @@ void PhysicsComponent::Initialize(GameObject *pObj, const Shape *pInShape, float
     m_pGameObject = pObj;
 }
 
-void PhysicsComponent::ApplyGravityImpulse(const float dt)
+void RigidBody::ApplyGravityImpulse(const float dt)
 {
     if (m_invMass == 0)
         return;
@@ -39,7 +31,7 @@ void PhysicsComponent::ApplyGravityImpulse(const float dt)
     ApplyImpulseLinear(impulseGravity);
 }
 
-void PhysicsComponent::ApplyImpulse(const Vector3 &impulsePoint, const Vector3 &impulse)
+void RigidBody::ApplyImpulse(const Vector3 &impulsePoint, const Vector3 &impulse)
 {
     if (m_invMass == 0.0f)
         return;
@@ -52,7 +44,7 @@ void PhysicsComponent::ApplyImpulse(const Vector3 &impulsePoint, const Vector3 &
     ApplyImpulseAngular(dL);
 }
 
-void PhysicsComponent::ApplyImpulseLinear(const Vector3 &impulse)
+void RigidBody::ApplyImpulseLinear(const Vector3 &impulse)
 {
     if (m_invMass == 0)
         return;
@@ -60,7 +52,7 @@ void PhysicsComponent::ApplyImpulseLinear(const Vector3 &impulse)
     m_linearVelocity += impulse * m_invMass;
 }
 
-void PhysicsComponent::ApplyImpulseAngular(const Vector3 &impulse)
+void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
 {
     if (m_invMass == 0.0f)
         return;
@@ -78,7 +70,7 @@ void PhysicsComponent::ApplyImpulseAngular(const Vector3 &impulse)
     }
 }
 
-void PhysicsComponent::Update(float dt)
+void RigidBody::Update(float dt)
 {
     Vector3 deltaPos(m_linearVelocity * dt);
     m_pGameObject->AddPosition(&deltaPos);
@@ -92,7 +84,7 @@ void PhysicsComponent::Update(float dt)
     // T = Ia = w x I * w
     // a = I^-1 (w x I * w)
     Matrix orient = Matrix::CreateFromQuaternion(GetOrient());
-    Matrix inertiaTensor = orient * m_pShape->InertiaTensor() * orient.Transpose();
+    Matrix inertiaTensor = orient * m_pCollider->InertiaTensor() * orient.Transpose();
     Matrix invInertiaTensor = inertiaTensor.Invert();
 
     const Vector3 Iw = Vector3::Transform(m_angularVelocity, inertiaTensor);
@@ -113,22 +105,22 @@ void PhysicsComponent::Update(float dt)
     m_pGameObject->SetPosition(newPos.x, newPos.y, newPos.z);
 }
 
-Vector3 PhysicsComponent::GetPosition() const { return m_pGameObject->GetPosition(); }
+Vector3 RigidBody::GetPosition() const { return m_pGameObject->GetPosition(); }
 
-Quaternion PhysicsComponent::GetOrient() const { return m_pGameObject->GetRotation(); }
+Quaternion RigidBody::GetOrient() const { return m_pGameObject->GetRotation(); }
 
-void PhysicsComponent::AddPosition(const Vector3 &deltaPos) { m_pGameObject->AddPosition(&deltaPos); }
+void RigidBody::AddPosition(const Vector3 &deltaPos) { m_pGameObject->AddPosition(&deltaPos); }
 
-Vector3 PhysicsComponent::GetCenterOfMassWorldSpace() const
+Vector3 RigidBody::GetCenterOfMassWorldSpace() const
 {
-    const Vector3 centerOfMass = m_pShape->GetCenterOfMass();
+    const Vector3 centerOfMass = m_pCollider->GetCenter();
     const Vector3 pos = m_pGameObject->GetPosition() + Vector3::Transform(centerOfMass, m_pGameObject->GetRotation());
     return pos;
 }
 
-Vector3 PhysicsComponent::GetCenterOfMassLocalSpace() const { return m_pShape->GetCenterOfMass(); }
+Vector3 RigidBody::GetCenterOfMassLocalSpace() const { return m_pCollider->GetCenter(); }
 
-Vector3 PhysicsComponent::WorldSpaceToLocalSpace(const Vector3 &point) const
+Vector3 RigidBody::WorldSpaceToLocalSpace(const Vector3 &point) const
 {
     Vector3    tmp = point - GetCenterOfMassWorldSpace();
     Quaternion orient = m_pGameObject->GetRotation();
@@ -139,15 +131,15 @@ Vector3 PhysicsComponent::WorldSpaceToLocalSpace(const Vector3 &point) const
     return localSpace;
 }
 
-Vector3 PhysicsComponent::LocalSpaceToWorldSpace(const Vector3 &point) const
+Vector3 RigidBody::LocalSpaceToWorldSpace(const Vector3 &point) const
 {
     Vector3 worldSpace = GetCenterOfMassWorldSpace() + Vector3::Transform(point, m_pGameObject->GetRotation());
     return worldSpace;
 }
 
-Matrix PhysicsComponent::GetInverseInertiaTensorWorldSpace() const
+Matrix RigidBody::GetInverseInertiaTensorWorldSpace() const
 {
-    Matrix inertiaTensor = m_pShape->InertiaTensor();
+    Matrix inertiaTensor = m_pCollider->InertiaTensor();
     Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
     Matrix orient = Matrix::CreateFromQuaternion(GetOrient());
     invInertiaTensor = orient * invInertiaTensor * orient.Transpose();
@@ -155,16 +147,16 @@ Matrix PhysicsComponent::GetInverseInertiaTensorWorldSpace() const
     return invInertiaTensor;
 }
 
-Matrix PhysicsComponent::GetInverseInertiaTensorLocalSpace() const
+Matrix RigidBody::GetInverseInertiaTensorLocalSpace() const
 {
-    Matrix inertiaTensor = m_pShape->InertiaTensor();
+    Matrix inertiaTensor = m_pCollider->InertiaTensor();
     Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
     return invInertiaTensor;
 }
 
-Bounds PhysicsComponent::GetBounds() const
+Bounds RigidBody::GetBounds() const
 {
-    return m_pShape->GetBounds(m_pGameObject->GetPosition(), m_pGameObject->GetRotation());
+    return m_pCollider->GetWorldBounds();
 }
 
-PhysicsComponent::~PhysicsComponent() { Cleanup(); }
+RigidBody::~RigidBody() { Cleanup(); }

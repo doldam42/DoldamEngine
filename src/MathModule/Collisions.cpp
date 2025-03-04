@@ -67,12 +67,12 @@ BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &
         return FALSE;
 }
 
-BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                         Vector3 *pOutContactPointA, Vector3 *pOutContactPointB, Vector3 *pOutNormal)
 {
     Vector3 ab = posB - posA;
 
-    const float radiusAB = a.Radius + b.Radius;
+    const float radiusAB = radiusA + radiusB;
     const float lengthSquared = ab.LengthSquared();
     if (lengthSquared > (radiusAB * radiusAB))
     {
@@ -82,15 +82,15 @@ BOOL SphereSphereStatic(const Sphere &a, const Sphere &b, const Vector3 &posA, c
     Vector3 normal = ab;
     normal.Normalize();
 
-    *pOutContactPointA = posA + normal * a.Radius;
-    *pOutContactPointB = posB - normal * b.Radius;
+    *pOutContactPointA = posA + normal * radiusA;
+    *pOutContactPointB = posB - normal * radiusB;
 
     *pOutNormal = normal;
 
     return TRUE;
 }
 
-BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, const Vector3 &posB,
+BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                          const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
                          Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi)
 {
@@ -106,13 +106,13 @@ BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, 
     {
         // Ray is too short, just check if already intersecting
         Vector3 ab = posB - posA;
-        float   radius = a.Radius + b.Radius + 0.001f;
+        float   radius = radiusA + radiusB + 0.001f;
         if (ab.LengthSquared() > radius * radius)
         {
             return false;
         }
     }
-    else if (!RaySphere(posA, rayDir, posB, a.Radius + b.Radius, &t0, &t1))
+    else if (!RaySphere(posA, rayDir, posB, radiusA + radiusB, &t0, &t1))
     {
         return false;
     }
@@ -143,8 +143,8 @@ BOOL SphereSphereDynamic(const Sphere &a, const Sphere &b, const Vector3 &posA, 
     ab.Normalize();
 
     *pOutToi = toi;
-    *pOutContactPointA = newPosA + ab * a.Radius;
-    *pOutContactPointB = newPosB - ab * b.Radius;
+    *pOutContactPointA = newPosA + ab * radiusA;
+    *pOutContactPointB = newPosB - ab * radiusB;
     return true;
 }
 

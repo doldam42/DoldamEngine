@@ -214,6 +214,8 @@ BOOL Client::Initialize(HWND hWnd)
 
     m_hWnd = hWnd;
     
+    m_prevUpdateTick = m_prevFrameCheckTick = GetTickCount64();
+
     return result;
 }
 
@@ -225,9 +227,31 @@ void Client::Process()
 {
     ProcessInput();
 
-    m_pGame->Update();
+    ULONGLONG curTick = GetTickCount64();
+    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
+
+    // FPS가 너무 낮은 경우 30 FPS로 고정
+    dt = (dt > 0.1f) ? 0.03f : dt;
+    if (!m_isPaused && dt > 0.025f)  // // Update Scene with 40FPS
+    {
+        m_prevUpdateTick = curTick;
+        dt *= m_timeSpeed;
+
+        m_pGame->Update(dt);
+
+        m_pInputManager->Update();
+    }
 
     m_pGame->Render();
+
+    // 성능 측정
+    m_frameCount++;
+    if (curTick - m_prevFrameCheckTick > 1000)
+    {
+        m_prevFrameCheckTick = curTick;
+        m_FPS = m_frameCount;
+        m_frameCount = 0;
+    }
 }
 
 BOOL Client::Start()
