@@ -21,10 +21,9 @@ class SphereCollider : public ICollider
     Matrix        InertiaTensor() const override
     {
         Matrix tensor = Matrix::Identity;
-        tensor.m[0][0] = 2.0f * m_radius * m_radius / 5.0f;
-        tensor.m[1][1] = 2.0f * m_radius * m_radius / 5.0f;
-        tensor.m[2][2] = 2.0f * m_radius * m_radius / 5.0f;
-
+        tensor._11 = 2.0f * m_radius * m_radius / 5.0f;
+        tensor._22 = 2.0f * m_radius * m_radius / 5.0f;
+        tensor._33 = 2.0f * m_radius * m_radius / 5.0f;
         return tensor;
     }
 

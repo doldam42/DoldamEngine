@@ -61,10 +61,7 @@ BOOL BadAppleController::Start()
     {
         __debugbreak();
     }
-    g_pClient->GetInputManager()->AddKeyListener(VK_SPACE, [pBadAppleAudio](void *) {
-        pBadAppleAudio->isPaused = !pBadAppleAudio->isPaused;
-        pBadAppleAudio->pChannel->setPaused(pBadAppleAudio->isPaused);
-    });
+    
     m_pBadAppleAudio = pBadAppleAudio;
     
     // Create Textures
@@ -127,7 +124,18 @@ BOOL BadAppleController::Start()
 
 void BadAppleController::Update(float dt)
 {
-    AudioManager *pAudio = g_pClient->GetAudioManager();
+    static bool   isPaused = false;
+    InputManager *pI = g_pClient->GetInputManager();
+    if (pI->IsKeyPressed(VK_SPACE, false))
+    {
+        isPaused = !isPaused;
+        m_pBadAppleAudio->isPaused = isPaused;
+        m_pBadAppleAudio->pChannel->setPaused(isPaused);
+    }
+
+    if (isPaused)
+        return;
+
     IRenderer    *pRnd = g_pClient->GetGameManager()->GetRenderer();
     
     VideoPlay(m_pBadAppleVideo, dt);

@@ -41,6 +41,7 @@
     <ClInclude Include="Ellipse.h">
       <Filter>Shape</Filter>
     </ClInclude>
+    <ClInclude Include="Ray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

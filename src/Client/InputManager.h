@@ -15,11 +15,6 @@ class InputManager
     float m_lastWheelTime = 0.0f;
     float m_deltaWheel = 0.0f;
 
-    EventListener m_eventListeners[256];
-
-    char m_pressedKey[256] = {false};
-    UINT m_pressedKeyCount = 0;
-
   public:
     void Initialize(UINT width, UINT height);
 
@@ -38,12 +33,9 @@ class InputManager
 
     void SetWindowSize(UINT width, UINT height);
 
-    // repeat = false : 처음 입력만 받음
+    // repeat(false) : 최초 키 입력 시에만 TRUE를 반환
+    // repeat(true)  : 키를 누르고 있는 동안 TRUE를 반환
     BOOL IsKeyPressed(UINT nChar, bool repeat = true) const;
-
-    GameEvent *AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg = nullptr,
-                              size_t sizeOfArg = 0);
-    void       DeleteKeyListener(UINT nChar, GameEvent *pEvent);
 
     float GetXAxis() const;
     float GetYAxis() const;

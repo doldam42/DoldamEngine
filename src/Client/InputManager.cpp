@@ -6,20 +6,12 @@ void InputManager::Initialize(UINT width, UINT height) { SetWindowSize(width, he
 
 void InputManager::ProcessInput()
 {
-    for (UINT i = 0; i < m_pressedKeyCount; i++)
-    {
-        char nChar = m_pressedKey[i];
-        m_eventListeners[nChar].Run();
-    }
-    m_pressedKeyCount = 0;
+
 }
 
 void InputManager::OnKeyDown(UINT nChar, UINT uiScanCode)
 {
     m_keyPressed[nChar] = true;
-
-    m_pressedKey[m_pressedKeyCount] = nChar;
-    m_pressedKeyCount++;
 }
 
 void InputManager::OnKeyUp(UINT nChar, UINT uiScanCode) { m_keyPressed[nChar] = false; }
@@ -55,9 +47,6 @@ void InputManager::OnMouseWheel(float wheelDelta)
 void InputManager::OnMouseLButtonDown()
 {
     m_keyPressed[VK_LBUTTON] = true;
-
-    m_pressedKey[m_pressedKeyCount] = VK_LBUTTON;
-    m_pressedKeyCount++;
 }
 
 void InputManager::OnMouseLButtonUp() { m_keyPressed[VK_LBUTTON] = false; }
@@ -65,8 +54,6 @@ void InputManager::OnMouseLButtonUp() { m_keyPressed[VK_LBUTTON] = false; }
 void InputManager::OnMouseRButtonDown()
 {
     m_keyPressed[VK_RBUTTON] = true;
-    m_pressedKey[m_pressedKeyCount] = VK_RBUTTON;
-    m_pressedKeyCount++;
 }
 
 void InputManager::OnMouseRButtonUp() { m_keyPressed[VK_RBUTTON] = false; }
@@ -82,13 +69,6 @@ BOOL InputManager::IsKeyPressed(UINT nChar, bool repeat) const
     assert(nChar < 256);
     return m_keyPressed[nChar] && (repeat || !m_prevKeyPressed[nChar]);
 }
-
-GameEvent *InputManager::AddKeyListener(UINT nChar, const std::function<void(void *)> func, void *arg, size_t sizeOfArg)
-{
-    return m_eventListeners[nChar].AddCallback(func, arg, sizeOfArg);
-}
-
-void InputManager::DeleteKeyListener(UINT nChar, GameEvent *pEvent) { m_eventListeners[nChar].DeleteCallback(pEvent); }
 
 float InputManager::GetXAxis() const
 {
@@ -125,8 +105,4 @@ void InputManager::Update() { memcpy(m_prevKeyPressed, m_keyPressed, sizeof(m_pr
 
 InputManager::~InputManager()
 {
-    for (int i = 0; i < 256; i++)
-    {
-        m_eventListeners[i].DeleteAllCallback();
-    }
 }

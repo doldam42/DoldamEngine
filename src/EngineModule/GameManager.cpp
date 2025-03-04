@@ -215,6 +215,17 @@ void GameManager::Start()
     LoadResources();
 
     m_pControllerManager->Start();
+
+    // Update Game Objects
+    SORT_LINK *pCur = m_pGameObjLinkHead;
+    while (pCur)
+    {
+        GameObject *pGameObj = (GameObject *)pCur->pItem;
+
+        pGameObj->Update(0.0f);
+
+        pCur = pCur->pNext;
+    }
 }
 
 void GameManager::Update(float dt)
@@ -614,11 +625,13 @@ void GameManager::Register(IController *pController) { m_pControllerManager->Reg
 
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
-BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit)
+BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance)
 {
     Ray ray;
     ray.position = rayOrigin;
     ray.direction = rayDir;
+    ray.tmax = maxDistance;
+
     return m_pWorld->Intersect(ray, pOutHit);
 }
 

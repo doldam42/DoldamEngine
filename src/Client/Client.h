@@ -5,6 +5,7 @@ class TimeController;
 class BadAppleController;
 class RaytracingDemoController;
 class TessellationDemoController;
+class PhysicsDemoController;
 class InputManager;
 class AudioManager;
 class Client
@@ -36,6 +37,7 @@ class Client
     BadAppleController         *m_pDemoController = nullptr;
     RaytracingDemoController   *m_pRaytracingDemoController = nullptr;
     TessellationDemoController *m_pTessellationDemoController = nullptr;
+    PhysicsDemoController      *m_pPhysicsDemoController = nullptr;
 
     // Timer
     ULONGLONG m_prevUpdateTick = 0;
@@ -90,6 +92,8 @@ class Client
 
     UINT GetScreenWidth() const { return m_width; }
     UINT GetScreenHeight() const { return m_height; }
+
+    void SetTimeSpeed(float speed) { m_timeSpeed = speed; }
 
     Client() = default;
     ~Client();

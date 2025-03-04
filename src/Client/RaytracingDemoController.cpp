@@ -144,10 +144,16 @@ BOOL RaytracingDemoController::Start()
     // Set Camera Position
     pGame->SetCameraPosition(-0.0f, 2.0f, -5.0f);
 
-    pI->AddKeyListener(VK_LBUTTON, [](void *) {
-        InputManager *pI = g_pClient->GetInputManager();
-        IGameManager *pGame = g_pClient->GetGameManager();
+    return TRUE;
+}
 
+void RaytracingDemoController::Update(float dt) 
+{
+    InputManager *pI = g_pClient->GetInputManager();
+    IGameManager *pGame = g_pClient->GetGameManager();
+
+    if (pI->IsKeyPressed(VK_LBUTTON, false))
+    {
         Vector3 rayDir = pGame->GetCameraLookTo();
         Vector3 rayPos = pGame->GetCameraPos();
 
@@ -158,11 +164,9 @@ BOOL RaytracingDemoController::Start()
             IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
             pMaterial->UpdateEmissive(Vector3(1.0f, 0.0f, 0.0f));
         }
-    });
-    pI->AddKeyListener(VK_RBUTTON, [](void *) {
-        InputManager *pI = g_pClient->GetInputManager();
-        IGameManager *pGame = g_pClient->GetGameManager();
-
+    }
+    else if (pI->IsKeyPressed(VK_RBUTTON, false))
+    {
         Vector3 rayDir = pGame->GetCameraLookTo();
         Vector3 rayPos = pGame->GetCameraPos();
 
@@ -173,11 +177,8 @@ BOOL RaytracingDemoController::Start()
             IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
             pMaterial->UpdateEmissive(Vector3(0.0f, 0.0f, 0.0f));
         }
-    });
-    return TRUE;
+    }
 }
-
-void RaytracingDemoController::Update(float dt) {}
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }
 

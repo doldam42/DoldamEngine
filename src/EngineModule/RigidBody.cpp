@@ -8,7 +8,8 @@ void RigidBody::Cleanup()
 {
 }
 
-void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction)
+void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
+                           BOOL useGravity, BOOL isKinematic)
 {
     m_pCollider = pCollider;
 
@@ -17,11 +18,14 @@ void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, f
     m_friction = friction;
 
     m_pGameObject = pObj;
+
+    m_useGravity = useGravity;
+    m_isKinematic = isKinematic;
 }
 
 void RigidBody::ApplyGravityImpulse(const float dt)
 {
-    if (m_invMass == 0)
+    if (!m_useGravity || m_invMass == 0)
         return;
 
     const Vector3 gravity(0.0f, -9.8f, 0.0f);

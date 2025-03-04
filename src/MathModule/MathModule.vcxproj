@@ -176,6 +176,7 @@
     <ClInclude Include="MathHeaders.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="ShapeBase.h" />
     <ClInclude Include="SimpleMath.h" />
     <ClInclude Include="Sphere.h" />

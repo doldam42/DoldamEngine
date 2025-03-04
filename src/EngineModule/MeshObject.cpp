@@ -70,9 +70,6 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd)
         m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles);
     }
     m_pMeshHandle->EndCreateMesh();
-
-    m_ppMaterialHandles = new IRenderMaterial *[m_faceGroupCount];
-    ZeroMemory(m_ppMaterialHandles, sizeof(IRenderMaterial *) * m_faceGroupCount);
     return TRUE;
 }
 
@@ -175,20 +172,14 @@ void MeshObject::WriteFile(FILE *fp)
 void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
                         const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
 {
-    for (UINT i = 0; i < m_faceGroupCount; i++)
-    {
-        FaceGroup *pFace = m_pFaceGroups + i;
-        m_ppMaterialHandles[i] = ppMaterials[pFace->materialIndex];
-    }
-
     Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, m_ppMaterialHandles, m_faceGroupCount);
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, ppMaterials, m_faceGroupCount);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, m_ppMaterialHandles,
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
                                     m_faceGroupCount);
         break;
     default:

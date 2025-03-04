@@ -77,7 +77,7 @@ bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
     float tmin = max(max(fMinVec[1], fMinVec[2]), fMinVec[3]);
     float tmax = min(min(fMaxVec[1], fMaxVec[2]), fMaxVec[3]);
 
-    if (tmax >= tmin && tmax >= 0)
+    if (tmax >= tmin && tmax >= 0 && tmin <= ray.tmax)
     {
         *hitt0 = tmin;
         *hitt1 = tmax;

@@ -10,6 +10,7 @@
 #include "BadAppleController.h"
 #include "RaytracingDemoController.h"
 #include "TessellationDemoController.h"
+#include "PhysicsDemoController.h"
 #include "TimeController.h"
 
 #include "Client.h"
@@ -123,6 +124,11 @@ void Client::CleanupControllers()
         delete m_pTessellationDemoController;
         m_pTessellationDemoController = nullptr;
     }
+    if (m_pPhysicsDemoController)
+    {
+        delete m_pPhysicsDemoController;
+        m_pPhysicsDemoController = nullptr;
+    }
 }
 
 void Client::Cleanup()
@@ -202,12 +208,14 @@ BOOL Client::Initialize(HWND hWnd)
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
-    m_pRaytracingDemoController = new RaytracingDemoController;
+    m_pPhysicsDemoController = new PhysicsDemoController;
+    //m_pRaytracingDemoController = new RaytracingDemoController;
      //m_pTessellationDemoController = new TessellationDemoController();
 
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
-    m_pGame->Register(m_pRaytracingDemoController);
+    m_pGame->Register(m_pPhysicsDemoController);
+    //m_pGame->Register(m_pRaytracingDemoController);
      //m_pGame->Register(m_pTessellationDemoController);
 
     Start();

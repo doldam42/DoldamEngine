@@ -35,9 +35,10 @@ class GameObject : public IGameObject
   public:
     void Initialize(GameManager *pGameEngine);
 
-    void InitBoxCollider(const Vector3& center, const Vector3& extent) override;
-    void InitSphereCollider(const Vector3& center, const float radius) override;
-    void InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) override;
+    BOOL InitBoxCollider(const Vector3& center, const Vector3& extent) override;
+    BOOL InitSphereCollider(const Vector3& center, const float radius) override;
+    BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
+                       BOOL isKinematic = TRUE) override;
 
     virtual void Update(float dt);
     void         Render();

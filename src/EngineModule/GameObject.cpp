@@ -46,28 +46,33 @@ void GameObject::Initialize(GameManager *pGameEngine)
     m_pRenderer = pGameEngine->GetRenderer();
 }
 
-void GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
+BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
 {
     BoxCollider *pBox = new BoxCollider;
     pBox->Initialize(this, center, extent);
     m_pCollider = pBox;
+
+    return TRUE;
 }
 
-void GameObject::InitSphereCollider(const Vector3 &center, const float radius)
+BOOL GameObject::InitSphereCollider(const Vector3 &center, const float radius)
 {
     SphereCollider *pSphere = new SphereCollider;
     pSphere->Initialize(this, center, radius);
     m_pCollider = pSphere;
+
+    return TRUE;
 }
 
-void GameObject::InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction)
+BOOL GameObject::InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity,
+                               BOOL isKinematic)
 {
-    m_pRigidBody = new RigidBody;
+    if (!m_pCollider)
+        return FALSE;
 
-    if (m_pCollider)
-    {
-        m_pRigidBody->Initialize(this, m_pCollider, mass, elasticity, friction);
-    }
+    m_pRigidBody = new RigidBody;
+    m_pRigidBody->Initialize(this, m_pCollider, mass, elasticity, friction, useGravity, isKinematic);
+    return TRUE;
 }
 
 void GameObject::Update(float dt)

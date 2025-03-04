@@ -14,12 +14,14 @@ class RigidBody : public IRigidBody
     ICollider  *m_pCollider = nullptr;
     GameObject *m_pGameObject = nullptr;
 
+    BOOL m_useGravity = TRUE;
+    BOOL m_isKinematic = TRUE;
+
   private:
     void Cleanup();
 
   public:
-    // Inherited via IRigidBody
-    void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction);
+    void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity = TRUE, BOOL isKinematic = TRUE);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
     Bounds  GetBounds() const;

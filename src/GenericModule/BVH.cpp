@@ -616,7 +616,7 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
         }
     }
 
-    if (closestHit < FLT_MAX)
+    if (closestHit < ray.tmax)
     {
         return true;
     }

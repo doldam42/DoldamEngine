@@ -23,7 +23,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
     Vector3 velA = pA->GetVelocity();
     Vector3 velB = pB->GetVelocity();
 
-    if (pA->m_pCollider->GetType() == SHAPE_TYPE_SPHERE && pB->m_pCollider->GetType() == SHAPE_TYPE_SPHERE)
+    if (pA->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE && pB->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE)
     {
         SphereCollider *pSphereA = (SphereCollider *)pA->m_pCollider;
         SphereCollider *pSphereB = (SphereCollider *)pB->m_pCollider;

@@ -12,13 +12,13 @@
 #include "FontManager.h"
 #include "GraphicsCommon.h"
 #include "MaterialManager.h"
+#include "PrimitiveGenerator.h"
 #include "RaytracingManager.h"
 #include "RaytracingMeshObject.h"
 #include "RenderThread.h"
 #include "SpriteObject.h"
 #include "Terrain.h"
 #include "TextureManager.h"
-#include "PrimitiveGenerator.h"
 
 #include "PostProcessor.h"
 
@@ -26,8 +26,8 @@
 #include "SingleDescriptorAllocator.h"
 // #include "PSOLibrary.h"
 
-#include <process.h>
 #include "D3D12Renderer.h"
+#include <process.h>
 
 D3D12Renderer *g_pRenderer = nullptr;
 
@@ -334,8 +334,6 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    CommandListPool            *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
-    
     UpdateGlobal();
 #ifdef USE_DEFERRED_RENDERING
     m_activeThreadCount = m_renderThreadCount;
@@ -346,6 +344,7 @@ void D3D12Renderer::EndRender()
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
 #endif
 
+    CommandListPool            *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
@@ -478,7 +477,7 @@ void D3D12Renderer::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWid
         m_ScissorRect.right = width;
         m_ScissorRect.bottom = height;
     }
-    
+
     CleanupBuffers();
 
     if (FAILED(m_pSwapChain->ResizeBuffers(SWAP_CHAIN_FRAME_COUNT, width, height, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -556,7 +555,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
     //// TODO: ADD Material
-    //pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
+    // pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
 
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -577,13 +576,12 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
-                                          bool isWired)
+                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
 {
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
-    //pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
+    // pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -1010,10 +1008,7 @@ TEXTURE_HANDLE *D3D12Renderer::GetDefaultTex()
 }
 
 // TODO: Addref를 하면서 적절히 처리할 수 있는 방법 찾기
-MATERIAL_HANDLE *D3D12Renderer::GetDefaultMaterial() 
-{ 
-    return m_pDefaultMaterial;
-}
+MATERIAL_HANDLE *D3D12Renderer::GetDefaultMaterial() { return m_pDefaultMaterial; }
 
 D3D12_GPU_DESCRIPTOR_HANDLE D3D12Renderer::GetGlobalDescriptorHandle(UINT threadIndex)
 {
@@ -1148,8 +1143,7 @@ IRenderMesh *D3D12Renderer::CreateSphereMesh(const float radius, const int numSl
     return PrimitiveGenerator::MakeSphere(radius, numSlices, numStacks);
 }
 
-IRenderMesh *D3D12Renderer::CreateBoxMesh(const float scale) 
-{ return PrimitiveGenerator::MakeBox(scale); }
+IRenderMesh *D3D12Renderer::CreateBoxMesh(const float scale) { return PrimitiveGenerator::MakeBox(scale); }
 
 IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector3 extends)
 {
@@ -1164,8 +1158,8 @@ void D3D12Renderer::CreateDefaultResources()
     m_pDefaultMaterial = m_pMaterialManager->CreateMaterial(&defaultMaterial);
 }
 
-void D3D12Renderer::CleanupDefaultResources() 
-{ 
+void D3D12Renderer::CleanupDefaultResources()
+{
     if (m_pDefaultTexHandle)
     {
         DeleteTexture(m_pDefaultTexHandle);

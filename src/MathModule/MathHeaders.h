@@ -35,7 +35,6 @@ using DirectX::SimpleMath::Vector4;
 using DirectX::SimpleMath::Plane;
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Quaternion;
-using DirectX::SimpleMath::Ray;
 
 using DirectX::BoundingBox;
 using DirectX::BoundingSphere;
@@ -51,6 +50,7 @@ static float MachineEpsilon = std::numeric_limits<float>::epsilon() * 0.5;
 #endif
 inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilon); }
 
+#include "Ray.h"
 #include "Bounds.h"
 #include "ShapeBase.h"
 #include "Sphere.h"

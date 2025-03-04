@@ -26,6 +26,9 @@
     </ClCompile>
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="PhysicsDemoController.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -68,6 +71,9 @@
     </ClInclude>
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="PhysicsDemoController.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

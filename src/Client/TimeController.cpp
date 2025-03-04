@@ -7,18 +7,18 @@
 
 BOOL TimeController::Start() 
 {
-    IGameManager  *pG = g_pClient->GetGameManager();
-    InputManager *pI = g_pClient->GetInputManager();
-
-    /*pI->AddKeyListener(VK_SPACE, [pG](void *) { pG->TogglePause(); });
-    pI->AddKeyListener('1', [pG](void *) { pG->SetTimeSpeed(0.5f); });
-    pI->AddKeyListener('2', [pG](void *) { pG->SetTimeSpeed(1.0f); });
-    pI->AddKeyListener('3', [pG](void *) { pG->SetTimeSpeed(2.0f); });*/
-
     return TRUE;
 }
 
 void TimeController::Update(float dt)
-{}
+{ 
+    static float  speed = 0.0f;
+    InputManager *pI = g_pClient->GetInputManager();
+    if (pI->IsKeyPressed(VK_TAB, false))
+    {
+        speed = fmodf(speed + 0.5f, 2.0f);
+        g_pClient->SetTimeSpeed(speed);
+    }
+}
 
 void TimeController::Render() {}

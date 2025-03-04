@@ -26,8 +26,6 @@ class MeshObject : public IGameMesh, public BaseObject
     SkinnedVertex *m_pSkinnedVertices = nullptr;
     
     FaceGroup     *m_pFaceGroups = nullptr;
-    IRenderMaterial **m_ppMaterialHandles = nullptr;
-
     IRenderMesh *m_pMeshHandle = nullptr;
 
   private:

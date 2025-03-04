@@ -104,9 +104,10 @@ interface IGameObject : public IBoundedObject
 {
     virtual size_t GetID() = 0;
 
-    virtual void InitBoxCollider(const Vector3 &center, const Vector3 &extent) = 0;
-    virtual void InitSphereCollider(const Vector3 &center, const float radius) = 0;
-    virtual void InitRigidBody(SHAPE_TYPE shapeType, float mass, float elasticity, float friction) = 0;
+    virtual BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) = 0;
+    virtual BOOL InitSphereCollider(const Vector3 &center, const float radius) = 0;
+    virtual BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
+                               BOOL isKinematic = TRUE) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
@@ -229,7 +230,7 @@ interface IGameManager : public IUnknown
 
     virtual float DeltaTime() const = 0;
 
-    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit) = 0;
+    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = FLT_MAX) = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };
