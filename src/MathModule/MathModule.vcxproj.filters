@@ -24,21 +24,12 @@
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="ShapeBase.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Sphere.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="SimpleMath.h">
       <Filter>SimpleMath</Filter>
     </ClInclude>
     <ClInclude Include="ColorUtils.h" />
     <ClInclude Include="Collisions.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Ellipse.h">
       <Filter>Shape</Filter>
     </ClInclude>
     <ClInclude Include="Ray.h" />
@@ -50,18 +41,12 @@
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Bounds.cpp" />
-    <ClCompile Include="Sphere.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="SimpleMath.cpp">
       <Filter>SimpleMath</Filter>
     </ClCompile>
     <ClCompile Include="ColorUtils.cpp" />
     <ClCompile Include="Collisions.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
-    <ClCompile Include="Ellipse.cpp">
       <Filter>Shape</Filter>
     </ClCompile>
   </ItemGroup>

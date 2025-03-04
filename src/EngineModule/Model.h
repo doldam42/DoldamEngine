@@ -29,7 +29,6 @@ class Model : public IGameModel
     MeshObject **m_ppMeshObjects = nullptr;
     Joint       *m_pJoints = nullptr;
 
-    Sphere m_boundingSphere;
     Bounds m_boundingBox;
     IRenderMesh *m_pBoundingBoxMesh;
 
@@ -73,7 +72,7 @@ class Model : public IGameModel
     inline IGameMesh *GetMeshAt(UINT index) override { return m_ppMeshObjects[index]; }
 
     Bounds& GetBoundingBox() { return m_boundingBox; }
-    Sphere& GetBoundingSphere() { return m_boundingSphere; }
+    //Sphere& GetBoundingSphere() { return m_boundingSphere; }
 
     const Material *GetMaterials() { return m_pMaterials; }
     UINT            GetMaterialCount() { return m_materialCount; }

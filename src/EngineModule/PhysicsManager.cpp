@@ -31,9 +31,8 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         float   timeOfImpact;
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
-        Vector3 normal;
         if (SphereSphereDynamic(pSphereA->GetRadius(), pSphereB->GetRadius(), posA, posB, velA, velB, dt,
-                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, &timeOfImpact))
+                                &contactPointAWorldSpace, &contactPointBWorldSpace, &timeOfImpact))
         {
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);

@@ -148,35 +148,35 @@ void Model::InitBoundary()
     Vector3 center = (minCorner + maxCorner) * 0.5f;
     Vector3 extents = maxCorner - center;
 
-    float maxRadius = 0.0f;
-    for (int i = 0; i < m_objectCount; i++)
-    {
-        MeshObject *pObj = GetObjectByIdx(i);
+    //float maxRadius = 0.0f;
+    //for (int i = 0; i < m_objectCount; i++)
+    //{
+    //    MeshObject *pObj = GetObjectByIdx(i);
 
-        UINT vertexCount = pObj->GetVertexCount();
-        if (vertexCount == 0)
-            continue;
+    //    UINT vertexCount = pObj->GetVertexCount();
+    //    if (vertexCount == 0)
+    //        continue;
 
-        if (pObj->IsSkinned())
-        {
-            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
-            for (int i = 0; i < vertexCount; i++)
-            {
-                maxRadius = max((center - pVertice->position).Length(), maxRadius);
-            }
-        }
-        else
-        {
-            BasicVertex *pVertice = pObj->GetBasicVertices();
-            for (int i = 0; i < vertexCount; i++)
-            {
-                maxRadius = max((center - pVertice->position).Length(), maxRadius);
-            }
-        }
-    }
-    maxRadius += 1e-3f;
+    //    if (pObj->IsSkinned())
+    //    {
+    //        SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+    //        for (int i = 0; i < vertexCount; i++)
+    //        {
+    //            maxRadius = max((center - pVertice->position).Length(), maxRadius);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        BasicVertex *pVertice = pObj->GetBasicVertices();
+    //        for (int i = 0; i < vertexCount; i++)
+    //        {
+    //            maxRadius = max((center - pVertice->position).Length(), maxRadius);
+    //        }
+    //    }
+    //}
+    //maxRadius += 1e-3f;
     m_boundingBox = {minCorner, maxCorner};
-    m_boundingSphere = Sphere(maxRadius);
+    //m_boundingSphere = Sphere(maxRadius);
 
     extents += Vector3(1e-3f);
     m_pBoundingBoxMesh = m_pRenderer->CreateWireBoxMesh(center, extents);
@@ -317,7 +317,7 @@ ULONG __stdcall Model::Release(void)
     return newRefCount;
 }
 
-Model::Model() : m_boundingBox(), m_boundingSphere(0)
+Model::Model() : m_boundingBox()
 {
     m_LinkInGame.pPrev = nullptr;
     m_LinkInGame.pNext = nullptr;

@@ -52,8 +52,6 @@ inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilo
 
 #include "Ray.h"
 #include "Bounds.h"
-#include "ShapeBase.h"
-#include "Sphere.h"
 #include "Collisions.h"
 
 #include "Camera.h"
