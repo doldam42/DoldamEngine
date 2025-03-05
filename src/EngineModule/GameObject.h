@@ -10,17 +10,16 @@ class GameObject : public IGameObject
     size_t        m_id;
     Transform     m_transform;
     Matrix        m_worldMatrix;
+    BOOL          m_IsUpdated = false;
+    UINT          m_materialCount = 0;
 
     GameManager      *m_pGame = nullptr;
     IRenderer        *m_pRenderer = nullptr;
     Model            *m_pModel = nullptr;
     IRenderMaterial **m_ppMaterials = nullptr;
-    UINT              m_materialCount = 0;
-
+    
     ICollider *m_pCollider = nullptr;
     RigidBody *m_pRigidBody = nullptr;
-
-    bool m_IsUpdated = false;
 
   public:
     SORT_LINK m_LinkInGame;

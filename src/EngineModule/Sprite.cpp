@@ -17,7 +17,6 @@ BOOL Sprite::Initialize(IRenderer *pRnd, const WCHAR *filename, UINT width, UINT
 
     m_width = width;
     m_height = height;
-
     if (!pSprite)
         return FALSE;
 

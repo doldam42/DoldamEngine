@@ -46,7 +46,7 @@ void CollisionDemoController::Update(float dt)
     IGameManager *pGame = g_pClient->GetGameManager();
 
     RayHit hit;
-    BOOL   isGrounded = pGame->Raycast(m_pPlayer->GetPosition(), -Vector3::UnitY, &hit, 0.1f);
+    BOOL   isGrounded = pGame->Raycast(m_pPlayer->GetPosition(), Vector3::Down, &hit, 0.1f);
     if (isGrounded)
     {
         jumpSpeed = (pI->IsKeyPressed(VK_SPACE, false)) ? 9.8 : 0.0f;
