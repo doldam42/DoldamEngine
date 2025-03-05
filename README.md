@@ -3,8 +3,8 @@
 https://github.com/user-attachments/assets/5b2ef421-ca79-4e69-ab40-13b3eb5fb45f
 ## 레이 캐스팅 데모
 https://github.com/user-attachments/assets/25334281-e95b-4959-a41a-d91c9dbe3895
-## Displacement Map (height Map) with tessellation 데모
-![Terrain](https://github.com/user-attachments/assets/33691b04-5d10-4760-b95e-49c67d26d815)
+## Height Field with tessellation 데모
+![Terrain](https://github.com/user-attachments/assets/560cb417-2d01-4e90-acc4-129090c870c9)
 ## 레이트레이싱 데모
 https://github.com/user-attachments/assets/f32779f7-aba3-48f2-8123-e62d98f4bb36
 ## Video/Audio 재생 데모
