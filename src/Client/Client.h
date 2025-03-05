@@ -50,7 +50,7 @@ class Client
 
     // Timer-For Debug
     float m_loadingTime = 0.0f;
-    bool  m_isPaused = false;
+    BOOL  m_isPaused = false;
     float m_timeSpeed = 1.0f;
 
   private:
@@ -98,6 +98,7 @@ class Client
     UINT GetScreenHeight() const { return m_height; }
 
     void SetTimeSpeed(float speed) { m_timeSpeed = speed; }
+    void Pause() { m_isPaused = !m_isPaused; }
 
     Client() = default;
     ~Client();

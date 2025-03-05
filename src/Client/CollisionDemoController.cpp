@@ -37,6 +37,16 @@ BOOL CollisionDemoController::Start()
     m_pPlayer->SetPosition(0.0f, 2.f, 0.0f);
     pCam->SetFollowTarget(m_pPlayer);
 
+    UINT width = g_pClient->GetScreenWidth();
+    UINT height = g_pClient->GetScreenHeight();
+
+    int posX = (width / 2) - 32;
+    int posY = (height / 2) - 32;
+
+    IGameSprite *pSprite = pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds", 256, 256);
+    pSprite->SetScale(0.25);
+    pSprite->SetPosition(posX, posY);
+
     return TRUE;
 }
 
