@@ -130,9 +130,9 @@ interface IGameObject : public IBoundedObject
     virtual void SetRotationX(float rotX) = 0;
     virtual void SetRotationY(float rotY) = 0;
     virtual void SetRotationZ(float rotZ) = 0;
-    virtual void SetRotation(const Quaternion *pInQuaternion) = 0;
+    virtual void SetRotation(Quaternion q) = 0;
 
-    virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
+    virtual void AddPosition(Vector3 deltaPos) = 0;
     //virtual void Translate(const Vector3 *pInDeltaPos) = 0;
 
     virtual void             SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;

@@ -85,9 +85,9 @@ void Character::SetRotationY(float rotY) { GameObject::SetRotationY(rotY); }
 
 void Character::SetRotationZ(float rotZ) { GameObject::SetRotationZ(rotZ); }
 
-void Character::SetRotation(const Quaternion *pInQuaternion) { GameObject::SetRotation(pInQuaternion); }
+void Character::SetRotation(Quaternion q) { GameObject::SetRotation(q); }
 
-void Character::AddPosition(const Vector3 *pInDeltaPos) { GameObject::AddPosition(pInDeltaPos); }
+void Character::AddPosition(Vector3 deltaPos) { GameObject::AddPosition(deltaPos); }
 
 void Character::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials)
 {

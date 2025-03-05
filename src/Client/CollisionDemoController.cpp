@@ -6,11 +6,6 @@
 
 #include "CollisionDemoController.h"
 
-void CollisionDemoController::Jump() 
-{ 
-    jumpSpeed = 9.8f; 
-}
-
 BOOL CollisionDemoController::Start()
 {
     CameraController *pCam = g_pClient->GetCameraController();
@@ -50,8 +45,20 @@ void CollisionDemoController::Update(float dt)
     InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
 
-    float dx = pI->GetXAxis();
-    float dz = pI->GetZAxis();
+    RayHit hit;
+    BOOL   isGrounded = pGame->Raycast(m_pPlayer->GetPosition(), -Vector3::UnitY, &hit, 0.1f);
+    if (isGrounded)
+    {
+        jumpSpeed = (pI->IsKeyPressed(VK_SPACE, false)) ? 9.8 : 0.0f;
+        speed = (pI->IsKeyPressed(VK_SHIFT)) ? SPEED * 2.0f : SPEED;
+    }
+    else
+    {
+        jumpSpeed -= 9.8f * dt;
+    }
+
+    const float dx = pI->GetXAxis();
+    const float dz = pI->GetZAxis();
 
     Vector3 dir = m_pPlayer->GetForward();
     Vector3 right = Vector3::Up.Cross(dir);
@@ -59,27 +66,7 @@ void CollisionDemoController::Update(float dt)
     Vector3 deltaPos = (dir * dz + right * dx) * speed;
     deltaPos.y += jumpSpeed;
     deltaPos *= dt;
-    m_pPlayer->AddPosition(&deltaPos);
-    
-    Vector3 pos = m_pPlayer->GetPosition();
-    
-    RayHit hit;
-    BOOL   isGrounded = pGame->Raycast(pos, -Vector3::UnitY, &hit, 0.1f);
-    if (isGrounded)
-    {
-        if (pI->IsKeyPressed(VK_SPACE, false))
-        {
-            Jump();
-        }
-        else
-        {
-            jumpSpeed = 0.0f;
-        }
-    }
-    else
-    {
-        jumpSpeed -= 9.8f * dt;
-    }
+    m_pPlayer->AddPosition(deltaPos);
 }
 
 void CollisionDemoController::Render() {}

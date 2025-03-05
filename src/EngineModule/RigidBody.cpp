@@ -80,8 +80,7 @@ void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
 
 void RigidBody::Update(float dt)
 {
-    Vector3 deltaPos(m_linearVelocity * dt);
-    m_pGameObject->AddPosition(&deltaPos);
+    m_pGameObject->AddPosition(m_linearVelocity * dt);
 
     Vector3 pos = GetPosition();
     Vector3 positionCM = GetCenterOfMassWorldSpace();
@@ -107,7 +106,7 @@ void RigidBody::Update(float dt)
     Quaternion dq = (angleRadians == 0) ? Quaternion::Identity : Quaternion::CreateFromAxisAngle(dAngle, angleRadians);
     Quaternion o = Quaternion::Concatenate(GetOrient(), dq);
     o.Normalize();
-    m_pGameObject->SetRotation(&o);
+    m_pGameObject->SetRotation(o);
 
     Vector3 newPos = positionCM + Vector3::Transform(cmToPos, dq);
     m_pGameObject->SetPosition(newPos.x, newPos.y, newPos.z);
@@ -117,7 +116,7 @@ Vector3 RigidBody::GetPosition() const { return m_pGameObject->GetPosition(); }
 
 Quaternion RigidBody::GetOrient() const { return m_pGameObject->GetRotation(); }
 
-void RigidBody::AddPosition(const Vector3 &deltaPos) { m_pGameObject->AddPosition(&deltaPos); }
+void RigidBody::AddPosition(const Vector3 &deltaPos) { m_pGameObject->AddPosition(deltaPos); }
 
 Vector3 RigidBody::GetCenterOfMassWorldSpace() const
 {

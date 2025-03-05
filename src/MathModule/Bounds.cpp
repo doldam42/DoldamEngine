@@ -56,20 +56,33 @@ bool Bounds::DoesIntersect(const Bounds &rhs) const
 
 bool Bounds::DoesIntersect(const Vector3 &center, const float radius) const 
 {
-    // AABB 내부에서 Sphere 중심과 가장 가까운 점 찾기
-    Vector3 closestPoint;
-    closestPoint.x = std::fmax(mins.x, std::fmin(center.x, maxs.x));
-    closestPoint.y = std::fmax(mins.y, std::fmin(center.y, maxs.y));
-    closestPoint.z = std::fmax(mins.z, std::fmin(center.z, maxs.z));
+    __m128 _center = _mm_set_ps(center.x, center.y, center.z, 0.0f);
+    __m128 _mins = _mm_set_ps(mins.x, mins.y, mins.z, 0.0f);
+    __m128 _maxs = _mm_set_ps(maxs.x, maxs.y, maxs.z, 0.0f);
 
-    // 가장 가까운 점과 Sphere 중심 간 거리 계산
-    float dx = closestPoint.x - center.x;
-    float dy = closestPoint.y - center.y;
-    float dz = closestPoint.z - center.z;
-    float distanceSquared = dx * dx + dy * dy + dz * dz;
+    __m128 _closest = _mm_max_ps(_mins, _mm_min_ps(_center, _maxs)); 
+    __m128 _d = _mm_sub_ps(_closest, _center);
+    __m128 _d2 = _mm_dp_ps(_d, _d, 0xF1);
 
-    // 거리가 Sphere 반지름 이하이면 충돌
-    return distanceSquared <= (radius * radius);
+    float  distSquared;
+    _mm_store_ss(&distSquared, _d2);
+
+    return distSquared <= (radius * radius);
+
+    //// AABB 내부에서 Sphere 중심과 가장 가까운 점 찾기
+    //Vector3 closestPoint;
+    //closestPoint.x = std::fmax(mins.x, std::fmin(center.x, maxs.x));
+    //closestPoint.y = std::fmax(mins.y, std::fmin(center.y, maxs.y));
+    //closestPoint.z = std::fmax(mins.z, std::fmin(center.z, maxs.z));
+
+    //// 가장 가까운 점과 Sphere 중심 간 거리 계산
+    //float dx = closestPoint.x - center.x;
+    //float dy = closestPoint.y - center.y;
+    //float dz = closestPoint.z - center.z;
+    //float distanceSquared = dx * dx + dy * dy + dz * dz;
+
+    //// 거리가 Sphere 반지름 이하이면 충돌
+    //return distanceSquared <= (radius * radius);
 }
 
 bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
@@ -124,31 +137,8 @@ Bounds::Expand
 */
 void Bounds::Expand(const Vector3 &rhs)
 {
-    if (rhs.x < mins.x)
-    {
-        mins.x = rhs.x;
-    }
-    if (rhs.y < mins.y)
-    {
-        mins.y = rhs.y;
-    }
-    if (rhs.z < mins.z)
-    {
-        mins.z = rhs.z;
-    }
-
-    if (rhs.x > maxs.x)
-    {
-        maxs.x = rhs.x;
-    }
-    if (rhs.y > maxs.y)
-    {
-        maxs.y = rhs.y;
-    }
-    if (rhs.z > maxs.z)
-    {
-        maxs.z = rhs.z;
-    }
+    mins = Vector3::Min(mins, rhs);
+    maxs = Vector3::Max(maxs, rhs);
 }
 
 /*

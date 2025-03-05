@@ -156,15 +156,15 @@ void GameObject::SetRotationZ(float rotZ)
     m_IsUpdated = true;
 }
 
-void GameObject::SetRotation(const Quaternion *pInQuaternion)
+void GameObject::SetRotation(Quaternion q)
 {
-    m_transform.SetRotation(*pInQuaternion);
+    m_transform.SetRotation(q);
     m_IsUpdated = true;
 }
 
-void GameObject::AddPosition(const Vector3 *pInDeltaPos)
+void GameObject::AddPosition(Vector3 deltaPos)
 {
-    m_transform.AddPosition(*pInDeltaPos);
+    m_transform.AddPosition(deltaPos);
     m_IsUpdated = true;
 }
 

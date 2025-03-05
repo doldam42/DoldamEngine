@@ -1,11 +1,12 @@
 #pragma once
 class CollisionDemoController : public IController
 {
-    const float  speed = 5.0f;
-    float jumpSpeed = 0.0f;
-    IGameObject *m_pPlayer = nullptr; 
+    static constexpr float SPEED = 10.0f;
 
-    void Jump();
+    float speed = SPEED;
+    float jumpSpeed = 0.0f;
+
+    IGameObject *m_pPlayer = nullptr;
 
   public:
     // Inherited via IController

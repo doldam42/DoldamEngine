@@ -113,7 +113,7 @@ BOOL RaytracingDemoController::Start()
 
     pGura->SetPosition(0.0f, 1.0f, -1.0f);
     Quaternion q = Quaternion::CreateFromYawPitchRoll(Vector3(-XM_PIDIV2, XM_PI, 0.0f));
-    pGura->SetRotation(&q);
+    pGura->SetRotation(q);
 
     m_pGura = pGura;
     m_pBox = pBox;
