@@ -13,72 +13,67 @@ void CameraController::Update(const float dt)
     {
         m_isFreezed = !m_isFreezed;
     }
-
     if (m_isFreezed)
         return;
+
+    float cursorNDCX = pI->GetCursorNDCX();
+    float cursorNDCY = pI->GetCursorNDCY();
+
+    if (m_prevCursorNDCX != cursorNDCX || m_prevcursorNDCY != cursorNDCY)
+    {
+        UpdateMouse(cursorNDCX, cursorNDCY);
+        m_prevCursorNDCX = cursorNDCX;
+        m_prevcursorNDCY = cursorNDCY;
+    }
+
     if (m_pTarget && !m_useFirstPersonView)
     {
-        float offset = 2.f;
-
+        const float offset = 2.0f;
         Vector3 up = Vector3::UnitY;
-        Vector3 viewDir = m_pTarget->GetForward();
-        Vector3 eye = m_pTarget->GetPosition() + up * offset - viewDir * offset;
+        Vector3 pos = m_pTarget->GetPosition() + up * offset;
 
-        m_pGame->SetCameraEyeAtUp(eye, m_pTarget->GetPosition(), up);
+        m_pTarget->SetRotationY(m_yaw);
+        m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
     }
     else
     {
         UpdateKeyboard(dt);
-
-        float cursorNDCX = g_pClient->GetInputManager()->GetCursorNDCX();
-        float cursorNDCY = g_pClient->GetInputManager()->GetCursorNDCY();
-
-        if (m_prevCursorNDCX != cursorNDCX || m_prevcursorNDCY != cursorNDCY)
-        {
-            UpdateMouse(cursorNDCX, cursorNDCY);
-            m_prevCursorNDCX = cursorNDCX;
-            m_prevcursorNDCY = cursorNDCY;
-        }
     }
 }
 
 void CameraController::UpdateKeyboard(const float dt)
 {
-    if (m_useFirstPersonView)
+    InputManager *pInputManager = g_pClient->GetInputManager();
+
+    float x = pInputManager->GetXAxis();
+    float y = pInputManager->GetYAxis();
+    float z = pInputManager->GetZAxis();
+
+    if (x != 0 || y != 0 || z != 0)
     {
-        InputManager *pInputManager = g_pClient->GetInputManager();
+        Vector3 v(x, y, z);
 
-        float x = pInputManager->GetXAxis();
-        float y = pInputManager->GetYAxis();
-        float z = pInputManager->GetZAxis();
+        Vector3 forward = m_pGame->GetCameraLookTo();
+        Vector3 right = -forward.Cross(Vector3::Up);
 
-        if (x != 0 || y != 0 || z != 0)
-        {
-            Vector3 v(x, y, z);
+        Vector3 pos = m_pGame->GetCameraPos();
 
-            Vector3 forward = m_pGame->GetCameraLookTo();
-            Vector3 right = -forward.Cross(Vector3::Up);
+        Matrix m(right, Vector3::Up, forward);
+        pos += Vector3::Transform(v, m) * m_speed * dt;
 
-            Vector3 pos = m_pGame->GetCameraPos();
-
-            Matrix m(right, Vector3::Up, forward);
-            pos += Vector3::Transform(v, m) * m_speed * dt;
-
-            m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
-        }
+        m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
     }
 }
 
 void CameraController::UpdateMouse(float mouseNdcX, float mouseNdcY)
 {
-    if (m_useFirstPersonView)
-    {
-        // 얼마나 회전할지 계산
-        float yaw = mouseNdcX * XM_2PI;      // 좌우 360도
-        float pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
+    // 얼마나 회전할지 계산
+    float yaw = mouseNdcX * XM_2PI;      // 좌우 360도
+    float pitch = mouseNdcY * XM_PIDIV2; // 위 아래 90도
 
-        m_pGame->SetCameraYawPitchRoll(yaw, -pitch, 0.0f);
-    }
+    m_pGame->SetCameraYawPitchRoll(yaw, -pitch, 0.0f);
+
+    m_yaw = yaw;
 }
 
 void CameraController::Cleanup() {}
@@ -121,10 +116,7 @@ CameraController::CameraController() {}
 
 CameraController::~CameraController() { Cleanup(); }
 
-BOOL CameraController::Start() 
-{
-    return TRUE;
-}
+BOOL CameraController::Start() { return TRUE; }
 
 void CameraController::Render() {}
 

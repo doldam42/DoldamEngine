@@ -21,7 +21,13 @@ void World::BeginCreateWorld(UINT maxObjectCount)
     //m_pTree = new KDTree(maxObjectCount);
 }
 
-void World::InsertObject(GameObject *pObject) { m_pTree->InsertObject(pObject); }
+void World::InsertObject(GameObject *pObject) 
+{
+    if (pObject->HasBounds())
+    {
+        m_pTree->InsertObject(pObject);
+    }
+}
 
 void World::EndCreateWorld() { m_pTree->Build(); }
 

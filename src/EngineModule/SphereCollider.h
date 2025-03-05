@@ -17,6 +17,7 @@ class SphereCollider : public ICollider
     // Getter
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_SPHERE; }
     Vector3       GetCenter() const override { return m_centerOfMass; }
+    Vector3       GetWorldCenter() const override;
     float         GetRadius() const { return m_radius; }
     Matrix        InertiaTensor() const override
     {
@@ -26,6 +27,10 @@ class SphereCollider : public ICollider
         tensor._33 = 2.0f * m_radius * m_radius / 5.0f;
         return tensor;
     }
+
+    BOOL Intersect(ICollider *pOther) const override;
+    BOOL Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
+    BOOL Intersect(const Bounds &b) const override;
 
     SphereCollider() = default;
     ~SphereCollider() {}

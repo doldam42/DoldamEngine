@@ -57,7 +57,7 @@ class Character : public IGameCharacter, public GameObject
 
     Bounds GetBounds() const override;
     bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
-    bool   Intersect(const Bounds b) const override;
+    bool   Intersect(const Bounds& b) const override;
 
     // Inherited via IGameCharacter
     ICollider *GetCollider() const override;

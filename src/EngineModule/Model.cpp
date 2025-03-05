@@ -175,6 +175,9 @@ void Model::InitBoundary()
     //    }
     //}
     //maxRadius += 1e-3f;
+
+    minCorner -= Vector3(1e-3f);
+    maxCorner += Vector3(1e-3f);
     m_boundingBox = {minCorner, maxCorner};
     //m_boundingSphere = Sphere(maxRadius);
 

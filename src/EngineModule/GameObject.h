@@ -80,6 +80,7 @@ class GameObject : public IGameObject
 
     // Inherited via IBoundedObject
     Bounds GetBounds() const override;
+    BOOL   HasBounds() const;
     bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
-    bool   Intersect(const Bounds b) const override;
+    bool   Intersect(const Bounds& b) const override;
 };

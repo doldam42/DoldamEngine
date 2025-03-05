@@ -171,6 +171,7 @@
     <ClCompile Include="BadAppleController.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="CollisionDemoController.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
@@ -192,6 +193,7 @@
     <ClInclude Include="BadAppleController.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
+    <ClInclude Include="CollisionDemoController.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsDemoController.h" />

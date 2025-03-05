@@ -54,6 +54,24 @@ bool Bounds::DoesIntersect(const Bounds &rhs) const
     // return true;
 }
 
+bool Bounds::DoesIntersect(const Vector3 &center, const float radius) const 
+{
+    // AABB 내부에서 Sphere 중심과 가장 가까운 점 찾기
+    Vector3 closestPoint;
+    closestPoint.x = std::fmax(mins.x, std::fmin(center.x, maxs.x));
+    closestPoint.y = std::fmax(mins.y, std::fmin(center.y, maxs.y));
+    closestPoint.z = std::fmax(mins.z, std::fmin(center.z, maxs.z));
+
+    // 가장 가까운 점과 Sphere 중심 간 거리 계산
+    float dx = closestPoint.x - center.x;
+    float dy = closestPoint.y - center.y;
+    float dz = closestPoint.z - center.z;
+    float distanceSquared = dx * dx + dy * dy + dz * dz;
+
+    // 거리가 Sphere 반지름 이하이면 충돌
+    return distanceSquared <= (radius * radius);
+}
+
 bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
 {
     __m128 origin = _mm_set_ps(ray.position.x, ray.position.y, ray.position.z, 0.0f);

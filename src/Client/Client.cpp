@@ -12,6 +12,7 @@
 #include "TessellationDemoController.h"
 #include "PhysicsDemoController.h"
 #include "TimeController.h"
+#include "CollisionDemoController.h"
 
 #include "Client.h"
 
@@ -208,13 +209,16 @@ BOOL Client::Initialize(HWND hWnd)
 
     // Register Controllers Before Start Game Manager.
     m_pTimeController = new TimeController;
-    m_pPhysicsDemoController = new PhysicsDemoController;
+    //m_pPhysicsDemoController = new PhysicsDemoController;
     //m_pRaytracingDemoController = new RaytracingDemoController;
      //m_pTessellationDemoController = new TessellationDemoController();
+    m_pCollisionDemoController = new CollisionDemoController;
 
     m_pGame->Register(m_pAudio);
     m_pGame->Register(m_pTimeController);
-    m_pGame->Register(m_pPhysicsDemoController);
+    m_pGame->Register(m_pCollisionDemoController);
+    //m_pGame->Register(m_pPhysicsDemoController);
+    
     //m_pGame->Register(m_pRaytracingDemoController);
      //m_pGame->Register(m_pTessellationDemoController);
 

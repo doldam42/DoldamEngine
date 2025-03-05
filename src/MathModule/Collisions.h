@@ -21,4 +21,5 @@ BOOL SphereTriangleStatic(const Vector3 &sphereCenter, const float sphereRadius,
 
 BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius, const Vector3 &sphereVelocity,
                            const float dt, const Vector3 &v0, const Vector3 &v1, const Vector3 &v2,
-                           const Vector3 &normal, Vector3 *pOutSlide, Vector3 *pOutReflect, float *pOutToi);
+                           const Vector3 &normal, Vector3 *pOutSlide, Vector3 *pOutReflect,
+                           float *pOutToi);

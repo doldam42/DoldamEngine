@@ -2,6 +2,7 @@
 
 #include "GameObject.h"
 
+#include "SphereCollider.h"
 #include "BoxCollider.h"
 
 BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 &center, const Vector3 &extent) 
@@ -21,6 +22,12 @@ Bounds BoxCollider::GetWorldBounds() const
     Bounds box;
     m_bounds.Transform(&box, m);
     return box;
+}
+
+Vector3 BoxCollider::GetWorldCenter() const 
+{ 
+	const Vector3 pos = m_pGameObject->GetPosition(); 
+	return pos + m_bounds.Center();
 }
 
 Matrix BoxCollider::InertiaTensor() const 
@@ -52,4 +59,38 @@ Matrix BoxCollider::InertiaTensor() const
 
 	tensor += patTensor;
     return tensor;
+}
+
+BOOL BoxCollider::Intersect(ICollider *pOther) const 
+{
+    switch (pOther->GetType())
+    {
+    case COLLIDER_TYPE_SPHERE: {
+        const Vector3   posB = pOther->GetWorldCenter();
+        SphereCollider *pB = (SphereCollider *)pOther;
+        return GetWorldBounds().DoesIntersect(posB, pB->GetRadius());
+    }
+    case COLLIDER_TYPE_BOX: {
+        return GetWorldBounds().DoesIntersect(pOther->GetWorldBounds());
+    }
+    default:
+        return FALSE;
+    }
+}
+
+BOOL BoxCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+{ 
+    float tmin, tmax;
+    if (GetWorldBounds().IntersectP(ray, &tmin, &tmax) && tmin < ray.tmax)
+    {
+        *hitt0 = tmin;
+        *hitt1 = tmax;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL BoxCollider::Intersect(const Bounds &b) const 
+{ 
+    return b.DoesIntersect(GetWorldBounds());
 }

@@ -541,15 +541,13 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
 
     float closestHit = FLT_MAX;
 
-    Vector3 invDir(1.f / ray.direction.x, 1.f / ray.direction.y, 1.f / ray.direction.z);
-    int     dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
     int     nodesToVisit[64];
     int     toVisitOffset = 0, currentNodeIndex = 0;
     while (true)
     {
         const LinearBVHNode *node = &nodes[currentNodeIndex];
         float                tmin, tmax;
-        if (node->bounds.IntersectP(ray, &tmin, &tmax) && tmin < closestHit)
+        if (node->bounds.IntersectP(ray, &tmin, &tmax))
         {
             // Process BVH node _node_ for traversal
             if (node->nPrimitives > 0)
@@ -616,10 +614,11 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) 
         }
     }
 
-    if (closestHit < ray.tmax)
+    if (closestHit < FLT_MAX)
     {
         return true;
     }
+    
     return false;
 }
 

@@ -214,22 +214,28 @@ Bounds GameObject::GetBounds() const
     return box;
 }
 
-bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+BOOL GameObject::HasBounds() const 
 {
-    Bounds b = GetBounds();
-    return b.IntersectP(ray, hitt0, hitt1);
+    if (!m_pModel)
+        return FALSE;
+    return TRUE;
 }
 
-bool GameObject::Intersect(const Bounds b) const
+bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
 {
-    //    if (!m_pCollider)
-    //    {
-    // #ifdef _DEBUG
-    //        __debugbreak();
-    // #endif // _DEBUG
-    //        return false;
-    //    }
-    //    return m_pCollider->GetBounds().DoesIntersect(b);
+    if (!m_pCollider)
+    {
+        Bounds b = GetBounds();
+        return b.IntersectP(ray, hitt0, hitt1);
+    }
+    return m_pCollider->Intersect(ray, hitt0, hitt1);
+}
 
-    return GetBounds().DoesIntersect(b);
+bool GameObject::Intersect(const Bounds& b) const
+{
+    if (!m_pCollider)
+    {
+        return GetBounds().DoesIntersect(b);
+    }
+    return m_pCollider->Intersect(b);
 }

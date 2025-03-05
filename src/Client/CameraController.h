@@ -10,6 +10,8 @@ class CameraController : public IController
 
     float m_speed = 3.0f; // 움직이는 속도
 
+    float m_yaw = 0.0f;
+
     float m_prevCursorNDCX = 0.0f;
     float m_prevcursorNDCY = 0.0f;
     

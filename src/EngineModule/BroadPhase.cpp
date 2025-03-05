@@ -30,20 +30,19 @@ static int CompareSAP(const void *a, const void *b)
 SortBodiesBounds
 ====================================================
 */
-static void SortBodiesBounds(RigidBody **bodies, const int num, PsuedoBody *sortedArray,
-                             const float dt_sec)
+static void SortBodiesBounds(const RigidBody *const *bodies, const int num, PsuedoBody *sortedArray, const float dt_sec)
 {
     Vector3 axis = Vector3(1, 1, 1);
     axis.Normalize();
 
     for (int i = 0; i < num; i++)
     {
-        const RigidBody &body = *bodies[i];
-        Bounds           bounds = body.GetBounds();
+        const RigidBody *body = bodies[i];
+        Bounds           bounds = body->GetBounds();
 
         // Expand the bounds by the linear velocity
-        bounds.Expand(bounds.mins + body.m_linearVelocity * dt_sec);
-        bounds.Expand(bounds.maxs + body.m_linearVelocity * dt_sec);
+        bounds.Expand(bounds.mins + body->m_linearVelocity * dt_sec);
+        bounds.Expand(bounds.maxs + body->m_linearVelocity * dt_sec);
 
         const float epsilon = 0.01f;
         bounds.Expand(bounds.mins + Vector3(-1, -1, -1) * epsilon);
@@ -107,16 +106,18 @@ void BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *so
 SweepAndPrune1D
 ====================================================
 */
-void SweepAndPrune1D(RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
+void SweepAndPrune1D(const RigidBody *const *bodies, const int num, std::vector<CollisionPair> &finalPairs,
                      const float dt_sec)
 {
     PsuedoBody *sortedBodies = (PsuedoBody *)_malloca(sizeof(PsuedoBody) * num * 2);
 
     SortBodiesBounds(bodies, num, sortedBodies, dt_sec);
     BuildPairs(finalPairs, sortedBodies, num);
+    
+    _freea(sortedBodies);
 }
 
-void BroadPhase(RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
+void BroadPhase(const RigidBody *const *bodies, const int num, std::vector<CollisionPair> &finalPairs,
                 const float dt_sec)
 {
     finalPairs.clear();

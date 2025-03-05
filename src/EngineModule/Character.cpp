@@ -105,7 +105,7 @@ bool Character::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
     return GameObject::Intersect(ray, hitt0, hitt1);
 }
 
-bool Character::Intersect(const Bounds b) const { return GameObject::Intersect(b); }
+bool Character::Intersect(const Bounds& b) const { return GameObject::Intersect(b); }
 
 ICollider *Character::GetCollider() const { return GameObject::GetCollider(); }
 

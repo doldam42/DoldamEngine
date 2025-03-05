@@ -6,6 +6,7 @@ class BadAppleController;
 class RaytracingDemoController;
 class TessellationDemoController;
 class PhysicsDemoController;
+class CollisionDemoController;
 class InputManager;
 class AudioManager;
 class Client
@@ -38,6 +39,7 @@ class Client
     RaytracingDemoController   *m_pRaytracingDemoController = nullptr;
     TessellationDemoController *m_pTessellationDemoController = nullptr;
     PhysicsDemoController      *m_pPhysicsDemoController = nullptr;
+    CollisionDemoController    *m_pCollisionDemoController = nullptr;
 
     // Timer
     ULONGLONG m_prevUpdateTick = 0;
@@ -89,6 +91,8 @@ class Client
     IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }
 
     InputManager *GetInputManager() { return m_pInputManager; }
+
+    CameraController *GetCameraController() { return m_pCameraController; }
 
     UINT GetScreenWidth() const { return m_width; }
     UINT GetScreenHeight() const { return m_height; }

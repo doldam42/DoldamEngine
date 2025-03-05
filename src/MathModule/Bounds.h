@@ -29,6 +29,7 @@ class Bounds
         maxs = Vector3(FLT_MIN);
     }
     bool DoesIntersect(const Bounds &rhs) const;
+    bool DoesIntersect(const Vector3 &center, const float radius) const;
     bool IntersectP(const Ray &ray, float *hitt0, float *hitt1) const;
 
     void Expand(const Vector3 *pts, const int num);
@@ -60,5 +61,5 @@ interface IBoundedObject
     virtual Bounds GetBounds() const = 0;
 
     virtual bool Intersect(const Ray &ray, float* hitt0, float* hitt1) const = 0;
-    virtual bool Intersect(const Bounds b) const = 0;
+    virtual bool Intersect(const Bounds& b) const = 0;
 };

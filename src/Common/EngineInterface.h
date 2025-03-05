@@ -88,10 +88,15 @@ interface ICollider
     virtual COLLIDER_TYPE GetType() const = 0;
 
     virtual Vector3 GetCenter() const = 0;
+    virtual Vector3 GetWorldCenter() const = 0;
     virtual Bounds  GetBounds() const = 0;
     virtual Bounds  GetWorldBounds() const = 0;
 
     virtual Matrix InertiaTensor() const = 0;
+
+    virtual BOOL Intersect(ICollider * pOther) const = 0;
+    virtual BOOL Intersect(const Ray &ray, float* hitt0, float*hitt1) const = 0;
+    virtual BOOL Intersect(const Bounds &b) const = 0;
 };
 interface IRigidBody
 {
@@ -128,6 +133,7 @@ interface IGameObject : public IBoundedObject
     virtual void SetRotation(const Quaternion *pInQuaternion) = 0;
 
     virtual void AddPosition(const Vector3 *pInDeltaPos) = 0;
+    //virtual void Translate(const Vector3 *pInDeltaPos) = 0;
 
     virtual void             SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
     virtual IRenderMaterial *GetMaterialAt(UINT index) = 0;

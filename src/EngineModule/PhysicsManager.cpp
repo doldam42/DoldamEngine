@@ -1,12 +1,12 @@
 #include "pch.h"
 
-#include "BroadPhase.h"
 #include "GameObject.h"
 
+#include "SphereCollider.h"
 #include "BoxCollider.h"
 #include "RigidBody.h"
-#include "SphereCollider.h"
 
+#include "BroadPhase.h"
 #include "World.h"
 
 #include "PhysicsManager.h"
@@ -147,10 +147,8 @@ BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
     collisionPairs.reserve(MAX_COLLISION_COUNT);
     BroadPhase(m_pBodies, m_bodyCount, collisionPairs, dt);
 
-    for (UINT i = 0; i < collisionPairs.size(); i++)
+    for (const CollisionPair &pair : collisionPairs)
     {
-        const CollisionPair &pair = collisionPairs[i];
-
         RigidBody *pA = m_pBodies[pair.a];
         RigidBody *pB = m_pBodies[pair.b];
 
