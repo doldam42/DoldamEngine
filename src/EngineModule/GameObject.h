@@ -11,7 +11,7 @@ class GameObject : public IGameObject
     Transform     m_transform;
     Matrix        m_worldMatrix;
 
-    GameManager      *m_pGameEngine = nullptr;
+    GameManager      *m_pGame = nullptr;
     IRenderer        *m_pRenderer = nullptr;
     Model            *m_pModel = nullptr;
     IRenderMaterial **m_ppMaterials = nullptr;

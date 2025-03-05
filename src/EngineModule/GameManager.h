@@ -153,7 +153,8 @@ class GameManager : public IGameManager
     }
     void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) override { m_pMainCamera->SetEyeAtUp(eye, at, up); }
 
-    inline IRenderer     *GetRenderer() const { return m_pRenderer; }
+    IRenderer      *GetRenderer() const { return m_pRenderer; }
+    PhysicsManager *GetPhysicsManager() const { return m_pPhysicsManager; }
 
     BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = FLT_MAX) override;
 
@@ -164,7 +165,6 @@ class GameManager : public IGameManager
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
-
 };
 
 extern GameManager *g_pGame;

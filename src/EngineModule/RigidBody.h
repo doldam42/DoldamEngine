@@ -17,6 +17,8 @@ class RigidBody : public IRigidBody
     BOOL m_useGravity = TRUE;
     BOOL m_isKinematic = TRUE;
 
+    SORT_LINK m_linkInPhysics;
+
   private:
     void Cleanup();
 

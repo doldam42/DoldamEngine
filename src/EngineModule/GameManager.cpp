@@ -271,32 +271,10 @@ void GameManager::PreUpdate(float dt) { ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
-    SORT_LINK *pCur = m_pGameObjLinkHead;
-    while (pCur)
-    {
-        GameObject       *pGameObj = (GameObject *)pCur->pItem;
-        RigidBody  *pComp = (RigidBody *)pGameObj->GetRigidBody();
-        if (pComp)
-        {
-            pComp->ApplyGravityImpulse(dt);
-        }
+    m_pPhysicsManager->ApplyGravityImpulseAll(dt);
 
-        pCur = pCur->pNext;
-    }
-
-    pCur = m_pGameObjLinkHead;
-    while (pCur)
-    {
-        GameObject *pGameObj = (GameObject *)pCur->pItem;
-
-        if (pGameObj->GetRigidBody())
-        {
-            m_pPhysicsManager->CollisionTest(pGameObj, dt);
-        }
-
-        pCur = pCur->pNext;
-    }
-
+    m_pPhysicsManager->CollisionTestAll(m_pWorld, dt);
+    
     m_pPhysicsManager->ResolveContactsAll(dt);
 }
 

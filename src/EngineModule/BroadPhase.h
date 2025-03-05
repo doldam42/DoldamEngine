@@ -14,5 +14,5 @@ struct CollisionPair
     bool operator!=(const CollisionPair &rhs) const { return !(*this == rhs); }
 };
 
-void BroadPhase(const RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
+void BroadPhase(RigidBody **bodies, const int num, std::vector<CollisionPair> &finalPairs,
                 const float dt_sec);

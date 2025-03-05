@@ -4,9 +4,9 @@
 #include "Model.h"
 
 #include "BoxCollider.h"
-#include "RigidBody.h"
 #include "SphereCollider.h"
-
+#include "RigidBody.h"
+#include "PhysicsManager.h"
 #include "GameObject.h"
 
 size_t GameObject::g_id = 0;
@@ -28,21 +28,21 @@ void GameObject::CleanupMaterials()
 void GameObject::Cleanup()
 {
     CleanupMaterials();
+    if (m_pRigidBody)
+    {
+        m_pGame->GetPhysicsManager()->DeleteRigidBody(m_pRigidBody);
+        m_pRigidBody = nullptr;
+    }
     if (m_pModel)
     {
         m_pModel->Release();
         m_pModel = nullptr;
     }
-    if (m_pRigidBody)
-    {
-        delete m_pRigidBody;
-        m_pRigidBody = nullptr;
-    }
 }
 
 void GameObject::Initialize(GameManager *pGameEngine)
 {
-    m_pGameEngine = pGameEngine;
+    m_pGame = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();
 }
 
@@ -70,8 +70,8 @@ BOOL GameObject::InitRigidBody(float mass, float elasticity, float friction, BOO
     if (!m_pCollider)
         return FALSE;
 
-    m_pRigidBody = new RigidBody;
-    m_pRigidBody->Initialize(this, m_pCollider, mass, elasticity, friction, useGravity, isKinematic);
+    PhysicsManager *pPhysics = m_pGame->GetPhysicsManager();
+    m_pRigidBody = pPhysics->CreateRigidBody(this, m_pCollider, mass, elasticity, friction, useGravity, isKinematic);
     return TRUE;
 }
 

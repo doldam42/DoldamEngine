@@ -7,6 +7,8 @@
 #include "RigidBody.h"
 #include "SphereCollider.h"
 
+#include "World.h"
+
 #include "PhysicsManager.h"
 
 BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact)
@@ -63,13 +65,46 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         }
         return FALSE;
     }
+    return FALSE;
 }
+
+void PhysicsManager::Cleanup() {}
 
 BOOL PhysicsManager::Initialize() { return 0; }
 
+RigidBody *PhysicsManager::CreateRigidBody(GameObject *pObj, ICollider *pCollider, float mass, float elasticity,
+                                           float friction, BOOL useGravity, BOOL isKinematic)
+{
+    RigidBody *pItem = new RigidBody;
+    pItem->Initialize(pObj, pCollider, mass, elasticity, friction, useGravity, isKinematic);
+
+    LinkToLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pItem->m_linkInPhysics);
+
+    return pItem;
+}
+
+void PhysicsManager::DeleteRigidBody(RigidBody *pBody)
+{
+    UnLinkFromLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pBody->m_linkInPhysics);
+    delete pBody;
+}
+
+void PhysicsManager::ApplyGravityImpulseAll(float dt)
+{
+    SORT_LINK *pCur = m_pRigidBodyLinkHead;
+    while (pCur)
+    {
+        RigidBody *pBody = (RigidBody *)pCur->pItem;
+
+        pBody->ApplyGravityImpulse(dt);
+
+        pCur = pCur->pNext;
+    }
+}
+
 BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
 {
-    RigidBody *pCurComp = (RigidBody*)pObj->GetRigidBody();
+    RigidBody *pCurComp = (RigidBody *)pObj->GetRigidBody();
     if (!pCurComp)
         return FALSE;
 
@@ -85,7 +120,7 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
         Contact contact;
         if (Intersect(pCurComp, pOtherComp, dt, &contact))
         {
-            m_pContact[m_contactCount] = contact;
+            m_contacts[m_contactCount] = contact;
             m_contactCount++;
             return TRUE;
         }
@@ -93,6 +128,44 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
         pCur = pCur->pNext;
     }
     return FALSE;
+}
+
+BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
+{
+    SORT_LINK *pCur = m_pRigidBodyLinkHead;
+    while (pCur)
+    {
+        RigidBody *pBody = (RigidBody *)pCur->pItem;
+
+        m_pBodies[m_bodyCount] = pBody;
+        m_bodyCount++;
+
+        pCur = pCur->pNext;
+    }
+
+    std::vector<CollisionPair> collisionPairs;
+    collisionPairs.reserve(MAX_COLLISION_COUNT);
+    BroadPhase(m_pBodies, m_bodyCount, collisionPairs, dt);
+
+    for (UINT i = 0; i < collisionPairs.size(); i++)
+    {
+        const CollisionPair &pair = collisionPairs[i];
+
+        RigidBody *pA = m_pBodies[pair.a];
+        RigidBody *pB = m_pBodies[pair.b];
+
+        if (pA->m_invMass == 0 && pB->m_invMass == 0)
+            continue;
+
+        Contact contact;
+        if (Intersect(pA, pB, dt, &contact))
+        {
+            m_contacts[m_contactCount] = contact;
+            m_contactCount++;
+        }
+    }
+
+    return TRUE;
 }
 
 int CompareContacts(const void *p1, const void *p2)
@@ -117,13 +190,13 @@ void PhysicsManager::ResolveContactsAll(float dt)
 {
     if (m_contactCount > 1)
     {
-        qsort(m_pContact, m_contactCount, sizeof(Contact), CompareContacts);
+        qsort(m_contacts, m_contactCount, sizeof(Contact), CompareContacts);
     }
 
     float accumulatedTime = 0.0f;
     for (UINT i = 0; i < m_contactCount; i++)
     {
-        Contact    &contact = m_pContact[i];
+        Contact    &contact = m_contacts[i];
         const float dt_sec = contact.timeOfImpact - accumulatedTime;
 
         // position Update
@@ -149,3 +222,5 @@ void PhysicsManager::ResolveContactsAll(float dt)
     m_contactCount = 0;
     m_bodyCount = 0;
 }
+
+PhysicsManager::~PhysicsManager() {}
