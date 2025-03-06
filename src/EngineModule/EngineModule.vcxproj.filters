@@ -46,10 +46,10 @@
     <ClCompile Include="World.cpp" />
     <ClCompile Include="ControllerManager.cpp" />
     <ClCompile Include="BoxCollider.cpp">
-      <Filter>Collider</Filter>
+      <Filter>Physics\Collider</Filter>
     </ClCompile>
     <ClCompile Include="SphereCollider.cpp">
-      <Filter>Collider</Filter>
+      <Filter>Physics\Collider</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,10 +96,10 @@
     <ClInclude Include="ControllerManager.h" />
     <ClInclude Include="..\Common\EngineInterface.h" />
     <ClInclude Include="BoxCollider.h">
-      <Filter>Collider</Filter>
+      <Filter>Physics\Collider</Filter>
     </ClInclude>
     <ClInclude Include="SphereCollider.h">
-      <Filter>Collider</Filter>
+      <Filter>Physics\Collider</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -121,7 +121,7 @@
     <Filter Include="GameObject">
       <UniqueIdentifier>{9c64e1f9-0974-47ed-9ef1-56b8ed09e298}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Collider">
+    <Filter Include="Physics\Collider">
       <UniqueIdentifier>{291cb770-c317-44a2-b854-7fa734ec90ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

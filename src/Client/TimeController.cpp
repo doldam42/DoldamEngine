@@ -5,11 +5,6 @@
 
 #include "TimeController.h"
 
-BOOL TimeController::Start() 
-{
-    return TRUE;
-}
-
 void TimeController::Update(float dt)
 { 
     static float  speed = 0.0f;
@@ -26,4 +21,3 @@ void TimeController::Update(float dt)
     }
 }
 
-void TimeController::Render() {}

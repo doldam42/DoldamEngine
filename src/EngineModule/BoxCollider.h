@@ -12,7 +12,7 @@ class BoxCollider : public ICollider
     // Inherited via ICollider
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_BOX; }
     Vector3       GetCenter() const override { return m_bounds.Center(); }
-    Bounds        GetBounds() const override;
+    Bounds        GetBounds() const override { return m_bounds; }
     Bounds        GetWorldBounds() const override;
     Vector3       GetWorldCenter() const override;
 

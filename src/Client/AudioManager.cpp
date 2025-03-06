@@ -11,12 +11,6 @@ void AudioManager::Cleanup()
     }
 }
 
-void AudioManager::Initialize()
-{
-    FMOD::System_Create(&m_pSystem);
-    m_pSystem->init(4, FMOD_INIT_NORMAL, NULL);
-}
-
 SOUND_HANDLE *AudioManager::CreateAudioHandle(const WCHAR *wpath)
 {
     char path[MAX_PATH] = {'\0'};
@@ -65,9 +59,3 @@ void AudioManager::SoundPlay(SOUND_HANDLE *pAudio, bool isLoop)
 }
 
 AudioManager::~AudioManager() { Cleanup(); }
-
-void AudioManager::Render() {}
-
-BOOL AudioManager::Start() { return 0; }
-
-void AudioManager::Update(float dt) { m_pSystem->update();}

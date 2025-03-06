@@ -1,12 +1,6 @@
 #pragma once
 
 class CameraController;
-class TimeController;
-class BadAppleController;
-class RaytracingDemoController;
-class TessellationDemoController;
-class PhysicsDemoController;
-class CollisionDemoController;
 class InputManager;
 class AudioManager;
 class Client
@@ -18,7 +12,6 @@ class Client
 
     HWND          m_hWnd = nullptr;
     IGameManager *m_pGame = nullptr;
-    AudioManager *m_pAudio = nullptr;
 
     IRenderer      *m_pRenderer = nullptr;
     IGameCharacter *m_pCharacter = nullptr;
@@ -33,13 +26,8 @@ class Client
     UINT m_height = 0;
 
     // Controllers
-    TimeController             *m_pTimeController = nullptr;
-    CameraController           *m_pCameraController = nullptr;
-    BadAppleController         *m_pDemoController = nullptr;
-    RaytracingDemoController   *m_pRaytracingDemoController = nullptr;
-    TessellationDemoController *m_pTessellationDemoController = nullptr;
-    PhysicsDemoController      *m_pPhysicsDemoController = nullptr;
-    CollisionDemoController    *m_pCollisionDemoController = nullptr;
+    AudioManager     *m_pAudioManager = nullptr;
+    CameraController *m_pCameraController = nullptr;
 
     // Timer
     ULONGLONG m_prevUpdateTick = 0;
@@ -85,7 +73,7 @@ class Client
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     IGameManager *GetGameManager() { return m_pGame; }
-    AudioManager *GetAudioManager() { return m_pAudio; }
+    AudioManager *GetAudioManager() { return m_pAudioManager; }
 
     IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }
     IModelExporter *GetAssimpExporter() { return m_pAssimpExporter; }

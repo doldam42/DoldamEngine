@@ -1,8 +1,5 @@
 #pragma once
 
-#include "../MathModule/MathHeaders.h"
-
-class Client;
 class CameraController : public IController
 {
     IGameManager *m_pGame = nullptr;
@@ -26,9 +23,9 @@ class CameraController : public IController
     void Cleanup();
 
   public:
-    void Initialize(Client *pClient);
-
+    BOOL Start() override;
     void Update(const float dt) override;
+    void Render() override;
 
     void MoveForward(float dt);
     void MoveRight(float dt);
@@ -38,8 +35,4 @@ class CameraController : public IController
 
     CameraController();
     ~CameraController();
-
-    // Inherited via IController
-    BOOL Start() override;
-    void Render() override;
 };

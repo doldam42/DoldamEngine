@@ -190,10 +190,12 @@
     <ClInclude Include="..\Common\RendererInterface.h" />
     <ClInclude Include="..\Common\typedef.h" />
     <ClInclude Include="AudioManager.h" />
+    <ClInclude Include="AutoRegisterController.h" />
     <ClInclude Include="BadAppleController.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="CollisionDemoController.h" />
+    <ClInclude Include="ControllerRegistry.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsDemoController.h" />

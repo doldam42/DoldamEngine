@@ -112,12 +112,16 @@ void CameraController::SetFollowTarget(IGameObject *pTarget)
     m_pTarget = pTarget;
 }
 
-CameraController::CameraController() {}
+CameraController::CameraController() 
+{ 
+    m_pGame = g_pClient->GetGameManager();
+}
 
 CameraController::~CameraController() { Cleanup(); }
 
-BOOL CameraController::Start() { return TRUE; }
+BOOL CameraController::Start()
+{
+    return TRUE;
+}
 
 void CameraController::Render() {}
-
-void CameraController::Initialize(Client *pClient) { m_pGame = pClient->GetGameManager(); }

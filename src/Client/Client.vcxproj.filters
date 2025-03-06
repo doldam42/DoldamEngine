@@ -8,7 +8,6 @@
     <ClCompile Include="main.cpp">
       <Filter>MainEntry</Filter>
     </ClCompile>
-    <ClCompile Include="TimeController.cpp" />
     <ClCompile Include="VideoManager.cpp">
       <Filter>VideoManager</Filter>
     </ClCompile>
@@ -32,6 +31,7 @@
     <ClCompile Include="CollisionDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
+    <ClCompile Include="TimeController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -44,7 +44,6 @@
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="TimeController.h" />
     <ClInclude Include="VideoManager.h">
       <Filter>VideoManager</Filter>
     </ClInclude>
@@ -80,6 +79,9 @@
     <ClInclude Include="CollisionDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
+    <ClInclude Include="AutoRegisterController.h" />
+    <ClInclude Include="ControllerRegistry.h" />
+    <ClInclude Include="TimeController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

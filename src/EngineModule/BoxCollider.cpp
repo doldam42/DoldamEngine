@@ -13,11 +13,10 @@ BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 &center, const Vect
 
 	return TRUE;
 }
-Bounds BoxCollider::GetBounds() const { return m_bounds; }
 
 Bounds BoxCollider::GetWorldBounds() const 
 {
-    Matrix m = m_pGameObject->GetWorldMatrix();
+    const Matrix& m = m_pGameObject->GetWorldMatrix();
 
     Bounds box;
     m_bounds.Transform(&box, m);

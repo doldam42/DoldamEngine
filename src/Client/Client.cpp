@@ -6,6 +6,8 @@
 #include "VideoManager.h"
 #include "InputManager.h"
 
+#include "ControllerRegistry.h"
+
 #include "CameraController.h"
 #include "BadAppleController.h"
 #include "RaytracingDemoController.h"
@@ -105,31 +107,6 @@ void Client::CleanupControllers()
         delete m_pCameraController;
         m_pCameraController = nullptr;
     }
-    if (m_pDemoController)
-    {
-        delete m_pDemoController;
-        m_pDemoController = nullptr;
-    }
-    if (m_pTimeController)
-    {
-        delete m_pTimeController;
-        m_pTimeController = nullptr;
-    }
-    if (m_pRaytracingDemoController)
-    {
-        delete m_pRaytracingDemoController;
-        m_pRaytracingDemoController = nullptr;
-    }
-    if (m_pTessellationDemoController)
-    {
-        delete m_pTessellationDemoController;
-        m_pTessellationDemoController = nullptr;
-    }
-    if (m_pPhysicsDemoController)
-    {
-        delete m_pPhysicsDemoController;
-        m_pPhysicsDemoController = nullptr;
-    }
 }
 
 void Client::Cleanup()
@@ -161,10 +138,10 @@ void Client::Cleanup()
         m_pGame->Release();
         m_pGame = nullptr;
     }
-    if (m_pAudio)
+    if (m_pAudioManager)
     {
-        delete m_pAudio;
-        m_pAudio = nullptr;
+        delete m_pAudioManager;
+        m_pAudioManager = nullptr;
     }
     if (m_hModelExporterDLL)
     {
@@ -200,27 +177,12 @@ BOOL Client::Initialize(HWND hWnd)
     m_pInputManager = new InputManager;
     m_pInputManager->Initialize(width, height);
 
-    m_pAudio = new AudioManager;
-    m_pAudio->Initialize();
-
+    m_pAudioManager = new AudioManager;
     m_pCameraController = new CameraController;
-    m_pCameraController->Initialize(this);
+    m_pGame->Register(m_pAudioManager);
     m_pGame->Register(m_pCameraController);
 
-    // Register Controllers Before Start Game Manager.
-    m_pTimeController = new TimeController;
-    //m_pPhysicsDemoController = new PhysicsDemoController;
-    //m_pRaytracingDemoController = new RaytracingDemoController;
-     //m_pTessellationDemoController = new TessellationDemoController();
-    m_pCollisionDemoController = new CollisionDemoController;
-
-    m_pGame->Register(m_pAudio);
-    m_pGame->Register(m_pTimeController);
-    m_pGame->Register(m_pCollisionDemoController);
-    //m_pGame->Register(m_pPhysicsDemoController);
-    
-    //m_pGame->Register(m_pRaytracingDemoController);
-     //m_pGame->Register(m_pTessellationDemoController);
+    ControllerRegistry::GetInstance().RegisterAll(m_pGame);
 
     Start();
 

@@ -62,10 +62,8 @@ PS_OUTPUT main(PSInput input)
     float4 texColor = (material.flags & MATERIAL_USE_ALBEDO_MAP) ? albedoTex.Sample(linearWrapSampler, input.texcoord)
                                                                  : float4(material.albedo, 1.0);
     const float alpha = texColor.a * material.opacityFactor;
-    if (alpha < 0.01)
-    {
-        discard;
-    }
+    clip(alpha - 0.001);
+
     float  ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
     float3 normalWorld = GetNormal(input, material.flags & MATERIAL_USE_NORMAL_MAP);
     

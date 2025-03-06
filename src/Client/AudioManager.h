@@ -21,17 +21,17 @@ class AudioManager : public IController
     void Cleanup();
 
   public:
-    void Initialize();
-    BOOL Start() override;
-    void Update(float dt) override;
+    BOOL Start() override { return TRUE; }
+    void Update(float dt) override { m_pSystem->update(); }
+    void Render() override {}
 
     SOUND_HANDLE *CreateAudioHandle(const WCHAR *wpath);
     void          DeleteAudioHandle(SOUND_HANDLE *pDel);
     void          SoundPlay(SOUND_HANDLE *pAudio, bool isLoop);
 
-    AudioManager() = default;
+    AudioManager() {
+        FMOD::System_Create(&m_pSystem);
+        m_pSystem->init(4, FMOD_INIT_NORMAL, NULL);
+    }
     ~AudioManager();
-
-    // Inherited via IController
-    void Render() override;
 };
