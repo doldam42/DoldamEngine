@@ -153,4 +153,3 @@ void BadAppleController::Update(float dt)
 
 BadAppleController::~BadAppleController() { Cleanup(); }
 
-void BadAppleController::Render() {}

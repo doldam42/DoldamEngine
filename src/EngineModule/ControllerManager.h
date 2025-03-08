@@ -11,11 +11,13 @@ class ControllerManager
     static const UINT DEFAULT_SCRIPT_COUNT = 64;
 
     std::vector<IController *> m_controllers;
+    std::vector<IRenderableController*> m_renderableControllers;
     /*SORT_LINK *m_pControllerLinkHead = nullptr;
     SORT_LINK *m_pControllerLinkTail = nullptr;*/
 
   public:
     void Register(IController *pController);
+    void Register(IRenderableController *pController);
 
     void Update(float dt);
     void Render();

@@ -117,8 +117,6 @@ CameraController::~CameraController() { Cleanup(); }
 
 BOOL CameraController::Start() { return 0; }
 
-void CameraController::Render() {}
-
 void CameraController::Initialize(GameEditor* pEditor)
 {
     m_pGame = pEditor->GetGameManager();

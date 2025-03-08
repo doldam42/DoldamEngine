@@ -23,15 +23,22 @@
     <ClCompile Include="TessellationDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp" />
-    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="PhysicsDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
     <ClCompile Include="CollisionDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
-    <ClCompile Include="TimeController.cpp" />
+    <ClCompile Include="CameraController.cpp">
+      <Filter>Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeController.cpp">
+      <Filter>Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>InputManager</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -71,17 +78,25 @@
     <ClInclude Include="..\Common\RendererInterface.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager.h" />
-    <ClInclude Include="CameraController.h" />
     <ClInclude Include="PhysicsDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
     <ClInclude Include="CollisionDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
-    <ClInclude Include="AutoRegisterController.h" />
-    <ClInclude Include="ControllerRegistry.h" />
-    <ClInclude Include="TimeController.h" />
+    <ClInclude Include="CameraController.h">
+      <Filter>Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeController.h">
+      <Filter>Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>InputManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ControllerRegistry.h">
+      <Filter>Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -118,6 +133,12 @@
     </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{3418e9d2-50b9-4ba3-9c7c-37c392b1b533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controller">
+      <UniqueIdentifier>{230016e5-580a-481a-b870-cb542c3c876b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="InputManager">
+      <UniqueIdentifier>{628160d5-6d7b-4c84-9448-3087be2146df}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

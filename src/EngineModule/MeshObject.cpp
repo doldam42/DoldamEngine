@@ -172,14 +172,21 @@ void MeshObject::WriteFile(FILE *fp)
 void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
                         const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
 {
+    IRenderMaterial *pMaterials[12];
+    for (int i = 0; i < m_faceGroupCount; i++)
+    {
+        FaceGroup *pFace = m_pFaceGroups + i;
+        pMaterials[i] = ppMaterials[pFace->materialIndex];
+    }
+
     Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
     switch (m_meshType)
     {
     case MESH_TYPE_DEFAULT:
-        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, ppMaterials, m_faceGroupCount);
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, ppMaterials,
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, pMaterials,
                                     m_faceGroupCount);
         break;
     default:

@@ -23,7 +23,4 @@ class BadAppleController : public IController
 
     BadAppleController() = default;
     ~BadAppleController();
-
-    // Inherited via IController
-    void Render() override;
 };

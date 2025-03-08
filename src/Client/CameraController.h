@@ -5,6 +5,8 @@ class CameraController : public IController
     IGameManager *m_pGame = nullptr;
     IGameObject  *m_pTarget = nullptr;
 
+    Vector3 m_thirdPersonViewOffset = Vector3::Zero;
+
     float m_speed = 3.0f; // 움직이는 속도
 
     float m_yaw = 0.0f;
@@ -25,13 +27,12 @@ class CameraController : public IController
   public:
     BOOL Start() override;
     void Update(const float dt) override;
-    void Render() override;
 
     void MoveForward(float dt);
     void MoveRight(float dt);
     void MoveUp(float dt);
 
-    void SetFollowTarget(IGameObject *pTarget);
+    void SetFollowTarget(IGameObject *pTarget, Vector3 thirdPersonViewOffset = Vector3::Zero);
 
     CameraController();
     ~CameraController();

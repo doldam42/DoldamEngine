@@ -1,7 +1,7 @@
 #pragma once
 struct GUIView;
 struct FileNode;
-class GUIController : public IController
+class GUIController : public IRenderableController
 {
     IRenderer *m_pRenderer = nullptr;
     GUIView *m_pGUIView = nullptr;

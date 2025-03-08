@@ -38,5 +38,4 @@ class CameraController : public IController
 
     // Inherited via IController
     BOOL Start() override;
-    void Render() override;
 };

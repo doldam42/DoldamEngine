@@ -119,6 +119,7 @@ class GameManager : public IGameManager
                        const int numStack = 1) override;
 
     void Register(IController *pController) override;
+    void Register(IRenderableController *pController) override;
 
     BOOL LoadResources();
 

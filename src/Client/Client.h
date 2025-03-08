@@ -43,6 +43,7 @@ class Client
 
   private:
     BOOL LoadModules(HWND hWnd);
+    void CleanupModules();
 
     void ProcessInput();
 

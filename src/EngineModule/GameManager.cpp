@@ -601,6 +601,8 @@ BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale
 
 void GameManager::Register(IController *pController) { m_pControllerManager->Register(pController); }
 
+void GameManager::Register(IRenderableController *pController) { m_pControllerManager->Register(pController); }
+
 void GameManager::ToggleCamera() { m_activateCamera = !m_activateCamera; }
 
 BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance)

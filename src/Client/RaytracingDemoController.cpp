@@ -7,20 +7,10 @@
 
 #include "RaytracingDemoController.h"
 
+//REGISTER_CONTROLLER(RaytracingDemoController)
+
 void RaytracingDemoController::Cleanup()
 {
-    IGameManager *pGame = g_pClient->GetGameManager();
-    if (m_pBox)
-    {
-        pGame->DeleteGameObject(m_pBox);
-        m_pBox = nullptr;
-    }
-
-    if (m_pGround)
-    {
-        pGame->DeleteGameObject(m_pGround);
-        m_pGround = nullptr;
-    }
 }
 
 BOOL RaytracingDemoController::Start()
@@ -182,4 +172,3 @@ void RaytracingDemoController::Update(float dt)
 
 RaytracingDemoController::~RaytracingDemoController() { Cleanup(); }
 
-void RaytracingDemoController::Render() {}

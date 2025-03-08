@@ -44,14 +44,16 @@ interface ISerializable
     virtual void ReadFile(const char *filename) = 0;
 };
 
-interface IScriptable
+interface IController
 {
     virtual BOOL Start() = 0;
     virtual void Update(float dt) = 0;
-    virtual void Render() = 0;
 };
 
-interface IController : public IScriptable{};
+interface IRenderableController : public IController
+{
+    virtual void Render() = 0; 
+};
 
 interface IBaseObject
 {
@@ -226,6 +228,7 @@ interface IGameManager : public IUnknown
                                const int numStack = 1) = 0;
 
     virtual void Register(IController * pController) = 0;
+    virtual void Register(IRenderableController * pController) = 0;
 
     virtual Vector3 GetCameraPos() = 0;
     virtual Vector3 GetCameraLookTo() = 0;

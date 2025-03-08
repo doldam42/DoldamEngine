@@ -105,5 +105,3 @@ void PhysicsDemoController::Update(float dt)
         }
     }
 }
-
-void PhysicsDemoController::Render() {}

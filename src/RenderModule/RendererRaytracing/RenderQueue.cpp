@@ -91,7 +91,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             pMeshObj->DrawDeferred(
                 threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
                 pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
-                Graphics::GetPSO(pItem->type, passType, pItem->meshObjParam.fillMode), global, nullptr, 0);
+                Graphics::GetPSO(pItem->type, passType, pItem->fillMode), global, nullptr, 0);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
@@ -99,7 +99,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
                                    pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials,
                                    Graphics::GetRS(pItem->type, passType),
-                                   Graphics::GetPSO(pItem->type, passType, pItem->charObjParam.fillMode), global,
+                                   Graphics::GetPSO(pItem->type, passType, pItem->fillMode), global,
                            pItem->charObjParam.pBones, pItem->charObjParam.numBones);
         }
         break;

@@ -44,13 +44,13 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="World.cpp" />
-    <ClCompile Include="ControllerManager.cpp" />
     <ClCompile Include="BoxCollider.cpp">
       <Filter>Physics\Collider</Filter>
     </ClCompile>
     <ClCompile Include="SphereCollider.cpp">
       <Filter>Physics\Collider</Filter>
     </ClCompile>
+    <ClCompile Include="ControllerManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -93,7 +93,6 @@
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="World.h" />
-    <ClInclude Include="ControllerManager.h" />
     <ClInclude Include="..\Common\EngineInterface.h" />
     <ClInclude Include="BoxCollider.h">
       <Filter>Physics\Collider</Filter>
@@ -101,6 +100,7 @@
     <ClInclude Include="SphereCollider.h">
       <Filter>Physics\Collider</Filter>
     </ClInclude>
+    <ClInclude Include="ControllerManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

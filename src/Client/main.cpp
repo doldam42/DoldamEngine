@@ -102,23 +102,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     ShowCursor(FALSE);
 
-    RECT rc;
-    POINT p1, p2;
-    GetClientRect(g_hMainWindow, &rc);
+    //RECT rc;
+    //POINT p1, p2;
+    //GetClientRect(g_hMainWindow, &rc);
 
-    p1.x = rc.left;
-    p1.y = rc.top;
-    p2.x = rc.right;
-    p2.y = rc.bottom;
+    //p1.x = rc.left;
+    //p1.y = rc.top;
+    //p2.x = rc.right;
+    //p2.y = rc.bottom;
 
-    ClientToScreen(g_hMainWindow, &p1);
-    ClientToScreen(g_hMainWindow, &p2);
+    //ClientToScreen(g_hMainWindow, &p1);
+    //ClientToScreen(g_hMainWindow, &p2);
 
-    rc.left = p1.x;
-    rc.top = p1.y;
-    rc.right = p2.x;
-    rc.bottom = p2.y;
-    ClipCursor(&rc);
+    //rc.left = p1.x;
+    //rc.top = p1.y;
+    //rc.right = p2.x;
+    //rc.bottom = p2.y;
+    //ClipCursor(&rc);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MY01CREATEDEVICE));
 

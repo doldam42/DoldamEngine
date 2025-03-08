@@ -5,6 +5,7 @@
 
 #include "TimeController.h"
 
+REGISTER_CONTROLLER(TimeController)
 void TimeController::Update(float dt)
 { 
     static float  speed = 0.0f;

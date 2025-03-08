@@ -28,9 +28,7 @@ void CameraController::Update(const float dt)
 
     if (m_pTarget && !m_useFirstPersonView)
     {
-        const float offset = 2.0f;
-        Vector3 up = Vector3::UnitY;
-        Vector3 pos = m_pTarget->GetPosition() + up * offset;
+        Vector3 pos = m_pTarget->GetPosition() + m_thirdPersonViewOffset;
 
         m_pTarget->SetRotationY(m_yaw);
         m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
@@ -43,23 +41,19 @@ void CameraController::Update(const float dt)
 
 void CameraController::UpdateKeyboard(const float dt)
 {
-    InputManager *pInputManager = g_pClient->GetInputManager();
+    InputManager *pI = g_pClient->GetInputManager();
 
-    float x = pInputManager->GetXAxis();
-    float y = pInputManager->GetYAxis();
-    float z = pInputManager->GetZAxis();
+    float dx = pI->GetXAxis();
+    float dy = pI->GetYAxis();
+    float dz = pI->GetZAxis();
 
-    if (x != 0 || y != 0 || z != 0)
+    if (dx != 0.0f || dy != 0.0f || dz != 0.0f)
     {
-        Vector3 v(x, y, z);
-
-        Vector3 forward = m_pGame->GetCameraLookTo();
-        Vector3 right = -forward.Cross(Vector3::Up);
-
         Vector3 pos = m_pGame->GetCameraPos();
+        Vector3 forward = m_pGame->GetCameraLookTo();
+        Vector3 right = Vector3::Up.Cross(forward);
 
-        Matrix m(right, Vector3::Up, forward);
-        pos += Vector3::Transform(v, m) * m_speed * dt;
+        pos += (right * dx + Vector3::Up * dy + forward * dz) * m_speed * dt;
 
         m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
     }
@@ -106,10 +100,11 @@ void CameraController::MoveRight(float dt)
     m_pGame->SetCameraPosition(pos.x, pos.y, pos.z);
 }
 
-void CameraController::SetFollowTarget(IGameObject *pTarget)
+void CameraController::SetFollowTarget(IGameObject *pTarget, Vector3 thirdPersonViewOffset)
 {
     m_useFirstPersonView = FALSE;
     m_pTarget = pTarget;
+    m_thirdPersonViewOffset = thirdPersonViewOffset;
 }
 
 CameraController::CameraController() 
@@ -124,4 +119,3 @@ BOOL CameraController::Start()
     return TRUE;
 }
 
-void CameraController::Render() {}

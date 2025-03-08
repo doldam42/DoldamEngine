@@ -20,7 +20,7 @@
 #include "RaytracingMeshObject.h"
 
 // 레이트레이싱 SRV 디스크립터 구조
-// | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... | 
+// | VertexBuffer(SRV) | IndexBuffer0(SRV) | DiffuseTex0(SRV) | ... |
 BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type)
 {
     ID3D12Device5 *pDevice = pRenderer->GetD3DDevice();
@@ -84,7 +84,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HAND
  *  | Material | Textures |
  */
 void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable,
-                                                             UINT threadIndex, IRenderMaterial **ppMaterials,
+                                                             UINT threadIndex, IRenderMaterial *const *ppMaterials,
                                                              UINT numMaterial)
 {
     assert(numMaterial == m_faceGroupCount);
@@ -121,7 +121,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
 }
 
 void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
-                                        const Matrix *pWorldMat, IRenderMaterial **ppMaterials, UINT numMaterials,
+                                        const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
                                         ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO,
                                         D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones)
 {
@@ -203,7 +203,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         INDEXED_FACE_GROUP *pFace = m_pFaceGroups + i;
         m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(m_descriptorSize);
-        
+
         MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
         m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
         pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);

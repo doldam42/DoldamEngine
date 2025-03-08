@@ -108,7 +108,7 @@ class RaytracingMeshObject : public IRenderMesh
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                      const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                           IRenderMaterial **ppMaterials, UINT numMaterial);
+                                           IRenderMaterial *const *ppMaterials, UINT numMaterial);
 
     void AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *vertexBuffer, UINT64 vertexOffsetInBytes,
                          uint32_t vertexCount, UINT vertexSizeInBytes, ID3D12Resource *indexBuffer,
@@ -135,7 +135,7 @@ class RaytracingMeshObject : public IRenderMesh
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
-                      IRenderMaterial **ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
+                      IRenderMaterial *const* ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
                       ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
                       UINT numBones);
 

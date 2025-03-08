@@ -294,9 +294,10 @@ void D3D12Renderer::BeginRender()
     // GUI Begin
     m_pGUIManager->BeginRender();
 
-    CommandListPool           *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
+    CommandListPool           *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
+    UpdateGlobal();
     m_pTextureManager->Update(pCommandList);
     m_pMaterialManager->Update(pCommandList);
 
@@ -334,7 +335,6 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-    UpdateGlobal();
 #ifdef USE_DEFERRED_RENDERING
     m_activeThreadCount = m_renderThreadCount;
     for (UINT i = 0; i < m_renderThreadCount; i++)
@@ -347,7 +347,6 @@ void D3D12Renderer::EndRender()
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
-
     ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
     D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = GetUAVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 
@@ -551,56 +550,71 @@ IRenderTerrain *D3D12Renderer::CreateTerrain(const Material *pMaterial, const Ve
 void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
                                      UINT numMaterial, bool isWired, UINT numInstance)
 {
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
-    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pMeshObj;
-    //// TODO: ADD Material
-    // pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
-
+    RaytracingMeshObject *pObj = (RaytracingMeshObject *)pMeshObj;
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
-    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
     item.pObjHandle = pObj;
-    item.meshObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.meshObjParam.worldTM = (*pWorldMat);
-    item.meshObjParam.ppMaterials =
-        !ppMaterials ? reinterpret_cast<IRenderMaterial **>(&m_pDefaultMaterial) : ppMaterials;
-    item.meshObjParam.numMaterials = !numMaterial ? 1 : numMaterial;
-
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    item.type = RENDER_ITEM_TYPE_MESH_OBJ;
+    item.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.meshObjParam.worldTM = *pWorldMat;
+    if (!ppMaterials)
+    {
+        item.meshObjParam.ppMaterials[0] = m_pDefaultMaterial;
+        item.meshObjParam.numMaterials = 1;
+    }
+    else
+    {
+        for (UINT i = 0; i < numMaterial; i++)
+        {
+            item.meshObjParam.ppMaterials[i] = ppMaterials[i];
+        }
+        item.meshObjParam.numMaterials = numMaterial;
+    }
+    
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
 
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#elif defined(USE_FORWARD_RENDERING)
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
+    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
 #endif
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
                                           UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
 {
-    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
-    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
-    // pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
-
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;
-    item.charObjParam = {};
-    item.charObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.charObjParam.worldTM = (*pWorldMat);
+    item.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
+    item.charObjParam.worldTM = *pWorldMat;
     item.charObjParam.pBones = pBoneMats;
     item.charObjParam.numBones = numBones;
-    item.charObjParam.ppMaterials =
-        !ppMaterials ? reinterpret_cast<IRenderMaterial **>(&m_pDefaultMaterial) : ppMaterials;
-    item.charObjParam.numMaterials = !numMaterial ? 1 : numMaterial;
 
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    if (!ppMaterials)
+    {
+        item.charObjParam.ppMaterials[0] = m_pDefaultMaterial;
+        item.charObjParam.numMaterials = 1;
+    }
+    else
+    {
+        for (UINT i = 0; i < numMaterial; i++)
+        {
+            item.charObjParam.ppMaterials[i] = ppMaterials[i];
+        }
+        item.charObjParam.numMaterials = numMaterial;
+    }
+
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
 
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
+#elif defined(USE_FORWARD_RENDERING)
+    RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
+    CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
+    ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
+    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
 #endif
 }
 
@@ -629,11 +643,8 @@ void D3D12Renderer::RenderSpriteWithTex(IRenderSprite *pSprObjHandle, int iPosX,
     item.spriteParam.pTexHandle = pTexHandle;
     item.spriteParam.Z = Z;
 
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
 #endif
 }
 
@@ -653,11 +664,8 @@ void D3D12Renderer::RenderSprite(IRenderSprite *pSprObjHandle, int iPosX, int iP
     item.spriteParam.pTexHandle = nullptr;
     item.spriteParam.Z = Z;
 
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
 #endif
 }
 
@@ -672,11 +680,8 @@ void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScal
     item.terrainParam.scale = *pScale;
     item.terrainParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
 
-    if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
-
-    m_curThreadIndex++;
-    m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
 #endif
 }
 

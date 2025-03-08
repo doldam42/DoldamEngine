@@ -1,7 +1,7 @@
 #pragma once
-#include "AutoRegisterController.h"
+#include "ControllerRegistry.h"
 
-class CollisionDemoController : public AutoRegisterController<CollisionDemoController>
+class CollisionDemoController : public IController // or AutoRegisterController<TimeController>
 {
     static constexpr float SPEED = 10.0f;
 
@@ -14,7 +14,6 @@ class CollisionDemoController : public AutoRegisterController<CollisionDemoContr
     // Inherited via IController
     BOOL Start() override;
     void Update(float dt) override;
-    void Render() override;
 
     CollisionDemoController() {}
 };

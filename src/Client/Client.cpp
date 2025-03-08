@@ -91,33 +91,9 @@ BOOL Client::LoadModules(HWND hWnd)
     return result;
 }
 
-void Client::ProcessInput() 
+void Client::CleanupModules()
 {
-    if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
-    {
-        DestroyWindow(m_hWnd);
-    }
-    m_pInputManager->ProcessInput();
-}
-
-void Client::CleanupControllers()
-{
-    if (m_pCameraController)
-    {
-        delete m_pCameraController;
-        m_pCameraController = nullptr;
-    }
-}
-
-void Client::Cleanup()
-{
-    if (m_pInputManager)
-    {
-        delete m_pInputManager;
-        m_pInputManager = nullptr;
-    }
-
-    CleanupControllers();
+    // Cleanup Modules
     if (m_pFbxExporter)
     {
         m_pFbxExporter->Release();
@@ -138,11 +114,7 @@ void Client::Cleanup()
         m_pGame->Release();
         m_pGame = nullptr;
     }
-    if (m_pAudioManager)
-    {
-        delete m_pAudioManager;
-        m_pAudioManager = nullptr;
-    }
+    // Cleanup DLLs
     if (m_hModelExporterDLL)
     {
         FreeLibrary(m_hModelExporterDLL);
@@ -158,6 +130,43 @@ void Client::Cleanup()
         FreeLibrary(m_hRendererDLL);
         m_hRendererDLL = nullptr;
     }
+}
+
+void Client::ProcessInput() 
+{
+    if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
+    {
+        DestroyWindow(m_hWnd);
+    }
+    m_pInputManager->ProcessInput();
+}
+
+void Client::CleanupControllers()
+{
+    if (m_pCameraController)
+    {
+        delete m_pCameraController;
+        m_pCameraController = nullptr;
+    }
+
+    if (m_pAudioManager)
+    {
+        delete m_pAudioManager;
+        m_pAudioManager = nullptr;
+    }
+}
+
+void Client::Cleanup()
+{
+    if (m_pInputManager)
+    {
+        delete m_pInputManager;
+        m_pInputManager = nullptr;
+    }
+
+    CleanupControllers();
+
+    CleanupModules();
 }
 
 BOOL Client::Initialize(HWND hWnd)
@@ -193,9 +202,42 @@ BOOL Client::Initialize(HWND hWnd)
     return result;
 }
 
-void Client::LoadResources() {}
+void Client::LoadResources() 
+{
+    
+}
 
-void Client::LoadScene() {}
+void Client::LoadScene() 
+{
+    // Create Material
+    Material reflectiveMaterial = {};
+    reflectiveMaterial.metallicFactor = 0.0f;
+    reflectiveMaterial.reflectionFactor = 0.9f;
+    wcscpy_s(reflectiveMaterial.name, L"ground");
+    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
+    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
+    wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
+    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
+    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
+
+    IGameModel  *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameObject *pGround = m_pGame->CreateGameObject();
+    pGround->SetModel(pGroundModel);
+    pGround->SetPosition(0.0f, 0.0f, 0.0f);
+    pGround->SetRotationX(-XM_PIDIV2);
+    pGround->SetScale(50.0f);
+    pGround->SetMaterials(&pGroundMaterial, 1);
+
+    UINT width = g_pClient->GetScreenWidth();
+    UINT height = g_pClient->GetScreenHeight();
+
+    int posX = (width / 2) - 32;
+    int posY = (height / 2) - 32;
+
+    IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds", 256, 256);
+    pSprite->SetScale(0.25);
+    pSprite->SetPosition(posX, posY);
+}
 
 void Client::Process()
 {
@@ -230,11 +272,12 @@ void Client::Process()
 
 BOOL Client::Start()
 {
-    LoadResources();
-
     m_pGame->Start();
 
+    LoadResources();
+
     LoadScene();
+
     m_pGame->BuildScene();
 
     return TRUE;

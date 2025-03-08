@@ -1,13 +1,12 @@
 #pragma once
-#include "AutoRegisterController.h"
+#include "ControllerRegistry.h"
 
-class TimeController : public AutoRegisterController<TimeController>
+class TimeController : public IController // or AutoRegisterController<TimeController>
 {
   private:
   public:
     BOOL Start() override { return TRUE; }
     void Update(float dt) override;
-    void Render() override {}
 
     TimeController() = default;
     ~TimeController(){};

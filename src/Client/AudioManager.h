@@ -23,7 +23,6 @@ class AudioManager : public IController
   public:
     BOOL Start() override { return TRUE; }
     void Update(float dt) override { m_pSystem->update(); }
-    void Render() override {}
 
     SOUND_HANDLE *CreateAudioHandle(const WCHAR *wpath);
     void          DeleteAudioHandle(SOUND_HANDLE *pDel);
