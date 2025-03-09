@@ -34,11 +34,11 @@ void World::EndCreateWorld() { m_pTree->Build(); }
 bool World::Intersect(const Ray &ray, RayHit *pOutHit) 
 {
     float tHit;
-    GameObject *pOut = nullptr;
-    if (m_pTree->IntersectP(ray, &tHit, reinterpret_cast<IBoundedObject**>(&pOut)))
+    IBoundedObject *pOut = nullptr;
+    if (m_pTree->IntersectP(ray, &tHit, &pOut))
     {
         pOutHit->tHit = tHit;
-        pOutHit->pHitted = pOut;
+        pOutHit->pHitted = dynamic_cast<IGameObject *>(pOut);
         return TRUE;
     }
     return FALSE;

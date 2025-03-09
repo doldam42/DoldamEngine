@@ -4,9 +4,6 @@
     <Filter Include="pch">
       <UniqueIdentifier>{f7503ace-5b08-4961-993c-cbbeb40557f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shape">
-      <UniqueIdentifier>{67ae1203-e691-4c94-b43f-15c76b79bd51}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SimpleMath">
       <UniqueIdentifier>{bb904fbd-8580-4f27-aca9-65eade86f0bc}</UniqueIdentifier>
     </Filter>
@@ -29,10 +26,8 @@
       <Filter>SimpleMath</Filter>
     </ClInclude>
     <ClInclude Include="ColorUtils.h" />
-    <ClInclude Include="Collisions.h">
-      <Filter>Shape</Filter>
-    </ClInclude>
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="Collisions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -46,9 +41,7 @@
       <Filter>SimpleMath</Filter>
     </ClCompile>
     <ClCompile Include="ColorUtils.cpp" />
-    <ClCompile Include="Collisions.cpp">
-      <Filter>Shape</Filter>
-    </ClCompile>
+    <ClCompile Include="Collisions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

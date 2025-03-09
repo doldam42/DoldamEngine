@@ -6,7 +6,6 @@
 #include "BoxCollider.h"
 #include "RigidBody.h"
 
-#include "BroadPhase.h"
 #include "World.h"
 
 #include "PhysicsManager.h"
@@ -25,16 +24,20 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
     Vector3 velA = pA->GetVelocity();
     Vector3 velB = pB->GetVelocity();
 
-    if (pA->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE && pB->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE)
+    COLLIDER_TYPE typeA = pA->m_pCollider->GetType();
+    COLLIDER_TYPE typeB = pB->m_pCollider->GetType();
+
+    if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
     {
         SphereCollider *pSphereA = (SphereCollider *)pA->m_pCollider;
         SphereCollider *pSphereB = (SphereCollider *)pB->m_pCollider;
 
         float   timeOfImpact;
+        Vector3 normal;
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
         if (SphereSphereDynamic(pSphereA->GetRadius(), pSphereB->GetRadius(), posA, posB, velA, velB, dt,
-                                &contactPointAWorldSpace, &contactPointBWorldSpace, &timeOfImpact))
+                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, & timeOfImpact))
         {
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);
@@ -46,9 +49,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
             pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
             pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);
 
-            pOutContact->normal = pA->GetPosition() - pB->GetPosition();
-            pOutContact->normal.Normalize();
-
+            pOutContact->normal = normal;
             pOutContact->timeOfImpact = timeOfImpact;
 
             // Unwind time step
@@ -65,12 +66,17 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         }
         return FALSE;
     }
+    
     return FALSE;
 }
 
 void PhysicsManager::Cleanup() {}
 
-BOOL PhysicsManager::Initialize() { return 0; }
+BOOL PhysicsManager::Initialize()
+{
+    m_collisionPairs.reserve(MAX_COLLISION_COUNT);
+    return TRUE;
+}
 
 RigidBody *PhysicsManager::CreateRigidBody(GameObject *pObj, ICollider *pCollider, float mass, float elasticity,
                                            float friction, BOOL useGravity, BOOL isKinematic)
@@ -118,7 +124,7 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
         RigidBody  *pOtherComp = (RigidBody *)pOther->GetRigidBody();
 
         Contact contact;
-        if (Intersect(pCurComp, pOtherComp, dt, &contact))
+        if (!pCurComp->m_isKinematic && !pOtherComp->m_isKinematic && Intersect(pCurComp, pOtherComp, dt, &contact))
         {
             m_contacts[m_contactCount] = contact;
             m_contactCount++;
@@ -143,16 +149,16 @@ BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
         pCur = pCur->pNext;
     }
 
-    std::vector<CollisionPair> collisionPairs;
-    collisionPairs.reserve(MAX_COLLISION_COUNT);
-    BroadPhase(m_pBodies, m_bodyCount, collisionPairs, dt);
+    BroadPhase(m_pBodies, m_bodyCount, m_collisionPairs, dt);
 
-    for (const CollisionPair &pair : collisionPairs)
+    for (const CollisionPair &pair : m_collisionPairs)
     {
         RigidBody *pA = m_pBodies[pair.a];
         RigidBody *pB = m_pBodies[pair.b];
 
         if (pA->m_invMass == 0 && pB->m_invMass == 0)
+            continue;
+        if (pA->m_isKinematic || pB->m_isKinematic)
             continue;
 
         Contact contact;
@@ -202,7 +208,6 @@ void PhysicsManager::ResolveContactsAll(float dt)
         {
             m_pBodies[j]->Update(dt_sec);
         }
-
         ResolveContact(contact);
         accumulatedTime += dt_sec;
     }
@@ -219,6 +224,7 @@ void PhysicsManager::ResolveContactsAll(float dt)
 
     m_contactCount = 0;
     m_bodyCount = 0;
+    m_collisionPairs.clear();
 }
 
 PhysicsManager::~PhysicsManager() {}

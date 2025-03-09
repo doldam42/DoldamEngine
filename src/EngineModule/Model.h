@@ -61,10 +61,10 @@ class Model : public IGameModel
 
     // Setter
     void SetBasePath(const WCHAR *basePath);
+    void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;
 
     size_t GetID() override { return m_id; }
 
-    // Inherited via IModel
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;

@@ -51,6 +51,8 @@
       <Filter>Physics\Collider</Filter>
     </ClCompile>
     <ClCompile Include="ControllerManager.cpp" />
+    <ClCompile Include="CapsuleCollider.cpp" />
+    <ClCompile Include="EllipseCollider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -101,6 +103,8 @@
       <Filter>Physics\Collider</Filter>
     </ClInclude>
     <ClInclude Include="ControllerManager.h" />
+    <ClInclude Include="CapsuleCollider.h" />
+    <ClInclude Include="EllipseCollider.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

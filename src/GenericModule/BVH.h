@@ -41,7 +41,7 @@ private:
 public:
 
 	Bounds GetBounds() const;
-	bool IntersectP(const Ray& ray, float* pOutHitt, IBoundedObject** pHitted) const;
+	bool IntersectP(const Ray& ray, float* pOutHitt, IBoundedObject** ppHitted) const;
 	bool Intersect(const Bounds& b) const;
 
 	BOOL InsertObject(IBoundedObject *pObj);

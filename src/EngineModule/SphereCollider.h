@@ -21,16 +21,19 @@ class SphereCollider : public ICollider
     float         GetRadius() const { return m_radius; }
     Matrix        InertiaTensor() const override
     {
+        constexpr float oneDiv5 = 1.0f / 5.0f;
         Matrix tensor = Matrix::Identity;
-        tensor._11 = 2.0f * m_radius * m_radius / 5.0f;
-        tensor._22 = 2.0f * m_radius * m_radius / 5.0f;
-        tensor._33 = 2.0f * m_radius * m_radius / 5.0f;
+        tensor._11 = 2.0f * m_radius * m_radius * oneDiv5;
+        tensor._22 = 2.0f * m_radius * m_radius * oneDiv5;
+        tensor._33 = 2.0f * m_radius * m_radius * oneDiv5;
         return tensor;
     }
 
     BOOL Intersect(ICollider *pOther) const override;
     BOOL Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
     BOOL Intersect(const Bounds &b) const override;
+
+    BOOL Intersect(ICollider *pOther, Vector3 velocity, float dt);
 
     SphereCollider() = default;
     ~SphereCollider() {}

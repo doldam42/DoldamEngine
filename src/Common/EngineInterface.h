@@ -77,6 +77,8 @@ interface IGameModel : public IUnknown, public ISerializable
                                   Joint *pInJoints = nullptr, int jointCount = 0) = 0;
     virtual size_t     GetID() = 0;
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
+
+    virtual void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) = 0;
 };
 
 enum COLLIDER_TYPE
@@ -84,6 +86,7 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_SPHERE = 0,
     COLLIDER_TYPE_BOX,
     COLLIDER_TYPE_CAPSULE,
+    COLLIDER_TYPE_ELLIPSE,
 };
 interface ICollider
 {

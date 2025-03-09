@@ -173,11 +173,16 @@
     <ClCompile Include="BaseObject.cpp" />
     <ClCompile Include="BoxCollider.cpp" />
     <ClCompile Include="BroadPhase.cpp" />
+    <ClCompile Include="CapsuleCollider.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Contact.cpp" />
     <ClCompile Include="ControllerManager.cpp" />
     <ClCompile Include="DebugConsoleSprite.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EllipseCollider.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameUtils.cpp" />
@@ -204,10 +209,15 @@
     <ClInclude Include="BaseObject.h" />
     <ClInclude Include="BoxCollider.h" />
     <ClInclude Include="BroadPhase.h" />
+    <ClInclude Include="CapsuleCollider.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Character.h" />
     <ClInclude Include="Contact.h" />
     <ClInclude Include="ControllerManager.h" />
     <ClInclude Include="DebugConsoleSprite.h" />
+    <ClInclude Include="EllipseCollider.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />

@@ -534,88 +534,81 @@ int BVH::flattenBVHTree(BVHBuildNode *node, int *offset)
 
 Bounds BVH::GetBounds() const { return nodes ? nodes[0].bounds : Bounds(); }
 
-bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const
+bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **ppHitted) const
 {
     if (!nodes)
         return false;
 
     float closestHit = FLT_MAX;
+    IBoundedObject *pHitted = nullptr;
 
     int     nodesToVisit[64];
     int     toVisitOffset = 0, currentNodeIndex = 0;
     while (true)
     {
         const LinearBVHNode *node = &nodes[currentNodeIndex];
-        float                tmin, tmax;
-        if (node->bounds.IntersectP(ray, &tmin, &tmax))
+        
+        // Process BVH node _node_ for traversal
+        if (node->nPrimitives > 0)
         {
-            // Process BVH node _node_ for traversal
-            if (node->nPrimitives > 0)
+            float tmin, tmax;
+            for (int i = 0; i < node->nPrimitives; ++i)
             {
-                for (int i = 0; i < node->nPrimitives; ++i)
+                if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax) && tmin < closestHit)
                 {
-                    if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax) && tmin < closestHit)
-                    {
-                        *pOutHitt = tmin;
-                        *pHitted = primitives[node->primitivesOffset + i];
-                        closestHit = tmin;
-                        //return true;
-                    }
+                    closestHit = tmin;
+                    pHitted = primitives[node->primitivesOffset + i];
                 }
+            }
+            if (toVisitOffset == 0)
+                break;
+            currentNodeIndex = nodesToVisit[--toVisitOffset];
+        }
+        else
+        {
+            float tmin0, tmin1, tmax0, tmax1;
+
+            const LinearBVHNode *l = &nodes[currentNodeIndex + 1];
+            const LinearBVHNode *r = &nodes[node->secondChildOffset];
+
+            bool intersectL = l->bounds.IntersectP(ray, &tmin0, &tmax0);
+            bool intersectR = r->bounds.IntersectP(ray, &tmin1, &tmax1);
+
+            if (intersectL && intersectR)
+            {
+                if (tmin0 < tmin1)
+                {
+                    nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+                    currentNodeIndex = currentNodeIndex + 1;
+                }
+                else
+                {
+                    /// second child first
+                    nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                    currentNodeIndex = node->secondChildOffset;
+                }
+            }
+            else if (intersectL)
+            {
+                currentNodeIndex = currentNodeIndex + 1;
+            }
+            else if (intersectR)
+            {
+                currentNodeIndex = node->secondChildOffset;
+            }
+            else
+            {
                 if (toVisitOffset == 0)
                     break;
                 currentNodeIndex = nodesToVisit[--toVisitOffset];
             }
-            else
-            {
-                float tmin0, tmin1, tmax0, tmax1;
-
-                const LinearBVHNode *l = &nodes[currentNodeIndex + 1];
-                const LinearBVHNode *r = &nodes[node->secondChildOffset];
-
-                bool intersectL = l->bounds.IntersectP(ray, &tmin0, &tmax0);
-                bool intersectR = r->bounds.IntersectP(ray, &tmin1, &tmax1);
-
-                if (intersectL && intersectR)
-                {
-                    if (tmin0 < tmin1)
-                    {
-                        nodesToVisit[toVisitOffset++] = node->secondChildOffset;
-                        currentNodeIndex = currentNodeIndex + 1;
-                    }
-                    else
-                    {
-                        /// second child first
-                        nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
-                        currentNodeIndex = node->secondChildOffset;
-                    }
-                }
-                else if (intersectL)
-                {
-                    currentNodeIndex = currentNodeIndex + 1;
-                }
-                else if (intersectR)
-                {
-                    currentNodeIndex = node->secondChildOffset;
-                }
-                else
-                {
-                    if (toVisitOffset == 0)
-                        break;
-                    currentNodeIndex = nodesToVisit[--toVisitOffset];
-                }
-            }
-        }
-        else
-        {
-            if (toVisitOffset == 0)
-                break;
-            currentNodeIndex = nodesToVisit[--toVisitOffset];
         }
     }
 
     if (closestHit < FLT_MAX)
     {
+        *pOutHitt = closestHit;
+        *ppHitted = pHitted;
         return true;
     }
     

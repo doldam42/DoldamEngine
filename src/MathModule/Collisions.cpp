@@ -30,7 +30,7 @@ BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sp
 
 // ref : https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &v0, const Vector3 &v1,
-                 const Vector3 &v2, const Vector3 &vertexNormal)
+                 const Vector3 &v2, const Vector3 &vertexNormal, float *pOuttHit)
 {
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
@@ -61,6 +61,7 @@ BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &
 
     if (t > epsilon) // ray intersection
     {
+        *pOuttHit = t;
         return TRUE;
     }
     else // This means that there is a line intersection but not a ray intersection.
@@ -100,6 +101,26 @@ BOOL RayCylinder(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &
     return true;
 }
 
+BOOL RayEllipse(Vector3 rayStart, Vector3 rayDir, Vector3 center, float majorRadius, float minorRadius, float *pOutT1,
+                float *pOutT2)
+{
+    const float scale = minorRadius / majorRadius;
+    const float invScale = 1.0f / scale;
+
+    rayStart.y *= scale;
+    rayDir.y *= scale;
+    center.y *= scale;
+
+    float t0, t1;
+    if (RaySphere(rayStart, rayDir, center, minorRadius, &t0, &t1))
+    {
+        *pOutT1 = t0;
+        *pOutT2 = t1;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                         Vector3 *pOutContactPointA, Vector3 *pOutContactPointB)
 {
@@ -123,7 +144,7 @@ BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 
 
 BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                          const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
-                         Vector3 *pOutContactPointB, float *pOutToi)
+                         Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi)
 {
     const Vector3 relativeVelocity = velA - velB;
 
@@ -174,6 +195,7 @@ BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3
     ab.Normalize();
 
     *pOutToi = toi;
+    *pOutNormal = ab;
     *pOutContactPointA = newPosA + ab * radiusA;
     *pOutContactPointB = newPosB - ab * radiusB;
     return true;
@@ -238,45 +260,44 @@ BOOL SphereTriangleStatic(const Vector3 &sphereCenter, const float sphereRadius,
 
 BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius, const Vector3 &sphereVelocity,
                            const float dt, const Vector3 &v0, const Vector3 &v1, const Vector3 &v2,
-                           const Vector3 &normal, Vector3 *pOutSlide, Vector3 *pOutReflect,
-                           float *pOutToi)
+                           const Vector3 &normal, Vector3 *pOutNormal, float *pOutToi)
 {
     Vector3 dir = sphereVelocity;
     dir.Normalize();
-    const float tMax = dir.Length() * dt;
+    const float tMax = sphereVelocity.Length() * dt;
 
     // 삼각형의 3점을 중심으로 하는 원과의 충돌처리
     float t0, t1;
-    if (RaySphere(sphereCenter, dir, v0, sphereRadius, &t0, &t1) && t0 < tMax)
+    if (RaySphere(sphereCenter, dir, v0, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 n = hitPoint - v0;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
-    if (RaySphere(sphereCenter, dir, v1, sphereRadius, &t0, &t1) && t0 < tMax)
+    if (RaySphere(sphereCenter, dir, v1, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 n = hitPoint - v1;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
-    if (RaySphere(sphereCenter, dir, v2, sphereRadius, &t0, &t1) && t0 < tMax)
+    if (RaySphere(sphereCenter, dir, v2, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 n = hitPoint - v2;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
 
     // 삼각형의 변을 변환한 원통과의 충돌처리
-    if (RayCylinder(sphereCenter, dir, v0, v1, sphereRadius, &t0) && t0 < tMax)
+    if (RayCylinder(sphereCenter, dir, v0, v1, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 d = v1 - v0;
@@ -284,11 +305,11 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 p = v0 + d * t;
         const Vector3 n = hitPoint - p;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
-    if (RayCylinder(sphereCenter, dir, v1, v2, sphereRadius, &t0) && t0 < tMax)
+    if (RayCylinder(sphereCenter, dir, v1, v2, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 d = v2 - v1;
@@ -296,11 +317,11 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 p = v1 + d * t;
         const Vector3 n = hitPoint - p;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
-    if (RayCylinder(sphereCenter, dir, v2, v0, sphereRadius, &t0) && t0 < tMax)
+    if (RayCylinder(sphereCenter, dir, v2, v0, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 d = v0 - v2;
@@ -308,18 +329,125 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 p = v2 + d * t;
         const Vector3 n = hitPoint - p;
 
-        *pOutSlide = dir + dir.Dot(n) * n;
-        *pOutReflect = dir - 2 * dir.Dot(n) * n;
+        *pOutToi = t0 * dt;
+        *pOutNormal = n;
         return TRUE;
     }
 
     // normal 방향으로 이동한 삼각형과의 충돌처리
     if (RayTriangle(sphereCenter, dir, v0 + normal * sphereRadius, v1 + normal * sphereRadius,
-                    v2 + normal * sphereRadius, normal))
+                    v2 + normal * sphereRadius, normal, &t0) && t0 < tMax)
     {
-        *pOutSlide = dir + dir.Dot(normal) * normal;
-        *pOutReflect = dir - 2 * dir.Dot(normal) * normal;
+        *pOutToi = t0 * dt;
+        *pOutNormal = normal;
         return TRUE;
     }
+    return FALSE;
+}
+
+BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
+                          Vector3 posB)
+{
+    const float scale = minorRadiusA / majorRadiusA;
+    const float invScale = 1.0f / scale;
+
+    minorRadiusB *= scale;
+    majorRadiusB *= scale;
+    posA.y *= scale;
+    posB.y *= scale;
+
+    Vector3 dir = posB - posA;
+    dir.Normalize();
+
+    float dummyhitt0, dummyhitt1;
+    return RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &dummyhitt0,
+                      &dummyhitt1);
+}
+
+BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
+                           Vector3 posB, Vector3 velocity, const float dt, Vector3 *pOutNormal,
+                           float *pOutToi)
+{
+    const float scale = minorRadiusA / majorRadiusA;
+    const float invScale = 1.0f / scale;
+
+    Vector3 dir = velocity;
+    dir.Normalize();
+
+    // 장축(Y축)을 기준으로 Scale
+    majorRadiusB *= scale;
+    dir.y *= scale;
+    posA.y *= scale;
+    posB.y *= scale;
+
+    float t0, t1;
+    if (!RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &t0, &t1) || t1 < 0.0f)
+    {
+        return FALSE;
+    }
+
+    /*Vector3 tmp = posA + dir * t0;
+    Vector3 contactPoint = Vector3::Lerp(tmp, posB, minorRadiusA / (tmp - posB).Length());*/
+
+    // 원상 복구
+    /*contactPoint.y *= invScale;*/
+    majorRadiusB *= invScale;
+    dir.y *= invScale;
+    posA.y *= invScale;
+    posB.y *= invScale;
+
+    Vector3 collisionPoint = posA + dir * t0;
+
+    t0 *= dt;
+    t1 *= dt;
+
+    float toi = (t0 < 0.0f) ? 0.0f : t0;
+    if (toi > dt)
+    {
+        return false;
+    }
+
+    const float majorRS = majorRadiusB * majorRadiusB;
+    const float minorRS = minorRadiusB * minorRadiusB;
+    Vector3     n = (collisionPoint - posB) / Vector3(minorRS, majorRS, minorRS);
+    n.Normalize();
+
+    *pOutNormal = n;
+    *pOutToi = toi;
+    return TRUE;
+}
+
+BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius, Vector3 velocity, float dt,
+                            Vector3 v0, Vector3 v1, Vector3 v2, Vector3 normal, Vector3 *pOutNormal, float *pOutToi)
+{
+    const float scale = minorRadius / majorRadius;
+    const float invScale = 1.0f / scale;
+
+    v0.y *= scale;
+    v1.y *= scale;
+    v2.y *= scale;
+    center.y *= scale;
+    velocity.y *= scale;
+    normal.y *= scale;
+
+    float   t0;
+    Vector3 n;
+    if (SphereTriangleDynamic(center, minorRadius, velocity, dt, v0, v1, v2, normal, &n, &t0))
+    {
+        t0 *= dt;
+
+        float toi = (t0 < 0.0f) ? 0.0f : t0;
+        if (toi > dt)
+        {
+            return false;
+        }
+
+
+        *pOutNormal = n;
+        *pOutToi = t0;
+        n.y *= invScale;
+        return TRUE;
+    }
+
     return FALSE;
 }

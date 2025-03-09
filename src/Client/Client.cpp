@@ -3,18 +3,18 @@
 #include <filesystem>
 
 #include "AudioManager.h"
-#include "VideoManager.h"
 #include "InputManager.h"
+#include "VideoManager.h"
 
 #include "ControllerRegistry.h"
 
-#include "CameraController.h"
 #include "BadAppleController.h"
+#include "CameraController.h"
+#include "CollisionDemoController.h"
+#include "PhysicsDemoController.h"
 #include "RaytracingDemoController.h"
 #include "TessellationDemoController.h"
-#include "PhysicsDemoController.h"
 #include "TimeController.h"
-#include "CollisionDemoController.h"
 
 #include "Client.h"
 
@@ -31,7 +31,7 @@ BOOL Client::LoadModules(HWND hWnd)
     const WCHAR *engineFileName = nullptr;
     const WCHAR *exporterFileName = nullptr;
 #ifdef _DEBUG
-    //rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
+    // rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Debug.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
     exporterFileName = L"../../DLL/ModelExporter_x64_Debug.dll";
@@ -132,7 +132,7 @@ void Client::CleanupModules()
     }
 }
 
-void Client::ProcessInput() 
+void Client::ProcessInput()
 {
     if (m_pInputManager->IsKeyPressed(VK_ESCAPE))
     {
@@ -196,18 +196,15 @@ BOOL Client::Initialize(HWND hWnd)
     Start();
 
     m_hWnd = hWnd;
-    
+
     m_prevUpdateTick = m_prevFrameCheckTick = GetTickCount64();
 
     return result;
 }
 
-void Client::LoadResources() 
-{
-    
-}
+void Client::LoadResources() {}
 
-void Client::LoadScene() 
+void Client::LoadScene()
 {
     // Create Material
     Material reflectiveMaterial = {};
@@ -220,13 +217,19 @@ void Client::LoadScene()
     wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
-    IGameModel  *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
-    IGameObject *pGround = m_pGame->CreateGameObject();
-    pGround->SetModel(pGroundModel);
-    pGround->SetPosition(0.0f, 0.0f, 0.0f);
-    pGround->SetRotationX(-XM_PIDIV2);
-    pGround->SetScale(50.0f);
-    pGround->SetMaterials(&pGroundMaterial, 1);
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+
+    for (UINT i = 0; i < 4; i++)
+    {
+        IGameObject *pGround = m_pGame->CreateGameObject();
+        pGround->SetModel(pGroundModel);
+        pGround->SetPosition(0.0f, 5.0f * i, 20.0f * i);
+        pGround->SetRotationX(-XM_PIDIV2);
+        pGround->SetScale(25.0f);
+        pGround->SetMaterials(&pGroundMaterial, 1);
+
+        pGroundModel->AddRef();
+    }
 
     UINT width = g_pClient->GetScreenWidth();
     UINT height = g_pClient->GetScreenHeight();
@@ -244,11 +247,11 @@ void Client::Process()
     ProcessInput();
 
     ULONGLONG curTick = GetTickCount64();
-    float dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
+    float     dt = static_cast<float>(curTick - m_prevUpdateTick) / 1000.f;
 
     // FPS가 너무 낮은 경우 30 FPS로 고정
     dt = (dt > 0.1f) ? 0.03f : dt;
-    if (!m_isPaused && dt > 0.025f)  // // Update Scene with 40FPS
+    if (!m_isPaused && dt > 0.025f) // // Update Scene with 40FPS
     {
         m_prevUpdateTick = curTick;
         dt *= m_timeSpeed;

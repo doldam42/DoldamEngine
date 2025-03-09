@@ -267,6 +267,27 @@ void Model::SetBasePath(const WCHAR *basePath)
     wcscpy_s(m_basePath, basePath);
 }
 
+void Model::SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) 
+{ 
+    if (!m_ppMaterials)
+    {
+        m_ppMaterials = new IRenderMaterial *[numMaterials];
+        m_materialCount = numMaterials;
+        ZeroMemory(m_ppMaterials, sizeof(IRenderMaterial *) * numMaterials);
+    }
+
+    assert(m_materialCount == numMaterials);
+    for (int i = 0; i < numMaterials; i++)
+    {
+        if (m_ppMaterials[i])
+        {
+            m_ppMaterials[i]->Release();
+            m_ppMaterials[i] = nullptr;
+        }
+        m_ppMaterials[i] = ppMaterials[i];
+    }
+}
+
 HRESULT __stdcall Model::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
 ULONG __stdcall Model::AddRef(void)

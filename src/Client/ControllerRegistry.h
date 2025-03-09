@@ -1,9 +1,9 @@
 #pragma once
+#include <string_view>
+
 class ControllerRegistry
 {
-    ControllerRegistry() = default;
-    std::unordered_map<std::string, IController *> controllers;
-    // std::vector<IController *> controllers;
+    std::unordered_map<std::string_view, IController *> controllers;
 
   public:
     static ControllerRegistry &GetInstance()
@@ -12,7 +12,7 @@ class ControllerRegistry
         return instance;
     }
 
-    void Register(const std::string &name, IController *controller)
+    void Register(const std::string_view &name, IController *controller)
     {
         if (controllers.find(name) == controllers.end())
         {

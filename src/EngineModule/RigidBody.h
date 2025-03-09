@@ -23,7 +23,7 @@ class RigidBody : public IRigidBody
     void Cleanup();
 
   public:
-    void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity = TRUE, BOOL isKinematic = TRUE);
+    void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity = TRUE, BOOL isKinematic = FALSE);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
     Bounds  GetBounds() const;
