@@ -107,6 +107,7 @@ interface ICollider
     virtual Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) = 0;
     virtual float   FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const = 0;
 };
+
 interface IRigidBody
 {
     virtual Vector3 GetVelocity() const = 0;
@@ -120,6 +121,8 @@ interface IGameObject : public IBoundedObject
 
     virtual BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) = 0;
     virtual BOOL InitSphereCollider(const Vector3 &center, const float radius) = 0;
+    virtual BOOL InitConvexCollider() = 0;
+
     virtual BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
                                BOOL isKinematic = TRUE) = 0;
 

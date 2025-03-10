@@ -573,12 +573,6 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     return pModel;
 }
 
-Model *GeometryGenerator::MakeDiamond(const float scale) 
-{ 
-    Vector3 pts[4 + 4]; 
-    pts[0] = Vector3
-}
-
 // MeshData GeometryGenerator::MakeIcosahedron() {
 //
 //  // Luna DX12 교재 참고

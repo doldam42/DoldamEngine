@@ -27,7 +27,7 @@ class ConvexCollider : public ICollider
     Matrix m_inertiaTensor;
 
   public:
-    BOOL          Initialize(GameObject *pObj, const BasicVertex *vertices, const int num);
+    BOOL          Initialize(GameObject *pObj, const Vector3 *points, const int num);
     // Inherited via ICollider
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_CONVEX; }
     Vector3       GetCenter() const override { return m_centerOfMass; }

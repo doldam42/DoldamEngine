@@ -218,18 +218,36 @@ void Client::LoadScene()
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+    IGameObject *pGround = m_pGame->CreateGameObject();
+    pGround->SetModel(pGroundModel);
+    pGround->SetPosition(0.0f, 0.0f, 0.0f);
+    pGround->SetScale(25.0f, 0.2f, 25.0f);
+    pGround->SetMaterials(&pGroundMaterial, 1);
+    //pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
+    pGround->InitConvexCollider();
+    pGround->InitRigidBody(0.0f, 1.0f, 0.0f, FALSE);
 
-    for (UINT i = 0; i < 4; i++)
+    IGameModel *pSphereModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    IGameObject *pSphere = m_pGame->CreateGameObject();
+    pSphere->SetModel(pSphereModel);
+    pSphere->SetPosition(0.0f, 10.0f, 0.0f);
+    //pGround->SetMaterials(&pGroundMaterial, 1);
+    pSphere->InitSphereCollider(Vector3::Zero, 1.0f);
+    pSphere->InitRigidBody(1.0f, 1.0f, 1.0f);
+
+    m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
+
+    /*for (UINT i = 0; i < 4; i++)
     {
         IGameObject *pGround = m_pGame->CreateGameObject();
         pGround->SetModel(pGroundModel);
         pGround->SetPosition(0.0f, 5.0f * i, 25.0f * i);
-        //pGround->SetRotationX(-XM_PIDIV2);
         pGround->SetScale(25.0f, 0.2f, 25.0f);
         pGround->SetMaterials(&pGroundMaterial, 1);
-
+        pGround->InitConvexCollider();
+        pGround->InitRigidBody(0.0f, 1.0f, 1.0f);
         pGroundModel->AddRef();
-    }
+    }*/
 
     UINT width = g_pClient->GetScreenWidth();
     UINT height = g_pClient->GetScreenHeight();

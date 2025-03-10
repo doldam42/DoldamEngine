@@ -52,6 +52,8 @@ BOOL Character::InitSphereCollider(const Vector3 &center, const float radius)
     return GameObject::InitSphereCollider(center, radius);
 }
 
+BOOL Character::InitConvexCollider() { return GameObject::InitConvexCollider(); }
+
 BOOL Character::InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity, BOOL isKinematic)
 {
     return GameObject::InitRigidBody(mass, elasticity, friction, useGravity, isKinematic);

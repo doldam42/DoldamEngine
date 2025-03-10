@@ -7,6 +7,8 @@
 // REF: Game Physics In One Week 
 
 struct point_t;
+float EPA_Expand(const RigidBody *bodyA, const RigidBody *bodyB, const float bias, const point_t simplexPoints[4],
+                 Vector3 &ptOnA, Vector3 &ptOnB);
 
 /*
 ================================

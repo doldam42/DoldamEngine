@@ -2,13 +2,81 @@
 
 #include "GameObject.h"
 
-#include "SphereCollider.h"
 #include "BoxCollider.h"
 #include "RigidBody.h"
+#include "SphereCollider.h"
+
+#include "GJK.h"
 
 #include "World.h"
 
 #include "PhysicsManager.h"
+
+BOOL PhysicsManager::ConservativeAdvance(RigidBody *pA, RigidBody *pB, float dt, Contact *pOutContact)
+{ 
+    Contact contact;
+    contact.pA = pA;
+    contact.pB = pB;
+
+    float toi = 0.0f;
+
+    int numIters = 0;
+
+    // Advance the position of the bodies until they touch or there's not time left
+    while (dt > 0.0f)
+    {
+        if (Intersect(pA, pB, &contact))
+        {
+            contact.timeOfImpact = toi;
+            pA->Update(-toi);
+            pB->Update(-toi);
+
+            *pOutContact = contact;
+            return TRUE;
+        }
+
+        ++numIters;
+        if (numIters > 10)
+            break;
+
+        // Get the Vector from the closest point on A to the Closest point on B
+        Vector3 ab = contact.contactPointBWorldSpace - contact.contactPointAWorldSpace;
+        ab.Normalize();
+
+        // Project the relative velocity onto the ray of shortest distance
+        Vector3 relativeVelocity = pA->m_linearVelocity - pB->m_linearVelocity;
+        float   orthoSpeed = relativeVelocity.Dot(ab);
+
+        // Add to the orthoSpeed the maximum angular speed of the relative shape
+        float angularSpeedA = pA->m_pCollider->FastestLinearSpeed(pA->m_angularVelocity, ab);
+        float angularSpeedB = pB->m_pCollider->FastestLinearSpeed(pB->m_angularVelocity, -ab);
+
+        orthoSpeed += angularSpeedA + angularSpeedB;
+
+        if (orthoSpeed <= 0.0f)
+        {
+            break;
+        }
+
+        float timeToGo = contact.separationDistance / orthoSpeed;
+        if (timeToGo > dt)
+        {
+            break;
+        }
+
+        dt -= timeToGo;
+        toi += timeToGo;
+
+        pA->Update(timeToGo);
+        pB->Update(timeToGo);
+    }
+
+    pA->Update(-toi);
+    pB->Update(-toi);
+
+    *pOutContact = contact;
+    return FALSE;
+}
 
 BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact)
 {
@@ -17,6 +85,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
 
     pOutContact->pA = pA;
     pOutContact->pB = pB;
+    pOutContact->timeOfImpact = 0.0f;
 
     Vector3 posA = pA->GetPosition();
     Vector3 posB = pB->GetPosition();
@@ -37,7 +106,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
         if (SphereSphereDynamic(pSphereA->GetRadius(), pSphereB->GetRadius(), posA, posB, velA, velB, dt,
-                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, & timeOfImpact))
+                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, &timeOfImpact))
         {
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);
@@ -66,7 +135,91 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         }
         return FALSE;
     }
-    
+    else
+    {
+        return ConservativeAdvance(pA, pB, dt, pOutContact);
+    }
+
+    return FALSE;
+}
+
+BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContact)
+{
+    Contact contact;
+    contact.pA = pA;
+    contact.pB = pB;
+    contact.timeOfImpact = 0.0f;
+
+    Vector3 posA = pA->GetPosition();
+    Vector3 posB = pB->GetPosition();
+
+    if (pA->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE && pB->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE)
+    {
+        const SphereCollider *pSphereA = (const SphereCollider *)pA->m_pCollider;
+        const SphereCollider *pSphereB = (const SphereCollider *)pB->m_pCollider;
+
+        float radiusA = pSphereA->GetRadius();
+        float radiusB = pSphereB->GetRadius();
+        if (SphereSphereStatic(radiusA, radiusB, posA, posB, &contact.contactPointAWorldSpace,
+                               &contact.contactPointBWorldSpace))
+        {
+            contact.normal = posA - posB;
+            contact.normal.Normalize();
+
+            // Convert world space contacts to local space
+            contact.contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contact.contactPointAWorldSpace);
+            contact.contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contact.contactPointBWorldSpace);
+
+            Vector3 ab = pB->GetPosition() - pA->GetPosition();
+            float   r = ab.Length() - (pSphereA->GetRadius() + pSphereB->GetRadius());
+            contact.separationDistance = r;
+
+            *pOutContact = contact;
+            return TRUE;
+        }
+    }
+    else
+    {
+        Vector3 ptOnA, ptOnB;
+        const float bias = 0.001f;
+        if (GJK_DoesIntersect(pA, pB, bias, ptOnA, ptOnB))
+        {
+            Vector3 normal = ptOnB - ptOnA;
+            normal.Normalize();
+
+            ptOnA -= normal * bias;
+            ptOnB += normal * bias;
+
+            contact.normal = normal;
+
+            contact.contactPointAWorldSpace = ptOnA;
+            contact.contactPointBWorldSpace = ptOnB;
+            
+            // Convert world space contacts to local space
+            contact.contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contact.contactPointAWorldSpace);
+            contact.contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contact.contactPointBWorldSpace);
+
+            float   r = (ptOnA - ptOnB).Length();
+            contact.separationDistance = r;
+
+            *pOutContact = contact;
+            return TRUE;
+        }
+
+        // there was no collision, but we still want the contact data, so get it
+        GJK_ClosestPoints(pA, pB, ptOnA, ptOnB);
+        contact.contactPointAWorldSpace = ptOnA;
+        contact.contactPointBWorldSpace = ptOnB;
+
+        // Convert world space contacts to local space
+        contact.contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contact.contactPointAWorldSpace);
+        contact.contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contact.contactPointBWorldSpace);
+        
+        float r = (ptOnA - ptOnB).Length();
+        contact.separationDistance = r;
+
+        *pOutContact = contact;
+    }
     return FALSE;
 }
 

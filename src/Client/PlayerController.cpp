@@ -7,7 +7,7 @@
 
 #include "PlayerController.h"
 
-REGISTER_CONTROLLER(PlayerController)
+//REGISTER_CONTROLLER(PlayerController)
 BOOL PlayerController::Start() 
 {
     IGameManager *pGame = g_pClient->GetGameManager();

@@ -550,12 +550,12 @@ void BuildConvexHull(const std::vector<Vector3> &verts, std::vector<Vector3> &hu
     ExpandConvexHull(hullPts, hullTris, verts);
 }
 
-BOOL ConvexCollider::Initialize(GameObject *pObj, const BasicVertex *vertices, const int num)
+BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const int num)
 { 
     m_points.reserve(num);
     for (int i = 0; i < num; i++)
     {
-        m_points.push_back(vertices[i].position);
+        m_points.push_back(points[i]);
     }
 
     // Expand into a convex hull
@@ -571,6 +571,8 @@ BOOL ConvexCollider::Initialize(GameObject *pObj, const BasicVertex *vertices, c
     m_centerOfMass = CalculateCenterOfMass(hullPoints, hullTriangles);
 
     m_inertiaTensor = CalculateInertiaTensor(hullPoints, hullTriangles, m_centerOfMass);
+
+    m_pGameObject = pObj;
 
     return TRUE;
 }

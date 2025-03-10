@@ -23,8 +23,10 @@ class PhysicsManager
     SORT_LINK *m_pRigidBodyLinkHead = nullptr;
     SORT_LINK *m_pRigidBodyLinkTail = nullptr;
 
-    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact);
+    BOOL ConservativeAdvance(RigidBody *pA, RigidBody *pB, float dt, Contact *pOutContact);
 
+    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact);
+    BOOL Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContact);
     void Cleanup();
 
   public:

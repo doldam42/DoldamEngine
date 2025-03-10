@@ -5,6 +5,8 @@
 
 #include "BoxCollider.h"
 #include "SphereCollider.h"
+#include "ConvexCollider.h"
+
 #include "RigidBody.h"
 #include "PhysicsManager.h"
 #include "GameObject.h"
@@ -60,6 +62,47 @@ BOOL GameObject::InitSphereCollider(const Vector3 &center, const float radius)
     SphereCollider *pSphere = new SphereCollider;
     pSphere->Initialize(this, center, radius);
     m_pCollider = pSphere;
+
+    return TRUE;
+}
+
+BOOL GameObject::InitConvexCollider()
+{ 
+    if (!m_pModel)
+        return FALSE;
+
+    // TODO: Reserve Points
+    std::vector<Vector3> points; 
+    UINT numObj = m_pModel->GetObjectCount();
+    for (UINT i = 0; i < numObj; i++)
+    {
+        MeshObject* pObj = m_pModel->GetObjectByIdx(i);
+        
+        UINT numVertice = pObj->GetVertexCount();
+        
+        if (pObj->IsSkinned())
+        {
+            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+            for (int j = 0; j < numVertice; j++)
+            {
+                points.push_back(pVertice[j].position);
+            }
+        }
+        else
+        {
+            BasicVertex *pVertice = pObj->GetBasicVertices();
+            for (int j = 0; j < numVertice; j++)
+            {
+                points.push_back(pVertice[j].position);
+            }
+        }
+    }
+
+    ConvexCollider *pConvex = new ConvexCollider;
+
+    m_pCollider = pConvex;
+
+    pConvex->Initialize(this, points.data(), points.size());
 
     return TRUE;
 }
