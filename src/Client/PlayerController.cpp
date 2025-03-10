@@ -56,9 +56,11 @@ void PlayerController::Update(float dt)
     Vector3 pos = m_pPlayer->GetPosition();
 
     RayHit hit;
-    BOOL   isGrounded = pGame->Raycast(pos, Vector3::Down, &hit, 0.1f);
+    BOOL   isGrounded = pGame->Raycast(pos, Vector3::Down, &hit, 0.001f);
     if (isGrounded)
     {
+        if (hit.tHit < 0.0f)
+            pos.y -= hit.tHit * dt;
         jumpSpeed = (pI->IsKeyPressed(VK_SPACE, false)) ? 9.8 : 0.0f;
         speed = (pI->IsKeyPressed(VK_SHIFT)) ? SPEED * 2.0f : SPEED;
     }

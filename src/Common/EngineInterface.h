@@ -87,6 +87,7 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_BOX,
     COLLIDER_TYPE_CAPSULE,
     COLLIDER_TYPE_ELLIPSE,
+    COLLIDER_TYPE_CONVEX,
 };
 interface ICollider
 {
@@ -102,6 +103,9 @@ interface ICollider
     virtual BOOL Intersect(ICollider * pOther) const = 0;
     virtual BOOL Intersect(const Ray &ray, float* hitt0, float*hitt1) const = 0;
     virtual BOOL Intersect(const Bounds &b) const = 0;
+
+    virtual Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) = 0;
+    virtual float   FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const = 0;
 };
 interface IRigidBody
 {

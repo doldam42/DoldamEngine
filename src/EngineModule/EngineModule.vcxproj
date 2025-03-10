@@ -180,6 +180,7 @@
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="Contact.cpp" />
     <ClCompile Include="ControllerManager.cpp" />
+    <ClCompile Include="ConvexCollider.cpp" />
     <ClCompile Include="DebugConsoleSprite.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EllipseCollider.cpp" />
@@ -190,6 +191,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="GJK.cpp" />
     <ClCompile Include="MeshObject.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="pch.cpp">
@@ -216,12 +218,14 @@
     <ClInclude Include="Character.h" />
     <ClInclude Include="Contact.h" />
     <ClInclude Include="ControllerManager.h" />
+    <ClInclude Include="ConvexCollider.h" />
     <ClInclude Include="DebugConsoleSprite.h" />
     <ClInclude Include="EllipseCollider.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />
     <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="GJK.h" />
     <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="pch.h" />

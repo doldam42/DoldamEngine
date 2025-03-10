@@ -899,6 +899,14 @@ inline bool Vector3::InBounds(const Vector3& Bounds) const noexcept
     return XMVector3InBounds(v1, v2);
 }
 
+inline bool Vector3::IsValid() const noexcept 
+{
+    using namespace DirectX;
+    const XMVECTOR v = XMLoadFloat3(this);
+
+    return !XMVector3IsNaN(v) || !XMVector3IsInfinite(v);
+}
+
 inline float Vector3::Length() const noexcept
 {
     using namespace DirectX;
@@ -979,6 +987,25 @@ inline void Vector3::Clamp(const Vector3& vmin, const Vector3& vmax, Vector3& re
     const XMVECTOR v3 = XMLoadFloat3(&vmax);
     const XMVECTOR X = XMVectorClamp(v1, v2, v3);
     XMStoreFloat3(&result, X);
+}
+
+inline void Vector3::GetOrthoNormal(Vector3 *u, Vector3 *v) const noexcept 
+{ 
+    Vector3 _u, _v;
+    Vector3 n = *this;
+    n.Normalize();
+
+    const Vector3 w = (n.z * n.z > 0.9f * 0.9f) ? Vector3::UnitX : Vector3::UnitZ;
+    _u = w.Cross(n);
+    _u.Normalize();
+
+    _v = n.Cross(_u);
+    _v.Normalize();
+    _u = _v.Cross(n);
+    _u.Normalize();
+
+    *u = _u;
+    *v = _v;
 }
 
 //------------------------------------------------------------------------------
@@ -1486,6 +1513,13 @@ inline bool Vector4::InBounds(const Vector4& Bounds) const noexcept
     const XMVECTOR v1 = XMLoadFloat4(this);
     const XMVECTOR v2 = XMLoadFloat4(&Bounds);
     return XMVector4InBounds(v1, v2);
+}
+
+inline bool Vector4::IsValid() const noexcept 
+{
+    using namespace DirectX;
+    const XMVECTOR v = XMLoadFloat4(this);
+    return !XMVector4IsNaN(v) || !XMVector4IsInfinite(v);
 }
 
 inline float Vector4::Length() const noexcept
@@ -2358,6 +2392,39 @@ inline float Matrix::Determinant() const noexcept
     using namespace DirectX;
     const XMMATRIX M = XMLoadFloat4x4(this);
     return XMVectorGetX(XMMatrixDeterminant(M));
+}
+
+inline Matrix Matrix::Minor(const int i, const int j) const noexcept
+{ 
+    Matrix minor;
+    int    yy = 0;
+    for (int y = 0; y < 4; y++)
+    {
+        if (y == j)
+        {
+            continue;
+        }
+        int xx = 0;
+        for (int x = 0; x < 4; x++)
+        {
+            if (x == i)
+            {
+                continue;
+            }
+
+            minor.m[xx][yy] = m[x][y];
+            xx++;
+        }
+        yy++;
+    }
+    return minor;
+}
+
+inline float  Matrix::Cofactor(const int i, const int j) const noexcept 
+{
+    const Matrix minor = Minor(i, j);
+    const float  C = float(pow(-1, i + 1 + j + 1)) * minor.Determinant();
+    return C;
 }
 
 inline Vector3 Matrix::ToEuler() const noexcept

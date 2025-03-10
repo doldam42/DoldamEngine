@@ -22,6 +22,7 @@ class SphereCollider : public ICollider
     Matrix        InertiaTensor() const override
     {
         constexpr float oneDiv5 = 1.0f / 5.0f;
+
         Matrix tensor = Matrix::Identity;
         tensor._11 = 2.0f * m_radius * m_radius * oneDiv5;
         tensor._22 = 2.0f * m_radius * m_radius * oneDiv5;
@@ -33,7 +34,11 @@ class SphereCollider : public ICollider
     BOOL Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
     BOOL Intersect(const Bounds &b) const override;
 
-    BOOL Intersect(ICollider *pOther, Vector3 velocity, float dt);
+    Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) override
+    {
+        return pos + dir * (m_radius + bias);
+    }
+    float FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const override { return 0.0f; }
 
     SphereCollider() = default;
     ~SphereCollider() {}

@@ -274,6 +274,7 @@ namespace DirectX
 
             // Vector operations
             bool InBounds(const Vector3& Bounds) const noexcept;
+            bool IsValid() const noexcept;
 
             float Length() const noexcept;
             float LengthSquared() const noexcept;
@@ -287,6 +288,8 @@ namespace DirectX
 
             void Clamp(const Vector3& vmin, const Vector3& vmax) noexcept;
             void Clamp(const Vector3& vmin, const Vector3& vmax, Vector3& result) const noexcept;
+
+            void GetOrthoNormal(Vector3 *u, Vector3 *v) const noexcept;
 
             // Static functions
             static float Distance(const Vector3& v1, const Vector3& v2) noexcept;
@@ -388,12 +391,26 @@ namespace DirectX
             Vector4& operator*= (float S) noexcept;
             Vector4& operator/= (float S) noexcept;
 
+            float operator[](int axis) const noexcept
+            {
+                if (axis < 0 || axis > 3)
+                    exit(-1);
+                return ((float *)this)[axis];
+            }
+            float &operator[](int axis) noexcept
+            {
+                if (axis < 0 || axis > 3)
+                    exit(-1);
+                return ((float *)this)[axis];
+            }
+
             // Unary operators
             Vector4 operator+ () const noexcept { return *this; }
             Vector4 operator- () const noexcept;
 
             // Vector operations
             bool InBounds(const Vector4& Bounds) const noexcept;
+            bool IsValid() const noexcept;
 
             float Length() const noexcept;
             float LengthSquared() const noexcept;
@@ -572,6 +589,9 @@ namespace DirectX
             void Invert(Matrix& result) const noexcept;
 
             float Determinant() const noexcept;
+
+            Matrix Minor(const int i, const int j) const noexcept;
+            float  Cofactor(const int i, const int j) const noexcept;
 
             // Computes rotation about y-axis (y), then x-axis (x), then z-axis (z)
             Vector3 ToEuler() const noexcept;

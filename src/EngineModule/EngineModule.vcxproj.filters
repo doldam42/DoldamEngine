@@ -51,8 +51,18 @@
       <Filter>Physics\Collider</Filter>
     </ClCompile>
     <ClCompile Include="ControllerManager.cpp" />
-    <ClCompile Include="CapsuleCollider.cpp" />
-    <ClCompile Include="EllipseCollider.cpp" />
+    <ClCompile Include="CapsuleCollider.cpp">
+      <Filter>Physics\Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="EllipseCollider.cpp">
+      <Filter>Physics\Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="ConvexCollider.cpp">
+      <Filter>Physics\Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="GJK.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -103,8 +113,18 @@
       <Filter>Physics\Collider</Filter>
     </ClInclude>
     <ClInclude Include="ControllerManager.h" />
-    <ClInclude Include="CapsuleCollider.h" />
-    <ClInclude Include="EllipseCollider.h" />
+    <ClInclude Include="CapsuleCollider.h">
+      <Filter>Physics\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="EllipseCollider.h">
+      <Filter>Physics\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="ConvexCollider.h">
+      <Filter>Physics\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="GJK.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

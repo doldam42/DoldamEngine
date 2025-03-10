@@ -20,8 +20,12 @@ class GeometryGenerator
     static Model *MakeSquareGrid(const int numSlices, const int numStacks, const float scale = 1.0f);
     static Model *MakeBox(const float scale = 1.0f);
     static Model *MakeWireBox(const Vector3 center, const Vector3 extends);
-    static Model *MakeCylinder(const float bottomRadius, const float topRadius, float height, int numSlices);
     static Model *MakeSphere(const float radius, const int numSlices, const int numStacks);
+
+    static Model *MakeDiamond(const float scale = 1.0f);
+
+    static Model *MakeCylinder(const float bottomRadius, const float topRadius, float height, int numSlices);
+    
     static Model *MakeTetrahedron();
     static Model *MakeIcosahedron();
     static Model *SubdivideToSphere(const float radius, Model Model);

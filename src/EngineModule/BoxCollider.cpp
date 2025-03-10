@@ -5,16 +5,17 @@
 #include "SphereCollider.h"
 #include "BoxCollider.h"
 
-BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 &center, const Vector3 &extent) 
-{ 
-	m_pGameObject = pObj;
+BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents)
+{
+    m_pGameObject = pObj;
 
-	m_bounds = Bounds(center - extent, center + extent);
+    m_bounds.mins = (center - extents) * 0.5f;
+    m_bounds.maxs = (center + extents) * 0.5f;
 
-	return TRUE;
+    return TRUE;
 }
 
-Bounds BoxCollider::GetWorldBounds() const 
+Bounds BoxCollider::GetWorldBounds() const
 {
     const Matrix& m = m_pGameObject->GetWorldMatrix();
 
@@ -91,5 +92,62 @@ BOOL BoxCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
 
 BOOL BoxCollider::Intersect(const Bounds &b) const 
 { 
-    return b.DoesIntersect(GetWorldBounds());
+    return b.DoesIntersect(GetWorldBounds()); }
+
+Vector3 BoxCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias)
+{
+    using namespace DirectX;
+
+    // Find the point in furthest in direction
+    Matrix m = Matrix::CreateFromQuaternion(orient);
+
+    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(m_bounds.mins, m_bounds.maxs), 0.5f);
+    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(m_bounds.maxs, m_bounds.mins), 0.5f);
+
+    // Compute and transform the corners and find new min/max bounds.
+    XMVECTOR vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0], vCenter);
+    XMVECTOR maxPt = XMVectorAdd(XMVector3Transform(vCorner, m), pos);
+    float maxDist = dir.Dot(maxPt);
+
+    for (size_t i = 1; i < 8; ++i)
+    {
+        vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], pos);
+        vCorner = XMVectorAdd(XMVector3Transform(vCorner, m), pos);
+        float dist = dir.Dot(vCorner);
+
+        if (dist > maxDist)
+        {
+            maxDist = dist;
+            maxPt = vCorner;
+        }
+    }
+
+    Vector3 norm = dir;
+    norm.Normalize();
+    norm *= bias;
+
+    return XMVectorAdd(maxPt, norm);
+}
+
+float BoxCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const 
+{ 
+    using namespace DirectX;
+    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(m_bounds.mins, m_bounds.maxs), 0.5f);
+    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(m_bounds.maxs, m_bounds.mins), 0.5f);
+
+    float maxSpeed = 0.0f;
+    for (int i = 0; i < 8; i++)
+    {
+        XMVECTOR vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], vCenter);
+        XMVECTOR r = XMVectorSubtract(vCorner, vCenter);
+
+        Vector3 linearVelocity = angularVelocity.Cross(r);
+        float   speed = dir.Dot(linearVelocity);
+
+        if (speed > maxSpeed)
+        {
+            maxSpeed = speed;
+        }
+    }
+    return maxSpeed;
 }

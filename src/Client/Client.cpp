@@ -217,15 +217,15 @@ void Client::LoadScene()
     wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
+    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
 
     for (UINT i = 0; i < 4; i++)
     {
         IGameObject *pGround = m_pGame->CreateGameObject();
         pGround->SetModel(pGroundModel);
-        pGround->SetPosition(0.0f, 5.0f * i, 20.0f * i);
-        pGround->SetRotationX(-XM_PIDIV2);
-        pGround->SetScale(25.0f);
+        pGround->SetPosition(0.0f, 5.0f * i, 25.0f * i);
+        //pGround->SetRotationX(-XM_PIDIV2);
+        pGround->SetScale(25.0f, 0.2f, 25.0f);
         pGround->SetMaterials(&pGroundMaterial, 1);
 
         pGroundModel->AddRef();
