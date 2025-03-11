@@ -41,7 +41,7 @@ class GameObject : public IGameObject
     BOOL InitConvexCollider() override;
 
     BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                       BOOL isKinematic = TRUE) override;
+                       BOOL isKinematic = FALSE) override;
 
     virtual void Update(float dt);
     void         Render();

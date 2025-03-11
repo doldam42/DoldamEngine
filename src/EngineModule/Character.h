@@ -28,7 +28,7 @@ class Character : public IGameCharacter, public GameObject
     BOOL InitSphereCollider(const Vector3 &center, const float radius) override;
     BOOL InitConvexCollider() override;
     BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                       BOOL isKinematic = TRUE) override;
+                       BOOL isKinematic = FALSE) override;
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;

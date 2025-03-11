@@ -258,7 +258,7 @@ void Model::Render(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT num
     }
     
     // Render Bounding Box
-    m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
+    //m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }
 
 void Model::SetBasePath(const WCHAR *basePath)

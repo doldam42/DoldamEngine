@@ -125,7 +125,7 @@ interface IGameObject : public IBoundedObject
     virtual BOOL InitConvexCollider() = 0;
 
     virtual BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                               BOOL isKinematic = TRUE) = 0;
+                               BOOL isKinematic = FALSE) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;

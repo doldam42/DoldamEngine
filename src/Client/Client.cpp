@@ -238,26 +238,6 @@ void Client::LoadScene()
     //pSphere->InitSphereCollider(Vector3::Zero, 1.0f);
     //pSphere->InitRigidBody(1.0f, 0.5f, 0.5f, TRUE, FALSE);
 
-    // Create Material
-    Material boxMaterial = {};
-    boxMaterial.metallicFactor = 0.0f;
-    boxMaterial.roughnessFactor = 0.0f;
-    boxMaterial.reflectionFactor = 0.9f;
-    wcscpy_s(boxMaterial.name, L"box");
-    wcscpy_s(boxMaterial.basePath, L"..\\..\\assets\\textures\\");
-    wcscpy_s(boxMaterial.albedoTextureName, L"blender_uv_grid_2k.png");
-    IRenderMaterial *pBoxMaterialHandle = m_pRenderer->CreateMaterialHandle(&boxMaterial);
-    for (int i = 0; i < 4; i++)
-    {
-        pGroundModel->AddRef();
-        IGameObject *pBox = m_pGame->CreateGameObject(FALSE);
-        pBox->SetModel(pGroundModel);
-        pBox->SetPosition(0.0f, 5.0f * i, 3.0f * i);
-        pBox->SetMaterials(&pBoxMaterialHandle, 1);
-        pBox->InitBoxCollider(Vector3::Zero, Vector3::One);
-        pBox->InitRigidBody(1.0f, 0.2f, 1.0f, TRUE, FALSE);
-    }
-    
     // Set CrossHair
     {
         UINT width = g_pClient->GetScreenWidth();

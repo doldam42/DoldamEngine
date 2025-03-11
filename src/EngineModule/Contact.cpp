@@ -12,6 +12,7 @@ void ResolveContact(Contact &contact)
 
     const float invMassA = pA->m_invMass;
     const float invMassB = pB->m_invMass;
+    const float invMassAB = invMassA + invMassB;
 
     const float elasticity = pA->m_elasticity * pB->m_elasticity;
 
@@ -31,7 +32,7 @@ void ResolveContact(Contact &contact)
     const Vector3 velB = pB->m_linearVelocity + pB->m_angularVelocity.Cross(rb);
 
     const Vector3 vab = velA - velB;
-    const float   impulseJ = (1.0f + elasticity) * vab.Dot(n) / (invMassA + invMassB + angularFactor);
+    const float   impulseJ = (1.0f + elasticity) * vab.Dot(n) / (invMassAB + angularFactor);
     const Vector3 vectorImpulseJ = n * impulseJ;
 
     pA->ApplyImpulse(ptOnA, -vectorImpulseJ);
@@ -52,7 +53,7 @@ void ResolveContact(Contact &contact)
     const Vector3 inertiaB = (Vector3::Transform(rb.Cross(relativeVelGTang), invWorldInertiaB)).Cross(rb);
     const float   invIntertia = (inertiaA * inertiaB).Dot(relativeVelGTang);
 
-    const float   reduceMass = 1.0f / (invMassA + invMassB + invIntertia);
+    const float   reduceMass = 1.0f / (invMassAB + invIntertia);
     const Vector3 impulseFrition = velTang * reduceMass * friction;
 
     pA->ApplyImpulse(ptOnA, -impulseFrition);
@@ -65,8 +66,8 @@ void ResolveContact(Contact &contact)
     {
         const Vector3 ds = ptOnB - ptOnA;
 
-        const float tA = invMassA / (invMassA + invMassB);
-        const float tB = invMassB / (invMassA + invMassB);
+        const float tA = invMassA / invMassAB;
+        const float tB = invMassB / invMassAB;
 
         pA->AddPosition(ds * tA);
         pB->AddPosition(-ds * tB);
