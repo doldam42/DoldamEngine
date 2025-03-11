@@ -42,10 +42,11 @@ void GameObject::Cleanup()
     }
 }
 
-void GameObject::Initialize(GameManager *pGameEngine)
+void GameObject::Initialize(GameManager *pGameEngine, BOOL isStatic)
 {
     m_pGame = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();
+    m_isStatic = isStatic;
 }
 
 BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
@@ -255,13 +256,6 @@ Bounds GameObject::GetBounds() const
     Bounds box;
     m_pModel->GetBoundingBox().Transform(&box, m_transform.GetMatrix());
     return box;
-}
-
-BOOL GameObject::HasBounds() const 
-{
-    if (!m_pModel)
-        return FALSE;
-    return TRUE;
 }
 
 bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const

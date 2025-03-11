@@ -268,10 +268,8 @@ point_t Support(const RigidBody *bodyA, const RigidBody *bodyB, Vector3 dir, con
     // Find the point in A furthest in direction
     point.ptA = bodyA->m_pCollider->Support(dir, bodyA->GetPosition(), bodyA->GetOrient(), bias);
 
-    dir *= -1.0f;
-
     // Find the point in B furthest in the opposite direction
-    point.ptB = bodyB->m_pCollider->Support(dir, bodyB->GetPosition(), bodyB->GetOrient(), bias);
+    point.ptB = bodyB->m_pCollider->Support(-dir, bodyB->GetPosition(), bodyB->GetOrient(), bias);
 
     // Return the point, in the minkowski sum, furthest in the direction
     point.xyz = point.ptA - point.ptB;
@@ -432,7 +430,7 @@ bool GJK_DoesIntersect(const RigidBody *bodyA, const RigidBody *bodyB)
 
     int     numPts = 1;
     point_t simplexPoints[4];
-    simplexPoints[0] = Support(bodyA, bodyB, Vector3(1, 1, 1), 0.0f);
+    simplexPoints[0] = Support(bodyA, bodyB, Vector3::One, 0.0f);
 
     float closestDist = 1e10f;
     bool  doesContainOrigin = false;

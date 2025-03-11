@@ -32,7 +32,7 @@ BOOL PhysicsDemoController::Start()
 
     // Create Model & GameObject
     IGameModel *pGroundModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    IGameObject *pGround = pGame->CreateGameObject();
+    IGameObject *pGround = pGame->CreateGameObject(TRUE);
     pGround->SetModel(pGroundModel);
     pGround->SetPosition(0.0f, -50.5f, 0.0f);
     pGround->SetScale(50.0f);
@@ -45,7 +45,7 @@ BOOL PhysicsDemoController::Start()
         float        dx = -0.5f;
         float height = 5.0f + 3.0f * i;
         IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-        IGameObject *pSphere = pGame->CreateGameObject();
+        IGameObject *pSphere = pGame->CreateGameObject(FALSE);
         pSphere->SetModel(pSphereModel);
         pSphere->SetPosition(dx, height, 0.0f);
         pSphere->SetScale(2.0f);

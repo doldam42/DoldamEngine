@@ -218,58 +218,60 @@ void Client::LoadScene()
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pGround = m_pGame->CreateGameObject();
+    IGameObject *pGround = m_pGame->CreateGameObject(TRUE);
     pGround->SetModel(pGroundModel);
     pGround->SetPosition(0.0f, 0.0f, 0.0f);
     pGround->SetScale(25.0f, 0.2f, 25.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
     pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
-    //pGround->InitConvexCollider();
-
     pGround->InitRigidBody(0.0f, 0.5f, 0.0f, FALSE, FALSE);
 
-    IGameModel *pSphereModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    IGameObject *pSphere = m_pGame->CreateGameObject();
-    pSphere->SetModel(pSphereModel);
-    pSphere->SetPosition(0.0f, 10.0f, 0.0f);
-    //pGround->SetMaterials(&pGroundMaterial, 1);
-    pSphere->InitSphereCollider(Vector3::Zero, 1.0f);
-    pSphere->InitRigidBody(1.0f, 0.5f, 0.5f, TRUE, FALSE);
+    // pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
 
-    m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
+    // pGround->InitRigidBody(0.0f, 0.5f, 0.0f, FALSE, FALSE);
 
-    IGameObject *pBox = m_pGame->CreateGameObject();
-    pBox->SetModel(pGroundModel);
-    pBox->SetPosition(3.0f, 5.0f, 0.0f);
-    // pGround->SetMaterials(&pGroundMaterial, 1);
-    pBox->InitBoxCollider(Vector3::Zero, Vector3(1.0f));
-    //pBox->InitConvexCollider();
-    pBox->InitRigidBody(1.0f, 0.5f, 0.5f, TRUE, FALSE);
-    
+    //IGameModel  *pSphereModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+    //IGameObject *pSphere = m_pGame->CreateGameObject();
+    //pSphere->SetModel(pSphereModel);
+    //pSphere->SetPosition(0.0f, 10.0f, 0.0f);
+    //// pGround->SetMaterials(&pGroundMaterial, 1);
+    //pSphere->InitSphereCollider(Vector3::Zero, 1.0f);
+    //pSphere->InitRigidBody(1.0f, 0.5f, 0.5f, TRUE, FALSE);
 
-    m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
-
-    /*for (UINT i = 0; i < 4; i++)
+    // Create Material
+    Material boxMaterial = {};
+    boxMaterial.metallicFactor = 0.0f;
+    boxMaterial.roughnessFactor = 0.0f;
+    boxMaterial.reflectionFactor = 0.9f;
+    wcscpy_s(boxMaterial.name, L"box");
+    wcscpy_s(boxMaterial.basePath, L"..\\..\\assets\\textures\\");
+    wcscpy_s(boxMaterial.albedoTextureName, L"blender_uv_grid_2k.png");
+    IRenderMaterial *pBoxMaterialHandle = m_pRenderer->CreateMaterialHandle(&boxMaterial);
+    for (int i = 0; i < 4; i++)
     {
-        IGameObject *pGround = m_pGame->CreateGameObject();
-        pGround->SetModel(pGroundModel);
-        pGround->SetPosition(0.0f, 5.0f * i, 25.0f * i);
-        pGround->SetScale(25.0f, 0.2f, 25.0f);
-        pGround->SetMaterials(&pGroundMaterial, 1);
-        pGround->InitConvexCollider();
-        pGround->InitRigidBody(0.0f, 1.0f, 1.0f);
         pGroundModel->AddRef();
-    }*/
+        IGameObject *pBox = m_pGame->CreateGameObject(FALSE);
+        pBox->SetModel(pGroundModel);
+        pBox->SetPosition(0.0f, 5.0f * i, 3.0f * i);
+        pBox->SetMaterials(&pBoxMaterialHandle, 1);
+        pBox->InitBoxCollider(Vector3::Zero, Vector3::One);
+        pBox->InitRigidBody(1.0f, 0.2f, 1.0f, TRUE, FALSE);
+    }
+    
+    // Set CrossHair
+    {
+        UINT width = g_pClient->GetScreenWidth();
+        UINT height = g_pClient->GetScreenHeight();
 
-    UINT width = g_pClient->GetScreenWidth();
-    UINT height = g_pClient->GetScreenHeight();
+        int posX = (width / 2) - 32;
+        int posY = (height / 2) - 32;
 
-    int posX = (width / 2) - 32;
-    int posY = (height / 2) - 32;
-
-    IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds", 256, 256);
-    pSprite->SetScale(0.25);
-    pSprite->SetPosition(posX, posY);
+        IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds", 256, 256);
+        pSprite->SetScale(0.25);
+        pSprite->SetPosition(posX, posY);
+    }
+    
+    m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
 }
 
 void Client::Process()

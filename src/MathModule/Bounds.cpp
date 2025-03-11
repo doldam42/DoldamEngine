@@ -10,6 +10,51 @@ Bounds Bounds::SweptBounds(const Bounds &from, const Bounds &to)
     return Bounds(Vector3::Min(from.mins, to.mins), Vector3::Max(from.maxs, to.maxs));
 }
 
+BOOL Bounds::DoesIntersect(const Bounds &a, const Bounds &b, const Vector3 &velA, const Vector3 &velB, float *hitt0,
+                           float *hitt1)
+{
+    using namespace DirectX;
+
+    __m128 a_min = _mm_set_ps(0, a.mins.z, a.mins.y, a.mins.x);
+    __m128 a_max = _mm_set_ps(0, a.maxs.z, a.maxs.y, a.maxs.x);
+    __m128 b_min = _mm_set_ps(0, b.mins.z, b.mins.y, b.mins.x);
+    __m128 b_max = _mm_set_ps(0, b.maxs.z, b.maxs.y, b.maxs.x);
+
+    __m128 vA = _mm_set_ps(0, velA.z, velA.y, velA.x);
+    __m128 vB = _mm_set_ps(0, velB.z, velB.y, velB.x);
+    __m128 relVel = _mm_sub_ps(vA, vB); // 상대 속도 계산
+
+    __m128 zero = _mm_setzero_ps();
+
+    // invEntry = (bMin - aMax) / v, invExit = (bMax - aMin) / v
+    __m128 invEntry = _mm_div_ps(_mm_sub_ps(b_min, a_max), relVel);
+    __m128 invExit = _mm_div_ps(_mm_sub_ps(b_max, a_min), relVel);
+
+    // relVel < 0 -> swap(invEntry, invExit)
+    __m128 mask = _mm_cmplt_ps(relVel, zero);
+    __m128 temp = invEntry;
+    invEntry = _mm_blendv_ps(invEntry, invExit, mask);
+    invExit = _mm_blendv_ps(invExit, temp, mask);
+
+    // tMin = max(invEntry.x, invEntry.y, invEntry.z)
+    __m128 tMinVec = _mm_max_ps(invEntry, _mm_shuffle_ps(invEntry, invEntry, _MM_SHUFFLE(0, 0, 2, 1)));
+    tMinVec = _mm_max_ps(tMinVec, _mm_shuffle_ps(tMinVec, tMinVec, _MM_SHUFFLE(0, 0, 0, 2)));
+    float tMin = _mm_cvtss_f32(tMinVec);
+
+    // tMax = min(invExit.x, invExit.y, invExit.z)
+    __m128 tMaxVec = _mm_min_ps(invExit, _mm_shuffle_ps(invExit, invExit, _MM_SHUFFLE(0, 0, 2, 1)));
+    tMaxVec = _mm_min_ps(tMaxVec, _mm_shuffle_ps(tMaxVec, tMaxVec, _MM_SHUFFLE(0, 0, 0, 2)));
+    float tMax = _mm_cvtss_f32(tMaxVec);
+
+    if (tMin > tMax || tMin > 1.0f || tMin < 0.0f)
+        return false;
+
+    *hitt0 = tMin;
+    *hitt1 = tMax;
+
+    return true;
+}
+
 /*
 ====================================================
 Bounds::operator =
@@ -54,59 +99,52 @@ bool Bounds::DoesIntersect(const Bounds &rhs) const
     // return true;
 }
 
-bool Bounds::DoesIntersect(const Vector3 &center, const float radius) const 
+bool Bounds::DoesIntersect(const Vector3 &center, const float radius) const
 {
-    __m128 _center = _mm_set_ps(center.x, center.y, center.z, 0.0f);
+    Vector3 closestPoint = Vector3::Max(mins, Vector3::Min(center, maxs));
+    Vector3 d = closestPoint - center;
+    return d.LengthSquared() <= (radius * radius);
+
+    /*__m128 _center = _mm_set_ps(center.x, center.y, center.z, 0.0f);
     __m128 _mins = _mm_set_ps(mins.x, mins.y, mins.z, 0.0f);
     __m128 _maxs = _mm_set_ps(maxs.x, maxs.y, maxs.z, 0.0f);
 
-    __m128 _closest = _mm_max_ps(_mins, _mm_min_ps(_center, _maxs)); 
+    __m128 _closest = _mm_max_ps(_mins, _mm_min_ps(_center, _maxs));
     __m128 _d = _mm_sub_ps(_closest, _center);
     __m128 _d2 = _mm_dp_ps(_d, _d, 0xF1);
 
-    float  distSquared;
+    float distSquared;
     _mm_store_ss(&distSquared, _d2);
 
-    return distSquared <= (radius * radius);
+    return distSquared <= (radius * radius);*/
 
     //// AABB 내부에서 Sphere 중심과 가장 가까운 점 찾기
-    //Vector3 closestPoint;
-    //closestPoint.x = std::fmax(mins.x, std::fmin(center.x, maxs.x));
-    //closestPoint.y = std::fmax(mins.y, std::fmin(center.y, maxs.y));
-    //closestPoint.z = std::fmax(mins.z, std::fmin(center.z, maxs.z));
+    // Vector3 closestPoint;
+    // closestPoint.x = std::fmax(mins.x, std::fmin(center.x, maxs.x));
+    // closestPoint.y = std::fmax(mins.y, std::fmin(center.y, maxs.y));
+    // closestPoint.z = std::fmax(mins.z, std::fmin(center.z, maxs.z));
 
     //// 가장 가까운 점과 Sphere 중심 간 거리 계산
-    //float dx = closestPoint.x - center.x;
-    //float dy = closestPoint.y - center.y;
-    //float dz = closestPoint.z - center.z;
-    //float distanceSquared = dx * dx + dy * dy + dz * dz;
+    // float dx = closestPoint.x - center.x;
+    // float dy = closestPoint.y - center.y;
+    // float dz = closestPoint.z - center.z;
+    // float distanceSquared = dx * dx + dy * dy + dz * dz;
 
     //// 거리가 Sphere 반지름 이하이면 충돌
-    //return distanceSquared <= (radius * radius);
+    // return distanceSquared <= (radius * radius);
 }
 
 bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
 {
-    __m128 origin = _mm_set_ps(ray.position.x, ray.position.y, ray.position.z, 0.0f);
-    __m128 invDir = _mm_set_ps(1 / ray.direction.x, 1 / ray.direction.y, 1 / ray.direction.z, 0.0f);
+    const Vector3 invDir = Vector3(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
 
-    __m128 boundsMin = _mm_set_ps(mins.x, mins.y, mins.z, 0.0f);
-    __m128 boundsMax = _mm_set_ps(maxs.x, maxs.y, maxs.z, 0.0f);
+    Vector3 t1 = (mins - ray.position) * invDir;
+    Vector3 t2 = (maxs - ray.position) * invDir;
 
-    __m128 t1 = _mm_mul_ps(_mm_sub_ps(boundsMin, origin), invDir);
-    __m128 t2 = _mm_mul_ps(_mm_sub_ps(boundsMax, origin), invDir);
-
-    __m128 tminVec = _mm_min_ps(t1, t2);
-    __m128 tmaxVec = _mm_max_ps(t1, t2);
-
-    float fMinVec[4];
-    float fMaxVec[4];
-
-    _mm_store_ps(fMinVec, tminVec);
-    _mm_store_ps(fMaxVec, tmaxVec);
-
-    float tmin = max(max(fMinVec[1], fMinVec[2]), fMinVec[3]);
-    float tmax = min(min(fMaxVec[1], fMaxVec[2]), fMaxVec[3]);
+    Vector3 _min = Vector3::Min(t1, t2);
+    Vector3 _max = Vector3::Max(t1, t2);
+    float   tmin = max(max(_min.x, _min.y), _min.z);
+    float   tmax = min(min(_max.x, _max.y), _max.z);
 
     if (tmax >= tmin && tmax >= 0 && tmin <= ray.tmax)
     {
@@ -173,14 +211,12 @@ int Bounds::MaximumExtent() const
 
 Vector3 Bounds::Center() const
 {
-    using namespace DirectX;
-    return XMVectorScale(XMVectorAdd(mins, maxs), 0.5f);
+    return (mins + maxs) * 0.5f;
 }
 
 Vector3 Bounds::Extends() const
 {
-    using namespace DirectX;
-    return XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
+    return (maxs - mins) * 0.5f;
 }
 
 Vector3 Bounds::Offset(const Vector3 &p) const
@@ -195,29 +231,58 @@ Vector3 Bounds::Offset(const Vector3 &p) const
     return o;
 }
 
+void Bounds::GetCorners(Vector3 pOutCorners[8]) const
+{
+    for (int i = 0; i < CORNER_COUNT; i++)
+    {
+        pOutCorners[i] = {
+            (i & 0b100) ? maxs.x : mins.x, // x 결정
+            (i & 0b010) ? maxs.y : mins.y, // y 결정
+            (i & 0b001) ? maxs.z : mins.z  // z 결정
+        };
+    }
+}
+
 void Bounds::Transform(Bounds *pOutBounds, const Matrix &m) const
 {
-    using namespace DirectX;
-    // Load center and extents.
-    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(mins, maxs), 0.5f);
-    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(maxs, mins), 0.5f);
+    Vector3 corners[8];
+    GetCorners(corners);
 
-    // Compute and transform the corners and find new min/max bounds.
-    XMVECTOR Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0], vCenter);
-    Corner = XMVector3Transform(Corner, m);
+    Vector3 corner = Vector3::Transform(corners[0], m);
 
-    XMVECTOR Min, Max;
-    Min = Max = Corner;
+    Vector3 _min, _max;
+    _min = _max = corner;
 
-    for (size_t i = 1; i < CORNER_COUNT; ++i)
+    for (int i = 1; i < CORNER_COUNT; i++)
     {
-        Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], vCenter);
-        Corner = XMVector3Transform(Corner, m);
-
-        Min = XMVectorMin(Min, Corner);
-        Max = XMVectorMax(Max, Corner);
+        corner = Vector3::Transform(corners[i], m);
+        _min = Vector3::Min(_min, corner);
+        _max = Vector3::Max(_max, corner);
     }
 
-    XMStoreFloat3(&pOutBounds->mins, Min);
-    XMStoreFloat3(&pOutBounds->maxs, Max);
+    pOutBounds->mins = _min;
+    pOutBounds->maxs = _max;
+}
+
+void Bounds::Transform(Bounds *pOutBounds, const Vector3 &pos, const Quaternion &orient) const 
+{
+    const Matrix m = Matrix::CreateFromQuaternion(orient);
+
+    Vector3 corners[8];
+    GetCorners(corners);
+
+    Vector3 corner = Vector3::Transform(corners[0], m) + pos;
+
+    Vector3 _min, _max;
+    _min = _max = corner;
+
+    for (int i = 1; i < CORNER_COUNT; i++)
+    {
+        corner = Vector3::Transform(corners[i], m) + pos;
+        _min = Vector3::Min(_min, corner);
+        _max = Vector3::Max(_max, corner);
+    }
+
+    pOutBounds->mins = _min;
+    pOutBounds->maxs = _max;
 }

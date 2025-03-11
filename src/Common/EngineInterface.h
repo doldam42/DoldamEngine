@@ -103,7 +103,8 @@ interface ICollider
     virtual BOOL Intersect(ICollider * pOther) const = 0;
     virtual BOOL Intersect(const Ray &ray, float* hitt0, float*hitt1) const = 0;
     virtual BOOL Intersect(const Bounds &b) const = 0;
-
+    
+    // Find the point in furthest in direction
     virtual Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) = 0;
     virtual float   FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const = 0;
 };
@@ -212,7 +213,7 @@ interface IGameManager : public IUnknown
     virtual void       DeleteGameMesh(IGameMesh * pGameMesh) = 0;
 
     virtual IGameCharacter *CreateCharacter() = 0;
-    virtual IGameObject    *CreateGameObject() = 0;
+    virtual IGameObject    *CreateGameObject(BOOL isStatic) = 0;
     virtual void            DeleteGameObject(IGameObject * pGameObj) = 0;
     virtual void            DeleteAllGameObject() = 0;
 

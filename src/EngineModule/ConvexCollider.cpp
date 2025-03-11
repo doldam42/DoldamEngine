@@ -75,8 +75,8 @@ float DistanceFromTriangle(const Vector3 &a, const Vector3 &b, const Vector3 &c,
     Vector3 normal = ab.Cross(ac);
     normal.Normalize();
 
-    Vector3  ray = pt - a;
-    float dist = ray.Dot(normal);
+    Vector3 ray = pt - a;
+    float   dist = ray.Dot(normal);
     return dist;
 }
 
@@ -85,7 +85,8 @@ float DistanceFromTriangle(const Vector3 &a, const Vector3 &b, const Vector3 &c,
 FindPointFurthestFromTriangle
 ================================
 */
-Vector3 FindPointFurthestFromTriangle(const Vector3 *pts, const int num, const Vector3 &ptA, const Vector3 &ptB, const Vector3 &ptC)
+Vector3 FindPointFurthestFromTriangle(const Vector3 *pts, const int num, const Vector3 &ptA, const Vector3 &ptB,
+                                      const Vector3 &ptC)
 {
     int   maxIdx = 0;
     float maxDist = DistanceFromTriangle(ptA, ptB, ptC, pts[0]);
@@ -100,7 +101,6 @@ Vector3 FindPointFurthestFromTriangle(const Vector3 *pts, const int num, const V
     }
     return pts[maxIdx];
 }
-
 
 /*
 ================================
@@ -166,10 +166,10 @@ void RemoveInternalPoints(const std::vector<Vector3> &hullPoints, const std::vec
         bool isExternal = false;
         for (int t = 0; t < hullTris.size(); t++)
         {
-            const tri_t &tri = hullTris[t];
-            const Vector3  &a = hullPoints[tri.a];
-            const Vector3  &b = hullPoints[tri.b];
-            const Vector3  &c = hullPoints[tri.c];
+            const tri_t   &tri = hullTris[t];
+            const Vector3 &a = hullPoints[tri.a];
+            const Vector3 &b = hullPoints[tri.b];
+            const Vector3 &c = hullPoints[tri.c];
 
             // If the point is in front of any triangle then it's external
             float dist = DistanceFromTriangle(a, b, c, pt);
@@ -212,7 +212,6 @@ void RemoveInternalPoints(const std::vector<Vector3> &hullPoints, const std::vec
         }
     }
 }
-
 
 /*
 ================================
@@ -416,10 +415,10 @@ bool IsExternal(const std::vector<Vector3> &pts, const std::vector<tri_t> &tris,
     bool isExternal = false;
     for (int t = 0; t < tris.size(); t++)
     {
-        const tri_t &tri = tris[t];
-        const Vector3  &a = pts[tri.a];
-        const Vector3  &b = pts[tri.b];
-        const Vector3  &c = pts[tri.c];
+        const tri_t   &tri = tris[t];
+        const Vector3 &a = pts[tri.a];
+        const Vector3 &b = pts[tri.b];
+        const Vector3 &c = pts[tri.c];
 
         // If the point is in front of any triangle then it's external
         float dist = DistanceFromTriangle(a, b, c, pt);
@@ -445,7 +444,7 @@ Vector3 CalculateCenterOfMass(const std::vector<Vector3> &pts, const std::vector
     Bounds bounds;
     bounds.Expand(pts.data(), pts.size());
 
-    Vector3        cm(0.0f);
+    Vector3     cm(0.0f);
     const float dx = bounds.WidthX() / (float)numSamples;
     const float dy = bounds.WidthY() / (float)numSamples;
     const float dz = bounds.WidthZ() / (float)numSamples;
@@ -473,7 +472,6 @@ Vector3 CalculateCenterOfMass(const std::vector<Vector3> &pts, const std::vector
     cm /= (float)sampleCount;
     return cm;
 }
-
 
 /*
 ================================
@@ -531,7 +529,6 @@ Matrix CalculateInertiaTensor(const std::vector<Vector3> &pts, const std::vector
     return tensor;
 }
 
-
 /*
 ================================
 BuildConvexHull
@@ -551,7 +548,7 @@ void BuildConvexHull(const std::vector<Vector3> &verts, std::vector<Vector3> &hu
 }
 
 BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const int num)
-{ 
+{
     m_points.reserve(num);
     for (int i = 0; i < num; i++)
     {
@@ -559,8 +556,8 @@ BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const i
     }
 
     // Expand into a convex hull
-    std::vector<Vector3>  hullPoints;
-    std::vector<tri_t> hullTriangles;
+    std::vector<Vector3> hullPoints;
+    std::vector<tri_t>   hullTriangles;
     BuildConvexHull(m_points, hullPoints, hullTriangles);
     m_points = hullPoints;
 
@@ -602,19 +599,13 @@ BOOL ConvexCollider::Intersect(const Bounds &b) const { return 0; }
 
 Vector3 ConvexCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias)
 {
-    using namespace DirectX;
-
-    // Find the point in furthest in direction
     Matrix m = Matrix::CreateFromQuaternion(orient);
- 
-    XMVECTOR maxPt = XMVectorAdd(XMVector3Transform(m_points[0], m), pos);
-    float    maxDist = dir.Dot(maxPt);
-
-    for (size_t i = 1; i < 8; ++i)
+    Vector3 maxPt = Vector3::Transform(m_points[0], m) + pos;
+    float   maxDist = maxPt.Dot(dir);
+    for (size_t i = 1; i < m_points.size(); ++i)
     {
-        XMVECTOR pt = XMVectorAdd(XMVector3Transform(m_points[i], m), pos);
-        float    dist = dir.Dot(pt);
-
+        Vector3  pt = Vector3::Transform(m_points[i], m) + pos;
+        float    dist = pt.Dot(dir);
         if (dist > maxDist)
         {
             maxDist = dist;
@@ -626,7 +617,7 @@ Vector3 ConvexCollider::Support(const Vector3 dir, const Vector3 pos, const Quat
     norm.Normalize();
     norm *= bias;
 
-    return XMVectorAdd(maxPt, norm);
+    return maxPt + norm;
 }
 
 float ConvexCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const

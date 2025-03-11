@@ -2,66 +2,64 @@
 
 #include "GameObject.h"
 
-#include "SphereCollider.h"
 #include "BoxCollider.h"
+#include "SphereCollider.h"
 
 BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents)
 {
     m_pGameObject = pObj;
 
-    m_bounds.mins = (center - extents) * 0.5f;
-    m_bounds.maxs = (center + extents) * 0.5f;
+    m_bounds.mins = center - extents;
+    m_bounds.maxs = center + extents;
 
     return TRUE;
 }
 
 Bounds BoxCollider::GetWorldBounds() const
 {
-    const Matrix& m = m_pGameObject->GetWorldMatrix();
+    const Vector3    pos = m_pGameObject->GetPosition();
+    const Quaternion q = m_pGameObject->GetRotation();
 
     Bounds box;
-    m_bounds.Transform(&box, m);
+    m_bounds.Transform(&box, pos, q);
     return box;
 }
 
-Vector3 BoxCollider::GetWorldCenter() const 
-{ 
-	const Vector3 pos = m_pGameObject->GetPosition(); 
-	return pos + m_bounds.Center();
+Vector3 BoxCollider::GetWorldCenter() const
+{
+    const Vector3 pos = m_pGameObject->GetPosition();
+    return pos + m_bounds.Center();
 }
 
-Matrix BoxCollider::InertiaTensor() const 
+Matrix BoxCollider::InertiaTensor() const
 {
-	// Inertia tensor for box centered around zero
+    constexpr float OneDiv12 = 1 / 12.0f;
+    // Inertia tensor for box centered around zero
     const float dx = m_bounds.WidthX();
     const float dy = m_bounds.WidthY();
     const float dz = m_bounds.WidthZ();
 
-	Matrix tensor;
-    tensor._11 = (dy * dy + dz * dz) / 12.0f;
-    tensor._22 = (dx * dx + dz * dz) / 12.0f;
-    tensor._33 = (dx * dx + dy * dy) / 12.0f;
+    Matrix tensor;
+    tensor._11 = (dy * dy + dz * dz) * OneDiv12;
+    tensor._22 = (dx * dx + dz * dz) * OneDiv12;
+    tensor._33 = (dx * dx + dy * dy) * OneDiv12;
 
-	// Now We need to use the parallel axis theorem to get the inertia tensor for a box
-	// that is not centered around the origin
+    // Now We need to use the parallel axis theorem to get the inertia tensor for a box
+    // that is not centered around the origin
 
-	Vector3 cm = m_bounds.Center();
+    Vector3 cm = m_bounds.Center();
 
-	const Vector3 R = -cm;
+    const Vector3 R = -cm;
     const float   R2 = R.LengthSquared();
 
-	Matrix patTensor(
-		R2 - R.x * R.x, R.x * R.y, R.x * R.z, 0.0f, 
-		R.y * R.x, R2 - R.y * R.y, R.y * R.z, 0.0f, 
-		R.z * R.x, R.z * R.y, R2 - R.z * R.z, 0.0f, 
-		0.0f, 0.0f, 0.0f, 0.0f
-	);
+    Matrix patTensor(R2 - R.x * R.x, R.x * R.y, R.x * R.z, 0.0f, R.y * R.x, R2 - R.y * R.y, R.y * R.z, 0.0f, R.z * R.x,
+                     R.z * R.y, R2 - R.z * R.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-	tensor += patTensor;
+    tensor += patTensor;
     return tensor;
 }
 
-BOOL BoxCollider::Intersect(ICollider *pOther) const 
+BOOL BoxCollider::Intersect(ICollider *pOther) const
 {
     switch (pOther->GetType())
     {
@@ -79,7 +77,7 @@ BOOL BoxCollider::Intersect(ICollider *pOther) const
 }
 
 BOOL BoxCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
-{ 
+{
     float tmin, tmax;
     if (GetWorldBounds().IntersectP(ray, &tmin, &tmax) && tmin < ray.tmax)
     {
@@ -90,35 +88,25 @@ BOOL BoxCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
     return FALSE;
 }
 
-BOOL BoxCollider::Intersect(const Bounds &b) const 
-{ 
-    return b.DoesIntersect(GetWorldBounds()); }
+BOOL BoxCollider::Intersect(const Bounds &b) const { return b.DoesIntersect(GetWorldBounds()); }
 
 Vector3 BoxCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias)
 {
-    using namespace DirectX;
+    const Matrix m = Matrix::CreateFromQuaternion(orient);
 
-    // Find the point in furthest in direction
-    Matrix m = Matrix::CreateFromQuaternion(orient);
+    Vector3 corners[CORNER_COUNT];
+    m_bounds.GetCorners(corners);
 
-    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(m_bounds.mins, m_bounds.maxs), 0.5f);
-    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(m_bounds.maxs, m_bounds.mins), 0.5f);
-
-    // Compute and transform the corners and find new min/max bounds.
-    XMVECTOR vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0], vCenter);
-    XMVECTOR maxPt = XMVectorAdd(XMVector3Transform(vCorner, m), pos);
-    float maxDist = dir.Dot(maxPt);
-
+    Vector3 maxPt = Vector3::Transform(corners[0], m) + pos;
+    float   maxDist = maxPt.Dot(dir);
     for (size_t i = 1; i < 8; ++i)
     {
-        vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], pos);
-        vCorner = XMVectorAdd(XMVector3Transform(vCorner, m), pos);
-        float dist = dir.Dot(vCorner);
-
+        Vector3 pt = Vector3::Transform(corners[i], m) + pos;
+        float   dist = pt.Dot(dir);
         if (dist > maxDist)
         {
             maxDist = dist;
-            maxPt = vCorner;
+            maxPt = pt;
         }
     }
 
@@ -126,20 +114,18 @@ Vector3 BoxCollider::Support(const Vector3 dir, const Vector3 pos, const Quatern
     norm.Normalize();
     norm *= bias;
 
-    return XMVectorAdd(maxPt, norm);
+    return maxPt + norm;
 }
 
-float BoxCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const 
-{ 
-    using namespace DirectX;
-    XMVECTOR vCenter = XMVectorScale(XMVectorAdd(m_bounds.mins, m_bounds.maxs), 0.5f);
-    XMVECTOR vExtents = XMVectorScale(XMVectorSubtract(m_bounds.maxs, m_bounds.mins), 0.5f);
+float BoxCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const
+{
+    Vector3 corners[8];
+    m_bounds.GetCorners(corners);
 
     float maxSpeed = 0.0f;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < CORNER_COUNT; i++)
     {
-        XMVECTOR vCorner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i], vCenter);
-        XMVECTOR r = XMVectorSubtract(vCorner, vCenter);
+        Vector3 r = corners[i];
 
         Vector3 linearVelocity = angularVelocity.Cross(r);
         float   speed = dir.Dot(linearVelocity);

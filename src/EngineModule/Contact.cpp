@@ -42,7 +42,7 @@ void ResolveContact(Contact &contact)
     const float friction = frictionA * frictionB;
 
     const Vector3 velNorm = n * n.Dot(vab);
-    
+
     const Vector3 velTang = vab - velNorm;
 
     Vector3 relativeVelGTang = velTang;
@@ -52,7 +52,7 @@ void ResolveContact(Contact &contact)
     const Vector3 inertiaB = (Vector3::Transform(rb.Cross(relativeVelGTang), invWorldInertiaB)).Cross(rb);
     const float   invIntertia = (inertiaA * inertiaB).Dot(relativeVelGTang);
 
-    const float reduceMass = 1.0f / (invMassA + invMassB + invIntertia);
+    const float   reduceMass = 1.0f / (invMassA + invMassB + invIntertia);
     const Vector3 impulseFrition = velTang * reduceMass * friction;
 
     pA->ApplyImpulse(ptOnA, -impulseFrition);
@@ -64,9 +64,10 @@ void ResolveContact(Contact &contact)
     if (contact.timeOfImpact == 0.0f)
     {
         const Vector3 ds = ptOnB - ptOnA;
-        const float   tA = pA->m_invMass / (pA->m_invMass + pB->m_invMass);
-        const float   tB = pB->m_invMass / (pA->m_invMass + pB->m_invMass);
-        
+
+        const float tA = invMassA / (invMassA + invMassB);
+        const float tB = invMassB / (invMassA + invMassB);
+
         pA->AddPosition(ds * tA);
         pB->AddPosition(-ds * tB);
     }

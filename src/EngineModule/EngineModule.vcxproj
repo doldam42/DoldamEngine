@@ -192,6 +192,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="GJK.cpp" />
+    <ClCompile Include="Maniford.cpp" />
     <ClCompile Include="MeshObject.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="pch.cpp">
@@ -226,6 +227,7 @@
     <ClInclude Include="GameUtils.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="GJK.h" />
+    <ClInclude Include="Maniford.h" />
     <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="pch.h" />

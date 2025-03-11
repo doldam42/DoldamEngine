@@ -15,6 +15,8 @@ class Bounds
     static constexpr size_t CORNER_COUNT = 8;
 
     static Bounds SweptBounds(const Bounds &from, const Bounds &to);
+    static BOOL DoesIntersect(const Bounds &a, const Bounds &b, const Vector3 &velA, const Vector3 &velB, float *hitt0,
+                              float *hitt1);
 
     Bounds() { Clear(); }
     Bounds(const Bounds &rhs) : mins(rhs.mins), maxs(rhs.maxs) {}
@@ -30,6 +32,7 @@ class Bounds
     }
     bool DoesIntersect(const Bounds &rhs) const;
     bool DoesIntersect(const Vector3 &center, const float radius) const;
+
     bool IntersectP(const Ray &ray, float *hitt0, float *hitt1) const;
 
     void Expand(const Vector3 *pts, const int num);
@@ -49,7 +52,11 @@ class Bounds
 
     Vector3 Offset(const Vector3 &p) const;
 
+    // Corner Count must be 8
+    void GetCorners(Vector3 pOutCorners[8]) const;
+
     void Transform(Bounds *pOutBounds, const Matrix& m) const;
+    void Transform(Bounds *pOutBounds, const Vector3& pos, const Quaternion& orient) const;
 
   public:
     Vector3 mins;

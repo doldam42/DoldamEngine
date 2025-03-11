@@ -94,7 +94,7 @@ class GameManager : public IGameManager
     void       DeleteGameMesh(IGameMesh *pGameMesh) override;
 
     IGameCharacter *CreateCharacter() override;
-    IGameObject    *CreateGameObject() override;
+    IGameObject    *CreateGameObject(BOOL isStatic) override;
     void            DeleteGameObject(IGameObject *pGameObj) override;
     void            DeleteAllGameObject() override;
 

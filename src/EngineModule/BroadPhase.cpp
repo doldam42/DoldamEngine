@@ -34,7 +34,7 @@ static void SortBodiesBounds(const RigidBody *const *bodies, const int num, Psue
 {
     Vector3 axis = Vector3(1, 1, 1);
     axis.Normalize();
-
+    
     for (int i = 0; i < num; i++)
     {
         const RigidBody *body = bodies[i];
