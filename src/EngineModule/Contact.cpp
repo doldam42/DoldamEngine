@@ -61,7 +61,7 @@ void ResolveContact(Contact &contact)
     //
     // Let's also move our colliding objects to just outside of each other (projection method)
     //
-    if (contact.timeOfImpact == 0)
+    if (contact.timeOfImpact == 0.0f)
     {
         const Vector3 ds = ptOnB - ptOnA;
         const float   tA = pA->m_invMass / (pA->m_invMass + pB->m_invMass);
