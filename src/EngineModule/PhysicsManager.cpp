@@ -356,8 +356,6 @@ BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
         Contact contact;
         if (Intersect(pA, pB, dt, &contact))
         {
-            m_contacts[m_contactCount] = contact;
-            m_contactCount++;
             if (contact.timeOfImpact == 0.0f)
             {
                 // Static contact

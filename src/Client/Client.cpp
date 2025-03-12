@@ -221,9 +221,9 @@ void Client::LoadScene()
     IGameObject *pGround = m_pGame->CreateGameObject(TRUE);
     pGround->SetModel(pGroundModel);
     pGround->SetPosition(0.0f, 0.0f, 0.0f);
-    pGround->SetScale(25.0f, 0.2f, 25.0f);
+    pGround->SetScale(30.0f, 0.2f, 30.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
-    pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
+    pGround->InitBoxCollider(Vector3::Zero, Vector3(30.0f, 0.2f, 30.0f));
     pGround->InitRigidBody(0.0f, 0.5f, 0.5f, FALSE);
 
     // pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));

@@ -63,6 +63,9 @@ BOOL DynamicSprite::Initialize(IRenderer *pRnd, UINT width, UINT height)
     m_pTexHandle = pTexHandle;
     m_pRenderer = pRnd;
 
+    m_width = width;
+    m_height = height;
+
     m_LinkInGame.pPrev = nullptr;
     m_LinkInGame.pNext = nullptr;
     m_LinkInGame.pItem = this;

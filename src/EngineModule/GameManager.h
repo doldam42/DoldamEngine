@@ -11,6 +11,7 @@ class GameObject;
 class Model;
 class PhysicsManager;
 class World;
+class DynamicSprite;
 class GameManager : public IGameManager
 {
   public:
@@ -66,8 +67,6 @@ class GameManager : public IGameManager
     UINT m_commandListCount = 0;
     UINT m_renderThreadCount = 0;
 
-    BoundingFrustum m_boundingFrustum;
-
     HWND m_hWnd = nullptr;
 
     bool m_isInitialized = false;
@@ -75,7 +74,13 @@ class GameManager : public IGameManager
     bool m_useGUIEditor = false;
 
     // For Debugging
-    // IRenderSprite *m_pShadowMapSprite = nullptr;
+    UINT m_culledObjectCount = 0;
+    WCHAR m_text[64] = {};
+    BYTE *m_pTextImage = nullptr;
+    UINT  m_TextImageWidth = 0;
+    UINT  m_TextImageHeight = 0;
+    IGameSprite *m_pTextSprite = nullptr;
+    IFontHandle   *m_pFontHandle = nullptr;
 
   private:
     void LoadPrimitiveMeshes();

@@ -130,7 +130,7 @@ void GameObject::Update(float dt)
 
 void GameObject::Render()
 {
-    if (m_pModel)
+    if (m_pModel && m_isVisible)
     {
         m_pModel->Render(this, m_ppMaterials, m_materialCount);
     }

@@ -32,24 +32,26 @@ BOOL PhysicsDemoController::Start()
     pBox->SetMaterials(&pSphereMaterial, 1);
     pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
     pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
-   /* float dx = -10.f;
-    for (int i = 0; i < 100; i++)
+
+    float y = -20.0f;
+    float height = 25.0f;
+    for (int i = 0; i < 10; i++)
     {
-        
-        float height = 5.0f + 3.0f * i;
-
-        IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-        IGameObject *pSphere = pGame->CreateGameObject(FALSE);
-        pSphere->SetModel(pSphereModel);
-        pSphere->SetPosition(dx, height, 0.0f);
-        pSphere->SetScale(2.0f);
-        pSphere->SetMaterials(&pSphereMaterial, 1);
-        pSphere->InitSphereCollider(Vector3::Zero, 2.0f);
-        pSphere->InitRigidBody(1.0f, 1.0f, 0.5f);
-
-        dx += 0.5f;
-    }*/
-
+        float x = -20.0f;
+        for (int j = 0; j < 10; j++)
+        {
+            IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+            IGameObject *pSphere = pGame->CreateGameObject(FALSE);
+            pSphere->SetModel(pSphereModel);
+            pSphere->SetPosition(x, height, y);
+            pSphere->SetScale(2.0f);
+            pSphere->SetMaterials(&pSphereMaterial, 1);
+            pSphere->InitSphereCollider(Vector3::Zero, 2.0f);
+            pSphere->InitRigidBody(1.0f, 1.0f, 0.5f);
+            x += 4.0f;
+        }
+        y += 4.0f;
+    }
     m_pMaterial = pSphereMaterial;
 
     return TRUE;
@@ -57,7 +59,7 @@ BOOL PhysicsDemoController::Start()
 
 void PhysicsDemoController::Update(float dt)
 {
-   /* constexpr float SHOOT_CYCLE = 0.5f;
+    constexpr float SHOOT_CYCLE = 0.5f;
     static float    cycle = 0.0f;
 
     InputManager *pI = g_pClient->GetInputManager();
@@ -67,17 +69,28 @@ void PhysicsDemoController::Update(float dt)
 
     if (cycle > SHOOT_CYCLE)
     {
-        IGameModel *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-        IGameObject *pSphere = pGame->CreateGameObject(FALSE);
-        pSphere->SetModel(pSphereModel);
-        pSphere->SetPosition(0.0f, 10.0f, -25.0f);
-        pSphere->SetScale(2.0f);
-        pSphere->SetMaterials(&m_pMaterial, 1);
-        pSphere->InitSphereCollider(Vector3::Zero, 2.0f);
-        pSphere->InitRigidBody(1.0f, 1.0f, 0.5f);
-        
-        pSphere->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 15.0f));
-        
+        IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+        IGameObject *pSphere1 = pGame->CreateGameObject(FALSE);
+        pSphere1->SetModel(pSphereModel);
+        pSphere1->SetPosition(0.0f, 10.0f, -25.0f);
+        pSphere1->SetScale(2.0f);
+        pSphere1->SetMaterials(&m_pMaterial, 1);
+        pSphere1->InitSphereCollider(Vector3::Zero, 2.0f);
+        pSphere1->InitRigidBody(1.0f, 1.0f, 0.5f);
+
+        pSphere1->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 15.0f));
+
+        pSphereModel->AddRef();
+        IGameObject *pSphere2 = pGame->CreateGameObject(FALSE);
+        pSphere2->SetModel(pSphereModel);
+        pSphere2->SetPosition(0.0f, 10.0f, 25.0f);
+        pSphere2->SetScale(2.0f);
+        pSphere2->SetMaterials(&m_pMaterial, 1);
+        pSphere2->InitSphereCollider(Vector3::Zero, 2.0f);
+        pSphere2->InitRigidBody(1.0f, 1.0f, 0.5f);
+
+        pSphere2->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, -15.0f));
+
         cycle = 0.0f;
-    }*/
+    }
 }

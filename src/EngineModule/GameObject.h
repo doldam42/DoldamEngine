@@ -28,6 +28,8 @@ class GameObject : public IGameObject
     SORT_LINK m_LinkInWorld;
     void     *m_pSearchHandleInGame = nullptr;
 
+    BOOL m_isVisible = TRUE;
+
   private:
     void CleanupMaterials();
 

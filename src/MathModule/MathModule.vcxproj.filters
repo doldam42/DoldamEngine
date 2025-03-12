@@ -28,6 +28,7 @@
     <ClInclude Include="ColorUtils.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Collisions.h" />
+    <ClInclude Include="Plane.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -42,6 +43,8 @@
     </ClCompile>
     <ClCompile Include="ColorUtils.cpp" />
     <ClCompile Include="Collisions.cpp" />
+    <ClCompile Include="Plane.cpp" />
+    <ClCompile Include="Frustum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

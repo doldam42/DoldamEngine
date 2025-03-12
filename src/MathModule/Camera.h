@@ -18,6 +18,8 @@ class Camera
     Matrix m_viewProjMatrix;
     Matrix m_prevViewProjMatrix;
 
+    Frustum m_frustumWS;
+
   public:
     BOOL m_usePerspectiveProjection = TRUE;
     BOOL m_isUpdated = FALSE;
@@ -58,4 +60,6 @@ class Camera
     const Matrix &GetViewMatrix() const { return m_viewMatrix; }
     const Matrix &GetProjMatrix() const { return m_projMatrix; }
     const Matrix &GetViewProjMatrix() const { return m_viewProjMatrix; }
+
+    BOOL IsCulled(const Bounds &inBounds) const;
 };

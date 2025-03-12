@@ -674,11 +674,6 @@ void D3D12Renderer::RenderTerrain(IRenderTerrain *pTerrain, const Vector3 *pScal
     if (!m_ppRenderQueue[m_curThreadIndex]->Add(&item))
         __debugbreak();
 
-    /*if (!m_pShadowManager->Add(&item))
-    {
-        __debugbreak();
-    }*/
-
     m_curThreadIndex++;
     m_curThreadIndex = m_curThreadIndex % m_renderThreadCount;
 }

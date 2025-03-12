@@ -32,16 +32,11 @@ using DirectX::XMVectorSetW;
 using DirectX::SimpleMath::Vector2;
 using DirectX::SimpleMath::Vector3;
 using DirectX::SimpleMath::Vector4;
-using DirectX::SimpleMath::Plane;
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Quaternion;
 
-using DirectX::BoundingBox;
-using DirectX::BoundingSphere;
 using DirectX::BoundingFrustum;
-using DirectX::BoundingOrientedBox;
-using DirectX::ContainmentType;
-
+using DirectX::BoundingBox;
 
 #ifdef _MSC_VER
 #define MachineEpsilon (std::numeric_limits<float>::epsilon() * 0.5)
@@ -54,8 +49,10 @@ inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilo
 #include "Bounds.h"
 #include "Collisions.h"
 
-#include "Camera.h"
+#include "Plane.h"
 #include "Frustum.h"
+
+#include "Camera.h"
 #include "Joint.h"
 #include "Material.h"
 

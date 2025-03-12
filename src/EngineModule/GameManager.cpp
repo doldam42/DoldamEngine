@@ -71,11 +71,16 @@ void GameManager::DeletePrimitiveMeshes()
 
 void GameManager::Cleanup()
 {
-    /*if (m_pShadowMapSprite)
+    if (m_pFontHandle)
     {
-        m_pShadowMapSprite->Release();
-        m_pShadowMapSprite = nullptr;
-    }*/
+        m_pRenderer->DeleteFontObject(m_pFontHandle);
+        m_pFontHandle = nullptr;
+    }
+    if (m_pTextImage)
+    {
+        delete[] m_pTextImage;
+        m_pTextImage = nullptr;
+    }
 
     if (m_pWorld)
     {
@@ -177,6 +182,16 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT
     m_pWorld = new World;
     m_pWorld->Initialize();
 
+    m_TextImageWidth = width * 0.4;
+    m_TextImageHeight = height * 0.2;
+
+    m_pFontHandle = pRnd->CreateFontObject(L"Tahoma", 21.0f);
+    m_pTextSprite = CreateDynamicSprite(m_TextImageWidth, m_TextImageHeight);
+    m_pTextSprite->SetPosition(width * 0.6, height * 0.8);
+    m_pTextImage = new BYTE[m_TextImageWidth * m_TextImageHeight * 4];
+    ZeroMemory(m_pTextImage, sizeof(BYTE) * m_TextImageWidth * m_TextImageHeight * 4);
+    ZeroMemory(m_text, sizeof(m_text));
+
     result = TRUE;
 lb_return:
     return result;
@@ -246,10 +261,36 @@ void GameManager::Update(float dt)
 
         pGameObj->Update(dt);
 
+        if (pGameObj->HasBounds() && m_pMainCamera->IsCulled(pGameObj->GetBounds()))
+        {
+            pGameObj->m_isVisible = FALSE;
+            m_culledObjectCount++;
+        }
+        else
+        {
+            pGameObj->m_isVisible = TRUE;
+        }
+
         pCur = pCur->pNext;
     }
 
     LateUpdate(dt);
+
+    WCHAR text[512] = {L'\0'};
+    int   txtLen = wsprintfW(text, L"Culled Object Count :%d", m_culledObjectCount);
+    if (wcscmp(text, m_text) != 0)
+    {
+        // 텍스트가 변경된 경우
+        int width, height;
+        memset(m_pTextImage, 0, m_TextImageWidth * m_TextImageHeight * 4);
+        m_pRenderer->WriteTextToBitmap(m_pTextImage, m_TextImageWidth, m_TextImageHeight, m_TextImageWidth * 4, &width,
+                                       &height, m_pFontHandle, text, txtLen);
+        m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_TextImageWidth, m_TextImageHeight);
+        wcscpy_s(m_text, text);
+
+        SetWindowText(m_hWnd, text);
+    }
+    m_culledObjectCount = 0;
 }
 
 void GameManager::BuildScene()
@@ -274,14 +315,11 @@ void GameManager::UpdatePhysics(float dt)
     m_pPhysicsManager->ApplyGravityImpulseAll(dt);
 
     m_pPhysicsManager->CollisionTestAll(m_pWorld, dt);
-    
+
     m_pPhysicsManager->ResolveContactsAll(dt);
 }
 
-void GameManager::LateUpdate(float dt)
-{
-    
-}
+void GameManager::LateUpdate(float dt) {}
 
 void GameManager::Render()
 {
@@ -292,7 +330,7 @@ void GameManager::Render()
         m_pRenderer->UpdateCamera(m_pMainCamera->GetPosition(), m_pMainCamera->GetViewMatrix(),
                                   m_pMainCamera->GetProjMatrix());
     }
-    
+
     // begin
     m_pRenderer->BeginRender();
 
@@ -324,8 +362,7 @@ void GameManager::Render()
         pCur = pCur->pNext;
         spriteCount++;
     }
-    /*m_pRenderer->RenderSpriteWithTex(m_pShadowMapSprite, 0, 0, 0.25f, 0.25f, nullptr, 0,
-                                     m_pRenderer->GetShadowMapTexture(0));*/
+
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 }
@@ -539,7 +576,8 @@ IGameAnimation *GameManager::CreateEmptyAnimation(const WCHAR *name)
     AnimationClip *pClip = new AnimationClip;
     pClip->SetName(name);
 
-    pClip->m_pSearchHandleInGame = m_pAnimationHashTable->Insert((void *)pClip, (void *)(pClip->GetName()), sizeof(size_t));
+    pClip->m_pSearchHandleInGame =
+        m_pAnimationHashTable->Insert((void *)pClip, (void *)(pClip->GetName()), sizeof(size_t));
 
     return pClip;
 }

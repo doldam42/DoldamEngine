@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "Frustum.h"
+
 #include "Camera.h"
 
 void Camera::UpdateProjMatrix()
@@ -13,6 +15,7 @@ void Camera::UpdateProjMatrix()
 void Camera::UpdateViewMatrix()
 {
     m_viewMatrix = XMMatrixLookToLH(m_position, m_forwardDir, m_upDir);
+
     // Vector4 pos(m_position);
     // pos.w = 1.0f;
     // m_viewMatrix = Matrix(Vector4(m_rightDir), Vector4(m_upDir), Vector4(m_forwardDir), pos).Invert();
@@ -33,6 +36,24 @@ void Camera::Update()
 
         m_prevViewProjMatrix = m_viewProjMatrix;
         m_viewProjMatrix = m_viewMatrix * m_projMatrix;
+
+        // view proj 행렬로부터 평면의 방정식과 절두체 생성
+        Matrix m = m_viewProjMatrix.Transpose();
+
+        Vector4 row1(m._11, m._12, m._13, m._14);
+        Vector4 row2(m._21, m._22, m._23, m._24);
+        Vector4 row3(m._31, m._32, m._33, m._34);
+        Vector4 row4(m._41, m._42, m._43, m._44);
+
+        std::array<Plane, 6> frustumPlanesFromMatrix = {
+            Plane(-(row4 - row2)), // up
+            Plane(-(row4 + row2)), // bottom
+            Plane(-(row4 - row1)), // right
+            Plane(-(row4 + row1)), // left
+            Plane(-(row4 - row3)), // far
+            Plane(-(row4 + row3)), // near
+        };
+        m_frustumWS = Frustum(frustumPlanesFromMatrix);
     }
     m_isUpdated = FALSE;
 }
@@ -129,4 +150,10 @@ void Camera::DisablePerspectiveProjection()
     UpdateProjMatrix();
 
     m_isUpdated = TRUE;
+}
+
+BOOL Camera::IsCulled(const Bounds &inBounds) const 
+{ 
+    BoundCheckResult result = m_frustumWS.CheckBound(inBounds); 
+    return result == BoundCheckResult::Outside;
 }
