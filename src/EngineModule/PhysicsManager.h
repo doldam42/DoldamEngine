@@ -2,6 +2,7 @@
 
 #include "Contact.h"
 #include "BroadPhase.h"
+#include "Maniford.h"
 
 class World;
 class GameObject;
@@ -19,6 +20,7 @@ class PhysicsManager
     UINT       m_bodyCount = 0;
 
     std::vector<CollisionPair> m_collisionPairs;
+    std::map<ManifordKey, Maniford> m_manifords;
 
     SORT_LINK *m_pRigidBodyLinkHead = nullptr;
     SORT_LINK *m_pRigidBodyLinkTail = nullptr;
@@ -28,6 +30,9 @@ class PhysicsManager
     BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact);
     BOOL Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContact);
     void Cleanup();
+
+    void AddContact(const Contact &contact);
+    void RemoveExpired();
 
   public:
     BOOL Initialize();

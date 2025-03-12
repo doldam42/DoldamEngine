@@ -224,7 +224,7 @@ void Client::LoadScene()
     pGround->SetScale(25.0f, 0.2f, 25.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
     pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
-    pGround->InitRigidBody(0.0f, 0.5f, 0.0f, FALSE, FALSE);
+    pGround->InitRigidBody(0.0f, 0.5f, 0.5f, FALSE);
 
     // pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
 

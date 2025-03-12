@@ -13,7 +13,7 @@
 #include "PhysicsManager.h"
 
 BOOL PhysicsManager::ConservativeAdvance(RigidBody *pA, RigidBody *pB, float dt, Contact *pOutContact)
-{ 
+{
     Contact contact;
     contact.pA = pA;
     contact.pB = pB;
@@ -180,7 +180,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContac
     }
     else
     {
-        Vector3 ptOnA, ptOnB;
+        Vector3     ptOnA, ptOnB;
         const float bias = 0.001f;
         if (GJK_DoesIntersect(pA, pB, bias, ptOnA, ptOnB))
         {
@@ -194,13 +194,13 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContac
 
             contact.contactPointAWorldSpace = ptOnA;
             contact.contactPointBWorldSpace = ptOnB;
-            
+
             // Convert world space contacts to local space
             contact.contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contact.contactPointAWorldSpace);
             contact.contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contact.contactPointBWorldSpace);
 
-            float   r = (ptOnA - ptOnB).Length();
-            contact.separationDistance = r;
+            float r = (ptOnA - ptOnB).Length();
+            contact.separationDistance = -r;
 
             *pOutContact = contact;
             return TRUE;
@@ -214,7 +214,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContac
         // Convert world space contacts to local space
         contact.contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contact.contactPointAWorldSpace);
         contact.contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contact.contactPointBWorldSpace);
-        
+
         float r = (ptOnA - ptOnB).Length();
         contact.separationDistance = r;
 
@@ -224,6 +224,43 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContac
 }
 
 void PhysicsManager::Cleanup() {}
+
+void PhysicsManager::AddContact(const Contact &contact)
+{
+    ManifordKey key(contact.pA, contact.pB);
+
+    if (m_manifords.find(key) == m_manifords.end())
+    {
+        Maniford maniford;
+        maniford.m_pBodyA = contact.pA;
+        maniford.m_pBodyB = contact.pB;
+
+        maniford.AddContact(contact);
+        m_manifords.insert({key, maniford});
+    }
+    else
+    {
+        m_manifords[key].AddContact(contact);
+    }
+}
+
+void PhysicsManager::RemoveExpired()
+{
+    for (auto it = m_manifords.begin(); it != m_manifords.end();)
+    {
+        Maniford &manifold = it->second;
+
+        manifold.RemoveExpiredContacts();
+        if (manifold.m_numContacts == 0)
+        {
+            m_manifords.erase(it++);
+        }
+        else
+        {
+            it++;
+        }
+    }
+}
 
 BOOL PhysicsManager::Initialize()
 {
@@ -291,6 +328,8 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
 
 BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
 {
+    RemoveExpired();
+
     SORT_LINK *pCur = m_pRigidBodyLinkHead;
     while (pCur)
     {
@@ -319,6 +358,16 @@ BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
         {
             m_contacts[m_contactCount] = contact;
             m_contactCount++;
+            if (contact.timeOfImpact == 0.0f)
+            {
+                // Static contact
+                AddContact(contact);
+            }
+            else
+            {
+                m_contacts[m_contactCount] = contact;
+                m_contactCount++;
+            }
         }
     }
 
@@ -348,6 +397,16 @@ void PhysicsManager::ResolveContactsAll(float dt)
     if (m_contactCount > 1)
     {
         qsort(m_contacts, m_contactCount, sizeof(Contact), CompareContacts);
+    }
+
+    for (auto& maniPair : m_manifords)
+    {
+        Maniford &manifold = maniPair.second;
+        for (int i = 0; i < manifold.m_numContacts; i++)
+        {
+            Contact    &contact = manifold.m_contacts[i];
+            ResolveContact(contact);
+        }
     }
 
     float accumulatedTime = 0.0f;

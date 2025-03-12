@@ -32,7 +32,10 @@ void ResolveContact(Contact &contact)
     const Vector3 velB = pB->m_linearVelocity + pB->m_angularVelocity.Cross(rb);
 
     const Vector3 vab = velA - velB;
-    const float   impulseJ = (1.0f + elasticity) * vab.Dot(n) / (invMassAB + angularFactor);
+    float   impulseJ = (1.0f + elasticity) * vab.Dot(n) / (invMassAB + angularFactor);
+    const float oldImpulse = contact.normalImpulse;
+    contact.normalImpulse = max(oldImpulse + impulseJ, 0.0f); 
+    impulseJ -= oldImpulse;
     const Vector3 vectorImpulseJ = n * impulseJ;
 
     pA->ApplyImpulse(ptOnA, -vectorImpulseJ);

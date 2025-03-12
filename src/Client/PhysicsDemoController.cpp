@@ -24,7 +24,15 @@ BOOL PhysicsDemoController::Start()
 
     IRenderMaterial *pSphereMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
 
-    float dx = -10.f;
+    IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+    IGameObject *pBox = pGame->CreateGameObject(FALSE);
+    pBox->SetModel(pBoxModel);
+    pBox->SetPosition(20.0f, 0.0f, 0.0f);
+    pBox->SetScale(2.0f);
+    pBox->SetMaterials(&pSphereMaterial, 1);
+    pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
+    pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
+   /* float dx = -10.f;
     for (int i = 0; i < 100; i++)
     {
         
@@ -40,7 +48,7 @@ BOOL PhysicsDemoController::Start()
         pSphere->InitRigidBody(1.0f, 1.0f, 0.5f);
 
         dx += 0.5f;
-    }
+    }*/
 
     m_pMaterial = pSphereMaterial;
 
@@ -49,7 +57,7 @@ BOOL PhysicsDemoController::Start()
 
 void PhysicsDemoController::Update(float dt)
 {
-    constexpr float SHOOT_CYCLE = 0.5f;
+   /* constexpr float SHOOT_CYCLE = 0.5f;
     static float    cycle = 0.0f;
 
     InputManager *pI = g_pClient->GetInputManager();
@@ -71,5 +79,5 @@ void PhysicsDemoController::Update(float dt)
         pSphere->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 15.0f));
         
         cycle = 0.0f;
-    }
+    }*/
 }

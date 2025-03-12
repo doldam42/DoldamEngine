@@ -943,14 +943,14 @@ float EPA_Expand(const RigidBody *bodyA, const RigidBody *bodyB, const float bia
                  Vector3 &ptOnA,
                  Vector3 &ptOnB)
 {
-    std::vector<point_t> points;
-    std::vector<tri_t>   triangles;
+    std::vector<point_t> points(4);
+    std::vector<tri_t>   triangles(4);
     std::vector<edge_t>  danglingEdges;
 
     Vector3 center(0.0f);
     for (int i = 0; i < 4; i++)
     {
-        points.push_back(simplexPoints[i]);
+        points[i] = simplexPoints[i];
         center += simplexPoints[i].xyz;
     }
     center *= 0.25f;
@@ -974,7 +974,7 @@ float EPA_Expand(const RigidBody *bodyA, const RigidBody *bodyB, const float bia
             std::swap(tri.a, tri.b);
         }
 
-        triangles.push_back(tri);
+        triangles[i] = tri;
     }
 
     //

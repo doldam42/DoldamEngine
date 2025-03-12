@@ -63,7 +63,9 @@
     <ClCompile Include="GJK.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Maniford.cpp" />
+    <ClCompile Include="Maniford.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -126,7 +128,9 @@
     <ClInclude Include="GJK.h">
       <Filter>Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Maniford.h" />
+    <ClInclude Include="Maniford.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

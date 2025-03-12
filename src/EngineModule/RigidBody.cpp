@@ -29,7 +29,7 @@ void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, f
 
 void RigidBody::ApplyGravityImpulse(const float dt)
 {
-    if (!m_useGravity || m_invMass == 0)
+    if (!m_useGravity || m_invMass == 0 || m_onGround)
         return;
 
     const Vector3 gravity(0.0f, -9.8f, 0.0f);
