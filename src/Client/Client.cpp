@@ -138,6 +138,11 @@ void Client::ProcessInput()
     {
         DestroyWindow(m_hWnd);
     }
+    if (m_pInputManager->IsKeyPressed('P', false))
+    {
+        m_isPaused = !m_isPaused;
+    }
+
     m_pInputManager->ProcessInput();
 }
 

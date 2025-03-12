@@ -219,7 +219,9 @@ BOOL GameManager::LoadResources()
     return TRUE;
 }
 
-void GameManager::ProcessInput() {}
+void GameManager::ProcessInput() 
+{
+}
 
 void GameManager::Start()
 {
