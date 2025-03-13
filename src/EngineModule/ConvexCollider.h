@@ -21,6 +21,7 @@ class ConvexCollider : public ICollider
     GameObject *m_pGameObject = nullptr;
 
     std::vector<Vector3> m_points;
+    std::vector<tri_t>   m_triangles;
 
     Vector3 m_centerOfMass;
     Bounds m_bounds;

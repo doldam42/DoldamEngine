@@ -113,7 +113,6 @@ void BuildTetrahedron(const Vector3 *verts, const int num, std::vector<Vector3> 
     hullTris.clear();
 
     Vector3 points[4];
-
     int idx = FindPointFurthestInDir(verts, num, Vector3(1, 0, 0));
     points[0] = verts[idx];
     idx = FindPointFurthestInDir(verts, num, -points[0]);
@@ -183,7 +182,8 @@ void RemoveInternalPoints(const std::vector<Vector3> &hullPoints, const std::vec
         // if it's not external, then it's inside the polyhedron and should be removed
         if (!isExternal)
         {
-            checkPts.erase(checkPts.begin() + i);
+            checkPts[i] = checkPts.back();
+            checkPts.pop_back();
             i--;
         }
     }
@@ -207,7 +207,8 @@ void RemoveInternalPoints(const std::vector<Vector3> &hullPoints, const std::vec
 
         if (isTooClose)
         {
-            checkPts.erase(checkPts.begin() + i);
+            checkPts[i] = checkPts.back();
+            checkPts.pop_back();
             i--;
         }
     }
@@ -282,6 +283,7 @@ void AddPoint(std::vector<Vector3> &hullPoints, std::vector<tri_t> &hullTris, co
 
     // Now find all edges that are unique to the tris, these will be the edges that form the new triangles
     std::vector<edge_t> uniqueEdges;
+    uniqueEdges.reserve(facingTris.size() * 3);
     for (int i = 0; i < facingTris.size(); i++)
     {
         const int    triIdx = facingTris[i];
@@ -309,7 +311,8 @@ void AddPoint(std::vector<Vector3> &hullPoints, std::vector<tri_t> &hullTris, co
     // now remove the old facing tris
     for (int i = 0; i < facingTris.size(); i++)
     {
-        hullTris.erase(hullTris.begin() + facingTris[i]);
+        hullTris[facingTris[i]] = hullTris.back();
+        hullTris.pop_back();
     }
 
     // Now add the new point
@@ -373,7 +376,8 @@ void RemoveUnreferencedVerts(std::vector<Vector3> &hullPoints, std::vector<tri_t
             }
         }
 
-        hullPoints.erase(hullPoints.begin() + i);
+        hullPoints[i] = hullPoints.back();
+        hullPoints.pop_back();
         i--;
     }
 }
@@ -395,7 +399,8 @@ void ExpandConvexHull(std::vector<Vector3> &hullPoints, std::vector<tri_t> &hull
         Vector3 pt = externalVerts[ptIdx];
 
         // remove this element
-        externalVerts.erase(externalVerts.begin() + ptIdx);
+        externalVerts[ptIdx] = externalVerts.back();
+        externalVerts.pop_back();
 
         AddPoint(hullPoints, hullTris, pt);
 
@@ -549,6 +554,11 @@ void BuildConvexHull(const std::vector<Vector3> &verts, std::vector<Vector3> &hu
 
 BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const int num)
 {
+    std::vector<Vector3> hullPoints;
+    std::vector<tri_t> hullTriangles;
+    hullPoints.reserve(num);
+    hullTriangles.reserve(num);
+
     m_points.reserve(num);
     for (int i = 0; i < num; i++)
     {
@@ -556,20 +566,21 @@ BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const i
     }
 
     // Expand into a convex hull
-    std::vector<Vector3> hullPoints;
-    std::vector<tri_t>   hullTriangles;
+    
     BuildConvexHull(m_points, hullPoints, hullTriangles);
-    m_points = hullPoints;
 
     // Expand the bounds
     m_bounds.Clear();
-    m_bounds.Expand(m_points.data(), m_points.size());
+    m_bounds.Expand(hullPoints.data(), hullPoints.size());
 
     m_centerOfMass = CalculateCenterOfMass(hullPoints, hullTriangles);
 
     m_inertiaTensor = CalculateInertiaTensor(hullPoints, hullTriangles, m_centerOfMass);
 
     m_pGameObject = pObj;
+
+    m_points = std::move(hullPoints);
+    m_triangles = std::move(hullTriangles);
 
     return TRUE;
 }
@@ -593,9 +604,34 @@ Matrix ConvexCollider::InertiaTensor() const { return Matrix(); }
 
 BOOL ConvexCollider::Intersect(ICollider *pOther) const { return 0; }
 
-BOOL ConvexCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
+BOOL ConvexCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const 
+{ 
+    for (const tri_t& tri : m_triangles)
+    {
+        const Vector3 &v0 = m_points[tri.a];
+        const Vector3 &v1 = m_points[tri.b];
+        const Vector3 &v2 = m_points[tri.c];
 
-BOOL ConvexCollider::Intersect(const Bounds &b) const { return 0; }
+        float thit;
+        if (RayTriangle(ray.position, ray.direction, v0, v1, v2, &thit))
+        {
+            *hitt0 = thit;
+            *hitt1 = thit;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+BOOL ConvexCollider::Intersect(const Bounds &b) const 
+{ 
+    for (const Vector3& p : m_points)
+    {
+        if (b.DoesIntersect(p))
+            return true;
+    }
+    return false;
+}
 
 Vector3 ConvexCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias)
 {

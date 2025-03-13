@@ -32,6 +32,7 @@ class Bounds
     }
     bool DoesIntersect(const Bounds &rhs) const;
     bool DoesIntersect(const Vector3 &center, const float radius) const;
+    bool DoesIntersect(const Vector3 &point) const;
 
     bool IntersectP(const Ray &ray, float *hitt0, float *hitt1) const;
 

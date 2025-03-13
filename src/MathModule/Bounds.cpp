@@ -134,6 +134,16 @@ bool Bounds::DoesIntersect(const Vector3 &center, const float radius) const
     // return distanceSquared <= (radius * radius);
 }
 
+bool Bounds::DoesIntersect(const Vector3 &point) const 
+{
+    Vector3 closestPoint = Vector3::Max(mins, Vector3::Min(point, maxs));
+    if (closestPoint == point)
+    {
+        return true;
+    }
+    return false;
+}
+
 bool Bounds::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const
 {
     const Vector3 invDir = Vector3(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
