@@ -104,7 +104,7 @@ Vector3 FindPointFurthestFromTriangle(const Vector3 *pts, const int num, const V
 
 /*
 ================================
-BuildTetrahedron
+BuildTetrahedron (Quick Hull)
 ================================
 */
 void BuildTetrahedron(const Vector3 *verts, const int num, std::vector<Vector3> &hullPts, std::vector<tri_t> &hullTris)
@@ -116,7 +116,7 @@ void BuildTetrahedron(const Vector3 *verts, const int num, std::vector<Vector3> 
 
     int idx = FindPointFurthestInDir(verts, num, Vector3(1, 0, 0));
     points[0] = verts[idx];
-    idx = FindPointFurthestInDir(verts, num, points[0] * -1.0f);
+    idx = FindPointFurthestInDir(verts, num, -points[0]);
     points[1] = verts[idx];
     points[2] = FindPointFurthestFromLine(verts, num, points[0], points[1]);
     points[3] = FindPointFurthestFromTriangle(verts, num, points[0], points[1], points[2]);
@@ -593,7 +593,7 @@ Matrix ConvexCollider::InertiaTensor() const { return Matrix(); }
 
 BOOL ConvexCollider::Intersect(ICollider *pOther) const { return 0; }
 
-BOOL ConvexCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
+BOOL ConvexCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
 
 BOOL ConvexCollider::Intersect(const Bounds &b) const { return 0; }
 

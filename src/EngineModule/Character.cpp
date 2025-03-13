@@ -102,9 +102,9 @@ size_t Character::GetID() { return GameObject::GetID(); }
 
 Bounds Character::GetBounds() const { return GameObject::GetBounds(); }
 
-bool Character::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+bool Character::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
-    return GameObject::Intersect(ray, hitt0, hitt1);
+    return GameObject::IntersectRay(ray, hitt0, hitt1);
 }
 
 bool Character::Intersect(const Bounds& b) const { return GameObject::Intersect(b); }

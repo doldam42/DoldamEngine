@@ -42,6 +42,9 @@ Matrix EllipseCollider::InertiaTensor() const { return Matrix(); }
 
 BOOL EllipseCollider::Intersect(ICollider *pOther) const { return FALSE; }
 
-BOOL EllipseCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
+BOOL EllipseCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
+{
+    return RayEllipse(ray.position, ray.direction, GetCenter(), m_majorRadius, m_minorRadius, hitt0, hitt1);
+}
 
 BOOL EllipseCollider::Intersect(const Bounds &b) const { return 0; }

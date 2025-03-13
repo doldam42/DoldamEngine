@@ -30,9 +30,9 @@ BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sp
 
 // ref : https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &v0, const Vector3 &v1,
-                 const Vector3 &v2, const Vector3 &vertexNormal, float *pOuttHit)
+                 const Vector3 &v2, float *pOuttHit)
 {
-    constexpr float epsilon = std::numeric_limits<float>::epsilon();
+    constexpr float epsilon = MachineEpsilon;
 
     Vector3 edge1 = v1 - v0;
     Vector3 edge2 = v2 - v0;
@@ -336,7 +336,7 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
 
     // normal 방향으로 이동한 삼각형과의 충돌처리
     if (RayTriangle(sphereCenter, dir, v0 + normal * sphereRadius, v1 + normal * sphereRadius,
-                    v2 + normal * sphereRadius, normal, &t0) && t0 < tMax)
+                    v2 + normal * sphereRadius, &t0) && t0 < tMax)
     {
         *pOutToi = t0 * dt;
         *pOutNormal = normal;

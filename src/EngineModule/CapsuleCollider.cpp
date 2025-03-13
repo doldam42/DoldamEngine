@@ -73,6 +73,6 @@ Matrix CapsuleCollider::InertiaTensor() const
 
 BOOL CapsuleCollider::Intersect(ICollider *pOther) const { return 0; }
 
-BOOL CapsuleCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
+BOOL CapsuleCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const { return 0; }
 
 BOOL CapsuleCollider::Intersect(const Bounds &b) const { return 0; }

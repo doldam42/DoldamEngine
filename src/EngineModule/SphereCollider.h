@@ -31,7 +31,7 @@ class SphereCollider : public ICollider
     }
 
     BOOL Intersect(ICollider *pOther) const override;
-    BOOL Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
+    BOOL IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;
     BOOL Intersect(const Bounds &b) const override;
 
     Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) override

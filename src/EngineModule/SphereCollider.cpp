@@ -58,7 +58,7 @@ BOOL SphereCollider::Intersect(ICollider *pOther) const
     }
 }
 
-BOOL SphereCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+BOOL SphereCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
     float tmin, tmax;
     if (RaySphere(ray.position, ray.direction, GetWorldCenter(), m_radius, &tmin, &tmax) && tmin < ray.tmax)

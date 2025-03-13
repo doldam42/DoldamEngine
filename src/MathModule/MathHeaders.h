@@ -38,12 +38,8 @@ using DirectX::SimpleMath::Quaternion;
 using DirectX::BoundingFrustum;
 using DirectX::BoundingBox;
 
-#ifdef _MSC_VER
-#define MachineEpsilon (std::numeric_limits<float>::epsilon() * 0.5)
-#else
-static float MachineEpsilon = std::numeric_limits<float>::epsilon() * 0.5;
-#endif
-inline float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilon); }
+constexpr float MachineEpsilon = std::numeric_limits<float>::epsilon();
+inline constexpr float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilon); }
 
 #include "Ray.h"
 #include "Bounds.h"

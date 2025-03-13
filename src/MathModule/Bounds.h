@@ -67,6 +67,6 @@ interface IBoundedObject
 {
     virtual Bounds GetBounds() const = 0;
 
-    virtual bool Intersect(const Ray &ray, float* hitt0, float* hitt1) const = 0;
+    virtual bool IntersectRay(const Ray &ray, float* hitt0, float* hitt1) const = 0;
     virtual bool Intersect(const Bounds& b) const = 0;
 };

@@ -4,7 +4,7 @@ BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sp
                float *pOutT1, float *pOutT2);
 
 BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &v0, const Vector3 &v1,
-                 const Vector3 &v2, const Vector3 &vertexNormal, float *pOuttHit);
+                 const Vector3 &v2, float *pOuttHit);
 
 BOOL RayCylinder(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &p1, const Vector3 &p2,
                  const float radius, float *tHit);

@@ -101,7 +101,7 @@ interface ICollider
     virtual Matrix InertiaTensor() const = 0;
 
     virtual BOOL Intersect(ICollider * pOther) const = 0;
-    virtual BOOL Intersect(const Ray &ray, float* hitt0, float*hitt1) const = 0;
+    virtual BOOL IntersectRay(const Ray &ray, float* hitt0, float*hitt1) const = 0;
     virtual BOOL Intersect(const Bounds &b) const = 0;
     
     // Find the point in furthest in direction

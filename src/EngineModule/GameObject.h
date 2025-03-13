@@ -86,6 +86,6 @@ class GameObject : public IGameObject
     BOOL   IsStatic() const { return m_isStatic; }
     BOOL   HasBounds() const { return (m_pModel || m_pCollider); }
     Bounds GetBounds() const override;
-    bool   Intersect(const Ray &ray, float *hitt0, float *hitt1) const override;
+    bool   IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;
     bool   Intersect(const Bounds &b) const override;
 };

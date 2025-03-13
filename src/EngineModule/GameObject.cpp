@@ -258,14 +258,14 @@ Bounds GameObject::GetBounds() const
     return box;
 }
 
-bool GameObject::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+bool GameObject::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
     if (!m_pCollider)
     {
         Bounds b = GetBounds();
         return b.IntersectP(ray, hitt0, hitt1);
     }
-    return m_pCollider->Intersect(ray, hitt0, hitt1);
+    return m_pCollider->IntersectRay(ray, hitt0, hitt1);
 }
 
 bool GameObject::Intersect(const Bounds& b) const

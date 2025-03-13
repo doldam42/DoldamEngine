@@ -323,7 +323,7 @@ bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitte
             if (nPrimitives == 1)
             {
                 IBoundedObject *prim = primitives[node->onePrimitive];
-                if (prim->Intersect(ray, &tMin, &tMax))
+                if (prim->IntersectRay(ray, &tMin, &tMax))
                 {
                     *pOutHitt = tMin;
                     *pHitted = prim;
@@ -336,7 +336,7 @@ bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitte
                 {
                     int             primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
                     IBoundedObject *prim = primitives[primitiveIndex];
-                    if (prim->Intersect(ray, &tMin, &tMax))
+                    if (prim->IntersectRay(ray, &tMin, &tMax))
                     {
                         *pOutHitt = tMin;
                         *pHitted = prim;

@@ -554,7 +554,7 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **ppHitted)
             float tmin, tmax;
             for (int i = 0; i < node->nPrimitives; ++i)
             {
-                if (primitives[node->primitivesOffset + i]->Intersect(ray, &tmin, &tmax) && tmin < closestHit)
+                if (primitives[node->primitivesOffset + i]->IntersectRay(ray, &tmin, &tmax) && tmin < closestHit)
                 {
                     closestHit = tmin;
                     pHitted = primitives[node->primitivesOffset + i];

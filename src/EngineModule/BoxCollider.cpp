@@ -76,7 +76,7 @@ BOOL BoxCollider::Intersect(ICollider *pOther) const
     }
 }
 
-BOOL BoxCollider::Intersect(const Ray &ray, float *hitt0, float *hitt1) const
+BOOL BoxCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
     float tmin, tmax;
     if (GetWorldBounds().IntersectP(ray, &tmin, &tmax) && tmin < ray.tmax)
