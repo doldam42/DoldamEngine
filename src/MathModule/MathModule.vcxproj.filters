@@ -29,6 +29,7 @@
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Collisions.h" />
     <ClInclude Include="Plane.h" />
+    <ClInclude Include="Particle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

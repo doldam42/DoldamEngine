@@ -1,12 +1,9 @@
 #include "pch.h"
+
+#include "GameObject.h"
+
 #include "BroadPhase.h"
 
-struct PsuedoBody
-{
-    int   id;
-    float value;
-    bool  isMin;
-};
 
 /*
 ====================================================
@@ -25,16 +22,16 @@ static int CompareSAP(const void *a, const void *b)
     return 1;
 }
 
+static bool pred(const PsuedoBody &a, const float value) { return a.value < value; }
+
 /*
 ====================================================
 SortBodiesBounds
 ====================================================
 */
-static void SortBodiesBounds(const RigidBody *const *bodies, const int num, PsuedoBody *sortedArray, const float dt_sec)
+void BroadPhase::SortBodiesBounds(const RigidBody *const *bodies, const int num, PsuedoBody *sortedArray,
+                                  const float dt_sec)
 {
-    Vector3 axis = Vector3(1, 1, 1);
-    axis.Normalize();
-    
     for (int i = 0; i < num; i++)
     {
         const RigidBody *body = bodies[i];
@@ -49,11 +46,11 @@ static void SortBodiesBounds(const RigidBody *const *bodies, const int num, Psue
         bounds.Expand(bounds.maxs + Vector3(1, 1, 1) * epsilon);
 
         sortedArray[i * 2 + 0].id = i;
-        sortedArray[i * 2 + 0].value = axis.Dot(bounds.mins);
+        sortedArray[i * 2 + 0].value = m_axisSAP.Dot(bounds.mins);
         sortedArray[i * 2 + 0].isMin = true;
 
         sortedArray[i * 2 + 1].id = i;
-        sortedArray[i * 2 + 1].value = axis.Dot(bounds.maxs);
+        sortedArray[i * 2 + 1].value = m_axisSAP.Dot(bounds.maxs);
         sortedArray[i * 2 + 1].isMin = false;
     }
 
@@ -65,7 +62,7 @@ static void SortBodiesBounds(const RigidBody *const *bodies, const int num, Psue
 BuildPairs
 ====================================================
 */
-void BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *sortedBodies, const int num)
+void BroadPhase::BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *sortedBodies, const int num)
 {
     collisionPairs.clear();
 
@@ -101,26 +98,97 @@ void BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *so
     }
 }
 
-/*
-====================================================
-SweepAndPrune1D
-====================================================
-*/
-void SweepAndPrune1D(const RigidBody *const *bodies, const int num, std::vector<CollisionPair> &finalPairs,
-                     const float dt_sec)
+BOOL BroadPhase::Initialize(const UINT maxBodyCount, Vector3 axisSAP)
 {
-    PsuedoBody *sortedBodies = (PsuedoBody *)_malloca(sizeof(PsuedoBody) * num * 2);
+    m_pPsudoBodies = new PsuedoBody[maxBodyCount * 2];
 
-    SortBodiesBounds(bodies, num, sortedBodies, dt_sec);
-    BuildPairs(finalPairs, sortedBodies, num);
-    
-    _freea(sortedBodies);
+    m_axisSAP = axisSAP;
+    m_axisSAP.Normalize();
+
+    m_bodyCount = 0;
+    m_maxBodyCount = maxBodyCount;
+
+    return TRUE;
 }
 
-void BroadPhase(const RigidBody *const *bodies, const int num, std::vector<CollisionPair> &finalPairs,
-                const float dt_sec)
+void BroadPhase::Build(const RigidBody *const *bodies, const int num, const float dt_sec)
 {
-    finalPairs.clear();
-
-    SweepAndPrune1D(bodies, num, finalPairs, dt_sec);
+    m_bodyCount = num;
+    SortBodiesBounds(bodies, num, m_pPsudoBodies, dt_sec);
 }
+
+UINT BroadPhase::QueryCollisionPairs(CollisionPair *pCollisionPairs, UINT maxCollision)
+{
+    UINT numCollision = 0;
+    // Now that the bodies are sorted, build the collision pairs
+    for (int i = 0; i < m_bodyCount * 2; i++)
+    {
+        const PsuedoBody &a = m_pPsudoBodies[i];
+        if (!a.isMin)
+        {
+            continue;
+        }
+
+        CollisionPair pair;
+        pair.a = a.id;
+
+        for (int j = i + 1; j < m_bodyCount * 2; j++)
+        {
+            const PsuedoBody &b = m_pPsudoBodies[j];
+            // if we've hit the end of the a element, then we're done creating pairs with a
+            if (b.id == a.id)
+            {
+                break;
+            }
+
+            if (!b.isMin)
+            {
+                continue;
+            }
+
+            pair.b = b.id;
+
+            pCollisionPairs[numCollision] = pair;
+            numCollision++;
+
+            if (numCollision == maxCollision)
+            {
+                __debugbreak();
+                return numCollision;
+            }
+        }
+    }
+
+    return numCollision;
+}
+
+UINT BroadPhase::QueryIntersectRay(const Ray &ray, int *bodyIDs, UINT maxCollision)
+{
+    const Vector3 p0 = ray.position;
+    const Vector3 p1 = p0 + ray.direction * ray.tmax;
+
+    float v0 = m_axisSAP.Dot(p0);
+    float v1 = m_axisSAP.Dot(p1);
+
+    if (v0 > v1)
+        std::swap(v0, v1);
+
+    UINT numCollision = 0;
+
+    PsuedoBody *pFirst = m_pPsudoBodies;
+    PsuedoBody *pLast = m_pPsudoBodies + m_bodyCount * 2;
+
+    pFirst = std::lower_bound(pFirst, pLast, v0, pred);
+    while (pFirst < pLast && numCollision < maxCollision)
+    {
+        if (v1 < pFirst->value)
+            break;
+
+        bodyIDs[numCollision] = pFirst->id;
+        numCollision++;
+        pFirst++;
+    }
+    return numCollision;
+}
+
+void BroadPhase::Reset() { m_bodyCount = 0; }

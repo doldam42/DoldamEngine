@@ -264,7 +264,9 @@ void PhysicsManager::RemoveExpired()
 
 BOOL PhysicsManager::Initialize()
 {
-    m_collisionPairs.reserve(MAX_COLLISION_COUNT);
+    m_pBroadPhase = new BroadPhase;
+    m_pBroadPhase->Initialize(MAX_BODY_COUNT, Vector3::One);
+
     return TRUE;
 }
 
@@ -274,27 +276,37 @@ RigidBody *PhysicsManager::CreateRigidBody(GameObject *pObj, ICollider *pCollide
     RigidBody *pItem = new RigidBody;
     pItem->Initialize(pObj, pCollider, mass, elasticity, friction, useGravity, isKinematic);
 
-    LinkToLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pItem->m_linkInPhysics);
+    pItem->id = m_bodyCount;
+    m_pBodies[m_bodyCount] = pItem;
+    m_bodyCount++;
 
     return pItem;
 }
 
 void PhysicsManager::DeleteRigidBody(RigidBody *pBody)
 {
-    UnLinkFromLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pBody->m_linkInPhysics);
+    UINT idx = pBody->id;
+
+    RigidBody *pBack = m_pBodies[m_bodyCount - 1];
+
+    m_pBodies[idx] = pBack;
+    pBack->id = idx;
+    m_bodyCount--;
+
     delete pBody;
+}
+
+void PhysicsManager::BeginCollision(float dt) 
+{ 
+    m_pBroadPhase->Build(m_pBodies, m_bodyCount, dt);
 }
 
 void PhysicsManager::ApplyGravityImpulseAll(float dt)
 {
-    SORT_LINK *pCur = m_pRigidBodyLinkHead;
-    while (pCur)
+    for (UINT i = 0; i < m_bodyCount; i++)
     {
-        RigidBody *pBody = (RigidBody *)pCur->pItem;
-
+        RigidBody *pBody = m_pBodies[i];
         pBody->ApplyGravityImpulse(dt);
-
-        pCur = pCur->pNext;
     }
 }
 
@@ -329,22 +341,13 @@ BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
 BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
 {
     RemoveExpired();
-
-    SORT_LINK *pCur = m_pRigidBodyLinkHead;
-    while (pCur)
+    
+    ZeroMemory(m_collisionPairs, sizeof(CollisionPair) * MAX_COLLISION_CANDIDATE_COUNT);
+    UINT numCandidate = m_pBroadPhase->QueryCollisionPairs(m_collisionPairs, MAX_COLLISION_CANDIDATE_COUNT);
+    for (UINT i = 0; i < numCandidate; i++)
     {
-        RigidBody *pBody = (RigidBody *)pCur->pItem;
+        const CollisionPair &pair = m_collisionPairs[i];
 
-        m_pBodies[m_bodyCount] = pBody;
-        m_bodyCount++;
-
-        pCur = pCur->pNext;
-    }
-
-    BroadPhase(m_pBodies, m_bodyCount, m_collisionPairs, dt);
-
-    for (const CollisionPair &pair : m_collisionPairs)
-    {
         RigidBody *pA = m_pBodies[pair.a];
         RigidBody *pB = m_pBodies[pair.b];
 
@@ -397,12 +400,12 @@ void PhysicsManager::ResolveContactsAll(float dt)
         qsort(m_contacts, m_contactCount, sizeof(Contact), CompareContacts);
     }
 
-    for (auto& maniPair : m_manifords)
+    for (auto &maniPair : m_manifords)
     {
         Maniford &manifold = maniPair.second;
         for (int i = 0; i < manifold.m_numContacts; i++)
         {
-            Contact    &contact = manifold.m_contacts[i];
+            Contact &contact = manifold.m_contacts[i];
             ResolveContact(contact);
         }
     }
@@ -414,7 +417,7 @@ void PhysicsManager::ResolveContactsAll(float dt)
         const float dt_sec = contact.timeOfImpact - accumulatedTime;
 
         // position Update
-        for (int j = 0; j < m_bodyCount; j++)
+        for (UINT j = 0; j < m_bodyCount; j++)
         {
             m_pBodies[j]->Update(dt_sec);
         }
@@ -426,15 +429,40 @@ void PhysicsManager::ResolveContactsAll(float dt)
     const float timeRemaining = dt - accumulatedTime;
     if (timeRemaining > 0.0f)
     {
-        for (int i = 0; i < m_bodyCount; i++)
+        for (UINT i = 0; i < m_bodyCount; i++)
         {
             m_pBodies[i]->Update(timeRemaining);
         }
     }
 
     m_contactCount = 0;
-    m_bodyCount = 0;
-    m_collisionPairs.clear();
+}
+
+bool PhysicsManager::IntersectRay(const Ray &ray, RayHit *pOutHit) 
+{
+    float closestHit = FLT_MAX;
+    RayHit hitInfo;
+
+    int  bodyIDs[64];
+    UINT numCandidate = m_pBroadPhase->QueryIntersectRay(ray, bodyIDs, 64);
+    for (UINT i = 0; i < numCandidate; i++)
+    {
+        GameObject *pObj = m_pBodies[bodyIDs[i]]->m_pGameObject;
+        float       hitt0, hitt1;
+        if (pObj->IntersectRay(ray, &hitt0, &hitt1) && hitt0 < closestHit)
+        {
+            closestHit = hitt0;
+            hitInfo.pHitted = pObj;
+            hitInfo.tHit = hitt0;
+        }
+    }
+
+    if (closestHit < FLT_MAX)
+    {
+        *pOutHit = hitInfo;
+        return true;
+    }
+    return false;
 }
 
 PhysicsManager::~PhysicsManager() {}

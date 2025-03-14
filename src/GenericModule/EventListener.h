@@ -2,9 +2,11 @@
 
 #include "LinkedList.h"
 
+class EventHandler;
+
 struct GameEvent
 {
-    std::function<void(void *)> func;
+    std::function<void(void*)> func;
     void *arg = nullptr;
 
     SORT_LINK link;

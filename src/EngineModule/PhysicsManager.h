@@ -12,6 +12,7 @@ class PhysicsManager
   public:
     static constexpr size_t MAX_COLLISION_COUNT = 256;
     static constexpr size_t MAX_BODY_COUNT = 1024;
+    static constexpr size_t MAX_COLLISION_CANDIDATE_COUNT = MAX_BODY_COUNT * 3; 
   private:
     Contact m_contacts[MAX_COLLISION_COUNT] = {};
     UINT    m_contactCount = 0;
@@ -19,11 +20,11 @@ class PhysicsManager
     RigidBody *m_pBodies[MAX_BODY_COUNT] = {nullptr};
     UINT       m_bodyCount = 0;
 
-    std::vector<CollisionPair> m_collisionPairs;
-    std::map<ManifordKey, Maniford> m_manifords;
+    CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
 
-    SORT_LINK *m_pRigidBodyLinkHead = nullptr;
-    SORT_LINK *m_pRigidBodyLinkTail = nullptr;
+    BroadPhase *m_pBroadPhase = nullptr;
+
+    std::map<ManifordKey, Maniford> m_manifords;
 
     BOOL ConservativeAdvance(RigidBody *pA, RigidBody *pB, float dt, Contact *pOutContact);
 
@@ -41,11 +42,15 @@ class PhysicsManager
                                BOOL useGravity = TRUE, BOOL isKinematic = FALSE);
     void       DeleteRigidBody(RigidBody *pBody);
 
+    void BeginCollision(float dt);
+
     void ApplyGravityImpulseAll(float dt);
 
     BOOL CollisionTest(GameObject *pObj, const float dt);
     BOOL CollisionTestAll(World* pWorld, const float dt);
     void ResolveContactsAll(float dt);
+
+    bool IntersectRay(const Ray &ray, RayHit *pOutHit);
 
     PhysicsManager() = default;
     ~PhysicsManager();

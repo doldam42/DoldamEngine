@@ -184,6 +184,7 @@
     <ClCompile Include="DebugConsoleSprite.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EllipseCollider.cpp" />
+    <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameUtils.cpp" />
@@ -222,6 +223,7 @@
     <ClInclude Include="ConvexCollider.h" />
     <ClInclude Include="DebugConsoleSprite.h" />
     <ClInclude Include="EllipseCollider.h" />
+    <ClInclude Include="EventManager.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameUtils.h" />

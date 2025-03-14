@@ -21,10 +21,6 @@ void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, f
 
     m_useGravity = useGravity;
     m_isKinematic = isKinematic;
-
-    m_linkInPhysics.pItem = this;
-    m_linkInPhysics.pNext = nullptr;
-    m_linkInPhysics.pPrev = nullptr;
 }
 
 void RigidBody::ApplyGravityImpulse(const float dt)

@@ -23,7 +23,7 @@ class HashTable
     UINT         m_maxKeyDataSize = 0;
     UINT         m_itemNum = 0;
 
-    UINT CreateKey(const void *pData, UINT size, UINT bucketNum);
+    UINT CreateKey(const void *pData, UINT size, UINT bucketNum) const;
 
   public:
     BOOL  Initialize(UINT maxBucketNum, UINT maxKeySize, UINT maxItemNum);
@@ -35,6 +35,7 @@ class HashTable
     UINT  GetAllItems(void **ppOutItemList, UINT maxItemNum, BOOL *pbOutInsufficient) const;
     UINT  GetKeyPtrAndSize(void **ppOutKeyPtr, const void *pSearchHandle) const;
     UINT  GetItemNum() const;
+    UINT  GetItemNumInBucket(const void *pKeyData, UINT size) const;
     void  ResourceCheck() const;
 
     void Cleanup();

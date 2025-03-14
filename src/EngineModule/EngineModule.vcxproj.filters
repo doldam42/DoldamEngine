@@ -66,6 +66,7 @@
     <ClCompile Include="Maniford.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="EventManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -131,6 +132,7 @@
     <ClInclude Include="Maniford.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="EventManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

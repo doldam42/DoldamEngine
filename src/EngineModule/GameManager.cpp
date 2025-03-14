@@ -219,9 +219,7 @@ BOOL GameManager::LoadResources()
     return TRUE;
 }
 
-void GameManager::ProcessInput() 
-{
-}
+void GameManager::ProcessInput() {}
 
 void GameManager::Start()
 {
@@ -314,6 +312,8 @@ void GameManager::PreUpdate(float dt) { ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
+    m_pPhysicsManager->BeginCollision(dt);
+
     m_pPhysicsManager->ApplyGravityImpulseAll(dt);
 
     m_pPhysicsManager->CollisionTestAll(m_pWorld, dt);
@@ -653,6 +653,32 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.tmax = maxDistance;
 
     return m_pWorld->Intersect(ray, pOutHit);
+    //RayHit rayHit;
+    //float  closestHit = m_pWorld->Intersect(ray, &rayHit) ? rayHit.tHit : FLT_MAX;
+
+    //SORT_LINK *pCur = m_pGameObjLinkHead;
+    //while (pCur)
+    //{
+    //    GameObject *pObj = (GameObject *)pCur->pItem;
+
+    //    float hitt0, hitt1;
+    //    if (pObj->IntersectRay(ray, &hitt0, &hitt1) && hitt0 < closestHit)
+    //    {
+    //        closestHit = hitt0;
+    //        rayHit.pHitted = pObj;
+    //        rayHit.tHit = hitt0;
+    //    }
+
+    //    pCur->pNext;
+    //}
+
+    //if (closestHit < FLT_MAX)
+    //{
+    //    *pOutHit = rayHit;
+    //    return TRUE;
+    //}
+
+    //return FALSE;
 }
 
 GameManager::~GameManager()

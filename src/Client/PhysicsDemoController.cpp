@@ -30,8 +30,8 @@ BOOL PhysicsDemoController::Start()
     pBox->SetPosition(20.0f, 0.0f, 0.0f);
     pBox->SetScale(2.0f);
     pBox->SetMaterials(&pSphereMaterial, 1);
-    //pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
-    pBox->InitConvexCollider();
+    pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
+    //pBox->InitConvexCollider();
     pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
 
     float y = -20.0f;

@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "HashTable.h"
+#include "pch.h"
 
-UINT HashTable::CreateKey(const void *pData, UINT size, UINT bucketNum)
+UINT HashTable::CreateKey(const void *pData, UINT size, UINT bucketNum) const
 {
     UINT keyData = 0;
 
@@ -97,7 +97,7 @@ void *HashTable::Insert(const void *pItem, const void *pKeyData, UINT size)
     UINT       bucketMemSize = (UINT)(sizeof(VB_BUCKET)) + m_maxKeyDataSize;
     VB_BUCKET *pBucket = (VB_BUCKET *)malloc(bucketMemSize);
 
-    UINT index = CreateKey(pKeyData, size, m_maxBucketNum);
+    UINT         index = CreateKey(pKeyData, size, m_maxBucketNum);
     BUCKET_DESC *pBucketDesc = m_pBucketDescTable + index;
 
     pBucket->pItem = pItem;
@@ -121,7 +121,7 @@ lb_return:
 
 void HashTable::Delete(const void *pSearchHandle)
 {
-    VB_BUCKET *pBucket = (VB_BUCKET *)pSearchHandle;
+    VB_BUCKET   *pBucket = (VB_BUCKET *)pSearchHandle;
     BUCKET_DESC *pBucketDesc = pBucket->pBucketDesc;
 
     UnLinkFromLinkedList(&pBucketDesc->pBucketLinkHead, &pBucketDesc->pBucketLinkTail, &pBucket->sortLink);
@@ -132,10 +132,7 @@ void HashTable::Delete(const void *pSearchHandle)
     m_itemNum--;
 }
 
-UINT HashTable::GetMaxBucketNum() const
-{
-    return m_maxBucketNum;
-}
+UINT HashTable::GetMaxBucketNum() const { return m_maxBucketNum; }
 
 void HashTable::DeleteAll()
 {
@@ -191,9 +188,30 @@ UINT HashTable::GetKeyPtrAndSize(void **ppOutKeyPtr, const void *pSearchHandle) 
     return size;
 }
 
-UINT HashTable::GetItemNum() const
+UINT HashTable::GetItemNum() const { return m_itemNum; }
+
+UINT HashTable::GetItemNumInBucket(const void *pKeyData, UINT size) const
 {
-    return m_itemNum;
+    UINT numItem = 0;
+    if (size > m_maxKeyDataSize)
+    {
+        __debugbreak();
+        return 0;
+    }
+
+    UINT         index = CreateKey(pKeyData, size, m_maxBucketNum);
+    BUCKET_DESC *pBucketDesc = m_pBucketDescTable + index;
+    SORT_LINK *pCur = pBucketDesc->pBucketLinkHead;
+    while (pCur)
+    {
+        VB_BUCKET *pBucket = (VB_BUCKET *)pCur->pItem;
+        if (memcmp(pBucket->pKeyData, pKeyData, size))
+            numItem++;
+
+        pCur = pCur->pNext;
+    }
+
+    return numItem;
 }
 
 void HashTable::ResourceCheck() const
@@ -214,7 +232,4 @@ void HashTable::Cleanup()
     }
 }
 
-HashTable::~HashTable()
-{
-    Cleanup();
-}
+HashTable::~HashTable() { Cleanup(); }

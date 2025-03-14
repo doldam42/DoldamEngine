@@ -107,7 +107,7 @@ BOOL FontManager::CreateDWrite(ID3D12Device *pD3DDevice, UINT TexWidth, UINT Tex
     bitmapProperties.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ;
     if (FAILED(m_pD2DDeviceContext->CreateBitmap(size, nullptr, 0, &bitmapProperties, &m_pD2DTargetBitmapRead)))
         __debugbreak();
-
+    
     if (FAILED(m_pD2DDeviceContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pWhiteBrush)))
         __debugbreak();
 

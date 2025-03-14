@@ -22,7 +22,8 @@ struct ManifordKey
 {
     ManifordKey(RigidBody *pA, RigidBody *pB) { key = (uintptr_t)pA ^ (uintptr_t)pB; }
 
-    inline bool operator==(const ManifordKey &other) { return key == other.key; }
+    inline bool operator==(const ManifordKey &rhs) { return key == rhs.key; }
+    inline bool operator!=(const ManifordKey &rhs) const { return !(this->key == rhs.key); }
     uintptr_t   key;
 };
 

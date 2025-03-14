@@ -4,6 +4,8 @@ class GameObject;
 class RigidBody : public IRigidBody
 {
   public:
+    UINT id;
+
     Vector3 m_linearVelocity = Vector3::Zero;
     Vector3 m_angularVelocity = Vector3::Zero;
 
@@ -17,8 +19,6 @@ class RigidBody : public IRigidBody
     BOOL m_useGravity = TRUE;
     BOOL m_isKinematic = TRUE;
     BOOL m_onGround = FALSE;
-
-    SORT_LINK m_linkInPhysics;
 
   private:
     void Cleanup();

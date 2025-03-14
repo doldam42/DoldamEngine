@@ -41,6 +41,8 @@ using DirectX::BoundingBox;
 constexpr float MachineEpsilon = std::numeric_limits<float>::epsilon();
 inline constexpr float gamma(int n) { return (n * MachineEpsilon) / (1 - n * MachineEpsilon); }
 
+#include "Particle.h"
+
 #include "Ray.h"
 #include "Bounds.h"
 #include "Collisions.h"
