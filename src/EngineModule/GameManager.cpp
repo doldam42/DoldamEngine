@@ -287,8 +287,6 @@ void GameManager::Update(float dt)
                                        &height, m_pFontHandle, text, txtLen);
         m_pTextSprite->UpdateTextureWithImage(m_pTextImage, m_TextImageWidth, m_TextImageHeight);
         wcscpy_s(m_text, text);
-
-        SetWindowText(m_hWnd, text);
     }
     m_culledObjectCount = 0;
 }
@@ -308,7 +306,10 @@ void GameManager::BuildScene()
     m_pWorld->EndCreateWorld();
 }
 
-void GameManager::PreUpdate(float dt) { ProcessInput(); }
+void GameManager::PreUpdate(float dt)
+{
+    ProcessInput();
+}
 
 void GameManager::UpdatePhysics(float dt)
 {
@@ -652,7 +653,8 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.direction = rayDir;
     ray.tmax = maxDistance;
 
-    return m_pWorld->Intersect(ray, pOutHit);
+    //m_pWorld->Intersect(ray, pOutHit)
+    return m_pPhysicsManager->IntersectRay(ray, pOutHit);
     //RayHit rayHit;
     //float  closestHit = m_pWorld->Intersect(ray, &rayHit) ? rayHit.tHit : FLT_MAX;
 

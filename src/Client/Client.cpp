@@ -287,6 +287,10 @@ void Client::Process()
         m_prevFrameCheckTick = curTick;
         m_FPS = m_frameCount;
         m_frameCount = 0;
+
+        WCHAR text[64];
+        wsprintf(text, L"FrameRate: %d", m_FPS);
+        SetWindowText(m_hWnd, text);
     }
 }
 

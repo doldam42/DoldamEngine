@@ -101,6 +101,7 @@ void BroadPhase::BuildPairs(std::vector<CollisionPair> &collisionPairs, const Ps
 BOOL BroadPhase::Initialize(const UINT maxBodyCount, Vector3 axisSAP)
 {
     m_pPsudoBodies = new PsuedoBody[maxBodyCount * 2];
+    ZeroMemory(m_pPsudoBodies, sizeof(PsuedoBody) * maxBodyCount * 2);
 
     m_axisSAP = axisSAP;
     m_axisSAP.Normalize();
@@ -181,11 +182,12 @@ UINT BroadPhase::QueryIntersectRay(const Ray &ray, int *bodyIDs, UINT maxCollisi
     pFirst = std::lower_bound(pFirst, pLast, v0, pred);
     while (pFirst < pLast && numCollision < maxCollision)
     {
-        if (v1 < pFirst->value)
-            break;
+        if (!pFirst->isMin && v1 < pFirst->value)
+        {
+            bodyIDs[numCollision] = pFirst->id;
+            numCollision++;
+        }
 
-        bodyIDs[numCollision] = pFirst->id;
-        numCollision++;
         pFirst++;
     }
     return numCollision;
