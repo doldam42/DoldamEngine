@@ -14,7 +14,7 @@ BOOL PlayerController::Start()
     IGameManager *pGame = g_pClient->GetGameManager();
     CameraController *pCam = g_pClient->GetCameraController();
 
-    m_pPlayer = pGame->CreateGameObject(FALSE);
+    m_pPlayer = pGame->CreateGameObject();
     m_pPlayer->SetPosition(0.0f, 2.f, 0.0f);
 
     pCam->SetFollowTarget(m_pPlayer, Vector3(0.0f, 2.0f, -3.0f));

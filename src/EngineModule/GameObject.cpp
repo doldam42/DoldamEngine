@@ -42,11 +42,10 @@ void GameObject::Cleanup()
     }
 }
 
-void GameObject::Initialize(GameManager *pGameEngine, BOOL isStatic)
+void GameObject::Initialize(GameManager *pGameEngine)
 {
     m_pGame = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();
-    m_isStatic = isStatic;
 }
 
 BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)

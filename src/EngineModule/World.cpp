@@ -23,8 +23,10 @@ void World::BeginCreateWorld(UINT maxObjectCount)
 
 void World::InsertObject(GameObject *pObject) 
 {
-    if (pObject->IsStatic() && pObject->HasBounds())
+    if (pObject->HasBounds())
     {
+        if (!(pObject->GetRigidBody() && pObject->GetRigidBody()->IsStatic()))
+            return;
         m_pTree->InsertObject(pObject);
     }
 }

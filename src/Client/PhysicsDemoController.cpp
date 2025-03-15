@@ -25,7 +25,7 @@ BOOL PhysicsDemoController::Start()
     IRenderMaterial *pSphereMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
 
     IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pBox = pGame->CreateGameObject(FALSE);
+    IGameObject *pBox = pGame->CreateGameObject();
     pBox->SetModel(pBoxModel);
     pBox->SetPosition(20.0f, 0.0f, 0.0f);
     pBox->SetScale(2.0f);
@@ -42,7 +42,7 @@ BOOL PhysicsDemoController::Start()
         for (int j = 0; j < 10; j++)
         {
             IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-            IGameObject *pSphere = pGame->CreateGameObject(FALSE);
+            IGameObject *pSphere = pGame->CreateGameObject();
             pSphere->SetModel(pSphereModel);
             pSphere->SetPosition(x, height, y);
             pSphere->SetScale(2.0f);
@@ -71,7 +71,7 @@ void PhysicsDemoController::Update(float dt)
     if (cycle > SHOOT_CYCLE)
     {
         IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-        IGameObject *pSphere1 = pGame->CreateGameObject(FALSE);
+        IGameObject *pSphere1 = pGame->CreateGameObject();
         pSphere1->SetModel(pSphereModel);
         pSphere1->SetPosition(0.0f, 10.0f, -25.0f);
         pSphere1->SetScale(2.0f);
@@ -82,7 +82,7 @@ void PhysicsDemoController::Update(float dt)
         pSphere1->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 15.0f));
 
         pSphereModel->AddRef();
-        IGameObject *pSphere2 = pGame->CreateGameObject(FALSE);
+        IGameObject *pSphere2 = pGame->CreateGameObject();
         pSphere2->SetModel(pSphereModel);
         pSphere2->SetPosition(0.0f, 10.0f, 25.0f);
         pSphere2->SetScale(2.0f);

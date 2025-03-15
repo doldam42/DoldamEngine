@@ -97,7 +97,7 @@ BOOL BadAppleController::Start()
     {
         for (UINT col = 0; col < numCols + 1; col++)
         {
-            IGameObject* pObj = pGame->CreateGameObject(TRUE);
+            IGameObject* pObj = pGame->CreateGameObject();
             pModel->AddRef();
             pObj->SetModel(pModel);
             pObj->SetMaterials(&pDynamicMaterial, 1);

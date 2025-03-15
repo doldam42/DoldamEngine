@@ -223,7 +223,7 @@ void Client::LoadScene()
     IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
     IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pGround = m_pGame->CreateGameObject(TRUE);
+    IGameObject *pGround = m_pGame->CreateGameObject();
     pGround->SetModel(pGroundModel);
     pGround->SetPosition(0.0f, 0.0f, 0.0f);
     pGround->SetScale(30.0f, 0.2f, 30.0f);

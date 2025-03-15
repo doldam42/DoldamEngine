@@ -58,21 +58,21 @@ BOOL RaytracingDemoController::Start()
     IGameModel *pSquareModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE);
     IGameModel *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
 
-    IGameObject *pGround = pGame->CreateGameObject(TRUE);
+    IGameObject *pGround = pGame->CreateGameObject();
     pGround->SetModel(pSquareModel);
     pGround->SetPosition(0.0f, -1e-3, 0.f);
     pGround->SetRotationX(-XM_PIDIV2);
     pGround->SetScale(20.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
 
-    IGameObject *pBox = pGame->CreateGameObject(TRUE);
+    IGameObject *pBox = pGame->CreateGameObject();
     pBox->SetModel(pBoxModel);
     pBox->SetScale(1.5f, 1.5f, 1.5f);
     pBox->SetRotationZ(XM_PIDIV2);
     pBox->SetPosition(3.0f, 1.5f, 0.0f);
     pBox->SetMaterials(&pWallMaterial, 1);
 
-    IGameObject *pSphere = pGame->CreateGameObject(TRUE);
+    IGameObject *pSphere = pGame->CreateGameObject();
     pSphere->SetModel(pSphereModel);
     pSphere->SetScale(2.0f);
     pSphere->SetPosition(-5.0f, 2.0f, 0.0f);

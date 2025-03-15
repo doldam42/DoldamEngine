@@ -14,7 +14,7 @@ BOOL CollisionDemoController::Start()
     IGameManager     *pGame = g_pClient->GetGameManager();
     IRenderer        *pRenderer = pGame->GetRenderer();
 
-    m_pPlayer = pGame->CreateGameObject(FALSE);
+    m_pPlayer = pGame->CreateGameObject();
     m_pPlayer->SetPosition(0.0f, 2.f, 0.0f);
     pCam->SetFollowTarget(m_pPlayer);
 

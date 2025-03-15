@@ -352,7 +352,10 @@ BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
         RigidBody *pB = m_pBodies[pair.b];
 
         if (pA->m_invMass == 0 && pB->m_invMass == 0)
+        {
+            __debugbreak();
             continue;
+        }
         if (pA->m_isKinematic || pB->m_isKinematic)
             continue;
 

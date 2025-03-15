@@ -12,7 +12,6 @@ class GameObject : public IGameObject
     Transform m_transform;
     Matrix    m_worldMatrix;
     BOOL      m_IsUpdated = false;
-    BOOL      m_isStatic = TRUE;
     UINT      m_materialCount = 0;
 
     GameManager      *m_pGame = nullptr;
@@ -36,7 +35,7 @@ class GameObject : public IGameObject
     void Cleanup();
 
   public:
-    void Initialize(GameManager *pGameEngine, BOOL isStatic);
+    void Initialize(GameManager *pGameEngine);
 
     BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) override;
     BOOL InitSphereCollider(const Vector3 &center, const float radius) override;
@@ -82,8 +81,6 @@ class GameObject : public IGameObject
 
     GameObject();
     virtual ~GameObject();
-
-    BOOL   IsStatic() const { return m_isStatic; }
     BOOL   HasBounds() const { return (m_pModel || m_pCollider); }
     Bounds GetBounds() const override;
     bool   IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;

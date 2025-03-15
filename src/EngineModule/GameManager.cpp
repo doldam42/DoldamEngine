@@ -419,10 +419,10 @@ IGameCharacter *GameManager::CreateCharacter()
     return pGameObj;
 }
 
-IGameObject *GameManager::CreateGameObject(BOOL isStatic)
+IGameObject *GameManager::CreateGameObject()
 {
     GameObject *pGameObj = new GameObject;
-    pGameObj->Initialize(this, isStatic);
+    pGameObj->Initialize(this);
     LinkToLinkedListFIFO(&m_pGameObjLinkHead, &m_pGameObjLinkTail, &pGameObj->m_LinkInGame);
 
     size_t id = pGameObj->GetID();

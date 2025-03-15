@@ -114,6 +114,8 @@ interface IRigidBody
     virtual Vector3 GetVelocity() const = 0;
     virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
     virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
+
+    virtual BOOL IsStatic() = 0;
 };
 
 interface IGameObject : public IBoundedObject
@@ -213,7 +215,7 @@ interface IGameManager : public IUnknown
     virtual void       DeleteGameMesh(IGameMesh * pGameMesh) = 0;
 
     virtual IGameCharacter *CreateCharacter() = 0;
-    virtual IGameObject    *CreateGameObject(BOOL isStatic) = 0;
+    virtual IGameObject    *CreateGameObject() = 0;
     virtual void            DeleteGameObject(IGameObject * pGameObj) = 0;
     virtual void            DeleteAllGameObject() = 0;
 

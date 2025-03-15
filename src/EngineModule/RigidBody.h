@@ -35,6 +35,8 @@ class RigidBody : public IRigidBody
     void ApplyImpulseLinear(const Vector3 &impulse) override;
     void ApplyImpulseAngular(const Vector3 &impulse) override;
 
+    BOOL IsStatic() { return m_invMass == 0.0f; }
+
     void Update(float dt);
 
     Vector3    GetPosition() const;

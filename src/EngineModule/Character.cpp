@@ -25,7 +25,7 @@ void Character::Cleanup()
 
 void Character::Initialize(GameManager *pGameEngine, UINT maxClipCount)
 {
-    GameObject::Initialize(pGameEngine, FALSE);
+    GameObject::Initialize(pGameEngine);
     m_maxClipCount = maxClipCount;
     m_ppAnimationClips = new AnimationClip *[maxClipCount];
 }
