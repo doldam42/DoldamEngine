@@ -9,19 +9,25 @@ class BoxCollider : public ICollider
   private:
     GameObject *m_pGameObject = nullptr;
 
-    Bounds  m_bounds;
+    Matrix m_inertiaTensor;
+    Bounds m_bounds;
+    Bounds m_worldBounds;
+
+    void InitTensor();
 
   public:
     BOOL Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents);
+
+    void Update() override;
 
     // Inherited via ICollider
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_BOX; }
     Vector3       GetCenter() const override { return m_bounds.Center(); }
     Bounds        GetBounds() const override { return m_bounds; }
-    Bounds        GetWorldBounds() const override;
-    Vector3       GetWorldCenter() const override;
+    Bounds        GetWorldBounds() const override { return m_worldBounds; }
+    Vector3       GetWorldCenter() const override { return m_worldBounds.Center(); }
 
-    Matrix InertiaTensor() const override;
+    Matrix InertiaTensor() const override { return m_inertiaTensor; }
 
     BOOL Intersect(ICollider *pOther) const override;
     BOOL IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;

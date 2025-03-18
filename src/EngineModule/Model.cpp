@@ -293,10 +293,10 @@ HRESULT __stdcall Model::QueryInterface(REFIID riid, void **ppvObject) { return 
 ULONG __stdcall Model::AddRef(void)
 {
     ref_count++;
-    if (ref_count > MAX_INSTANCE_COUNT)
+    /*if (ref_count > MAX_INSTANCE_COUNT)
     {
         __debugbreak();
-    }
+    }*/
     return ref_count;
 }
 

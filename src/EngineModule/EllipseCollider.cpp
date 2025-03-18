@@ -10,13 +10,9 @@ BOOL EllipseCollider::Initialize(GameObject *pObj, Vector3 center, float majorRa
     m_centerOfMass = center;
     m_majorRadius = majorRadius;
     m_minorRadius = minorRadius;
-    return TRUE;
-}
 
-Vector3 EllipseCollider::GetWorldCenter() const
-{
-    Vector3 pos = m_pGameObject->GetPosition();
-    return pos + m_centerOfMass;
+    Update();
+    return TRUE;
 }
 
 Bounds EllipseCollider::GetBounds() const
@@ -48,3 +44,9 @@ BOOL EllipseCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) c
 }
 
 BOOL EllipseCollider::Intersect(const Bounds &b) const { return 0; }
+
+void EllipseCollider::Update()
+{
+    Vector3 pos = m_pGameObject->GetPosition();
+    m_worldCenterOfMass = pos + m_centerOfMass;
+}

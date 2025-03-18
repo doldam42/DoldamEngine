@@ -123,6 +123,12 @@ void GameObject::Update(float dt)
     if (m_IsUpdated)
     {
         m_worldMatrix = m_transform.GetMatrix();
+
+        if (m_pCollider)
+        {
+            m_pCollider->Update();
+        }
+
         m_IsUpdated = false;
     }
 }

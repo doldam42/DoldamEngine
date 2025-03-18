@@ -653,34 +653,8 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.direction = rayDir;
     ray.tmax = maxDistance;
 
-    //m_pWorld->Intersect(ray, pOutHit)
-    return m_pPhysicsManager->IntersectRay(ray, pOutHit);
-    //RayHit rayHit;
-    //float  closestHit = m_pWorld->Intersect(ray, &rayHit) ? rayHit.tHit : FLT_MAX;
-
-    //SORT_LINK *pCur = m_pGameObjLinkHead;
-    //while (pCur)
-    //{
-    //    GameObject *pObj = (GameObject *)pCur->pItem;
-
-    //    float hitt0, hitt1;
-    //    if (pObj->IntersectRay(ray, &hitt0, &hitt1) && hitt0 < closestHit)
-    //    {
-    //        closestHit = hitt0;
-    //        rayHit.pHitted = pObj;
-    //        rayHit.tHit = hitt0;
-    //    }
-
-    //    pCur->pNext;
-    //}
-
-    //if (closestHit < FLT_MAX)
-    //{
-    //    *pOutHit = rayHit;
-    //    return TRUE;
-    //}
-
-    //return FALSE;
+    return m_pWorld->Intersect(ray, pOutHit);
+    //return m_pPhysicsManager->IntersectRay(ray, pOutHit);
 }
 
 GameManager::~GameManager()

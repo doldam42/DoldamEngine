@@ -8,7 +8,7 @@ class BaseObject
 
     int m_parentIndex = -1;
     int m_childCount = 0;
-
+    
   public:
     BOOL Initialize(const WCHAR* name, const Transform* pLocalTransform, int parentIndex, int childCount);
 

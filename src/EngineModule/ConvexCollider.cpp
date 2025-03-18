@@ -582,26 +582,10 @@ BOOL ConvexCollider::Initialize(GameObject *pObj, const Vector3 *points, const i
     m_points = std::move(hullPoints);
     m_triangles = std::move(hullTriangles);
 
+    Update();
+
     return TRUE;
 }
-
-Vector3 ConvexCollider::GetWorldCenter() const
-{
-    const Vector3 pos = m_pGameObject->GetPosition();
-    return pos + m_bounds.Center();
-}
-
-Bounds ConvexCollider::GetWorldBounds() const
-{
-    const Matrix &m = m_pGameObject->GetWorldMatrix();
-
-    Bounds box;
-    m_bounds.Transform(&box, m);
-    return box;
-}
-
-Matrix ConvexCollider::InertiaTensor() const { return Matrix(); }
-
 BOOL ConvexCollider::Intersect(ICollider *pOther) const { return 0; }
 
 BOOL ConvexCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const 
@@ -670,4 +654,13 @@ float ConvexCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Ve
         }
     }
     return maxSpeed;
+}
+
+void ConvexCollider::Update() 
+{
+    const Vector3 pos = m_pGameObject->GetPosition();
+    const Matrix &m = m_pGameObject->GetWorldMatrix();
+
+    m_worldCenterOfMass = pos + m_bounds.Center();
+    m_bounds.Transform(&m_worldBounds, m);
 }

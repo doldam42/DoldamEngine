@@ -35,7 +35,6 @@ class BroadPhase
     Vector3 m_axisSAP;
 
     void SortBodiesBounds(const RigidBody *const *bodies, const int num, PsuedoBody *sortedArray, const float dt_sec);
-    void BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *sortedBodies, const int num);
 
   public:
     BOOL Initialize(const UINT maxBodyCount, Vector3 axisSAP);

@@ -5,6 +5,7 @@
 #include <functional>
 #include <cmath>
 #include <cstring>
+#include <set>
 
 #include "EventListener.h"
 #include "HashTable.h"
@@ -17,3 +18,4 @@
 
 #include "BVH.h"
 #include "KDTree.h"
+#include "Grid.h"

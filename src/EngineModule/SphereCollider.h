@@ -4,7 +4,9 @@ class GameObject;
 class SphereCollider : public ICollider
 {
     GameObject *m_pGameObject = nullptr;
+    Matrix      m_inertiaTensor;
     Vector3     m_centerOfMass;
+    Vector3     m_worldCenterOfMass;
     float       m_radius = 0.0f;
 
   public:
@@ -17,18 +19,9 @@ class SphereCollider : public ICollider
     // Getter
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_SPHERE; }
     Vector3       GetCenter() const override { return m_centerOfMass; }
-    Vector3       GetWorldCenter() const override;
+    Vector3       GetWorldCenter() const override { return m_worldCenterOfMass; }
     float         GetRadius() const { return m_radius; }
-    Matrix        InertiaTensor() const override
-    {
-        constexpr float oneDiv5 = 1.0f / 5.0f;
-
-        Matrix tensor = Matrix::Identity;
-        tensor._11 = 2.0f * m_radius * m_radius * oneDiv5;
-        tensor._22 = 2.0f * m_radius * m_radius * oneDiv5;
-        tensor._33 = 2.0f * m_radius * m_radius * oneDiv5;
-        return tensor;
-    }
+    Matrix        InertiaTensor() const override { return m_inertiaTensor; }
 
     BOOL Intersect(ICollider *pOther) const override;
     BOOL IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;
@@ -39,6 +32,8 @@ class SphereCollider : public ICollider
         return pos + dir * (m_radius + bias);
     }
     float FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const override { return 0.0f; }
+
+    void Update() override;
 
     SphereCollider() = default;
     ~SphereCollider() {}

@@ -57,47 +57,6 @@ void BroadPhase::SortBodiesBounds(const RigidBody *const *bodies, const int num,
     qsort(sortedArray, num * 2, sizeof(PsuedoBody), CompareSAP);
 }
 
-/*
-====================================================
-BuildPairs
-====================================================
-*/
-void BroadPhase::BuildPairs(std::vector<CollisionPair> &collisionPairs, const PsuedoBody *sortedBodies, const int num)
-{
-    collisionPairs.clear();
-
-    // Now that the bodies are sorted, build the collision pairs
-    for (int i = 0; i < num * 2; i++)
-    {
-        const PsuedoBody &a = sortedBodies[i];
-        if (!a.isMin)
-        {
-            continue;
-        }
-
-        CollisionPair pair;
-        pair.a = a.id;
-
-        for (int j = i + 1; j < num * 2; j++)
-        {
-            const PsuedoBody &b = sortedBodies[j];
-            // if we've hit the end of the a element, then we're done creating pairs with a
-            if (b.id == a.id)
-            {
-                break;
-            }
-
-            if (!b.isMin)
-            {
-                continue;
-            }
-
-            pair.b = b.id;
-            collisionPairs.push_back(pair);
-        }
-    }
-}
-
 BOOL BroadPhase::Initialize(const UINT maxBodyCount, Vector3 axisSAP)
 {
     m_pPsudoBodies = new PsuedoBody[maxBodyCount * 2];

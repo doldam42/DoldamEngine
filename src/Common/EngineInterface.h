@@ -93,6 +93,8 @@ interface ICollider
 {
     virtual COLLIDER_TYPE GetType() const = 0;
 
+    virtual void Update() = 0;
+
     virtual Vector3 GetCenter() const = 0;
     virtual Vector3 GetWorldCenter() const = 0;
     virtual Bounds  GetBounds() const = 0;

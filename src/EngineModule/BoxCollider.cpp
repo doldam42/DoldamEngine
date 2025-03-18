@@ -5,39 +5,13 @@
 #include "BoxCollider.h"
 #include "SphereCollider.h"
 
-BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents)
-{
-    m_pGameObject = pObj;
-
-    m_bounds.mins = center - extents;
-    m_bounds.maxs = center + extents;
-
-    return TRUE;
-}
-
-Bounds BoxCollider::GetWorldBounds() const
-{
-    const Vector3    pos = m_pGameObject->GetPosition();
-    const Quaternion q = m_pGameObject->GetRotation();
-
-    Bounds box;
-    m_bounds.Transform(&box, pos, q);
-    return box;
-}
-
-Vector3 BoxCollider::GetWorldCenter() const
-{
-    const Vector3 pos = m_pGameObject->GetPosition();
-    return pos + m_bounds.Center();
-}
-
-Matrix BoxCollider::InertiaTensor() const
+void BoxCollider::InitTensor() 
 {
     constexpr float OneDiv12 = 1 / 12.0f;
     // Inertia tensor for box centered around zero
-    const float dx = m_bounds.WidthX();
-    const float dy = m_bounds.WidthY();
-    const float dz = m_bounds.WidthZ();
+    const float     dx = m_bounds.WidthX();
+    const float     dy = m_bounds.WidthY();
+    const float     dz = m_bounds.WidthZ();
 
     Matrix tensor;
     tensor._11 = (dy * dy + dz * dz) * OneDiv12;
@@ -56,7 +30,21 @@ Matrix BoxCollider::InertiaTensor() const
                      R.z * R.y, R2 - R.z * R.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
     tensor += patTensor;
-    return tensor;
+    m_inertiaTensor = tensor;
+}
+
+BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents)
+{
+    m_pGameObject = pObj;
+
+    m_bounds.mins = center - extents;
+    m_bounds.maxs = center + extents;
+
+    InitTensor();
+
+    Update();
+
+    return TRUE;
 }
 
 BOOL BoxCollider::Intersect(ICollider *pOther) const
@@ -79,7 +67,7 @@ BOOL BoxCollider::Intersect(ICollider *pOther) const
 BOOL BoxCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
     float tmin, tmax;
-    if (GetWorldBounds().IntersectP(ray, &tmin, &tmax) && tmin < ray.tmax)
+    if (m_worldBounds.IntersectP(ray, &tmin, &tmax) && tmin < ray.tmax)
     {
         *hitt0 = tmin;
         *hitt1 = tmax;
@@ -88,7 +76,7 @@ BOOL BoxCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
     return FALSE;
 }
 
-BOOL BoxCollider::Intersect(const Bounds &b) const { return b.DoesIntersect(GetWorldBounds()); }
+BOOL BoxCollider::Intersect(const Bounds &b) const { return b.DoesIntersect(m_worldBounds); }
 
 Vector3 BoxCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias)
 {
@@ -136,4 +124,12 @@ float BoxCollider::FastestLinearSpeed(const Vector3 angularVelocity, const Vecto
         }
     }
     return maxSpeed;
+}
+
+void BoxCollider::Update() 
+{
+    const Vector3    pos = m_pGameObject->GetPosition();
+    const Quaternion q = m_pGameObject->GetRotation();
+
+    m_bounds.Transform(&m_worldBounds, pos, q);
 }

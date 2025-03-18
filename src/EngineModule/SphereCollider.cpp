@@ -11,6 +11,15 @@ BOOL SphereCollider::Initialize(GameObject *pObj, const Vector3 &center, const f
     m_centerOfMass = center;
     m_radius = radius;
 
+    constexpr float oneDiv5 = 1.0f / 5.0f;
+
+    m_inertiaTensor = Matrix::Identity;
+    m_inertiaTensor._11 = 2.0f * m_radius * m_radius * oneDiv5;
+    m_inertiaTensor._22 = 2.0f * m_radius * m_radius * oneDiv5;
+    m_inertiaTensor._33 = 2.0f * m_radius * m_radius * oneDiv5;
+
+    Update();
+
     return TRUE;
 }
 
@@ -29,12 +38,6 @@ Bounds SphereCollider::GetWorldBounds() const
     tmp.mins = Vector3(-m_radius) + pos;
     tmp.maxs = Vector3(m_radius) + pos;
     return tmp;
-}
-
-Vector3 SphereCollider::GetWorldCenter() const
-{
-    const Vector3 pos = m_pGameObject->GetPosition();
-    return pos + m_centerOfMass;
 }
 
 BOOL SphereCollider::Intersect(ICollider *pOther) const
@@ -71,3 +74,5 @@ BOOL SphereCollider::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) co
 }
 
 BOOL SphereCollider::Intersect(const Bounds &b) const { return b.DoesIntersect(GetWorldCenter(), m_radius); }
+
+void SphereCollider::Update() { m_worldCenterOfMass = m_centerOfMass + m_pGameObject->GetPosition(); }

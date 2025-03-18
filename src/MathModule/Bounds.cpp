@@ -232,12 +232,14 @@ Vector3 Bounds::Extends() const
 Vector3 Bounds::Offset(const Vector3 &p) const
 {
     Vector3 o = p - mins;
-    if (maxs.x > mins.x)
-        o.x /= maxs.x - mins.x;
-    if (maxs.y > mins.y)
-        o.y /= maxs.y - mins.y;
-    if (maxs.z > mins.z)
-        o.z /= maxs.z - mins.z;
+    Vector3 l = maxs - mins;
+    
+    if (l.x > 0)
+        o.x /= l.x;
+    if (l.y > 0)
+        o.y /= l.y;
+    if (l.z > 0)
+        o.z /= l.z;
     return o;
 }
 
@@ -275,20 +277,18 @@ void Bounds::Transform(Bounds *pOutBounds, const Matrix &m) const
 }
 
 void Bounds::Transform(Bounds *pOutBounds, const Vector3 &pos, const Quaternion &orient) const 
-{
-    const Matrix m = Matrix::CreateFromQuaternion(orient);
-
+{   
     Vector3 corners[8];
     GetCorners(corners);
 
-    Vector3 corner = Vector3::Transform(corners[0], m) + pos;
+    Vector3 corner = Vector3::Transform(corners[0], orient) + pos;
 
     Vector3 _min, _max;
     _min = _max = corner;
 
     for (int i = 1; i < CORNER_COUNT; i++)
     {
-        corner = Vector3::Transform(corners[i], m) + pos;
+        corner = Vector3::Transform(corners[i], orient) + pos;
         _min = Vector3::Min(_min, corner);
         _max = Vector3::Max(_max, corner);
     }
