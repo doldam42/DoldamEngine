@@ -1,14 +1,10 @@
 #include "pch.h"
 
-#include "GameObject.h"
-
 #include "BoxCollider.h"
 #include "RigidBody.h"
 #include "SphereCollider.h"
 
 #include "GJK.h"
-
-#include "World.h"
 
 #include "PhysicsManager.h"
 
@@ -93,10 +89,10 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
     Vector3 velA = pA->GetVelocity();
     Vector3 velB = pB->GetVelocity();
 
-    COLLIDER_TYPE typeA = pA->m_pCollider->GetType();
-    COLLIDER_TYPE typeB = pB->m_pCollider->GetType();
+    DP_COLLIDER_TYPE typeA = pA->m_pCollider->GetType();
+    DP_COLLIDER_TYPE typeB = pB->m_pCollider->GetType();
 
-    if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
+    if (typeA == DP_COLLIDER_TYPE_SPHERE && typeB == DP_COLLIDER_TYPE_SPHERE)
     {
         SphereCollider *pSphereA = (SphereCollider *)pA->m_pCollider;
         SphereCollider *pSphereB = (SphereCollider *)pB->m_pCollider;
@@ -153,7 +149,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContac
     Vector3 posA = pA->GetPosition();
     Vector3 posB = pB->GetPosition();
 
-    if (pA->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE && pB->m_pCollider->GetType() == COLLIDER_TYPE_SPHERE)
+    if (pA->m_pCollider->GetType() == DP_COLLIDER_TYPE_SPHERE && pB->m_pCollider->GetType() == DP_COLLIDER_TYPE_SPHERE)
     {
         const SphereCollider *pSphereA = (const SphereCollider *)pA->m_pCollider;
         const SphereCollider *pSphereB = (const SphereCollider *)pB->m_pCollider;
@@ -270,7 +266,7 @@ BOOL PhysicsManager::Initialize()
     return TRUE;
 }
 
-RigidBody *PhysicsManager::CreateRigidBody(GameObject *pObj, ICollider *pCollider, float mass, float elasticity,
+RigidBody *PhysicsManager::CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity,
                                            float friction, BOOL useGravity, BOOL isKinematic)
 {
     RigidBody *pItem = new RigidBody;
@@ -314,34 +310,6 @@ void PhysicsManager::ApplyGravityImpulseAll(float dt)
         RigidBody *pBody = m_pBodies[i];
         pBody->ApplyGravityImpulse(dt);
     }
-}
-
-BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
-{
-    RigidBody *pCurComp = (RigidBody *)pObj->GetRigidBody();
-    if (!pCurComp)
-        return FALSE;
-
-    m_pBodies[m_bodyCount] = pCurComp;
-    m_bodyCount++;
-
-    SORT_LINK *pCur = pObj->m_LinkInGame.pNext;
-    while (pCur)
-    {
-        GameObject *pOther = (GameObject *)pCur->pItem;
-        RigidBody  *pOtherComp = (RigidBody *)pOther->GetRigidBody();
-
-        Contact contact;
-        if (!pCurComp->m_isKinematic && !pOtherComp->m_isKinematic && Intersect(pCurComp, pOtherComp, dt, &contact))
-        {
-            m_contacts[m_contactCount] = contact;
-            m_contactCount++;
-            return TRUE;
-        }
-
-        pCur = pCur->pNext;
-    }
-    return FALSE;
 }
 
 BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)
@@ -454,7 +422,7 @@ bool PhysicsManager::IntersectRay(const Ray &ray, RayHit *pOutHit)
     UINT numCandidate = m_pBroadPhase->QueryIntersectRay(ray, bodyIDs, 64);
     for (UINT i = 0; i < numCandidate; i++)
     {
-        GameObject *pObj = m_pBodies[bodyIDs[i]]->m_pGameObject;
+        IGameObject *pObj = m_pBodies[bodyIDs[i]]->m_pIGameObject;
         float       hitt0, hitt1;
         if (pObj->IntersectRay(ray, &hitt0, &hitt1) && hitt0 < closestHit)
         {

@@ -5,9 +5,8 @@
 #include "Maniford.h"
 
 class World;
-class GameObject;
 class RigidBody;
-class PhysicsManager
+class PhysicsManager : public IPhysicsManager
 {
   public:
     static constexpr size_t MAX_COLLISION_COUNT = 256;
@@ -38,8 +37,8 @@ class PhysicsManager
   public:
     BOOL Initialize();
 
-    RigidBody *CreateRigidBody(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
-                               BOOL useGravity = TRUE, BOOL isKinematic = FALSE);
+    RigidBody *CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
+                               BOOL useGravity = TRUE, BOOL isKinematic = FALSE) override;
     void       DeleteRigidBody(RigidBody *pBody);
 
     void BeginCollision(float dt);
@@ -47,7 +46,6 @@ class PhysicsManager
 
     void ApplyGravityImpulseAll(float dt);
 
-    BOOL CollisionTest(GameObject *pObj, const float dt);
     BOOL CollisionTestAll(World* pWorld, const float dt);
     void ResolveContactsAll(float dt);
 

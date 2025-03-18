@@ -118,6 +118,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A5B322
 		Common\typedef.h = Common\typedef.h
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhysicsModule", "PhysicsModule\PhysicsModule.vcxproj", "{E3E5E05C-2EF4-48CF-9051-E100157C1158}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -198,6 +200,14 @@ Global
 		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x64.Build.0 = Release|x64
 		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x86.ActiveCfg = Release|Win32
 		{B0547F1F-E215-40A8-B968-C78B945CABC1}.Release|x86.Build.0 = Release|Win32
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Debug|x64.ActiveCfg = Debug|x64
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Debug|x64.Build.0 = Debug|x64
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Debug|x86.ActiveCfg = Debug|Win32
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Debug|x86.Build.0 = Debug|Win32
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Release|x64.ActiveCfg = Release|x64
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Release|x64.Build.0 = Release|x64
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Release|x86.ActiveCfg = Release|Win32
+		{E3E5E05C-2EF4-48CF-9051-E100157C1158}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

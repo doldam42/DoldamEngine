@@ -320,6 +320,8 @@ void GameManager::UpdatePhysics(float dt)
     m_pPhysicsManager->CollisionTestAll(m_pWorld, dt);
 
     m_pPhysicsManager->ResolveContactsAll(dt);
+
+    m_pPhysicsManager->EndCollision(dt);
 }
 
 void GameManager::LateUpdate(float dt) {}

@@ -50,10 +50,7 @@ interface IController
     virtual void Update(float dt) = 0;
 };
 
-interface IRenderableController : public IController
-{
-    virtual void Render() = 0; 
-};
+interface IRenderableController : public IController { virtual void Render() = 0; };
 
 interface IBaseObject
 {
@@ -78,7 +75,7 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual size_t     GetID() = 0;
     virtual IGameMesh *GetMeshAt(UINT index) = 0;
 
-    virtual void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) = 0;
+    virtual void SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
 };
 
 enum COLLIDER_TYPE
@@ -103,9 +100,9 @@ interface ICollider
     virtual Matrix InertiaTensor() const = 0;
 
     virtual BOOL Intersect(ICollider * pOther) const = 0;
-    virtual BOOL IntersectRay(const Ray &ray, float* hitt0, float*hitt1) const = 0;
+    virtual BOOL IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const = 0;
     virtual BOOL Intersect(const Bounds &b) const = 0;
-    
+
     // Find the point in furthest in direction
     virtual Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) = 0;
     virtual float   FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const = 0;
@@ -116,8 +113,7 @@ interface IRigidBody
     virtual Vector3 GetVelocity() const = 0;
     virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
     virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
-
-    virtual BOOL IsStatic() = 0;
+    virtual BOOL    IsStatic() = 0;
 };
 
 interface IGameObject : public IBoundedObject
@@ -150,7 +146,7 @@ interface IGameObject : public IBoundedObject
     virtual void SetRotation(Quaternion q) = 0;
 
     virtual void AddPosition(Vector3 deltaPos) = 0;
-    //virtual void Translate(const Vector3 *pInDeltaPos) = 0;
+    // virtual void Translate(const Vector3 *pInDeltaPos) = 0;
 
     virtual void             SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
     virtual IRenderMaterial *GetMaterialAt(UINT index) = 0;
@@ -254,7 +250,8 @@ interface IGameManager : public IUnknown
 
     virtual float DeltaTime() const = 0;
 
-    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = FLT_MAX) = 0;
+    virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit,
+                         float maxDistance = FLT_MAX) = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };
