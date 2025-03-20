@@ -145,6 +145,8 @@ interface IGameObject : public IBoundedObject
     virtual void SetRotationZ(float rotZ) = 0;
     virtual void SetRotation(Quaternion q) = 0;
 
+    virtual void SetActive(BOOL state) = 0;
+
     virtual void AddPosition(Vector3 deltaPos) = 0;
     // virtual void Translate(const Vector3 *pInDeltaPos) = 0;
 

@@ -89,6 +89,8 @@ class Client
     void SetTimeSpeed(float speed) { m_timeSpeed = speed; }
     void Pause() { m_isPaused = !m_isPaused; }
 
+    ULONGLONG LastFrameTimestamp() const { return m_prevFrameCheckTick; }
+
     Client() = default;
     ~Client();
 };

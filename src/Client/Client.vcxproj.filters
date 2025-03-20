@@ -39,6 +39,10 @@
       <Filter>InputManager</Filter>
     </ClCompile>
     <ClCompile Include="PlayerController.cpp" />
+    <ClCompile Include="BallisticDemo.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="Firework.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -97,6 +101,10 @@
       <Filter>Controller</Filter>
     </ClInclude>
     <ClInclude Include="PlayerController.h" />
+    <ClInclude Include="BallisticDemo.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="Firework.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -139,6 +147,9 @@
     </Filter>
     <Filter Include="InputManager">
       <UniqueIdentifier>{628160d5-6d7b-4c84-9448-3087be2146df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireworkDemo">
+      <UniqueIdentifier>{7c1b3754-0250-4a4c-9d03-2bb908a76028}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

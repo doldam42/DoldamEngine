@@ -31,6 +31,7 @@ void Maniford::AddContact(const Contact &contact_old)
         const Vector3 bb = newB - oldB;
 
         const float distanceThreshold = 0.02f;
+        
         if (aa.LengthSquared() < distanceThreshold * distanceThreshold)
         {
             return;

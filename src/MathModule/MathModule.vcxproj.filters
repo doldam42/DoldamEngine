@@ -46,6 +46,7 @@
     <ClCompile Include="Collisions.cpp" />
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="Frustum.cpp" />
+    <ClCompile Include="Particle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

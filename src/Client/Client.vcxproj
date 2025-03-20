@@ -169,9 +169,11 @@
   <ItemGroup>
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="BadAppleController.cpp" />
+    <ClCompile Include="BallisticDemo.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CollisionDemoController.cpp" />
+    <ClCompile Include="Firework.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
@@ -192,10 +194,12 @@
     <ClInclude Include="..\Common\typedef.h" />
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="BadAppleController.h" />
+    <ClInclude Include="BallisticDemo.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="CollisionDemoController.h" />
     <ClInclude Include="ControllerRegistry.h" />
+    <ClInclude Include="Firework.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsDemoController.h" />

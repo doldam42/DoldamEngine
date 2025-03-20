@@ -27,7 +27,7 @@ void PlayerController::Update(float dt)
     InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
 
-    if (pI->IsKeyPressed(VK_LBUTTON, false))
+    /*if (pI->IsKeyPressed(VK_LBUTTON, false))
     {
         Vector3 rayDir = pGame->GetCameraLookTo();
         Vector3 rayPos = pGame->GetCameraPos();
@@ -52,7 +52,7 @@ void PlayerController::Update(float dt)
             IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
             pMaterial->UpdateEmissive(Vector3(0.0f, 0.0f, 0.0f));
         }
-    }
+    }*/
 
     Vector3 pos = m_pPlayer->GetPosition();
 

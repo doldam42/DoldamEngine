@@ -49,6 +49,8 @@ class Character : public IGameCharacter, public GameObject
     void SetRotationZ(float rotZ) override;
     void SetRotation(Quaternion q) override;
 
+    void SetActive(BOOL state) override;
+
     void AddPosition(Vector3 deltaPos) override;
 
     void SetMaterials(IRenderMaterial **ppMaterials, const UINT numMaterials) override;

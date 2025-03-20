@@ -6,7 +6,7 @@
 
 #include "PhysicsDemoController.h"
 
-REGISTER_CONTROLLER(PhysicsDemoController)
+//REGISTER_CONTROLLER(PhysicsDemoController)
 
 BOOL PhysicsDemoController::Start()
 {
@@ -27,13 +27,13 @@ BOOL PhysicsDemoController::Start()
     IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
     IGameObject *pBox = pGame->CreateGameObject();
     pBox->SetModel(pBoxModel);
-    pBox->SetPosition(20.0f, 0.0f, 0.0f);
+    pBox->SetPosition(20.0f, 10.0f, 0.0f);
     pBox->SetScale(2.0f);
     pBox->SetMaterials(&pSphereMaterial, 1);
     pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
     pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
 
-    float y = -20.0f;
+    /*float y = -20.0f;
     float height = 25.0f;
     for (int i = 0; i < 10; i++)
     {
@@ -51,7 +51,7 @@ BOOL PhysicsDemoController::Start()
             x += 4.0f;
         }
         y += 4.0f;
-    }
+    }*/
     m_pMaterial = pSphereMaterial;
 
     return TRUE;
@@ -67,7 +67,7 @@ void PhysicsDemoController::Update(float dt)
 
     cycle += dt;
 
-    if (cycle > SHOOT_CYCLE)
+    /*if (cycle > SHOOT_CYCLE)
     {
         IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
         IGameObject *pSphere1 = pGame->CreateGameObject();
@@ -92,5 +92,5 @@ void PhysicsDemoController::Update(float dt)
         pSphere2->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, -15.0f));
 
         cycle = 0.0f;
-    }
+    }*/
 }

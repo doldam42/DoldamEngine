@@ -28,6 +28,7 @@ class GameObject : public IGameObject
     void     *m_pSearchHandleInGame = nullptr;
 
     BOOL m_isVisible = TRUE;
+    BOOL m_isActive = TRUE;
 
   private:
     void CleanupMaterials();
@@ -71,6 +72,8 @@ class GameObject : public IGameObject
     void SetRotationX(float rotX) override;
     void SetRotationZ(float rotZ) override;
     void SetRotation(Quaternion q) override;
+
+    void SetActive(BOOL state) override { m_isActive = state; }
 
     void AddPosition(Vector3 deltaPos) override;
 
