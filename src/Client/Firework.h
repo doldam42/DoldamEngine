@@ -22,8 +22,8 @@ struct FireworkRule
 
     void Init(UINT payloadCount);
 
-    void SetParameters(UINT type, float minAge, float maxAge, const Vector3 &minVelocity,
-                       const Vector3 &maxVelocity, float damping);
+    void SetParameters(UINT type, float minAge, float maxAge, const Vector3 &minVelocity, const Vector3 &maxVelocity,
+                       float damping);
 
     struct Payload
     {
@@ -36,10 +36,20 @@ struct FireworkRule
         }
     };
 
-    UINT payloadCount;
+    UINT     payloadCount;
     Payload *payloads;
 
     void Create(Firework *firework, const Firework *parent = nullptr) const;
+
+    ~FireworkRule()
+    {
+        if (payloads)
+        {
+            delete[] payloads;
+            payloads = nullptr;
+        }
+    };
+    FireworkRule() = default;
 };
 
 class FireworkDemo : public IController
