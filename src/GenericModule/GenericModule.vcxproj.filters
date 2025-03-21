@@ -28,6 +28,9 @@
     <Filter Include="DataStructure">
       <UniqueIdentifier>{951ec261-2323-4906-bb52-b5476184372f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pfgen">
+      <UniqueIdentifier>{70da02a3-c60f-4e34-aef3-ef02779c3c76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtil.h">
@@ -66,6 +69,8 @@
     <ClInclude Include="KDTree.h">
       <Filter>DataStructure</Filter>
     </ClInclude>
+    <ClInclude Include="Grid.h" />
+    <ClInclude Include="ParticleForceGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -99,5 +104,7 @@
     <ClCompile Include="KDTree.cpp">
       <Filter>DataStructure</Filter>
     </ClCompile>
+    <ClCompile Include="Grid.cpp" />
+    <ClCompile Include="ParticleForceGenerator.cpp" />
   </ItemGroup>
 </Project>

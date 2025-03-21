@@ -16,6 +16,8 @@
 #include "StringUtil.h"
 #include "MemoryStreamBuf.h"
 
+#include "ParticleForceGenerator.h"
+
 #include "BVH.h"
 #include "KDTree.h"
 #include "Grid.h"

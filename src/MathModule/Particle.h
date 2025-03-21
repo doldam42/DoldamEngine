@@ -10,6 +10,7 @@ struct Particle
     float damping = 0.0f; // 감쇠 ex) 공기 저항
     float invMass = 0.0f;
 
+    void AddForce(const Vector3 &force);
     void Integrate(float dt);
 
     void ClearAccumulator();
