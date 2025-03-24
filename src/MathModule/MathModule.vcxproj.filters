@@ -30,6 +30,9 @@
     <ClInclude Include="Collisions.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Particle.h" />
+    <ClInclude Include="Vector12.h" />
+    <ClInclude Include="Matrix12.h" />
+    <ClInclude Include="MatN.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -47,6 +50,9 @@
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Particle.cpp" />
+    <ClCompile Include="Vector12.cpp" />
+    <ClCompile Include="Matrix12.cpp" />
+    <ClCompile Include="MatN.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

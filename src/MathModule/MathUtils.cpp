@@ -35,3 +35,4 @@ Bounds GetBoundingBox(const SkinnedVertex *pVertice, UINT numVertice)
 
     return Bounds(minCorner, maxCorner);
 }
+

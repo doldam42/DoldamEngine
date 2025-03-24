@@ -6,7 +6,7 @@
 
 #include "Firework.h"
 
-REGISTER_CONTROLLER(FireworkDemo)
+//REGISTER_CONTROLLER(FireworkDemo)
 
 void FireworkDemo::InitFireworkRules()
 {

@@ -6,7 +6,7 @@
 
 #include "PhysicsDemoController.h"
 
-//REGISTER_CONTROLLER(PhysicsDemoController)
+REGISTER_CONTROLLER(PhysicsDemoController)
 
 BOOL PhysicsDemoController::Start()
 {
@@ -24,14 +24,43 @@ BOOL PhysicsDemoController::Start()
 
     IRenderMaterial *pSphereMaterial = pRenderer->CreateMaterialHandle(&ChristmasTreeOrnamentMaterial);
 
-    IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pBox = pGame->CreateGameObject();
-    pBox->SetModel(pBoxModel);
-    pBox->SetPosition(20.0f, 10.0f, 0.0f);
-    pBox->SetScale(2.0f);
-    pBox->SetMaterials(&pSphereMaterial, 1);
-    pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
-    pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
+    //IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+    //IGameObject *pBox = pGame->CreateGameObject();
+    //pBox->SetModel(pBoxModel);
+    //pBox->SetPosition(0.0f, 10.0f, 0.0f);
+    //pBox->SetScale(2.0f);
+    ////pBox->SetRotationX(XM_PIDIV2 / 4);
+    //pBox->SetMaterials(&pSphereMaterial, 1);
+    //pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
+    //pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
+
+    const int stackHeight = 5;
+    for (int x = 0; x < 1; x++)
+    {
+        for (int y = 0; y < 1; y++)
+        {
+            for (int z = 0; z < stackHeight; z++)
+            {
+                IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+                IGameObject *pBox = pGame->CreateGameObject();
+                pBox->SetModel(pBoxModel);
+
+                float offset = ((z & 1) == 0) ? 0.0f : 0.15f;
+                float xx = (float)x + offset;
+                float yy = (float)y + offset;
+                float delta = 0.05f;
+                float scaleHeight = 2.0f + delta;
+                float deltaHeight = 1.0f + delta;
+                
+                Vector3 pos =
+                    Vector3((float)xx * scaleHeight, deltaHeight + (float)z * scaleHeight, (float) yy * scaleHeight);
+                pBox->SetPosition(pos.x, pos.y, pos.z);
+                pBox->SetMaterials(&pSphereMaterial, 1);
+                pBox->InitBoxCollider(Vector3::Zero, Vector3(1.0f));
+                pBox->InitRigidBody(1.0f, 0.0f, 0.5f);
+            }
+        }
+    }
 
     /*float y = -20.0f;
     float height = 25.0f;

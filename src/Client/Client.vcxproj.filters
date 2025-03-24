@@ -42,7 +42,9 @@
     <ClCompile Include="BallisticDemo.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
-    <ClCompile Include="Firework.cpp" />
+    <ClCompile Include="Firework.cpp">
+      <Filter>FireworkDemo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -104,7 +106,9 @@
     <ClInclude Include="BallisticDemo.h">
       <Filter>Demos</Filter>
     </ClInclude>
-    <ClInclude Include="Firework.h" />
+    <ClInclude Include="Firework.h">
+      <Filter>FireworkDemo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

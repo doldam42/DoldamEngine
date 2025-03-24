@@ -178,6 +178,21 @@ BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
 
+    float    f[12];
+    for (int i = 0; i < 12; i++)
+    {
+        f[i] = 1.0f;
+    }
+    Vector12 v1(f);
+
+    for (int i = 0; i < 12; i++)
+    {
+        f[i] = 1.0f;
+    }
+    Vector12 v2(f);
+
+    float x = v1.Dot(v2);
+
     result = LoadModules(hWnd);
 
     RECT rect;

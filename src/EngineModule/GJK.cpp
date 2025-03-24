@@ -851,7 +851,8 @@ int RemoveTrianglesFacingPoint(const Vector3 &pt, std::vector<tri_t> &triangles,
         if (dist > 0.0f)
         {
             // This triangle faces the point.  Remove it.
-            triangles.erase(triangles.begin() + i);
+            triangles[i] = triangles.back();
+            triangles.pop_back();
             i--;
             numRemoved++;
         }
@@ -945,7 +946,7 @@ float EPA_Expand(const RigidBody *bodyA, const RigidBody *bodyB, const float bia
 {
     std::vector<point_t> points(4);
     std::vector<tri_t>   triangles(4);
-    std::vector<edge_t>  danglingEdges;
+    std::vector<edge_t>  danglingEdges(4 * 3);
 
     Vector3 center(0.0f);
     for (int i = 0; i < 4; i++)

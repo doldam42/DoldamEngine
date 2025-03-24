@@ -299,11 +299,7 @@ void PhysicsManager::DeleteRigidBody(RigidBody *pBody)
 void PhysicsManager::BeginCollision(float dt) { m_pBroadPhase->Build(m_pBodies, m_bodyCount, dt); }
 
 void PhysicsManager::EndCollision(float dt)
-{ // Update the positions for the rest of this frame's time
-    for (UINT j = 0; j < m_bodyCount; j++)
-    {
-        m_pBodies[j]->Update(dt);
-    }
+{ 
     m_contactCount = 0;
 }
 
@@ -314,34 +310,6 @@ void PhysicsManager::ApplyGravityImpulseAll(float dt)
         RigidBody *pBody = m_pBodies[i];
         pBody->ApplyGravityImpulse(dt);
     }
-}
-
-BOOL PhysicsManager::CollisionTest(GameObject *pObj, const float dt)
-{
-    RigidBody *pCurComp = (RigidBody *)pObj->GetRigidBody();
-    if (!pCurComp)
-        return FALSE;
-
-    m_pBodies[m_bodyCount] = pCurComp;
-    m_bodyCount++;
-
-    SORT_LINK *pCur = pObj->m_LinkInGame.pNext;
-    while (pCur)
-    {
-        GameObject *pOther = (GameObject *)pCur->pItem;
-        RigidBody  *pOtherComp = (RigidBody *)pOther->GetRigidBody();
-
-        Contact contact;
-        if (!pCurComp->m_isKinematic && !pOtherComp->m_isKinematic && Intersect(pCurComp, pOtherComp, dt, &contact))
-        {
-            m_contacts[m_contactCount] = contact;
-            m_contactCount++;
-            return TRUE;
-        }
-
-        pCur = pCur->pNext;
-    }
-    return FALSE;
 }
 
 BOOL PhysicsManager::CollisionTestAll(World *pWorld, const float dt)

@@ -47,7 +47,6 @@ class PhysicsManager
 
     void ApplyGravityImpulseAll(float dt);
 
-    BOOL CollisionTest(GameObject *pObj, const float dt);
     BOOL CollisionTestAll(World* pWorld, const float dt);
     void ResolveContactsAll(float dt);
 
