@@ -116,7 +116,7 @@ interface IRigidBody
     virtual BOOL    IsStatic() = 0;
 };
 
-interface IGameObject : public IBoundedObject
+interface IGameObject
 {
     virtual size_t GetID() = 0;
 

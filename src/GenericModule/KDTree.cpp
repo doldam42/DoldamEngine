@@ -298,7 +298,7 @@ retrySplit:
 //	return hit;
 //}
 
-bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const
+bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, void **pHitted) const
 {
     // Compute initial parametric range of ray inside kd-tree extent
     float tMin, tMax;
@@ -322,11 +322,11 @@ bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitte
             int nPrimitives = node->nPrimitives();
             if (nPrimitives == 1)
             {
-                IBoundedObject *prim = primitives[node->onePrimitive];
-                if (prim->IntersectRay(ray, &tMin, &tMax))
+                const Bounds &b = primitives[node->onePrimitive].bounds;
+                if (b.IntersectP(ray, &tMin, &tMax))
                 {
                     *pOutHitt = tMin;
-                    *pHitted = prim;
+                    *pHitted = primitives[node->onePrimitive].pObj;
                     return true;
                 }
             }
@@ -334,12 +334,12 @@ bool KDTree::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitte
             {
                 for (int i = 0; i < nPrimitives; ++i)
                 {
-                    int             primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
-                    IBoundedObject *prim = primitives[primitiveIndex];
-                    if (prim->IntersectRay(ray, &tMin, &tMax))
+                    int           primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
+                    const Bounds &b = primitives[primitiveIndex].bounds;
+                    if (b.IntersectP(ray, &tMin, &tMax))
                     {
                         *pOutHitt = tMin;
-                        *pHitted = prim;
+                        *pHitted = primitives[primitiveIndex].pObj;
                         return true;
                     }
                 }
@@ -421,8 +421,8 @@ bool KDTree::Intersect(const Bounds &b) const
             int nPrimitives = node->nPrimitives();
             if (nPrimitives == 1)
             {
-                IBoundedObject *p = primitives[node->onePrimitive];
-                if (p->Intersect(b))
+                const Primitive &p = primitives[node->onePrimitive];
+                if (p.bounds.DoesIntersect(b))
                 {
                     return true;
                 }
@@ -431,9 +431,9 @@ bool KDTree::Intersect(const Bounds &b) const
             {
                 for (int i = 0; i < nPrimitives; ++i)
                 {
-                    int             primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
-                    IBoundedObject *prim = primitives[primitiveIndex];
-                    if (prim->Intersect(b))
+                    int              primitiveIndex = primitiveIndices[node->primitiveIndicesOffset + i];
+                    const Primitive &p = primitives[primitiveIndex];
+                    if (p.bounds.DoesIntersect(b))
                     {
                         return true;
                     }
@@ -456,13 +456,13 @@ bool KDTree::Intersect(const Bounds &b) const
             // Process kd-tree interior node
 
             // Compute parametric distance along ray to split plane
-            int   axis = node->SplitAxis();
-            //float tPlane = (node->SplitPos() - ray.position[axis]) * invDir[axis];
+            int axis = node->SplitAxis();
+            // float tPlane = (node->SplitPos() - ray.position[axis]) * invDir[axis];
 
             // Get node children pointers for ray
             const KdAccelNode *firstChild = node + 1;
             const KdAccelNode *secondChild = &nodes[node->AboveChild()];
-            
+
             if (node->SplitPos() > b.maxs[axis]) // left child
             {
                 node = firstChild;
@@ -471,7 +471,7 @@ bool KDTree::Intersect(const Bounds &b) const
             {
                 node = secondChild;
             }
-            else  // intersect
+            else // intersect
             {
                 // Enqueue _secondChild_ in todo list
                 todo[todoPos].node = secondChild;
@@ -485,7 +485,7 @@ bool KDTree::Intersect(const Bounds &b) const
     return false;
 }
 
-BOOL KDTree::InsertObject(IBoundedObject *pObj)
+BOOL KDTree::InsertObject(const Bounds &b, void *pObj)
 {
     if (primitives.size() > maxObjectCount)
     {
@@ -494,7 +494,7 @@ BOOL KDTree::InsertObject(IBoundedObject *pObj)
 #endif
         return FALSE;
     }
-    primitives.push_back(pObj);
+    primitives.push_back({b, pObj});
     return TRUE;
 }
 
@@ -503,11 +503,10 @@ void KDTree::Build()
     // Compute bounds for kd-tree construction
     std::vector<Bounds> primBounds;
     primBounds.reserve(primitives.size());
-    for (IBoundedObject *&prim : primitives)
+    for (Primitive &prim : primitives)
     {
-        Bounds b = prim->GetBounds();
-        bounds.Expand(b);
-        primBounds.push_back(b);
+        bounds.Expand(prim.bounds);
+        primBounds.push_back(prim.bounds);
     }
 
     // Allocate working memory for kd-tree construction

@@ -27,7 +27,7 @@ void World::InsertObject(GameObject *pObject)
     {
         if (!(pObject->GetRigidBody() && pObject->GetRigidBody()->IsStatic()))
             return;
-        m_pTree->InsertObject(pObject);
+        m_pTree->InsertObject(pObject->GetBounds(), pObject);
     }
 }
 
@@ -36,11 +36,11 @@ void World::EndCreateWorld() { m_pTree->Build(); }
 bool World::Intersect(const Ray &ray, RayHit *pOutHit) 
 {
     float tHit;
-    IBoundedObject *pOut = nullptr;
+    void *pOut = nullptr;
     if (m_pTree->IntersectP(ray, &tHit, &pOut))
     {
         pOutHit->tHit = tHit;
-        pOutHit->pHitted = dynamic_cast<IGameObject *>(pOut);
+        pOutHit->pHitted = (IGameObject*)pOut;
         return TRUE;
     }
     return FALSE;

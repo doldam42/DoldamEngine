@@ -83,15 +83,13 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
     if (!pA || !pB)
         return FALSE;
 
-    pOutContact->pA = pA;
-    pOutContact->pB = pB;
     pOutContact->timeOfImpact = 0.0f;
 
-    Vector3 posA = pA->GetPosition();
-    Vector3 posB = pB->GetPosition();
+    const Vector3 posA = pA->GetPosition();
+    const Vector3 posB = pB->GetPosition();
 
-    Vector3 velA = pA->GetVelocity();
-    Vector3 velB = pB->GetVelocity();
+    const Vector3 velA = pA->GetVelocity();
+    const Vector3 velB = pB->GetVelocity();
 
     COLLIDER_TYPE typeA = pA->m_pCollider->GetType();
     COLLIDER_TYPE typeB = pB->m_pCollider->GetType();
@@ -106,8 +104,11 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         Vector3 contactPointAWorldSpace;
         Vector3 contactPointBWorldSpace;
         if (SphereSphereDynamic(pSphereA->GetRadius(), pSphereB->GetRadius(), posA, posB, velA, velB, dt,
-                                &contactPointAWorldSpace, &contactPointBWorldSpace, &normal, &timeOfImpact))
+                                &contactPointAWorldSpace, &contactPointBWorldSpace, &timeOfImpact))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+
             pA->Update(timeOfImpact);
             pB->Update(timeOfImpact);
 
@@ -118,7 +119,7 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
             pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
             pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);
 
-            pOutContact->normal = normal;
+            pOutContact->normal = pA->GetPosition() - pB->GetPosition();
             pOutContact->timeOfImpact = timeOfImpact;
 
             // Unwind time step

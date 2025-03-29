@@ -8,7 +8,7 @@ void RigidBody::Cleanup()
 }
 
 void RigidBody::Initialize(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
-                           BOOL useGravity, BOOL isKinematic)
+                           BOOL useGravity = TRUE)
 {
     m_pCollider = pCollider;
 
@@ -16,10 +16,9 @@ void RigidBody::Initialize(IGameObject *pObj, ICollider *pCollider, float mass, 
     m_elasticity = elasticity;
     m_friction = friction;
 
-    m_pIGameObject = pObj;
+    m_pGameObject = pObj;
 
     m_useGravity = useGravity;
-    m_isKinematic = isKinematic;
 }
 
 void RigidBody::ApplyGravityImpulse(const float dt)
@@ -75,7 +74,7 @@ void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
 
 void RigidBody::Update(float dt)
 {
-    m_pIGameObject->AddPosition(m_linearVelocity * dt);
+    m_pGameObject->AddPosition(m_linearVelocity * dt);
 
     Vector3 pos = GetPosition();
     Vector3 positionCM = GetCenterOfMassWorldSpace();
@@ -101,22 +100,22 @@ void RigidBody::Update(float dt)
     Quaternion dq = (angleRadians == 0) ? Quaternion::Identity : Quaternion::CreateFromAxisAngle(dAngle, angleRadians);
     Quaternion o = Quaternion::Concatenate(GetOrient(), dq);
     o.Normalize();
-    m_pIGameObject->SetRotation(o);
+    m_pGameObject->SetRotation(o);
 
     Vector3 newPos = positionCM + Vector3::Transform(cmToPos, dq);
-    m_pIGameObject->SetPosition(newPos.x, newPos.y, newPos.z);
+    m_pGameObject->SetPosition(newPos.x, newPos.y, newPos.z);
 }
 
-Vector3 RigidBody::GetPosition() const { return m_pIGameObject->GetPosition(); }
+Vector3 RigidBody::GetPosition() const { return m_pGameObject->GetPosition(); }
 
-Quaternion RigidBody::GetOrient() const { return m_pIGameObject->GetRotation(); }
+Quaternion RigidBody::GetOrient() const { return m_pGameObject->GetRotation(); }
 
-void RigidBody::AddPosition(const Vector3 &deltaPos) { m_pIGameObject->AddPosition(deltaPos); }
+void RigidBody::AddPosition(const Vector3 &deltaPos) { m_pGameObject->AddPosition(deltaPos); }
 
 Vector3 RigidBody::GetCenterOfMassWorldSpace() const
 {
     const Vector3 centerOfMass = m_pCollider->GetCenter();
-    const Vector3 pos = m_pIGameObject->GetPosition() + Vector3::Transform(centerOfMass, m_pIGameObject->GetRotation());
+    const Vector3 pos = m_pGameObject->GetPosition() + Vector3::Transform(centerOfMass, m_pGameObject->GetRotation());
     return pos;
 }
 
@@ -125,7 +124,7 @@ Vector3 RigidBody::GetCenterOfMassLocalSpace() const { return m_pCollider->GetCe
 Vector3 RigidBody::WorldSpaceToLocalSpace(const Vector3 &point) const
 {
     Vector3    tmp = point - GetCenterOfMassWorldSpace();
-    Quaternion orient = m_pIGameObject->GetRotation();
+    Quaternion orient = m_pGameObject->GetRotation();
 
     Quaternion inverseOrient;
     orient.Inverse(inverseOrient);
@@ -135,7 +134,7 @@ Vector3 RigidBody::WorldSpaceToLocalSpace(const Vector3 &point) const
 
 Vector3 RigidBody::LocalSpaceToWorldSpace(const Vector3 &point) const
 {
-    Vector3 worldSpace = GetCenterOfMassWorldSpace() + Vector3::Transform(point, m_pIGameObject->GetRotation());
+    Vector3 worldSpace = GetCenterOfMassWorldSpace() + Vector3::Transform(point, m_pGameObject->GetRotation());
     return worldSpace;
 }
 

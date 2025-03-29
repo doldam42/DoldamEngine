@@ -85,7 +85,7 @@ class GameObject : public IGameObject
     GameObject();
     virtual ~GameObject();
     BOOL   HasBounds() const { return (m_pModel || m_pCollider); }
-    Bounds GetBounds() const override;
-    bool   IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;
-    bool   Intersect(const Bounds &b) const override;
+    Bounds GetBounds() const;
+    bool   IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const;
+    bool   Intersect(const Bounds &b) const;
 };

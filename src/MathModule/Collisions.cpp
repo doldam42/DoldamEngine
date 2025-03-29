@@ -144,7 +144,7 @@ BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 
 
 BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                          const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
-                         Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi)
+                         Vector3 *pOutContactPointB, float *pOutToi)
 {
     const Vector3 relativeVelocity = velA - velB;
 
@@ -195,7 +195,6 @@ BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3
     ab.Normalize();
 
     *pOutToi = toi;
-    *pOutNormal = ab;
     *pOutContactPointA = newPosA + ab * radiusA;
     *pOutContactPointB = newPosB - ab * radiusB;
     return true;
@@ -260,7 +259,8 @@ BOOL SphereTriangleStatic(const Vector3 &sphereCenter, const float sphereRadius,
 
 BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius, const Vector3 &sphereVelocity,
                            const float dt, const Vector3 &v0, const Vector3 &v1, const Vector3 &v2,
-                           const Vector3 &normal, Vector3 *pOutNormal, float *pOutToi)
+                           const Vector3 &normal, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB,
+                           float *pOutToi)
 {
     Vector3 dir = sphereVelocity;
     dir.Normalize();
@@ -270,29 +270,26 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
     float t0, t1;
     if (RaySphere(sphereCenter, dir, v0, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
-        const Vector3 hitPoint = sphereCenter + dir * t0;
-        const Vector3 n = hitPoint - v0;
+        *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
+        *pOutContactPointB = v0;
 
-        *pOutToi = t0 * dt;
-        *pOutNormal = n;
+        *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
     if (RaySphere(sphereCenter, dir, v1, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
-        const Vector3 hitPoint = sphereCenter + dir * t0;
-        const Vector3 n = hitPoint - v1;
+        *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
+        *pOutContactPointB = v1;
 
-        *pOutToi = t0 * dt;
-        *pOutNormal = n;
+        *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
     if (RaySphere(sphereCenter, dir, v2, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
-        const Vector3 hitPoint = sphereCenter + dir * t0;
-        const Vector3 n = hitPoint - v2;
+        *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
+        *pOutContactPointB = v2;
 
-        *pOutToi = t0 * dt;
-        *pOutNormal = n;
+        *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
 
@@ -300,13 +297,16 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
     if (RayCylinder(sphereCenter, dir, v0, v1, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
     {
         const Vector3 hitPoint = sphereCenter + dir * t0;
-        const Vector3 d = v1 - v0;
-        const float   t = (hitPoint - v0).Dot(d) / d.LengthSquared();
-        const Vector3 p = v0 + d * t;
-        const Vector3 n = hitPoint - p;
+        const Vector3 ab = v1 - v0;
+        const Vector3 ac = hitPoint - v0;
+        const Vector3 p = v0 + ab *(ac.Dot(ab) / ab.LengthSquared());
+        Vector3 n = hitPoint - p;
+        n.Normalize();
+
+        *pOutContactPointA = hitPoint + n * sphereRadius; 
+        *pOutContactPointB = p;
 
         *pOutToi = t0 * dt;
-        *pOutNormal = n;
         return TRUE;
     }
     if (RayCylinder(sphereCenter, dir, v1, v2, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
@@ -317,8 +317,10 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 p = v1 + d * t;
         const Vector3 n = hitPoint - p;
 
-        *pOutToi = t0 * dt;
-        *pOutNormal = n;
+        *pOutContactPointA = hitPoint + n * sphereRadius;
+        *pOutContactPointB = p;
+
+        *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
     if (RayCylinder(sphereCenter, dir, v2, v0, sphereRadius, &t0) && t0 < tMax && t1 >= 0.0f)
@@ -329,8 +331,10 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 p = v2 + d * t;
         const Vector3 n = hitPoint - p;
 
-        *pOutToi = t0 * dt;
-        *pOutNormal = n;
+        *pOutContactPointA = hitPoint + n * sphereRadius;
+        *pOutContactPointB = p;
+
+        *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
 
@@ -338,8 +342,12 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
     if (RayTriangle(sphereCenter, dir, v0 + normal * sphereRadius, v1 + normal * sphereRadius,
                     v2 + normal * sphereRadius, &t0) && t0 < tMax)
     {
+
+        *pOutContactPointA = hitPoint + n * sphereRadius;
+        *pOutContactPointB = p;
+
         *pOutToi = t0 * dt;
-        *pOutNormal = normal;
+
         return TRUE;
     }
     return FALSE;

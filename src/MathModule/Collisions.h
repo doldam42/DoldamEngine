@@ -17,14 +17,15 @@ BOOL SphereSphereStatic(const float radiusA, const float radiusB, const Vector3 
 
 BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3 &posA, const Vector3 &posB,
                          const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutContactPointA,
-                         Vector3 *pOutContactPointB, Vector3 *pOutNormal, float *pOutToi);
+                         Vector3 *pOutContactPointB, float *pOutToi);
 
 BOOL SphereTriangleStatic(const Vector3 &sphereCenter, const float sphereRadius, const Vector3 &v0, const Vector3 &v1,
                           const Vector3 &v2);
 
 BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius, const Vector3 &sphereVelocity,
                            const float dt, const Vector3 &v0, const Vector3 &v1, const Vector3 &v2,
-                           const Vector3 &normal, Vector3 *pOutNormal, float *pOutToi);
+                           const Vector3 &normal, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB,
+                           float *pOutToi);
 
 // 장축이 Y축이라 가정.
 BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,

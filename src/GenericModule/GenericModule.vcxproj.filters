@@ -69,8 +69,10 @@
     <ClInclude Include="KDTree.h">
       <Filter>DataStructure</Filter>
     </ClInclude>
-    <ClInclude Include="Grid.h" />
     <ClInclude Include="ParticleForceGenerator.h" />
+    <ClInclude Include="Grid.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -104,7 +106,9 @@
     <ClCompile Include="KDTree.cpp">
       <Filter>DataStructure</Filter>
     </ClCompile>
-    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="ParticleForceGenerator.cpp" />
+    <ClCompile Include="Grid.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

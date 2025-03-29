@@ -12,18 +12,18 @@ class RigidBody : public IRigidBody
     float m_elasticity = 1.0f;
     float m_friction = 0.0f;
 
-    ICollider  *m_pCollider = nullptr;
-    IGameObject *m_pIGameObject = nullptr;
+    ICollider   *m_pCollider = nullptr;
+    IGameObject *m_pGameObject = nullptr;
 
     BOOL m_useGravity = TRUE;
-    BOOL m_isKinematic = TRUE;
     BOOL m_onGround = FALSE;
 
   private:
     void Cleanup();
 
   public:
-    void Initialize(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity = TRUE, BOOL isKinematic = FALSE);
+    void Initialize(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
+                    BOOL useGravity = TRUE);
 
     Vector3 GetVelocity() const override { return m_linearVelocity; }
     Bounds  GetBounds() const;
@@ -34,7 +34,7 @@ class RigidBody : public IRigidBody
     void ApplyImpulseLinear(const Vector3 &impulse) override;
     void ApplyImpulseAngular(const Vector3 &impulse) override;
 
-    BOOL IsStatic() { return m_invMass == 0.0f; }
+    BOOL IsFixed() const override { return (m_invMass == 0.0f); }
 
     void Update(float dt);
 
@@ -51,6 +51,8 @@ class RigidBody : public IRigidBody
 
     Matrix GetInverseInertiaTensorWorldSpace() const;
     Matrix GetInverseInertiaTensorLocalSpace() const;
+
+    ICollider *GetCollider() const { return m_pCollider; }
 
     RigidBody() = default;
     ~RigidBody();

@@ -136,7 +136,7 @@ static void RadixSort(vector<MortonPrimitive> *v)
 }
 
 BVHBuildNode *BVH::BuildRecursive(std::vector<BVHPrimitiveInfo> &primitiveInfo, int start, int end, int *totalNodes,
-                                  std::vector<IBoundedObject *> &orderedPrims)
+                                  std::vector<Primitive> &orderedPrims)
 {
     BVHBuildNode *node = new BVHBuildNode;
     (*totalNodes)++;
@@ -304,7 +304,7 @@ BVHBuildNode *BVH::BuildRecursive(std::vector<BVHPrimitiveInfo> &primitiveInfo, 
 }
 
 BVHBuildNode *BVH::BuildHLBVH(std::vector<BVHPrimitiveInfo> &primitiveInfo, int *totalNodes,
-                              std::vector<IBoundedObject *> &orderedPrims) const
+                              std::vector<Primitive> &orderedPrims) const
 {
     // Compute bounding box of all primitive centroids
     Bounds bounds;
@@ -371,7 +371,7 @@ BVHBuildNode *BVH::BuildHLBVH(std::vector<BVHPrimitiveInfo> &primitiveInfo, int 
 
 BVHBuildNode *BVH::emitLBVH(BVHBuildNode *&buildNodes, const std::vector<BVHPrimitiveInfo> &primitiveInfo,
                             MortonPrimitive *mortonPrims, int nPrimitives, int *totalNodes,
-                            std::vector<IBoundedObject *> &orderedPrims, std::atomic<int> *orderedPrimsOffset,
+                            std::vector<Primitive> &orderedPrims, std::atomic<int> *orderedPrimsOffset,
                             int bitIndex) const
 {
     if (bitIndex == -1 || nPrimitives < maxPrimitiveInNode)
@@ -534,13 +534,13 @@ int BVH::flattenBVHTree(BVHBuildNode *node, int *offset)
 
 Bounds BVH::GetBounds() const { return nodes ? nodes[0].bounds : Bounds(); }
 
-bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **ppHitted) const
+bool BVH::IntersectP(const Ray &ray, float *pOutHitt, void **ppHitted) const
 {
     if (!nodes)
         return false;
 
     float closestHit = FLT_MAX;
-    IBoundedObject *pHitted = nullptr;
+    void* pHitted = nullptr;
 
     int     nodesToVisit[64];
     int     toVisitOffset = 0, currentNodeIndex = 0;
@@ -554,10 +554,10 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **ppHitted)
             float tmin, tmax;
             for (int i = 0; i < node->nPrimitives; ++i)
             {
-                if (primitives[node->primitivesOffset + i]->IntersectRay(ray, &tmin, &tmax) && tmin < closestHit)
+                if (primitives[node->primitivesOffset + i].bounds.IntersectP(ray, &tmin, &tmax) && tmin < closestHit)
                 {
                     closestHit = tmin;
-                    pHitted = primitives[node->primitivesOffset + i];
+                    pHitted = primitives[node->primitivesOffset + i].pObj;
                 }
             }
             if (toVisitOffset == 0)
@@ -615,7 +615,7 @@ bool BVH::IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **ppHitted)
     return false;
 }
 
-bool BVH::Intersect(const Bounds &b) const
+bool BVH::Intersect(const Bounds &b, void **ppObj) const
 {
     if (!nodes)
         return false;
@@ -633,8 +633,9 @@ bool BVH::Intersect(const Bounds &b) const
             {
                 for (int i = 0; i < node->nPrimitives; ++i)
                 {
-                    if (primitives[node->primitivesOffset + i]->Intersect(b))
+                    if (primitives[node->primitivesOffset + i].bounds.DoesIntersect(b))
                     {
+                        *ppObj = primitives[node->primitivesOffset + i].pObj;
                         return true;
                     }
                 }
@@ -659,7 +660,7 @@ bool BVH::Intersect(const Bounds &b) const
     return false;
 }
 
-BOOL BVH::InsertObject(IBoundedObject *pObj)
+BOOL BVH::InsertObject(const Bounds &b, void *pObj)
 {
     if (primitives.size() > maxObjectCount)
     {
@@ -669,7 +670,7 @@ BOOL BVH::InsertObject(IBoundedObject *pObj)
         return FALSE;
     }
 
-    primitives.push_back(pObj);
+    primitives.push_back({b, pObj});
     return TRUE;
 }
 
@@ -682,12 +683,12 @@ void BVH::Build()
     primitiveInfo.reserve(primitives.size());
     for (size_t i = 0; i < primitives.size(); ++i)
     {
-        primitiveInfo.emplace_back(i, primitives[i]->GetBounds());
+        primitiveInfo.emplace_back(i, primitives[i].bounds);
     }
 
     // Build BVH tree for primitives
     int                           totalNodes = 0;
-    std::vector<IBoundedObject *> orderedPrims;
+    std::vector<Primitive> orderedPrims;
     orderedPrims.reserve(primitives.size());
     BVHBuildNode *root;
     if (splitMethod == SplitMethod::HLBVH)

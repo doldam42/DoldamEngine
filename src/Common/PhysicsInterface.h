@@ -48,6 +48,8 @@ interface IRigidBody
     virtual Vector3 GetVelocity() const = 0;
     virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
     virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
+
+    virtual BOOL IsFixed() const = 0;
 };
 
 interface IPhysicsManager
@@ -59,9 +61,13 @@ interface IPhysicsManager
     virtual ICollider *CreateConvexCollider(IGameObject * pObj, const Vector3 *points, const int numPoints) = 0;
 
     virtual IRigidBody *CreateRigidBody(IGameObject * pObj, ICollider * pCollider, float mass, float elasticity,
-                                        float friction, BOOL useGravity = TRUE, BOOL isKinematic = FALSE) = 0;
+                                        float friction, BOOL useGravity = TRUE) = 0;
     
+    virtual void BuildScene() = 0;
+
     virtual void BeginCollision(float dt) = 0;
     virtual BOOL CollisionTestAll(float dt) = 0;
     virtual void EndCollision() = 0;
+
+    virtual BOOL Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) = 0;
 };

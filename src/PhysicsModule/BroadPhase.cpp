@@ -1,9 +1,6 @@
 #include "pch.h"
 
-#include "GameObject.h"
-
 #include "BroadPhase.h"
-
 
 /*
 ====================================================
@@ -35,7 +32,11 @@ void BroadPhase::SortBodiesBounds(const RigidBody *const *bodies, const int num,
     for (int i = 0; i < num; i++)
     {
         const RigidBody *body = bodies[i];
-        Bounds           bounds = body->GetBounds();
+
+        if (body->IsFixed())
+            continue;
+
+        Bounds bounds = body->GetBounds();
 
         // Expand the bounds by the linear velocity
         bounds.Expand(bounds.mins + body->m_linearVelocity * dt_sec);
@@ -121,35 +122,35 @@ UINT BroadPhase::QueryCollisionPairs(CollisionPair *pCollisionPairs, UINT maxCol
 
     return numCollision;
 }
-
-UINT BroadPhase::QueryIntersectRay(const Ray &ray, int *bodyIDs, UINT maxCollision)
-{
-    const Vector3 p0 = ray.position;
-    const Vector3 p1 = p0 + ray.direction * ray.tmax;
-
-    float v0 = m_axisSAP.Dot(p0);
-    float v1 = m_axisSAP.Dot(p1);
-
-    if (v0 > v1)
-        std::swap(v0, v1);
-
-    UINT numCollision = 0;
-
-    PsuedoBody *pFirst = m_pPsudoBodies;
-    PsuedoBody *pLast = m_pPsudoBodies + m_bodyCount * 2;
-
-    pFirst = std::lower_bound(pFirst, pLast, v0, pred);
-    while (pFirst < pLast && numCollision < maxCollision)
-    {
-        if (!pFirst->isMin && v1 < pFirst->value)
-        {
-            bodyIDs[numCollision] = pFirst->id;
-            numCollision++;
-        }
-
-        pFirst++;
-    }
-    return numCollision;
-}
+//
+// UINT BroadPhase::QueryIntersectRay(const Ray &ray, int *bodyIDs, UINT maxCollision)
+//{
+//    const Vector3 p0 = ray.position;
+//    const Vector3 p1 = p0 + ray.direction * ray.tmax;
+//
+//    float v0 = m_axisSAP.Dot(p0);
+//    float v1 = m_axisSAP.Dot(p1);
+//
+//    if (v0 > v1)
+//        std::swap(v0, v1);
+//
+//    UINT numCollision = 0;
+//
+//    PsuedoBody *pFirst = m_pPsudoBodies;
+//    PsuedoBody *pLast = m_pPsudoBodies + m_bodyCount * 2;
+//
+//    pFirst = std::lower_bound(pFirst, pLast, v0, pred);
+//    while (pFirst < pLast && numCollision < maxCollision)
+//    {
+//        if (!pFirst->isMin && v1 < pFirst->value)
+//        {
+//            bodyIDs[numCollision] = pFirst->id;
+//            numCollision++;
+//        }
+//
+//        pFirst++;
+//    }
+//    return numCollision;
+//}
 
 void BroadPhase::Reset() { m_bodyCount = 0; }

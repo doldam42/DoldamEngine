@@ -1,4 +1,3 @@
-
 #pragma once
 
 // KDTree Declarations
@@ -7,16 +6,22 @@ struct BoundEdge;
 class KDTree
 {
   public:
+    struct Primitive
+    {
+        Bounds bounds;
+        void  *pObj;
+    };
+
     // KDTree Public Methods
     KDTree(int maxObjectCount, int isectCost = 80, int traversalCost = 1, float emptyBonus = 0.5, int maxPrims = 1,
            int maxDepth = -1);
     Bounds WorldBound() const { return bounds; }
     ~KDTree();
     // bool Intersect(const Ray& ray, SurfaceInteraction* isect) const;
-    bool IntersectP(const Ray &ray, float *pOutHitt, IBoundedObject **pHitted) const;
+    bool IntersectP(const Ray &ray, float *pOutHitt, void **pHitted) const;
     bool Intersect(const Bounds &b) const;
 
-    BOOL InsertObject(IBoundedObject *pObj);
+    BOOL InsertObject(const Bounds &b, void *pObj);
 
     void Build();
 
@@ -31,11 +36,11 @@ class KDTree
 
     int maxDepth;
 
-    std::vector<IBoundedObject *> primitives;
-    std::vector<int>              primitiveIndices;
-    KdAccelNode                  *nodes;
-    int                           nAllocedNodes, nextFreeNode;
-    Bounds                        bounds;
+    std::vector<KDTree::Primitive> primitives;
+    std::vector<int>       primitiveIndices;
+    KdAccelNode           *nodes;
+    int                    nAllocedNodes, nextFreeNode;
+    Bounds                 bounds;
 };
 
 struct KdToDo

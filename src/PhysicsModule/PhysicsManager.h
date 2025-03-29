@@ -2,10 +2,20 @@
 
 #include "Contact.h"
 #include "BroadPhase.h"
-#include "Maniford.h"
 
-class World;
-class RigidBody;
+struct CollisionData
+{
+    // Á¢ÃË ¹è¿­
+    Contact contacts[4];
+    // Á¢ÃË ¹è¿­¿¡ ÀÖ´Â Ã¸ÃË °³¼ö
+    UINT     contactsLeft;
+
+    float timeOfImpact;
+
+    IRigidBody *pA;
+    IRigidBody *pB;
+};
+
 class PhysicsManager : public IPhysicsManager
 {
   public:
@@ -13,43 +23,39 @@ class PhysicsManager : public IPhysicsManager
     static constexpr size_t MAX_BODY_COUNT = 1024;
     static constexpr size_t MAX_COLLISION_CANDIDATE_COUNT = MAX_BODY_COUNT * 3; 
   private:
-    Contact m_contacts[MAX_COLLISION_COUNT] = {};
-    UINT    m_contactCount = 0;
+    BVH *m_pTree = nullptr;
+
+    CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
+
+    CollisionData m_collisions[MAX_COLLISION_COUNT] = {};
+    UINT    m_collisionCount = 0;
 
     RigidBody *m_pBodies[MAX_BODY_COUNT] = {nullptr};
     UINT       m_bodyCount = 0;
 
-    CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
+    BroadPhase   *m_pBroadPhase = nullptr;
 
-    BroadPhase *m_pBroadPhase = nullptr;
+    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, CollisionData *pOutContact);
 
-    std::map<ManifordKey, Maniford> m_manifords;
-
-    BOOL ConservativeAdvance(RigidBody *pA, RigidBody *pB, float dt, Contact *pOutContact);
-
-    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact);
-    BOOL Intersect(RigidBody *pA, RigidBody *pB, Contact *pOutContact);
     void Cleanup();
-
-    void AddContact(const Contact &contact);
-    void RemoveExpired();
 
   public:
     BOOL Initialize();
 
     RigidBody *CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
-                               BOOL useGravity = TRUE, BOOL isKinematic = FALSE) override;
+                               BOOL useGravity = TRUE) override;
     void       DeleteRigidBody(RigidBody *pBody);
 
-    void BeginCollision(float dt);
-    void EndCollision(float dt);
+    void BeginCollision(float dt) override;
+    void EndCollision() override;
 
     void ApplyGravityImpulseAll(float dt);
 
-    BOOL CollisionTestAll(World* pWorld, const float dt);
-    void ResolveContactsAll(float dt);
+    BOOL CollisionTestAll(const float dt);
 
-    bool IntersectRay(const Ray &ray, RayHit *pOutHit);
+    BOOL Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) override;
+
+    void BuildScene() override;
 
     PhysicsManager() = default;
     ~PhysicsManager();

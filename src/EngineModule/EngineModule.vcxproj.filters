@@ -67,7 +67,9 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="NarrowPhase.cpp" />
+    <ClCompile Include="NarrowPhase.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -134,7 +136,9 @@
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="EventManager.h" />
-    <ClInclude Include="NarrowPhase.h" />
+    <ClInclude Include="NarrowPhase.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="pch">

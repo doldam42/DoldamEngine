@@ -23,10 +23,8 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="BroadPhase.h" />
-    <ClInclude Include="CapsuleCollider.h" />
     <ClInclude Include="Contact.h" />
     <ClInclude Include="GJK.h" />
-    <ClInclude Include="Maniford.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="BoxCollider.h">
       <Filter>Collider</Filter>
@@ -43,6 +41,9 @@
     <ClInclude Include="EllipseCollider.h">
       <Filter>Collider</Filter>
     </ClInclude>
+    <ClInclude Include="CapsuleCollider.h">
+      <Filter>Collider</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -52,10 +53,8 @@
       <Filter>pch</Filter>
     </ClCompile>
     <ClCompile Include="BroadPhase.cpp" />
-    <ClCompile Include="CapsuleCollider.cpp" />
     <ClCompile Include="Contact.cpp" />
     <ClCompile Include="GJK.cpp" />
-    <ClCompile Include="Maniford.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="BoxCollider.cpp">
       <Filter>Collider</Filter>
@@ -70,6 +69,9 @@
       <Filter>Collider</Filter>
     </ClCompile>
     <ClCompile Include="EllipseCollider.cpp">
+      <Filter>Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="CapsuleCollider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
   </ItemGroup>

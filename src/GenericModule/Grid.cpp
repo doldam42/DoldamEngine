@@ -24,19 +24,18 @@ BOOL Grid::Initialize(const Vector3 &center, const Vector3 &extents, float cellS
     m_numSliceX = numSlice.x;
     m_numSliceZ = numSlice.z;
 
-    m_pObjectSets = new std::set<IBoundedObject *>[m_numSliceX * m_numSliceZ];
-    m_pActiveSets = new std::set<IBoundedObject *>[m_numSliceX * m_numSliceZ];
+    m_pObjectSets = new std::set<void*>[m_numSliceX * m_numSliceZ];
+    m_pActiveSets = new std::set<void*>[m_numSliceX * m_numSliceZ];
 
     return TRUE;
 }
 
-BOOL Grid::Insert(IBoundedObject *pObj)
+BOOL Grid::Insert(const Bounds &b, void *pObj)
 {
-    const Bounds &b = pObj->GetBounds();
     const Vector3 center = b.Center();
     const UINT    idx = GetLocationIndex(center);
 
-    std::set<IBoundedObject *> pLoc = m_pObjectSets[idx];
+    std::set<void*> pLoc = m_pObjectSets[idx];
     if (pLoc.size() == 1)
     {
         m_pActiveSets[m_activeSetCount] = pLoc;
@@ -47,13 +46,12 @@ BOOL Grid::Insert(IBoundedObject *pObj)
     return TRUE;
 }
 
-BOOL Grid::Remove(IBoundedObject *pObj)
+BOOL Grid::Remove(const Bounds &b, void *pObj)
 {
-    const Bounds &b = pObj->GetBounds();
     const Vector3 center = b.Center();
     const UINT    idx = GetLocationIndex(center);
 
-    std::set<IBoundedObject *> pLoc = m_pObjectSets[idx];
+    std::set<void*> pLoc = m_pObjectSets[idx];
     if (pLoc.size() == 2)
     {
         for (int i = 0; i < m_activeSetCount; i++)
