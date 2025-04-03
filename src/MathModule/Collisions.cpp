@@ -343,10 +343,10 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
                     v2 + normal * sphereRadius, &t0) && t0 < tMax)
     {
 
-        *pOutContactPointA = hitPoint + n * sphereRadius;
-        *pOutContactPointB = p;
+        //*pOutContactPointA = hitPoint + n * sphereRadius;
+        //*pOutContactPointB = p;
 
-        *pOutToi = t0 * dt;
+        //*pOutToi = t0 * dt;
 
         return TRUE;
     }
@@ -428,7 +428,7 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
 BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius, Vector3 velocity, float dt,
                             Vector3 v0, Vector3 v1, Vector3 v2, Vector3 normal, Vector3 *pOutNormal, float *pOutToi)
 {
-    const float scale = minorRadius / majorRadius;
+    /*const float scale = minorRadius / majorRadius;
     const float invScale = 1.0f / scale;
 
     v0.y *= scale;
@@ -455,7 +455,7 @@ BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius
         *pOutToi = t0;
         n.y *= invScale;
         return TRUE;
-    }
+    }*/
 
     return FALSE;
 }

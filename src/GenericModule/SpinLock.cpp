@@ -2,15 +2,20 @@
 
 #include "SpinLock.h"
 
-void SpinLock::lock()
+void AcquireSpinLock(volatile LONG *pCount)
 {
-    while (InterlockedExchange(&lockValue, 1) == 1)
+    LONG oldCount;
+
+lb_try:
+    oldCount = InterlockedCompareExchange(pCount, 1, 0);
+    if (oldCount)
     {
-        while (lockValue == 1);
+        for (int i = 0; i < 1024; i++)
+        {
+            YieldProcessor();
+        }
+        goto lb_try;
     }
 }
 
-void SpinLock::unlock()
-{
-    InterlockedExchange(&lockValue, 0);
-}
+void ReleaseSpinLock(volatile LONG *pCount) { InterlockedDecrement(pCount); }

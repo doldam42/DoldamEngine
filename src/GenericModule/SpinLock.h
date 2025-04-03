@@ -2,12 +2,5 @@
 
 #include <Windows.h>
 
-class SpinLock
-{
-  private:
-    volatile ULONG lockValue = 0;
-
-  public:
-    void lock();
-    void unlock();
-};
+void AcquireSpinLock(volatile LONG *pCount);
+void ReleaseSpinLock(volatile LONG *pCount);

@@ -148,6 +148,7 @@
     <ClInclude Include="EllipseCollider.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GJK.h" />
+    <ClInclude Include="Intersect.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="RigidBody.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EllipseCollider.cpp" />
     <ClCompile Include="GJK.cpp" />
+    <ClCompile Include="Intersect.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -4,8 +4,8 @@
 
 struct Contact
 {
-    Vector3 contactPoint;
-    Vector3 contactNormal;
+    Vector3 position;
+    Vector3 normal;
     float   penetration;
 };
 

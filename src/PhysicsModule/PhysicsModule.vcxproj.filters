@@ -44,6 +44,7 @@
     <ClInclude Include="CapsuleCollider.h">
       <Filter>Collider</Filter>
     </ClInclude>
+    <ClInclude Include="Intersect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -74,5 +75,6 @@
     <ClCompile Include="CapsuleCollider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
+    <ClCompile Include="Intersect.cpp" />
   </ItemGroup>
 </Project>

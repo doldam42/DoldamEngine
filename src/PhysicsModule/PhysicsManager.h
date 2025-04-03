@@ -1,19 +1,16 @@
 #pragma once
 
 #include "Contact.h"
+#include "RigidBody.h"
 #include "BroadPhase.h"
 
 struct CollisionData
 {
-    // Á¢ÃË ¹è¿­
-    Contact contacts[4];
-    // Á¢ÃË ¹è¿­¿¡ ÀÖ´Â Ã¸ÃË °³¼ö
-    UINT     contactsLeft;
-
+    Contact contacts[3];
+    UINT     numContact;
+    RigidBody *pA;
+    RigidBody *pB;
     float timeOfImpact;
-
-    IRigidBody *pA;
-    IRigidBody *pB;
 };
 
 class PhysicsManager : public IPhysicsManager

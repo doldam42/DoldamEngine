@@ -1042,7 +1042,6 @@ float EPA_Expand(const RigidBody *bodyA, const RigidBody *bodyB, const float bia
         }
     }
 
-    // Get the projection of the origin on the closest triangle
     const int    idx = ClosestTriangle(triangles, points);
     const tri_t &tri = triangles[idx];
     Vector3         ptA_w = points[tri.a].xyz;
