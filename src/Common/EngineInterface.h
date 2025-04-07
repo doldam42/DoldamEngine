@@ -256,7 +256,7 @@ interface IGameManager : public IUnknown
     virtual float DeltaTime() const = 0;
 
     virtual BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit,
-                         float maxDistance = FLT_MAX) = 0;
+                         float maxDistance = 1000.0f) = 0;
 
     virtual IRenderer *GetRenderer() const = 0;
 };

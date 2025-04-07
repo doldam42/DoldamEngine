@@ -40,3 +40,5 @@ void CharacterBody::Move(const Vector3 &dir) {
 void CharacterBody::Jump() { m_pCharacter->jump(); }
 
 BOOL CharacterBody::OnGround() { return m_pCharacter->onGround(); }
+
+BOOL CharacterBody::CanJump() { return m_pCharacter->canJump(); }

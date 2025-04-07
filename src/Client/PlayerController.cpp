@@ -14,11 +14,12 @@ BOOL PlayerController::Start()
     IGameManager     *pGame = g_pClient->GetGameManager();
     CameraController *pCam = g_pClient->GetCameraController();
 
+    const Vector3 pos(0.0f, 2.0f, -5.0f);
     m_pPlayer = pGame->CreateGameObject();
-    m_pPlayer->SetPosition(0.0f, 2.f, 0.0f);
+    m_pPlayer->SetPosition(pos.x, pos.y, pos.z);
 
-    m_pPlayerBody = g_pClient->GetPhysics()->CreateCharacterBody(Vector3(0.0f, 2.0f, 0.0f), 0.5f, 2.0f);
-    m_pPlayerBody->SetJumpSpeed(20.0f);
+    m_pPlayerBody = g_pClient->GetPhysics()->CreateCharacterBody(pos, 0.5f, 2.0f);
+    m_pPlayerBody->SetJumpSpeed(jumpSpeed);
 
     pCam->SetFollowTarget(m_pPlayer, Vector3(0.0f, 2.0f, -3.0f));
 
@@ -58,10 +59,11 @@ void PlayerController::Update(float dt)
     }
 
     BOOL isGround = m_pPlayerBody->OnGround();
+    BOOL canJump = m_pPlayerBody->CanJump();
 
     speed = (pI->IsKeyPressed(VK_SHIFT)) ? SPEED * 2.0f : SPEED;
 
-    if (isGround && pI->IsKeyPressed(VK_SPACE, false))
+    if (canJump && pI->IsKeyPressed(VK_SPACE, false))
     {
         m_pPlayerBody->Jump();
     }

@@ -22,7 +22,8 @@ interface ICharacterBody
 
     virtual void Move(const Vector3& dir) = 0;
     virtual void Jump() = 0;
-    virtual BOOL OnGround() = 0; 
+    virtual BOOL OnGround() = 0;
+    virtual BOOL CanJump() = 0;
 };
 
 interface IPhysicsManager : public IUnknown
@@ -49,5 +50,5 @@ interface IPhysicsManager : public IUnknown
     virtual BOOL CollisionTestAll(float dt) = 0;
     virtual void EndCollision() = 0;
 
-    virtual BOOL Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) = 0;
+    virtual BOOL Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted) = 0;
 };

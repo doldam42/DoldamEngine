@@ -65,7 +65,7 @@ BOOL PhysicsDemoController::Start()
                     Vector3((float)xx * scaleHeight, deltaHeight + (float)z * scaleHeight, (float) yy * scaleHeight);
                 pBox->SetPosition(pos.x, pos.y, pos.z);
                 pBox->SetMaterials(&pSphereMaterial, 1);
-                pBox->InitBoxCollider(Vector3::Zero, Vector3(1.0f));
+                pBox->InitBoxCollider(Vector3::Zero, Vector3::One);
                 pBox->InitRigidBody(1.0f, 0.0f, 0.5f);
             }
         }

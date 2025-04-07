@@ -21,4 +21,6 @@ class CharacterBody : public ICharacterBody
     void Move(const Vector3 &dir) override;
     void Jump() override;
     BOOL OnGround() override;
+
+    BOOL CanJump() override;
 };

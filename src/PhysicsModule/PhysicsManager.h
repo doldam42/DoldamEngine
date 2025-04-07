@@ -28,7 +28,6 @@ class PhysicsManager : public IPhysicsManager
     ICharacterBody *CreateCharacterBody(const Vector3 &startPosition, const float radius,
                                         const float height) override;
 
-    
     void DeleteCollider(ICollider *pDel);
     void DeleteRigidBody(IRigidBody *pDel);
 
@@ -36,7 +35,7 @@ class PhysicsManager : public IPhysicsManager
     void        BeginCollision(float dt) override;
     BOOL        CollisionTestAll(float dt) override;
     void        EndCollision() override;
-    BOOL        Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) override;
+    BOOL        Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted) override;
 
     // Inherited via IPhysicsManager
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

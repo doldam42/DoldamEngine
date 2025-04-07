@@ -161,7 +161,7 @@ class GameManager : public IGameManager
     IRenderer      *GetRenderer() const { return m_pRenderer; }
     IPhysicsManager *GetPhysicsManager() const { return m_pPhysicsManager; }
 
-    BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = FLT_MAX) override;
+    BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = 1000.f) override;
 
     GameManager() = default;
     ~GameManager();

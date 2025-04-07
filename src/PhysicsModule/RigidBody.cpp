@@ -25,6 +25,9 @@ BOOL RigidBody::Initialize(IGameObject *pObj, ICollider *pCollider, float mass, 
     m_pBody->setFriction(friction);
     m_pBody->setDamping(1.0f - elasticity, 1.0f - elasticity);
     m_pBody->setUserPointer(this);
+
+    m_position = pos;
+    m_rotation = pObj->GetRotation();
     return TRUE;
 }
 

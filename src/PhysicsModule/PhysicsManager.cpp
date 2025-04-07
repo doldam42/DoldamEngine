@@ -171,7 +171,7 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
 
 void PhysicsManager::EndCollision() {}
 
-BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject *pHitted)
+BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted)
 {
     Vector3 from = ray.position;
     Vector3 to = from + ray.direction * ray.tmax;
@@ -179,9 +179,9 @@ BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject *pHitted)
     btVector3 btTo(to.x, to.y, to.z);
 
     btCollisionWorld::ClosestRayResultCallback cb(btFrom, btTo);
-    cb.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
+    /*cb.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
     cb.m_collisionFilterMask = btBroadphaseProxy::AllFilter;
-    cb.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
+    cb.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;*/
 
     m_pDynamicWorld->rayTest(btFrom, btTo, cb);
     if (cb.hasHit())
@@ -190,7 +190,7 @@ BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject *pHitted)
         RigidBody         *pMyBody = (RigidBody *)pBody->getUserPointer();
 
         *tHit = ray.tmax * cb.m_closestHitFraction;
-        pHitted = pMyBody->GetObj();
+        *ppHitted = pMyBody->GetObj();
 
         return TRUE;
     }

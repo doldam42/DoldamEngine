@@ -655,7 +655,7 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.direction = rayDir;
     ray.tmax = maxDistance;
 
-    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, pOutHit->pHitted))
+    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, &pOutHit->pHitted))
     {
         return TRUE;
     }
