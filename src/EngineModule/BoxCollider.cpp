@@ -33,12 +33,12 @@ void BoxCollider::InitTensor()
     m_inertiaTensor = tensor;
 }
 
-BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents)
+BOOL BoxCollider::Initialize(GameObject *pObj, const Vector3 center, const Vector3 halfExtents)
 {
     m_pGameObject = pObj;
 
-    m_bounds.mins = center - extents;
-    m_bounds.maxs = center + extents;
+    m_bounds.mins = center - halfExtents;
+    m_bounds.maxs = center + halfExtents;
 
     InitTensor();
 

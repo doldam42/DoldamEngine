@@ -8,9 +8,7 @@
 #include "GeometryGenerator.h"
 #include "MeshObject.h"
 #include "Model.h"
-#include "PhysicsManager.h"
 #include "Sprite.h"
-#include "World.h"
 
 #include "GameManager.h"
 
@@ -110,7 +108,7 @@ void GameManager::Cleanup()
 
     if (m_pPhysicsManager)
     {
-        delete m_pPhysicsManager;
+        m_pPhysicsManager->Release();
         m_pPhysicsManager = nullptr;
     }
 
@@ -126,7 +124,8 @@ void GameManager::Cleanup()
     }
 }
 
-BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT viewportWidth, UINT viewportHeight)
+BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, IPhysicsManager *pPhysics, bool useGUIEditor,
+                             UINT viewportWidth, UINT viewportHeight)
 {
     BOOL result = FALSE;
 
@@ -148,8 +147,7 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT
 
     m_renderThreadCount = m_pRenderer->GetRenderThreadCount();
 
-    m_pPhysicsManager = new PhysicsManager;
-    m_pPhysicsManager->Initialize();
+    m_pPhysicsManager = pPhysics;
 
     m_pMainCamera = new Camera;
     if (useGUIEditor)
@@ -179,8 +177,8 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor, UINT
 
     // m_pInputManager->AddKeyListener(VK_F1, [this](void *) { this->m_isWired = !this->m_isWired; });
 
-    m_pWorld = new World;
-    m_pWorld->Initialize();
+    /*m_pWorld = new World;
+    m_pWorld->Initialize();*/
 
     m_TextImageWidth = width * 0.4;
     m_TextImageHeight = height * 0.2;
@@ -248,10 +246,11 @@ void GameManager::Update(float dt)
     m_deltaTime = dt;
     PreUpdate(dt);
 
+    // Update Physics
+    UpdatePhysics(dt);
+
     // Update Controller
     m_pControllerManager->Update(dt);
-
-    UpdatePhysics(dt);
 
     // Update Game Objects
     SORT_LINK *pCur = m_pGameObjLinkHead;
@@ -293,7 +292,7 @@ void GameManager::Update(float dt)
 
 void GameManager::BuildScene()
 {
-    m_pWorld->BeginCreateWorld(MAX_WORLD_OBJECT_COUNT);
+    /*m_pWorld->BeginCreateWorld(MAX_WORLD_OBJECT_COUNT);
 
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
@@ -303,7 +302,7 @@ void GameManager::BuildScene()
         pCur = pCur->pNext;
     }
 
-    m_pWorld->EndCreateWorld();
+    m_pWorld->EndCreateWorld();*/
 }
 
 void GameManager::PreUpdate(float dt)
@@ -315,13 +314,14 @@ void GameManager::UpdatePhysics(float dt)
 {
     m_pPhysicsManager->BeginCollision(dt);
 
-    m_pPhysicsManager->ApplyGravityImpulseAll(dt);
+    //m_pPhysicsManager->ApplyGravityImpulseAll(dt);
 
-    m_pPhysicsManager->CollisionTestAll(m_pWorld, dt);
+    m_pPhysicsManager->CollisionTestAll(dt);
 
-    m_pPhysicsManager->ResolveContactsAll(dt);
+    //m_pPhysicsManager->ResolveContactsAll(dt);
 
-    m_pPhysicsManager->EndCollision(dt);
+    //m_pPhysicsManager->EndCollision(dt);
+    m_pPhysicsManager->EndCollision();
 }
 
 void GameManager::LateUpdate(float dt) {}
@@ -655,8 +655,11 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.direction = rayDir;
     ray.tmax = maxDistance;
 
-    return m_pWorld->Intersect(ray, pOutHit);
-    //return m_pPhysicsManager->IntersectRay(ray, pOutHit);
+    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, pOutHit->pHitted))
+    {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 GameManager::~GameManager()

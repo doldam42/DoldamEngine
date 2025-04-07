@@ -9,6 +9,7 @@
 #include <combaseapi.h>
 
 #include "../Common/RendererInterface.h"
+#include "../Common/PhysicsInterface.h"
 #include "../GenericModule/GenericHeaders.h"
 #include "../MathModule/MathHeaders.h"
 
@@ -86,6 +87,7 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_ELLIPSE,
     COLLIDER_TYPE_CONVEX,
 };
+
 interface ICollider
 {
     virtual COLLIDER_TYPE GetType() const = 0;
@@ -110,10 +112,11 @@ interface ICollider
 
 interface IRigidBody
 {
+    virtual void Update(IGameObject * pObj) = 0;
     virtual Vector3 GetVelocity() const = 0;
     virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
     virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
-    virtual BOOL    IsStatic() = 0;
+    virtual BOOL    IsDynamic() = 0;
 };
 
 interface IGameObject
@@ -200,7 +203,7 @@ interface IGameSprite
 
 interface IGameManager : public IUnknown
 {
-    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, bool useGUIEditor = false, UINT viewportWidth = 0,
+    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, IPhysicsManager* pPhysics, bool useGUIEditor = false, UINT viewportWidth = 0,
                             UINT viewportHeight = 0) = 0;
 
     virtual void Start() = 0;

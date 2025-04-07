@@ -30,15 +30,18 @@ BOOL Client::LoadModules(HWND hWnd)
     const WCHAR *rendererFileName = nullptr;
     const WCHAR *engineFileName = nullptr;
     const WCHAR *exporterFileName = nullptr;
+    const WCHAR *physicsFileName = nullptr;
 #ifdef _DEBUG
     // rendererFileName = L"../../DLL/RendererD3D12_x64_debug.dll";
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Debug.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Debug.dll";
     exporterFileName = L"../../DLL/ModelExporter_x64_Debug.dll";
+    physicsFileName = L"../../DLL/PhysicsModule_x64_Debug.dll";
 #else
     rendererFileName = L"../../DLL/RendererRaytracing_x64_Release.dll";
     engineFileName = L"../../DLL/EngineModule_x64_Release.dll";
     exporterFileName = L"../../DLL/ModelExporter_x64_Release.dll";
+    physicsFileName = L"../../DLL/PhysicsModule_x64_Release.dll";
 #endif
 
     WCHAR wchErrTxt[128] = {};
@@ -54,6 +57,17 @@ BOOL Client::LoadModules(HWND hWnd)
     }
     pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hRendererDLL, "DllCreateInstance");
     pCreateFunc(&m_pRenderer);
+
+    m_hPhysicsDLL = LoadLibrary(physicsFileName);
+    if (!m_hPhysicsDLL)
+    {
+        dwErrCode = GetLastError();
+        swprintf_s(wchErrTxt, L"Fail to LoadLibrary(%s) - Error Code: %u", physicsFileName, dwErrCode);
+        MessageBox(hWnd, wchErrTxt, L"Error", MB_OK);
+        __debugbreak();
+    }
+    pCreateFunc = (CREATE_INSTANCE_FUNC)GetProcAddress(m_hPhysicsDLL, "DllCreateInstance");
+    pCreateFunc(&m_pPhysics);
 
     m_hEngineDLL = LoadLibrary(engineFileName);
     if (!m_hEngineDLL)
@@ -81,7 +95,8 @@ BOOL Client::LoadModules(HWND hWnd)
     pCreateFunc(&m_pFbxExporter);
 
     result = m_pRenderer->Initialize(hWnd, TRUE, FALSE);
-    result = m_pGame->Initialize(hWnd, m_pRenderer);
+    result = m_pPhysics->Initialize();
+    result = m_pGame->Initialize(hWnd, m_pRenderer, m_pPhysics);
     result = m_pAssimpExporter->Initialize(m_pGame);
     result = m_pFbxExporter->Initialize(m_pGame);
 

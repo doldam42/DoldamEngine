@@ -17,5 +17,6 @@
 #include "../MathModule/MathHeaders.h"
 #include "../GenericModule/GenericHeaders.h"
 #include "../Common/RendererInterface.h"
+#include "../Common/PhysicsInterface.h"
 #include "../Common/EngineInterface.h"
 #include "../Common/ModelExporterInterface.h"

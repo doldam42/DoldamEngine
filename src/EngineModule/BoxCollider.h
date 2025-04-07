@@ -16,7 +16,7 @@ class BoxCollider : public ICollider
     void InitTensor();
 
   public:
-    BOOL Initialize(GameObject *pObj, const Vector3 center, const Vector3 extents);
+    BOOL Initialize(GameObject *pObj, const Vector3 center, const Vector3 halfExtents);
 
     void Update() override;
 

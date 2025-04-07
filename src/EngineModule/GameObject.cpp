@@ -3,12 +3,6 @@
 #include "GameManager.h"
 #include "Model.h"
 
-#include "BoxCollider.h"
-#include "SphereCollider.h"
-#include "ConvexCollider.h"
-
-#include "RigidBody.h"
-#include "PhysicsManager.h"
 #include "GameObject.h"
 
 size_t GameObject::g_id = 0;
@@ -32,6 +26,7 @@ void GameObject::Cleanup()
     CleanupMaterials();
     if (m_pRigidBody)
     {
+        // TODO!
         m_pGame->GetPhysicsManager()->DeleteRigidBody(m_pRigidBody);
         m_pRigidBody = nullptr;
     }
@@ -50,8 +45,7 @@ void GameObject::Initialize(GameManager *pGameEngine)
 
 BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
 {
-    BoxCollider *pBox = new BoxCollider;
-    pBox->Initialize(this, center, extent);
+    ICollider *pBox = m_pGame->GetPhysicsManager()->CreateBoxCollider(extent);
     m_pCollider = pBox;
 
     return TRUE;
@@ -59,8 +53,7 @@ BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
 
 BOOL GameObject::InitSphereCollider(const Vector3 &center, const float radius)
 {
-    SphereCollider *pSphere = new SphereCollider;
-    pSphere->Initialize(this, center, radius);
+    ICollider      *pSphere = m_pGame->GetPhysicsManager()->CreateSphereCollider(radius);
     m_pCollider = pSphere;
 
     return TRUE;
@@ -68,43 +61,44 @@ BOOL GameObject::InitSphereCollider(const Vector3 &center, const float radius)
 
 BOOL GameObject::InitConvexCollider()
 { 
-    if (!m_pModel)
-        return FALSE;
+    //if (!m_pModel)
+    //    return FALSE;
 
-    // TODO: Reserve Points
-    std::vector<Vector3> points; 
-    UINT numObj = m_pModel->GetObjectCount();
-    for (UINT i = 0; i < numObj; i++)
-    {
-        MeshObject* pObj = m_pModel->GetObjectByIdx(i);
-        
-        UINT numVertice = pObj->GetVertexCount();
-        
-        if (pObj->IsSkinned())
-        {
-            SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
-            for (int j = 0; j < numVertice; j++)
-            {
-                points.push_back(pVertice[j].position);
-            }
-        }
-        else
-        {
-            BasicVertex *pVertice = pObj->GetBasicVertices();
-            for (int j = 0; j < numVertice; j++)
-            {
-                points.push_back(pVertice[j].position);
-            }
-        }
-    }
+    //// TODO: Reserve Points
+    //std::vector<Vector3> points; 
+    //UINT numObj = m_pModel->GetObjectCount();
+    //for (UINT i = 0; i < numObj; i++)
+    //{
+    //    MeshObject* pObj = m_pModel->GetObjectByIdx(i);
+    //    
+    //    UINT numVertice = pObj->GetVertexCount();
+    //    
+    //    if (pObj->IsSkinned())
+    //    {
+    //        SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
+    //        for (int j = 0; j < numVertice; j++)
+    //        {
+    //            points.push_back(pVertice[j].position);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        BasicVertex *pVertice = pObj->GetBasicVertices();
+    //        for (int j = 0; j < numVertice; j++)
+    //        {
+    //            points.push_back(pVertice[j].position);
+    //        }
+    //    }
+    //}
 
-    ConvexCollider *pConvex = new ConvexCollider;
+    //ConvexCollider *pConvex = new ConvexCollider;
 
-    m_pCollider = pConvex;
+    //m_pCollider = pConvex;
 
-    pConvex->Initialize(this, points.data(), points.size());
+    //pConvex->Initialize(this, points.data(), points.size());
 
-    return TRUE;
+    //return TRUE;
+    return FALSE;
 }
 
 BOOL GameObject::InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity,
@@ -113,13 +107,18 @@ BOOL GameObject::InitRigidBody(float mass, float elasticity, float friction, BOO
     if (!m_pCollider)
         return FALSE;
 
-    PhysicsManager *pPhysics = m_pGame->GetPhysicsManager();
-    m_pRigidBody = pPhysics->CreateRigidBody(this, m_pCollider, mass, elasticity, friction, useGravity, isKinematic);
+    IPhysicsManager *pPhysics = m_pGame->GetPhysicsManager();
+    m_pRigidBody = pPhysics->CreateRigidBody(this, m_pCollider, mass, elasticity, friction, useGravity);
     return TRUE;
 }
 
 void GameObject::Update(float dt)
 {
+    if (m_pRigidBody)
+    {
+        m_pRigidBody->Update(this);
+    }
+
     if (m_IsUpdated)
     {
         m_worldMatrix = m_transform.GetMatrix();

@@ -15,6 +15,16 @@
 #include <unordered_map>
 #include <map>
 
+#include "btBulletDynamicsCommon.h"
+#include "btBulletCollisionCommon.h"
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
+#include "BulletDynamics/Character/btKinematicCharacterController.h"
+#include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
 
+#include "../Common/typedef.h"
+#include "../MathModule/MathHeaders.h"
+#include "../GenericModule/GenericHeaders.h"
+#include "../Common/EngineInterface.h"
 #include "../Common/PhysicsInterface.h"
+
 #endif //PCH_H

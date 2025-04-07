@@ -7,44 +7,28 @@
     <Filter Include="pch">
       <UniqueIdentifier>{0eb2153c-4d8a-4d7f-9f78-0ff522b2b834}</UniqueIdentifier>
     </Filter>
-    <Filter Include="RigidBody">
-      <UniqueIdentifier>{4ac9dd21-df42-49a6-a1c3-2f1ee360a10c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Collider">
-      <UniqueIdentifier>{ae33bead-2546-4fc9-9031-b1780dba34b6}</UniqueIdentifier>
+      <UniqueIdentifier>{96175304-faf8-496c-9028-8c5bb3fb1155}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RigidBody">
+      <UniqueIdentifier>{d6953789-af3e-48bc-819b-88c73067fba1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Common\PhysicsInterface.h" />
     <ClInclude Include="framework.h">
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="BroadPhase.h" />
-    <ClInclude Include="Contact.h" />
-    <ClInclude Include="GJK.h" />
     <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="BoxCollider.h">
-      <Filter>Collider</Filter>
-    </ClInclude>
-    <ClInclude Include="ConvexCollider.h">
-      <Filter>Collider</Filter>
-    </ClInclude>
     <ClInclude Include="RigidBody.h">
       <Filter>RigidBody</Filter>
     </ClInclude>
-    <ClInclude Include="SphereCollider.h">
+    <ClInclude Include="Collider.h">
       <Filter>Collider</Filter>
     </ClInclude>
-    <ClInclude Include="EllipseCollider.h">
-      <Filter>Collider</Filter>
-    </ClInclude>
-    <ClInclude Include="CapsuleCollider.h">
-      <Filter>Collider</Filter>
-    </ClInclude>
-    <ClInclude Include="Intersect.h" />
+    <ClInclude Include="CharacterBody.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -53,28 +37,13 @@
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
-    <ClCompile Include="BroadPhase.cpp" />
-    <ClCompile Include="Contact.cpp" />
-    <ClCompile Include="GJK.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
-    <ClCompile Include="BoxCollider.cpp">
-      <Filter>Collider</Filter>
-    </ClCompile>
-    <ClCompile Include="ConvexCollider.cpp">
-      <Filter>Collider</Filter>
-    </ClCompile>
     <ClCompile Include="RigidBody.cpp">
       <Filter>RigidBody</Filter>
     </ClCompile>
-    <ClCompile Include="SphereCollider.cpp">
+    <ClCompile Include="Collider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
-    <ClCompile Include="EllipseCollider.cpp">
-      <Filter>Collider</Filter>
-    </ClCompile>
-    <ClCompile Include="CapsuleCollider.cpp">
-      <Filter>Collider</Filter>
-    </ClCompile>
-    <ClCompile Include="Intersect.cpp" />
+    <ClCompile Include="CharacterBody.cpp" />
   </ItemGroup>
 </Project>

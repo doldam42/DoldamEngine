@@ -1,6 +1,6 @@
 #pragma once
 #include "MathHeaders.h"
-#include "RigidBody.h"
+
 class IRenderer;
 class GameManager;
 class Model;
@@ -20,7 +20,7 @@ class GameObject : public IGameObject
     IRenderMaterial **m_ppMaterials = nullptr;
 
     ICollider *m_pCollider = nullptr;
-    RigidBody *m_pRigidBody = nullptr;
+    IRigidBody *m_pRigidBody = nullptr;
 
   public:
     SORT_LINK m_LinkInGame;

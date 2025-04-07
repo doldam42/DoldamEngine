@@ -26,6 +26,8 @@ class RigidBody : public IRigidBody
   public:
     void Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity = TRUE, BOOL isKinematic = FALSE);
 
+    void Update(IGameObject *pObj) override;
+
     Vector3 GetVelocity() const override { return m_linearVelocity; }
     Bounds  GetBounds() const;
 
@@ -35,7 +37,7 @@ class RigidBody : public IRigidBody
     void ApplyImpulseLinear(const Vector3 &impulse) override;
     void ApplyImpulseAngular(const Vector3 &impulse) override;
 
-    BOOL IsStatic() { return m_invMass == 0.0f; }
+    BOOL IsDynamic() override { return m_invMass > 0.0f; }
 
     void Update(float dt);
 

@@ -1,59 +1,50 @@
 #pragma once
 
-#include "Contact.h"
-#include "RigidBody.h"
-#include "BroadPhase.h"
-
-struct CollisionData
-{
-    Contact contacts[3];
-    UINT     numContact;
-    RigidBody *pA;
-    RigidBody *pB;
-    float timeOfImpact;
-};
-
 class PhysicsManager : public IPhysicsManager
 {
-  public:
-    static constexpr size_t MAX_COLLISION_COUNT = 256;
-    static constexpr size_t MAX_BODY_COUNT = 1024;
-    static constexpr size_t MAX_COLLISION_CANDIDATE_COUNT = MAX_BODY_COUNT * 3; 
+    const static UINT MAX_BODY_COUNT = 1024;
+
   private:
-    BVH *m_pTree = nullptr;
+    ULONG m_refCount = 1;
 
-    CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
-
-    CollisionData m_collisions[MAX_COLLISION_COUNT] = {};
-    UINT    m_collisionCount = 0;
-
-    RigidBody *m_pBodies[MAX_BODY_COUNT] = {nullptr};
-    UINT       m_bodyCount = 0;
-
-    BroadPhase   *m_pBroadPhase = nullptr;
-
-    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, CollisionData *pOutContact);
+    btDefaultCollisionConfiguration     *m_pCollisionConfiguration = nullptr;
+    btCollisionDispatcher               *m_pDispatcher = nullptr;
+    btBroadphaseInterface               *m_pOverlappingPairCache = nullptr;
+    btSequentialImpulseConstraintSolver *m_pSolver = nullptr;
+    btDiscreteDynamicsWorld             *m_pDynamicWorld = nullptr;
+    btAlignedObjectArray<btCollisionShape *> m_collisionShapes;
 
     void Cleanup();
 
   public:
-    BOOL Initialize();
+    BOOL Initialize() override;
 
-    RigidBody *CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
-                               BOOL useGravity = TRUE) override;
-    void       DeleteRigidBody(RigidBody *pBody);
+    // Inherited via IPhysicsManager
+    ICollider  *CreateSphereCollider(const float radius) override;
+    ICollider  *CreateBoxCollider(const Vector3 &halfExtents) override;
+    ICollider  *CreateCapsuleCollider(const float radius, const float height) override;
+    IRigidBody *CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
+                                BOOL useGravity) override;
+    ICharacterBody *CreateCharacterBody(const Vector3 &startPosition, const float radius,
+                                        const float height) override;
 
-    void BeginCollision(float dt) override;
-    void EndCollision() override;
+    
+    void DeleteCollider(ICollider *pDel);
+    void DeleteRigidBody(IRigidBody *pDel);
 
-    void ApplyGravityImpulseAll(float dt);
+    void        BuildScene() override;
+    void        BeginCollision(float dt) override;
+    BOOL        CollisionTestAll(float dt) override;
+    void        EndCollision() override;
+    BOOL        Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) override;
 
-    BOOL CollisionTestAll(const float dt);
-
-    BOOL Raycast(const Ray &ray, float *tHit, IGameObject *pHitted) override;
-
-    void BuildScene() override;
+    // Inherited via IPhysicsManager
+    HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
+    ULONG __stdcall AddRef(void) override;
+    ULONG __stdcall Release(void) override;
 
     PhysicsManager() = default;
     ~PhysicsManager();
 };
+
+extern PhysicsManager *g_pPhysics;

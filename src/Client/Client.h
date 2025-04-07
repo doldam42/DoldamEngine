@@ -9,11 +9,14 @@ class Client
     HMODULE m_hRendererDLL = nullptr;
     HMODULE m_hEngineDLL = nullptr;
     HMODULE m_hModelExporterDLL = nullptr;
+    HMODULE m_hPhysicsDLL = nullptr;
 
     HWND          m_hWnd = nullptr;
     IGameManager *m_pGame = nullptr;
 
     IRenderer      *m_pRenderer = nullptr;
+    IPhysicsManager *m_pPhysics = nullptr;
+
     IGameCharacter *m_pCharacter = nullptr;
     IGameObject    *m_pSphere = nullptr;
 
@@ -74,6 +77,9 @@ class Client
     BOOL OnUpdateWindowSize(UINT width, UINT height);
 
     IGameManager *GetGameManager() { return m_pGame; }
+
+    IPhysicsManager *GetPhysics() { return m_pPhysics; }
+
     AudioManager *GetAudioManager() { return m_pAudioManager; }
 
     IModelExporter *GetFBXModelExporter() { return m_pFbxExporter; }

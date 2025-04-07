@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Common/EngineInterface.h"
-
 #include "GameUtils.h"
 
 class AnimationClip;
@@ -29,7 +28,7 @@ class GameManager : public IGameManager
     ULONG m_refCount = 1;
     float m_deltaTime = 0.0f;
 
-    PhysicsManager *m_pPhysicsManager = nullptr;
+    IPhysicsManager *m_pPhysicsManager = nullptr;
     Camera         *m_pMainCamera = nullptr;
     IRenderer      *m_pRenderer = nullptr;
 
@@ -90,7 +89,7 @@ class GameManager : public IGameManager
 
   public:
     // Derived from IRenderer
-    BOOL Initialize(HWND hWnd, IRenderer *pRnd, bool useGUIEditor = false, UINT viewportWidth = 0,
+    BOOL Initialize(HWND hWnd, IRenderer *pRnd, IPhysicsManager* pPhysics, bool useGUIEditor = false, UINT viewportWidth = 0,
                     UINT viewportHeight = 0) override;
 
     BOOL OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth = 0, UINT viewportHeight = 0) override;
@@ -160,7 +159,7 @@ class GameManager : public IGameManager
     void SetCameraEyeAtUp(Vector3 eye, Vector3 at, Vector3 up) override { m_pMainCamera->SetEyeAtUp(eye, at, up); }
 
     IRenderer      *GetRenderer() const { return m_pRenderer; }
-    PhysicsManager *GetPhysicsManager() const { return m_pPhysicsManager; }
+    IPhysicsManager *GetPhysicsManager() const { return m_pPhysicsManager; }
 
     BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = FLT_MAX) override;
 

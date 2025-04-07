@@ -23,6 +23,11 @@ void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, f
     m_isKinematic = isKinematic;
 }
 
+void RigidBody::Update(IGameObject *pObj)
+{
+    
+}
+
 void RigidBody::ApplyGravityImpulse(const float dt)
 {
     if (!m_useGravity || m_invMass == 0 || m_onGround)
