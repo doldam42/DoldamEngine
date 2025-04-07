@@ -118,16 +118,16 @@ void PhysicsDemoController::Update(float dt)
 
         pSphere1->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 15.0f));
 
-        pSphereModel->AddRef();
-        IGameObject *pSphere2 = pGame->CreateGameObject();
-        pSphere2->SetModel(pSphereModel);
-        pSphere2->SetPosition(0.0f, 10.0f, 25.0f);
-        pSphere2->SetScale(2.0f);
-        pSphere2->SetMaterials(&m_pMaterial, 1);
-        pSphere2->InitSphereCollider(Vector3::Zero, 2.0f);
-        pSphere2->InitRigidBody(1.0f, 1.0f, 0.5f);
+        //pSphereModel->AddRef();
+        //IGameObject *pSphere2 = pGame->CreateGameObject();
+        //pSphere2->SetModel(pSphereModel);
+        //pSphere2->SetPosition(0.0f, 10.0f, 25.0f);
+        //pSphere2->SetScale(2.0f);
+        //pSphere2->SetMaterials(&m_pMaterial, 1);
+        //pSphere2->InitSphereCollider(Vector3::Zero, 2.0f);
+        //pSphere2->InitRigidBody(1.0f, 1.0f, 0.5f);
 
-        pSphere2->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, -15.0f));
+        //pSphere2->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, -15.0f));
 
         cycle = 0.0f;
     }

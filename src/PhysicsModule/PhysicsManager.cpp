@@ -1,14 +1,14 @@
 #include "pch.h"
 
+#include "CharacterBody.h"
 #include "Collider.h"
 #include "RigidBody.h"
-#include "CharacterBody.h"
 
 #include "PhysicsManager.h"
 
 PhysicsManager *g_pPhysics = nullptr;
 
-void PhysicsManager::Cleanup() 
+void PhysicsManager::Cleanup()
 {
     int i;
     // remove the rigidbodies from the dynamics world and delete them
@@ -75,7 +75,7 @@ BOOL PhysicsManager::Initialize()
 
 ICollider *PhysicsManager::CreateSphereCollider(const float radius)
 {
-    Collider       *pNew = Collider::CreateSphereCollider(radius);
+    Collider *pNew = Collider::CreateSphereCollider(radius);
     m_collisionShapes.push_back(pNew->Get());
     return pNew;
 }
@@ -113,8 +113,8 @@ ICharacterBody *PhysicsManager::CreateCharacterBody(const Vector3 &startPosition
     return pNew;
 }
 
-void PhysicsManager::DeleteCollider(ICollider *pDel) 
-{ 
+void PhysicsManager::DeleteCollider(ICollider *pDel)
+{
     Collider *pCollider = (Collider *)pDel;
     if (pCollider)
     {
@@ -123,8 +123,8 @@ void PhysicsManager::DeleteCollider(ICollider *pDel)
     }
 }
 
-void PhysicsManager::DeleteRigidBody(IRigidBody *pDel) 
-{ 
+void PhysicsManager::DeleteRigidBody(IRigidBody *pDel)
+{
     RigidBody *pBody = (RigidBody *)pDel;
     m_pDynamicWorld->removeRigidBody(pBody->Get());
     delete pBody;
@@ -148,8 +148,8 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         btRigidBody       *body = btRigidBody::upcast(obj);
         if (!body)
             continue;
-        RigidBody         *pBody = (RigidBody *)body->getUserPointer();
-        btTransform        trans;
+        RigidBody  *pBody = (RigidBody *)body->getUserPointer();
+        btTransform trans;
         if (body && body->getMotionState())
         {
             body->getMotionState()->getWorldTransform(trans);
@@ -173,8 +173,8 @@ void PhysicsManager::EndCollision() {}
 
 BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted)
 {
-    Vector3 from = ray.position;
-    Vector3 to = from + ray.direction * ray.tmax;
+    Vector3   from = ray.position;
+    Vector3   to = from + ray.direction * ray.tmax;
     btVector3 btFrom(from.x, from.y, from.z);
     btVector3 btTo(to.x, to.y, to.z);
 
@@ -194,7 +194,6 @@ BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted
 
         return TRUE;
     }
-
     return FALSE;
 }
 
@@ -215,4 +214,7 @@ ULONG __stdcall PhysicsManager::Release(void)
     return ref_count;
 }
 
-PhysicsManager::~PhysicsManager() { Cleanup(); }
+PhysicsManager::~PhysicsManager()
+{
+    Cleanup();
+}
