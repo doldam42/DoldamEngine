@@ -9,7 +9,7 @@
 #include "MeshObject.h"
 #include "Model.h"
 #include "Sprite.h"
-
+#include "Terrain.h"
 #include "GameManager.h"
 
 GameManager *g_pGame = nullptr;
@@ -87,7 +87,7 @@ void GameManager::Cleanup()
     }
     if (m_pTerrain)
     {
-        m_pTerrain->Release();
+        delete m_pTerrain;
         m_pTerrain = nullptr;
     }
 
@@ -343,7 +343,7 @@ void GameManager::Render()
 
     if (m_pTerrain)
     {
-        m_pRenderer->RenderTerrain(m_pTerrain, &m_terrainScale, m_isWired);
+        m_pTerrain->Render();
     }
 
     // render game objects
@@ -631,12 +631,13 @@ BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale
 {
     if (m_pTerrain)
     {
-        m_pTerrain->Release();
+        delete m_pTerrain;
         m_pTerrain = nullptr;
     }
-    m_pTerrain = m_pRenderer->CreateTerrain(pMaterial, pScale, numSlice, numStack);
-    m_terrainScale = *pScale;
 
+    m_pTerrain = new Terrain;
+    m_pTerrain->Initialize(pMaterial, *pScale, numSlice, numStack);
+    
     if (m_pTerrain)
         return TRUE;
     return FALSE;
@@ -655,8 +656,10 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.direction = rayDir;
     ray.tmax = maxDistance;
 
-    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, &pOutHit->pHitted))
+    IRigidBody *pBody = nullptr;
+    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, &pBody))
     {
+        pOutHit->pHitted = (IGameObject*)pBody->GetUserPtr();
         return TRUE;
     }
     return FALSE;

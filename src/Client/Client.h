@@ -43,6 +43,13 @@ class Client
     float m_loadingTime = 0.0f;
     BOOL  m_isPaused = false;
     float m_timeSpeed = 1.0f;
+    
+    // crossHair
+    int m_crossHairPosX = 0;
+    int m_crossHairPosY = 0;
+    int m_crossHairImageSize = 256;
+    float m_crossHairScale = 0.25f;
+    IGameSprite *m_pCrossHairSprite = nullptr;
 
   private:
     BOOL LoadModules(HWND hWnd);

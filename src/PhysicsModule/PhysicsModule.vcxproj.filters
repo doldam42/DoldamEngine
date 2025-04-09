@@ -29,6 +29,7 @@
       <Filter>Collider</Filter>
     </ClInclude>
     <ClInclude Include="CharacterBody.h" />
+    <ClInclude Include="HeightFieldTerrain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -45,5 +46,6 @@
       <Filter>Collider</Filter>
     </ClCompile>
     <ClCompile Include="CharacterBody.cpp" />
+    <ClCompile Include="HeightFieldTerrain.cpp" />
   </ItemGroup>
 </Project>

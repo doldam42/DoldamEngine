@@ -73,6 +73,7 @@
     <ClInclude Include="Grid.h">
       <Filter>DataStructure</Filter>
     </ClInclude>
+    <ClInclude Include="ImageUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -110,5 +111,6 @@
     <ClCompile Include="Grid.cpp">
       <Filter>DataStructure</Filter>
     </ClCompile>
+    <ClCompile Include="ImageUtil.cpp" />
   </ItemGroup>
 </Project>

@@ -10,16 +10,11 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
-#include <iostream>
-#include <algorithm>
-#include <unordered_map>
-#include <map>
-
 #include "btBulletDynamicsCommon.h"
 #include "btBulletCollisionCommon.h"
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
-#include "BulletDynamics/Character/btKinematicCharacterController.h"
 #include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
+#include "BulletDynamics/Character/btKinematicCharacterController.h"
 
 #include "../Common/typedef.h"
 #include "../MathModule/MathHeaders.h"

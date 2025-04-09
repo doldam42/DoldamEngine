@@ -193,7 +193,7 @@ BOOL Client::Initialize(HWND hWnd)
 {
     BOOL result = FALSE;
 
-    float    f[12];
+    float f[12];
     for (int i = 0; i < 12; i++)
     {
         f[i] = 1.0f;
@@ -258,34 +258,25 @@ void Client::LoadScene()
     pGround->SetPosition(0.0f, 0.0f, 0.0f);
     pGround->SetScale(30.0f, 0.2f, 30.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
-    pGround->InitBoxCollider(Vector3::Zero, Vector3(30.0f, 0.2f, 30.0f));
-    pGround->InitRigidBody(0.0f, 0.5f, 0.5f, FALSE);
-
-    // pGround->InitBoxCollider(Vector3::Zero, Vector3(25.0f, 0.2f, 25.0f));
-
-    // pGround->InitRigidBody(0.0f, 0.5f, 0.0f, FALSE, FALSE);
-
-    //IGameModel  *pSphereModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-    //IGameObject *pSphere = m_pGame->CreateGameObject();
-    //pSphere->SetModel(pSphereModel);
-    //pSphere->SetPosition(0.0f, 10.0f, 0.0f);
-    //// pGround->SetMaterials(&pGroundMaterial, 1);
-    //pSphere->InitSphereCollider(Vector3::Zero, 1.0f);
-    //pSphere->InitRigidBody(1.0f, 0.5f, 0.5f, TRUE, FALSE);
+    
+    ICollider* pCollider = m_pPhysics->CreateBoxCollider(Vector3(30.0f, 0.2f, 30.0f));
+    IRigidBody *pBody = m_pPhysics->CreateRigidBody(pCollider, Vector3::Zero, 0.0f, 0.5f, 0.5f, FALSE);
+    pGround->SetCollider(pCollider);
+    pGround->SetRigidBody(pBody);
 
     // Set CrossHair
     {
-        UINT width = g_pClient->GetScreenWidth();
-        UINT height = g_pClient->GetScreenHeight();
+        m_crossHairPosX = (m_width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+        m_crossHairPosY = (m_height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
 
-        int posX = (width / 2) - 32;
-        int posY = (height / 2) - 32;
-
-        IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds", 256, 256);
+        IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds",
+                                                             m_crossHairImageSize, m_crossHairImageSize);
         pSprite->SetScale(0.25);
-        pSprite->SetPosition(posX, posY);
+        pSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
+
+        m_pCrossHairSprite = pSprite;
     }
-    
+
     m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
 }
 
@@ -357,6 +348,10 @@ BOOL Client::OnUpdateWindowSize(UINT width, UINT height)
 {
     m_width = width;
     m_height = height;
+
+    m_crossHairPosX = (m_width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+    m_crossHairPosY = (m_height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+    m_pCrossHairSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
 
     m_pInputManager->SetWindowSize(width, height);
 

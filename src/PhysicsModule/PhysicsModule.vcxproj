@@ -156,6 +156,7 @@
     <ClInclude Include="CharacterBody.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="HeightFieldTerrain.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="RigidBody.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="CharacterBody.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="HeightFieldTerrain.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -79,56 +79,12 @@ interface IGameModel : public IUnknown, public ISerializable
     virtual void SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
 };
 
-enum COLLIDER_TYPE
-{
-    COLLIDER_TYPE_SPHERE = 0,
-    COLLIDER_TYPE_BOX,
-    COLLIDER_TYPE_CAPSULE,
-    COLLIDER_TYPE_ELLIPSE,
-    COLLIDER_TYPE_CONVEX,
-};
-
-interface ICollider
-{
-    virtual COLLIDER_TYPE GetType() const = 0;
-
-    virtual void Update() = 0;
-
-    virtual Vector3 GetCenter() const = 0;
-    virtual Vector3 GetWorldCenter() const = 0;
-    virtual Bounds  GetBounds() const = 0;
-    virtual Bounds  GetWorldBounds() const = 0;
-
-    virtual Matrix InertiaTensor() const = 0;
-
-    virtual BOOL Intersect(ICollider * pOther) const = 0;
-    virtual BOOL IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const = 0;
-    virtual BOOL Intersect(const Bounds &b) const = 0;
-
-    // Find the point in furthest in direction
-    virtual Vector3 Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) = 0;
-    virtual float   FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const = 0;
-};
-
-interface IRigidBody
-{
-    virtual void Update(IGameObject * pObj) = 0;
-    virtual Vector3 GetVelocity() const = 0;
-    virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
-    virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
-    virtual BOOL    IsDynamic() = 0;
-};
-
 interface IGameObject
 {
     virtual size_t GetID() = 0;
 
-    virtual BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) = 0;
-    virtual BOOL InitSphereCollider(const Vector3 &center, const float radius) = 0;
-    virtual BOOL InitConvexCollider() = 0;
-
-    virtual BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                               BOOL isKinematic = FALSE) = 0;
+    virtual void SetCollider(ICollider * pCollider) = 0;
+    virtual void SetRigidBody(IRigidBody * pBody) = 0;
 
     virtual Vector3 GetPosition() = 0;
     virtual Vector3 GetScale() = 0;
@@ -175,7 +131,10 @@ interface IGameAnimation : public IUnknown, public ISerializable
     virtual void   EndCreateAnim() = 0;
 };
 
-interface IGameCharacter : public IGameObject { virtual void InsertAnimation(IGameAnimation * pClip) = 0; };
+interface IGameCharacter : public IGameObject 
+{ 
+    virtual void InsertAnimation(IGameAnimation * pClip) = 0; 
+};
 
 interface IGameSprite
 {
@@ -240,8 +199,8 @@ interface IGameManager : public IUnknown
     virtual void            DeleteAnimation(IGameAnimation * pAnim) = 0;
     virtual void            DeleteAllAnimation() = 0;
 
-    virtual BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
-                               const int numStack = 1) = 0;
+    virtual BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 0,
+                               const int numStack = 0) = 0;
 
     virtual void Register(IController * pController) = 0;
     virtual void Register(IRenderableController * pController) = 0;

@@ -24,10 +24,16 @@ void GameObject::CleanupMaterials()
 void GameObject::Cleanup()
 {
     CleanupMaterials();
+
+    IPhysicsManager *pPhysics = m_pGame->GetPhysicsManager();
+    if (m_pCollider)
+    {
+        pPhysics->DeleteCollider(m_pCollider);
+        m_pCollider = nullptr;
+    }
     if (m_pRigidBody)
     {
-        // TODO!
-        m_pGame->GetPhysicsManager()->DeleteRigidBody(m_pRigidBody);
+        pPhysics->DeleteRigidBody(m_pRigidBody);
         m_pRigidBody = nullptr;
     }
     if (m_pModel)
@@ -41,75 +47,6 @@ void GameObject::Initialize(GameManager *pGameEngine)
 {
     m_pGame = pGameEngine;
     m_pRenderer = pGameEngine->GetRenderer();
-}
-
-BOOL GameObject::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
-{
-    ICollider *pBox = m_pGame->GetPhysicsManager()->CreateBoxCollider(extent);
-    m_pCollider = pBox;
-
-    return TRUE;
-}
-
-BOOL GameObject::InitSphereCollider(const Vector3 &center, const float radius)
-{
-    ICollider      *pSphere = m_pGame->GetPhysicsManager()->CreateSphereCollider(radius);
-    m_pCollider = pSphere;
-
-    return TRUE;
-}
-
-BOOL GameObject::InitConvexCollider()
-{ 
-    //if (!m_pModel)
-    //    return FALSE;
-
-    //// TODO: Reserve Points
-    //std::vector<Vector3> points; 
-    //UINT numObj = m_pModel->GetObjectCount();
-    //for (UINT i = 0; i < numObj; i++)
-    //{
-    //    MeshObject* pObj = m_pModel->GetObjectByIdx(i);
-    //    
-    //    UINT numVertice = pObj->GetVertexCount();
-    //    
-    //    if (pObj->IsSkinned())
-    //    {
-    //        SkinnedVertex *pVertice = pObj->GetSkinnedVertices();
-    //        for (int j = 0; j < numVertice; j++)
-    //        {
-    //            points.push_back(pVertice[j].position);
-    //        }
-    //    }
-    //    else
-    //    {
-    //        BasicVertex *pVertice = pObj->GetBasicVertices();
-    //        for (int j = 0; j < numVertice; j++)
-    //        {
-    //            points.push_back(pVertice[j].position);
-    //        }
-    //    }
-    //}
-
-    //ConvexCollider *pConvex = new ConvexCollider;
-
-    //m_pCollider = pConvex;
-
-    //pConvex->Initialize(this, points.data(), points.size());
-
-    //return TRUE;
-    return FALSE;
-}
-
-BOOL GameObject::InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity,
-                               BOOL isKinematic)
-{
-    if (!m_pCollider)
-        return FALSE;
-
-    IPhysicsManager *pPhysics = m_pGame->GetPhysicsManager();
-    m_pRigidBody = pPhysics->CreateRigidBody(this, m_pCollider, mass, elasticity, friction, useGravity);
-    return TRUE;
 }
 
 void GameObject::Update(float dt)
@@ -259,19 +196,22 @@ Bounds GameObject::GetBounds() const
 
 bool GameObject::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
 {
-    if (!m_pCollider)
+    /*if (!m_pCollider)
     {
         Bounds b = GetBounds();
         return b.IntersectP(ray, hitt0, hitt1);
     }
-    return m_pCollider->IntersectRay(ray, hitt0, hitt1);
+    return m_pCollider->IntersectRay(ray, hitt0, hitt1);*/
+    return false;
 }
 
 bool GameObject::Intersect(const Bounds& b) const
 {
-    if (!m_pCollider)
+    /*if (!m_pCollider)
     {
         return GetBounds().DoesIntersect(b);
     }
-    return m_pCollider->Intersect(b);
+    return m_pCollider->Intersect(b);*/
+
+    return false;
 }

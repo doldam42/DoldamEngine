@@ -16,6 +16,7 @@
 #endif
 
 #include <iostream>
+#include "../Common/typedef.h"
 #include "../MathModule/MathHeaders.h"
 #include "GenericHeaders.h"
 

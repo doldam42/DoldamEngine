@@ -1,9 +1,9 @@
 #pragma once
-
+#include "ColliderBase.h"
 class GameObject;
 
 // EllipseCollider는 Y축이 장축이고 X,Z가 단축인 타원이다.
-class EllipseCollider : public ICollider
+class EllipseCollider : public IColliderBase
 {
     GameObject *m_pGameObject = nullptr;
 
@@ -27,5 +27,5 @@ class EllipseCollider : public ICollider
     BOOL          IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const override;
     BOOL          Intersect(const Bounds &b) const override;
 
-    void Update() override;
+    void Update();
 };

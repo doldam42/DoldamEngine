@@ -11,6 +11,7 @@ class Model;
 class PhysicsManager;
 class World;
 class DynamicSprite;
+class Terrain;
 class GameManager : public IGameManager
 {
   public:
@@ -54,7 +55,7 @@ class GameManager : public IGameManager
     HashTable *m_pAnimationHashTable = nullptr;
 
     // Terrain
-    IRenderTerrain *m_pTerrain = nullptr;
+    Terrain *m_pTerrain = nullptr;
 
     Vector3 m_terrainScale;
 
@@ -119,8 +120,8 @@ class GameManager : public IGameManager
     void            DeleteAnimation(IGameAnimation *pInAnim) override;
     void            DeleteAllAnimation() override;
 
-    BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 1,
-                       const int numStack = 1) override;
+    BOOL CreateTerrain(const Material *pMaterial, const Vector3 *pScale, const int numSlice = 0,
+                       const int numStack = 0) override;
 
     void Register(IController *pController) override;
     void Register(IRenderableController *pController) override;

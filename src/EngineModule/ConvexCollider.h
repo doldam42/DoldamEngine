@@ -1,5 +1,5 @@
 #pragma once
-
+#include "ColliderBase.h"
 struct tri_t
 {
     int a;
@@ -16,7 +16,7 @@ struct edge_t
 };
 
 class GameObject;
-class ConvexCollider : public ICollider
+class ConvexCollider : public IColliderBase
 {
     GameObject *m_pGameObject = nullptr;
 
@@ -44,5 +44,5 @@ class ConvexCollider : public ICollider
     Vector3       Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) override;
     float         FastestLinearSpeed(const Vector3 angularVelocity, const Vector3 dir) const override;
 
-    void Update() override;
+    void Update();
 };

@@ -1,7 +1,8 @@
 #pragma once
 
+#include "ColliderBase.h"
 class GameObject;
-class BoxCollider : public ICollider
+class BoxCollider : public IColliderBase
 {
   public:
     static constexpr size_t CORNER_COUNT = 8;
@@ -18,7 +19,7 @@ class BoxCollider : public ICollider
   public:
     BOOL Initialize(GameObject *pObj, const Vector3 center, const Vector3 halfExtents);
 
-    void Update() override;
+    void Update();
 
     // Inherited via ICollider
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_BOX; }

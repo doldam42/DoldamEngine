@@ -42,22 +42,9 @@ void Character::Update(float dt)
 
 Character::~Character() { Cleanup(); }
 
-BOOL Character::InitBoxCollider(const Vector3 &center, const Vector3 &extent)
-{
-    return GameObject::InitBoxCollider(center, extent);
-}
+void Character::SetCollider(ICollider *pCollider) { GameObject::SetCollider(pCollider); }
 
-BOOL Character::InitSphereCollider(const Vector3 &center, const float radius)
-{
-    return GameObject::InitSphereCollider(center, radius);
-}
-
-BOOL Character::InitConvexCollider() { return GameObject::InitConvexCollider(); }
-
-BOOL Character::InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity, BOOL isKinematic)
-{
-    return GameObject::InitRigidBody(mass, elasticity, friction, useGravity, isKinematic);
-}
+void Character::SetRigidBody(IRigidBody *pBody) { GameObject::SetRigidBody(pBody); }
 
 Vector3 Character::GetPosition() { return GameObject::GetPosition(); }
 

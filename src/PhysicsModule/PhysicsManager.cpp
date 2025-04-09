@@ -3,6 +3,7 @@
 #include "CharacterBody.h"
 #include "Collider.h"
 #include "RigidBody.h"
+#include "HeightFieldTerrain.h"
 
 #include "PhysicsManager.h"
 
@@ -48,7 +49,7 @@ BOOL PhysicsManager::Initialize()
     /// use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see
     /// Extras/BulletMultiThreaded)
     btCollisionDispatcher *dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
+    
     /// btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
     btBroadphaseInterface *overlappingPairCache = new btDbvtBroadphase();
     overlappingPairCache->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
@@ -94,14 +95,35 @@ ICollider *PhysicsManager::CreateCapsuleCollider(const float radius, const float
     return pNew;
 }
 
-IRigidBody *PhysicsManager::CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity,
+ICollider *PhysicsManager::CreateConvexCollider(const Vector3 *points, const int numPoints) 
+{
+    Collider *pNew = Collider::CreateConvexCollider(points, numPoints);
+    m_collisionShapes.push_back(pNew->Get());
+    return pNew;
+}
+
+IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity,
                                             float friction, BOOL useGravity)
 {
-    RigidBody *pBody = new RigidBody;
-    pBody->Initialize(pObj, pCollider, mass, elasticity, friction, useGravity);
+    Collider *pBase = (Collider *)pCollider;
 
-    btRigidBody *pBtBody = pBody->Get();
-    m_pDynamicWorld->addRigidBody(pBtBody);
+    btTransform startTransform;
+    startTransform.setIdentity();
+    startTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
+
+    btVector3 localInertia;
+    localInertia.setZero();
+    if (mass > 0.0f)
+        pBase->m_pShape->calculateLocalInertia(mass, localInertia);
+
+    btDefaultMotionState                    *myMotionState = new btDefaultMotionState(startTransform);
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(btScalar(mass), myMotionState, pBase->m_pShape, localInertia);
+
+    RigidBody *pBody = new RigidBody(rbInfo);
+    pBody->setFriction(friction);
+    pBody->setDamping(1.0f - elasticity, 1.0f - elasticity);
+
+    m_pDynamicWorld->addRigidBody(pBody);
     return pBody;
 }
 
@@ -126,16 +148,23 @@ void PhysicsManager::DeleteCollider(ICollider *pDel)
 void PhysicsManager::DeleteRigidBody(IRigidBody *pDel)
 {
     RigidBody *pBody = (RigidBody *)pDel;
-    m_pDynamicWorld->removeRigidBody(pBody->Get());
+    m_pDynamicWorld->removeRigidBody(pBody);
     delete pBody;
+}
+
+IHeightFieldTerrainCollider *PhysicsManager::CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth,
+                                                              const UINT imgHeight, const Vector3 &scale,
+                                                              const float minHeight, const float maxHeight)
+{
+    HeightFieldTerrain *pNew = new HeightFieldTerrain;
+    pNew->Initialize(m_pDynamicWorld, m_collisionShapes, pImage, imgWidth, imgHeight, scale, minHeight, maxHeight);
+    return pNew;
 }
 
 void PhysicsManager::BuildScene() {}
 
 void PhysicsManager::BeginCollision(float dt)
 {
-    m_pDynamicWorld->updateAabbs();
-    m_pDynamicWorld->computeOverlappingPairs();
     m_pDynamicWorld->stepSimulation(dt, 10);
 }
 
@@ -148,7 +177,7 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         btRigidBody       *body = btRigidBody::upcast(obj);
         if (!body)
             continue;
-        RigidBody  *pBody = (RigidBody *)body->getUserPointer();
+        RigidBody  *pBody = (RigidBody *)body;
         btTransform trans;
         if (body && body->getMotionState())
         {
@@ -159,11 +188,14 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
             trans = obj->getWorldTransform();
         }
 
-        btVector3   &btOrigin = trans.getOrigin();
-        btQuaternion btQ = trans.getRotation();
+        if (pBody)
+        {
+            btVector3   &btOrigin = trans.getOrigin();
+            btQuaternion btQ = trans.getRotation();
 
-        pBody->SetPosition(Vector3(btOrigin.getX(), btOrigin.getY(), btOrigin.getZ()));
-        pBody->SetRotation(Quaternion(btQ.getX(), btQ.getY(), btQ.getZ(), btQ.getW()));
+            pBody->SetPosition(Vector3(btOrigin.getX(), btOrigin.getY(), btOrigin.getZ()));
+            pBody->SetRotation(Quaternion(btQ.getX(), btQ.getY(), btQ.getZ(), btQ.getW()));
+        }
     }
 
     return TRUE;
@@ -171,7 +203,7 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
 
 void PhysicsManager::EndCollision() {}
 
-BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted)
+BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IRigidBody **ppHitted)
 {
     Vector3   from = ray.position;
     Vector3   to = from + ray.direction * ray.tmax;
@@ -187,10 +219,10 @@ BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted
     if (cb.hasHit())
     {
         const btRigidBody *pBody = btRigidBody::upcast(cb.m_collisionObject);
-        RigidBody         *pMyBody = (RigidBody *)pBody->getUserPointer();
+        RigidBody         *pMyBody = (RigidBody *)pBody;
 
         *tHit = ray.tmax * cb.m_closestHitFraction;
-        *ppHitted = pMyBody->GetObj();
+        *ppHitted = pMyBody;
 
         return TRUE;
     }

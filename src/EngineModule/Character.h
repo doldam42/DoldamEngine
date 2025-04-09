@@ -24,11 +24,8 @@ class Character : public IGameCharacter, public GameObject
     Character() = default;
     ~Character() override;
 
-    BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) override;
-    BOOL InitSphereCollider(const Vector3 &center, const float radius) override;
-    BOOL InitConvexCollider() override;
-    BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                       BOOL isKinematic = FALSE) override;
+    void SetCollider(ICollider *pCollider) override;
+    void SetRigidBody(IRigidBody *pBody) override;
 
     Vector3 GetPosition() override;
     Vector3 GetScale() override;

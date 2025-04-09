@@ -14,6 +14,7 @@
 #include "ProcessInfo.h"
 #include "SpinLock.h"
 #include "StringUtil.h"
+#include "ImageUtil.h"
 #include "MemoryStreamBuf.h"
 
 #include "ParticleForceGenerator.h"

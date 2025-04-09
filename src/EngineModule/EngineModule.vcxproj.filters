@@ -70,6 +70,7 @@
     <ClCompile Include="NarrowPhase.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationClip.h" />
@@ -138,6 +139,10 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="NarrowPhase.h">
       <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h" />
+    <ClInclude Include="ColliderBase.h">
+      <Filter>Physics\Collider</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

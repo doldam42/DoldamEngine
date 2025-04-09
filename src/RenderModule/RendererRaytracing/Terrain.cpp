@@ -67,11 +67,11 @@ BOOL Terrain::InitMesh(const WCHAR *heightFilename, const int numSlice, const in
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i + 1;*/
 
-            // 0,1,2 - 0, 2, 3
+            // 0, 1, 2
             pIndices[numIndices++] = (numSlice + 1) * j + i;
             pIndices[numIndices++] = (numSlice + 1) * j + i + 1;
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
-
+            // 0, 2, 3
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i;
             pIndices[numIndices++] = (numSlice + 1) * j + i + 1;
             pIndices[numIndices++] = (numSlice + 1) * (j + 1) + i + 1;

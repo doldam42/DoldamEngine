@@ -5,8 +5,7 @@
 #include "RigidBody.h"
 
 void RigidBody::Cleanup()
-{
-}
+{ }
 
 void RigidBody::Initialize(GameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
                            BOOL useGravity, BOOL isKinematic)

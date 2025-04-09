@@ -1,19 +1,11 @@
 #pragma once
 
-class RigidBody : public IRigidBody
+class RigidBody : public IRigidBody, public btRigidBody
 {
-    btRigidBody *m_pBody = nullptr;
-    IGameObject *m_pObject = nullptr;
-    
     Vector3 m_position;
     Quaternion m_rotation;
 
-  private:
-    void Cleanup();
-
   public:
-    BOOL Initialize(IGameObject* pObj, ICollider *pCollider, float mass, float elasticity, float friction, BOOL useGravity);
-
     void SetPosition(const Vector3& pos);
     void SetRotation(const Quaternion& q);
 
@@ -24,6 +16,9 @@ class RigidBody : public IRigidBody
     void    ApplyImpulseAngular(const Vector3 &impulse) override;
     BOOL    IsDynamic() override;
 
-    btRigidBody *Get() const { return m_pBody; }
-    IGameObject *GetObj() const { return m_pObject; }
+    void  SetUserPtr(void *ptr) override { setUserPointer(ptr); }
+    void *GetUserPtr() override { return getUserPointer(); }
+
+    RigidBody(const btRigidBodyConstructionInfo &constructionInfo) : btRigidBody(constructionInfo){};
+    ~RigidBody();
 };

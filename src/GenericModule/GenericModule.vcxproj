@@ -169,6 +169,7 @@
     <ClInclude Include="GenericHeaders.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="HashTable.h" />
+    <ClInclude Include="ImageUtil.h" />
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="LinkedList.h" />
     <ClInclude Include="MemoryPool.h" />
@@ -185,6 +186,7 @@
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="HashTable.cpp" />
+    <ClCompile Include="ImageUtil.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="MemoryPool.cpp" />

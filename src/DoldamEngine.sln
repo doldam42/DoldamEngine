@@ -116,6 +116,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A5B322
 	ProjectSection(SolutionItems) = preProject
 		Common\EngineInterface.h = Common\EngineInterface.h
 		Common\ModelExporterInterface.h = Common\ModelExporterInterface.h
+		Common\PhysicsInterface.h = Common\PhysicsInterface.h
 		Common\RendererInterface.h = Common\RendererInterface.h
 		Common\typedef.h = Common\typedef.h
 	EndProjectSection

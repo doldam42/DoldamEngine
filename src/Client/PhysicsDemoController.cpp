@@ -12,6 +12,7 @@ BOOL PhysicsDemoController::Start()
 {
     IGameManager *pGame = g_pClient->GetGameManager();
     IRenderer    *pRenderer = pGame->GetRenderer();
+    IPhysicsManager *pPhysics = g_pClient->GetPhysics();
 
     Material ChristmasTreeOrnamentMaterial = {};
     ChristmasTreeOrnamentMaterial.reflectionFactor = 0.2f;
@@ -40,8 +41,11 @@ BOOL PhysicsDemoController::Start()
     pBox->SetPosition(5.0f, 10.0f, 5.0f);
     pBox->SetScale(2.0f);
     pBox->SetMaterials(&pSphereMaterial, 1);
-    pBox->InitBoxCollider(Vector3::Zero, Vector3(2.0f));
-    pBox->InitRigidBody(2.0f, 0.2f, 0.5f);
+
+    ICollider *pCollider = pPhysics->CreateBoxCollider(Vector3(2.0f));
+    IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider, Vector3(5.0f, 10.0f, 5.0f), 2.0f, 0.2f, 0.5f);
+    pBox->SetCollider(pCollider);
+    pBox->SetRigidBody(pBody);
 
     const int stackHeight = 5;
     for (int x = 0; x < 1; x++)
@@ -65,8 +69,10 @@ BOOL PhysicsDemoController::Start()
                     Vector3((float)xx * scaleHeight, deltaHeight + (float)z * scaleHeight, (float) yy * scaleHeight);
                 pBox->SetPosition(pos.x, pos.y, pos.z);
                 pBox->SetMaterials(&pSphereMaterial, 1);
-                pBox->InitBoxCollider(Vector3::Zero, Vector3::One);
-                pBox->InitRigidBody(1.0f, 0.7f, 0.5f);
+                ICollider  *pCollider = pPhysics->CreateBoxCollider(Vector3::One);
+                IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider,Vector3(pos.x, pos.y, pos.z), 1.0f, 0.2f, 0.5f);
+                pBox->SetCollider(pCollider);
+                pBox->SetRigidBody(pBody);
             }
         }
     }
@@ -102,6 +108,7 @@ void PhysicsDemoController::Update(float dt)
 
     InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
+    IPhysicsManager *pPhysics = g_pClient->GetPhysics();
 
     cycle += dt;
     
@@ -109,12 +116,16 @@ void PhysicsDemoController::Update(float dt)
     {
         IGameModel  *pSphereModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
         IGameObject *pSphere1 = pGame->CreateGameObject();
+        
         pSphere1->SetModel(pSphereModel);
         pSphere1->SetPosition(0.0f, 10.0f, -25.0f);
         pSphere1->SetScale(2.0f);
         pSphere1->SetMaterials(&m_pMaterial, 1);
-        pSphere1->InitSphereCollider(Vector3::Zero, 2.0f);
-        pSphere1->InitRigidBody(1.0f, 1.0f, 0.0f);
+
+        ICollider  *pCollider = pPhysics->CreateSphereCollider(2.0f);
+        IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider, Vector3(0.0f, 10.0f, -25.0f), 1.0f, 1.0f, 0.0f);
+        pSphere1->SetCollider(pCollider);
+        pSphere1->SetRigidBody(pBody);
 
         pSphere1->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, 40.0f));
 
@@ -124,9 +135,10 @@ void PhysicsDemoController::Update(float dt)
         pSphere2->SetPosition(0.0f, 10.0f, 25.0f);
         pSphere2->SetScale(2.0f);
         pSphere2->SetMaterials(&m_pMaterial, 1);
-        pSphere2->InitSphereCollider(Vector3::Zero, 2.0f);
-        pSphere2->InitRigidBody(1.0f, 1.0f, 0.0f);
-
+        pCollider = pPhysics->CreateSphereCollider(2.0f);
+        pBody = pPhysics->CreateRigidBody(pCollider, Vector3(0.0f, 10.0f, 25.0f), 1.0f, 1.0f, 0.0f);
+        pSphere2->SetCollider(pCollider);
+        pSphere2->SetRigidBody(pBody);
         pSphere2->GetRigidBody()->ApplyImpulseLinear(Vector3(0.0f, 2.0f, -40.0f));
 
         cycle = 0.0f;

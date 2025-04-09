@@ -23,7 +23,9 @@ class PhysicsManager : public IPhysicsManager
     ICollider  *CreateSphereCollider(const float radius) override;
     ICollider  *CreateBoxCollider(const Vector3 &halfExtents) override;
     ICollider  *CreateCapsuleCollider(const float radius, const float height) override;
-    IRigidBody *CreateRigidBody(IGameObject *pObj, ICollider *pCollider, float mass, float elasticity, float friction,
+    ICollider  *CreateConvexCollider(const Vector3 *points, const int numPoints) override;
+
+    IRigidBody *CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity, float friction,
                                 BOOL useGravity) override;
     ICharacterBody *CreateCharacterBody(const Vector3 &startPosition, const float radius,
                                         const float height) override;
@@ -31,11 +33,15 @@ class PhysicsManager : public IPhysicsManager
     void DeleteCollider(ICollider *pDel);
     void DeleteRigidBody(IRigidBody *pDel);
 
+    IHeightFieldTerrainCollider *CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth, const UINT imgHeight,
+                                                  const Vector3 &scale, const float minHeight,
+                                                  const float maxHeight) override;
+
     void        BuildScene() override;
     void        BeginCollision(float dt) override;
     BOOL        CollisionTestAll(float dt) override;
     void        EndCollision() override;
-    BOOL        Raycast(const Ray &ray, float *tHit, IGameObject **ppHitted) override;
+    BOOL        Raycast(const Ray &ray, float *tHit, IRigidBody **ppHitted) override;
 
     // Inherited via IPhysicsManager
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

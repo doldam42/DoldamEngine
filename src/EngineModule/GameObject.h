@@ -38,12 +38,12 @@ class GameObject : public IGameObject
   public:
     void Initialize(GameManager *pGameEngine);
 
-    BOOL InitBoxCollider(const Vector3 &center, const Vector3 &extent) override;
-    BOOL InitSphereCollider(const Vector3 &center, const float radius) override;
-    BOOL InitConvexCollider() override;
-
-    BOOL InitRigidBody(float mass, float elasticity, float friction, BOOL useGravity = TRUE,
-                       BOOL isKinematic = FALSE) override;
+    void SetCollider(ICollider *pCollider) override { m_pCollider = pCollider; }
+    void SetRigidBody(IRigidBody *pBody) override
+    {
+        m_pRigidBody = pBody;
+        pBody->SetUserPtr(this);
+    }
 
     virtual void Update(float dt);
     void         Render();

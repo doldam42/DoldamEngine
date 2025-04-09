@@ -1,7 +1,9 @@
 #pragma once
 
+#include "ColliderBase.h"
+
 class GameObject;
-class CapsuleCollider : ICollider
+class CapsuleCollider : IColliderBase
 {
     GameObject *m_pGameObject = nullptr;
 
