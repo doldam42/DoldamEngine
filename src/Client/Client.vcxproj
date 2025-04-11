@@ -170,6 +170,7 @@
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="BadAppleController.cpp" />
     <ClCompile Include="BallisticDemo.cpp" />
+    <ClCompile Include="BasicScene.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CollisionDemoController.cpp" />
@@ -184,7 +185,6 @@
     <ClCompile Include="PlayerController.cpp" />
     <ClCompile Include="RaytracingDemoController.cpp" />
     <ClCompile Include="TessellationDemoController.cpp" />
-    <ClCompile Include="TimeController.cpp" />
     <ClCompile Include="VideoManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +195,7 @@
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="BadAppleController.h" />
     <ClInclude Include="BallisticDemo.h" />
+    <ClInclude Include="BasicScene.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="CollisionDemoController.h" />
@@ -206,9 +207,9 @@
     <ClInclude Include="PlayerController.h" />
     <ClInclude Include="RaytracingDemoController.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SceneRegistry.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TessellationDemoController.h" />
-    <ClInclude Include="TimeController.h" />
     <ClInclude Include="VideoManager.h" />
   </ItemGroup>
   <ItemGroup>

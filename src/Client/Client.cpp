@@ -3,18 +3,13 @@
 #include <filesystem>
 
 #include "AudioManager.h"
-#include "InputManager.h"
 #include "VideoManager.h"
+#include "InputManager.h"
 
 #include "ControllerRegistry.h"
+#include "SceneRegistry.h"
 
-#include "BadAppleController.h"
 #include "CameraController.h"
-#include "CollisionDemoController.h"
-#include "PhysicsDemoController.h"
-#include "RaytracingDemoController.h"
-#include "TessellationDemoController.h"
-#include "TimeController.h"
 
 #include "Client.h"
 
@@ -184,6 +179,8 @@ void Client::Cleanup()
         m_pInputManager = nullptr;
     }
 
+    SceneRegistry::GetInstance().UnLoad();
+
     CleanupControllers();
 
     CleanupModules();
@@ -239,46 +236,7 @@ BOOL Client::Initialize(HWND hWnd)
 
 void Client::LoadResources() {}
 
-void Client::LoadScene()
-{
-    // Create Material
-    Material reflectiveMaterial = {};
-    reflectiveMaterial.metallicFactor = 0.0f;
-    reflectiveMaterial.reflectionFactor = 0.9f;
-    wcscpy_s(reflectiveMaterial.name, L"ground");
-    wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
-    wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
-    wcscpy_s(reflectiveMaterial.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
-    wcscpy_s(reflectiveMaterial.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
-    IRenderMaterial *pGroundMaterial = m_pRenderer->CreateMaterialHandle(&reflectiveMaterial);
-
-    IGameModel *pGroundModel = m_pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pGround = m_pGame->CreateGameObject();
-    pGround->SetModel(pGroundModel);
-    pGround->SetPosition(0.0f, 0.0f, 0.0f);
-    pGround->SetScale(30.0f, 0.2f, 30.0f);
-    pGround->SetMaterials(&pGroundMaterial, 1);
-    
-    ICollider* pCollider = m_pPhysics->CreateBoxCollider(Vector3(30.0f, 0.2f, 30.0f));
-    IRigidBody *pBody = m_pPhysics->CreateRigidBody(pCollider, Vector3::Zero, 0.0f, 0.5f, 0.5f, FALSE);
-    pGround->SetCollider(pCollider);
-    pGround->SetRigidBody(pBody);
-
-    // Set CrossHair
-    {
-        m_crossHairPosX = (m_width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
-        m_crossHairPosY = (m_height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
-
-        IGameSprite *pSprite = m_pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds",
-                                                             m_crossHairImageSize, m_crossHairImageSize);
-        pSprite->SetScale(0.25);
-        pSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
-
-        m_pCrossHairSprite = pSprite;
-    }
-
-    m_pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
-}
+void Client::LoadScene() { SceneRegistry::GetInstance().ChangeScene("PhysicsDemoController"); }
 
 void Client::Process()
 {
@@ -294,9 +252,13 @@ void Client::Process()
         m_prevUpdateTick = curTick;
         dt *= m_timeSpeed;
 
+        SceneRegistry::GetInstance().Update(dt);
+
         m_pGame->Update(dt);
 
         m_pInputManager->Update();
+        m_prevWindowResized = m_windowResized;
+        m_windowResized = FALSE;
     }
 
     m_pGame->Render();
@@ -349,11 +311,9 @@ BOOL Client::OnUpdateWindowSize(UINT width, UINT height)
     m_width = width;
     m_height = height;
 
-    m_crossHairPosX = (m_width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
-    m_crossHairPosY = (m_height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
-    m_pCrossHairSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
-
     m_pInputManager->SetWindowSize(width, height);
+
+    m_windowResized = TRUE;
 
     return m_pGame->OnUpdateWindowSize(width, height);
 }

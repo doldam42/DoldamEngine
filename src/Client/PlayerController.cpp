@@ -14,7 +14,7 @@ BOOL PlayerController::Start()
     IGameManager     *pGame = g_pClient->GetGameManager();
     CameraController *pCam = g_pClient->GetCameraController();
 
-    const Vector3 pos(1.0f, 100.0f, 1.0f);
+    const Vector3 pos(1.0f, 5.0f, -5.0f);
     m_pPlayer = pGame->CreateGameObject();
     m_pPlayer->SetPosition(pos.x, pos.y, pos.z);
 

@@ -41,15 +41,11 @@ class Client
 
     // Timer-For Debug
     float m_loadingTime = 0.0f;
-    BOOL  m_isPaused = false;
+    BOOL  m_isPaused = FALSE;
     float m_timeSpeed = 1.0f;
-    
-    // crossHair
-    int m_crossHairPosX = 0;
-    int m_crossHairPosY = 0;
-    int m_crossHairImageSize = 256;
-    float m_crossHairScale = 0.25f;
-    IGameSprite *m_pCrossHairSprite = nullptr;
+
+    BOOL m_prevWindowResized = FALSE;
+    BOOL m_windowResized = FALSE;
 
   private:
     BOOL LoadModules(HWND hWnd);
@@ -103,6 +99,8 @@ class Client
     void Pause() { m_isPaused = !m_isPaused; }
 
     ULONGLONG LastFrameTimestamp() const { return m_prevFrameCheckTick; }
+
+    BOOL IsWindowResized() const { return (m_windowResized && !m_prevWindowResized); }
 
     Client() = default;
     ~Client();

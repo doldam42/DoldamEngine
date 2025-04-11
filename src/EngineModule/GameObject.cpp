@@ -51,6 +51,9 @@ void GameObject::Initialize(GameManager *pGameEngine)
 
 void GameObject::Update(float dt)
 {
+    if (!m_isActive)
+        return;
+
     if (m_pRigidBody)
     {
         m_pRigidBody->Update(this);
@@ -85,7 +88,8 @@ void GameObject::SetModel(IGameModel *pModel)
 
 void GameObject::SetPosition(float x, float y, float z)
 {
-    m_transform.SetPosition(Vector3(x, y, z));
+    Vector3 pos(x, y, z);
+    m_transform.SetPosition(pos);
     m_IsUpdated = true;
 }
 

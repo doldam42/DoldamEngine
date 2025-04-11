@@ -19,7 +19,7 @@ class GameObject : public IGameObject
     Model            *m_pModel = nullptr;
     IRenderMaterial **m_ppMaterials = nullptr;
 
-    ICollider *m_pCollider = nullptr;
+    ICollider  *m_pCollider = nullptr;
     IRigidBody *m_pRigidBody = nullptr;
 
   public:
@@ -73,7 +73,14 @@ class GameObject : public IGameObject
     void SetRotationZ(float rotZ) override;
     void SetRotation(Quaternion q) override;
 
-    void SetActive(BOOL state) override { m_isActive = state; }
+    void SetActive(BOOL state) override
+    {
+        m_isActive = state;
+        if (m_pRigidBody)
+        {
+            m_pRigidBody->SetActive(state);
+        }
+    }
 
     void AddPosition(Vector3 deltaPos) override;
 

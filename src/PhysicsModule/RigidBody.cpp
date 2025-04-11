@@ -2,9 +2,23 @@
 #include "Collider.h"
 #include "RigidBody.h"
 
-void RigidBody::SetPosition(const Vector3 &pos) { m_position = pos; }
+void RigidBody::SetPosition(const Vector3 &pos) 
+{
+    btTransform& T = getWorldTransform();
+    T.setOrigin(btVector3(pos.x, pos.y, pos.z));
+    getMotionState()->setWorldTransform(T);
+}
 
-void RigidBody::SetRotation(const Quaternion &q) { m_rotation = q; }
+void RigidBody::SetRotation(const Quaternion &q)
+{
+    btTransform& T = getWorldTransform();
+    T.setRotation(btQuaternion(q.x, q.y, q.z, q.w));
+    getMotionState()->setWorldTransform(T);
+}
+
+void RigidBody::SetPositionInternal(const Vector3 &pos) { m_position = pos; }
+
+void RigidBody::SetRotationInternal(const Quaternion &q) { m_rotation = q; }
 
 void RigidBody::Update(IGameObject *pObj) 
 { 
@@ -12,7 +26,11 @@ void RigidBody::Update(IGameObject *pObj)
     pObj->SetRotation(m_rotation);
 }
 
-Vector3 RigidBody::GetVelocity() const { return Vector3(); }
+Vector3 RigidBody::GetVelocity() const
+{
+    const btVector3 &v = getLinearVelocity();
+    return Vector3(v.x(), v.y(), v.z());
+}
 
 void RigidBody::ApplyImpulseLinear(const Vector3 &impulse)
 {
@@ -26,4 +44,31 @@ void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
 
 BOOL RigidBody::IsDynamic() { return !isStaticObject(); }
 
-RigidBody::~RigidBody() { }
+void RigidBody::SetActive(BOOL isActive)
+{
+    if (isActive)
+    {
+        forceActivationState(ACTIVE_TAG);
+        activate();
+    }
+    else
+    {
+        forceActivationState(DISABLE_SIMULATION);
+    }
+}
+
+void RigidBody::Reset() 
+{ 
+    m_position = Vector3::Zero;
+    m_rotation = Quaternion::Identity;
+    
+    btTransform T;
+    T.setIdentity();
+    setWorldTransform(T);
+    getMotionState()->setWorldTransform(T);
+    setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+    setAngularVelocity(btVector3(0.0f, 0.0f, 0.0f));
+    clearForces();
+}
+
+RigidBody::~RigidBody() {}

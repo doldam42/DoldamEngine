@@ -6,8 +6,11 @@ class RigidBody : public IRigidBody, public btRigidBody
     Quaternion m_rotation;
 
   public:
-    void SetPosition(const Vector3& pos);
-    void SetRotation(const Quaternion& q);
+    void SetPosition(const Vector3& pos) override;
+    void SetRotation(const Quaternion& q) override;
+
+    void SetPositionInternal(const Vector3 &pos);
+    void SetRotationInternal(const Quaternion &q);
 
     // Inherited via IRigidBody
     void    Update(IGameObject *pObj) override;
@@ -18,6 +21,10 @@ class RigidBody : public IRigidBody, public btRigidBody
 
     void  SetUserPtr(void *ptr) override { setUserPointer(ptr); }
     void *GetUserPtr() override { return getUserPointer(); }
+
+    void SetActive(BOOL isActive) override;
+
+    void Reset() override;
 
     RigidBody(const btRigidBodyConstructionInfo &constructionInfo) : btRigidBody(constructionInfo){};
     ~RigidBody();

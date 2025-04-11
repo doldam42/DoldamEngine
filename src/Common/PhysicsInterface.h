@@ -34,6 +34,13 @@ interface IRigidBody
     virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
     virtual BOOL    IsDynamic() = 0;
 
+    virtual void SetActive(BOOL isActive) = 0;
+
+    virtual void Reset() = 0;
+
+    virtual void SetPosition(const Vector3 &pos) = 0;
+    virtual void SetRotation(const Quaternion &q) = 0;
+
     virtual void SetUserPtr(void *ptr) = 0;
     virtual void *GetUserPtr() = 0;
 };

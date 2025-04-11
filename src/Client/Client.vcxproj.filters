@@ -8,12 +8,6 @@
     <ClCompile Include="main.cpp">
       <Filter>MainEntry</Filter>
     </ClCompile>
-    <ClCompile Include="VideoManager.cpp">
-      <Filter>VideoManager</Filter>
-    </ClCompile>
-    <ClCompile Include="AudioManager.cpp">
-      <Filter>AudioManager</Filter>
-    </ClCompile>
     <ClCompile Include="RaytracingDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
@@ -23,27 +17,31 @@
     <ClCompile Include="TessellationDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
-    <ClCompile Include="PhysicsDemoController.cpp">
-      <Filter>Demos</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionDemoController.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
     <ClCompile Include="CameraController.cpp">
       <Filter>Controller</Filter>
     </ClCompile>
-    <ClCompile Include="TimeController.cpp">
-      <Filter>Controller</Filter>
-    </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>InputManager</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerController.cpp" />
     <ClCompile Include="BallisticDemo.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
     <ClCompile Include="Firework.cpp">
       <Filter>FireworkDemo</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerController.cpp" />
+    <ClCompile Include="BasicScene.cpp" />
+    <ClCompile Include="PhysicsDemoController.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,12 +54,6 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoManager.h">
-      <Filter>VideoManager</Filter>
-    </ClInclude>
-    <ClInclude Include="AudioManager.h">
-      <Filter>AudioManager</Filter>
     </ClInclude>
     <ClInclude Include="RaytracingDemoController.h">
       <Filter>Demos</Filter>
@@ -84,16 +76,10 @@
     <ClInclude Include="..\Common\RendererInterface.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsDemoController.h">
-      <Filter>Demos</Filter>
-    </ClInclude>
     <ClInclude Include="CollisionDemoController.h">
       <Filter>Demos</Filter>
     </ClInclude>
     <ClInclude Include="CameraController.h">
-      <Filter>Controller</Filter>
-    </ClInclude>
-    <ClInclude Include="TimeController.h">
       <Filter>Controller</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h">
@@ -102,12 +88,23 @@
     <ClInclude Include="ControllerRegistry.h">
       <Filter>Controller</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerController.h" />
     <ClInclude Include="BallisticDemo.h">
       <Filter>Demos</Filter>
     </ClInclude>
     <ClInclude Include="Firework.h">
       <Filter>FireworkDemo</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerController.h" />
+    <ClInclude Include="SceneRegistry.h" />
+    <ClInclude Include="BasicScene.h" />
+    <ClInclude Include="PhysicsDemoController.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -134,12 +131,6 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{d98cb3f0-6248-4c08-8953-d0c5bbc80d41}</UniqueIdentifier>
     </Filter>
-    <Filter Include="VideoManager">
-      <UniqueIdentifier>{b68427e8-01ac-4754-998c-6f4ea3b3874b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="AudioManager">
-      <UniqueIdentifier>{bd5370f9-3946-477b-9aba-eaa1ed05725d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Demos">
       <UniqueIdentifier>{8957c0e8-9b7b-40eb-817a-d2f700fd4efb}</UniqueIdentifier>
     </Filter>
@@ -154,6 +145,9 @@
     </Filter>
     <Filter Include="FireworkDemo">
       <UniqueIdentifier>{7c1b3754-0250-4a4c-9d03-2bb908a76028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{fec409ff-bf00-4990-bc22-7842dc62944a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

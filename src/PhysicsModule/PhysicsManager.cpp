@@ -124,6 +124,7 @@ IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 
     pBody->setDamping(1.0f - elasticity, 1.0f - elasticity);
 
     m_pDynamicWorld->addRigidBody(pBody);
+    
     return pBody;
 }
 
@@ -192,9 +193,9 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         {
             btVector3   &btOrigin = trans.getOrigin();
             btQuaternion btQ = trans.getRotation();
-
-            pBody->SetPosition(Vector3(btOrigin.getX(), btOrigin.getY(), btOrigin.getZ()));
-            pBody->SetRotation(Quaternion(btQ.getX(), btQ.getY(), btQ.getZ(), btQ.getW()));
+            
+            pBody->SetPositionInternal(Vector3(btOrigin.getX(), btOrigin.getY(), btOrigin.getZ()));
+            pBody->SetRotationInternal(Quaternion(btQ.getX(), btQ.getY(), btQ.getZ(), btQ.getW()));
         }
     }
 
