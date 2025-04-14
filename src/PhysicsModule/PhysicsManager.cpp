@@ -162,6 +162,10 @@ IHeightFieldTerrainCollider *PhysicsManager::CreateHeightFieldTerrain(const BYTE
     return pNew;
 }
 
+void PhysicsManager::RemoveFromWorld(btRigidBody *pBody) { m_pDynamicWorld->removeRigidBody(pBody); }
+
+void PhysicsManager::AddToWorld(btRigidBody *pBody) { m_pDynamicWorld->addRigidBody(pBody); }
+
 void PhysicsManager::BuildScene() {}
 
 void PhysicsManager::BeginCollision(float dt)

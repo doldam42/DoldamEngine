@@ -165,8 +165,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BVH.h" />
+    <ClInclude Include="DBVH.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="GenericHeaders.h" />
+    <ClInclude Include="GeometryCommon.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="HashTable.h" />
     <ClInclude Include="ImageUtil.h" />
@@ -183,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BVH.cpp" />
+    <ClCompile Include="DBVH.cpp" />
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="HashTable.cpp" />

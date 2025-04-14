@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "PhysicsManager.h"
 #include "Collider.h"
 #include "RigidBody.h"
 
@@ -50,10 +51,12 @@ void RigidBody::SetActive(BOOL isActive)
     {
         activate();
         forceActivationState(ACTIVE_TAG);
+        g_pPhysics->AddToWorld(this);
     }
     else
     {
         forceActivationState(DISABLE_SIMULATION);
+        g_pPhysics->RemoveFromWorld(this);
     }
 }
 

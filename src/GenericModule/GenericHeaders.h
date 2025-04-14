@@ -19,6 +19,7 @@
 
 #include "ParticleForceGenerator.h"
 
+#include "GeometryCommon.h"
 #include "BVH.h"
 #include "KDTree.h"
 #include "Grid.h"

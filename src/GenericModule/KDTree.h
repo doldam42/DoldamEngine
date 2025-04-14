@@ -6,12 +6,6 @@ struct BoundEdge;
 class KDTree
 {
   public:
-    struct Primitive
-    {
-        Bounds bounds;
-        void  *pObj;
-    };
-
     // KDTree Public Methods
     KDTree(int maxObjectCount, int isectCost = 80, int traversalCost = 1, float emptyBonus = 0.5, int maxPrims = 1,
            int maxDepth = -1);
@@ -36,7 +30,7 @@ class KDTree
 
     int maxDepth;
 
-    std::vector<KDTree::Primitive> primitives;
+    std::vector<Primitive> primitives;
     std::vector<int>       primitiveIndices;
     KdAccelNode           *nodes;
     int                    nAllocedNodes, nextFreeNode;

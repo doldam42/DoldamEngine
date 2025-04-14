@@ -74,6 +74,12 @@
       <Filter>DataStructure</Filter>
     </ClInclude>
     <ClInclude Include="ImageUtil.h" />
+    <ClInclude Include="DBVH.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryCommon.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -112,5 +118,8 @@
       <Filter>DataStructure</Filter>
     </ClCompile>
     <ClCompile Include="ImageUtil.cpp" />
+    <ClCompile Include="DBVH.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

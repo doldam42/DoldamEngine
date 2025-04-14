@@ -37,6 +37,9 @@ class PhysicsManager : public IPhysicsManager
                                                   const Vector3 &scale, const float minHeight,
                                                   const float maxHeight) override;
 
+    void RemoveFromWorld(btRigidBody *pBody);
+    void AddToWorld(btRigidBody *pBody);
+
     void        BuildScene() override;
     void        BeginCollision(float dt) override;
     BOOL        CollisionTestAll(float dt) override;

@@ -14,12 +14,6 @@ class BVH
         Middle,
         EqualCounts
     };
-    struct Primitive
-    {
-        Bounds      bounds;
-        void *pObj;
-    };
-
   private:
     const int         maxPrimitiveInNode, maxObjectCount;
     const SplitMethod splitMethod;
