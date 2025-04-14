@@ -48,8 +48,8 @@ void RigidBody::SetActive(BOOL isActive)
 {
     if (isActive)
     {
-        forceActivationState(ACTIVE_TAG);
         activate();
+        forceActivationState(ACTIVE_TAG);
     }
     else
     {

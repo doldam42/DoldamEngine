@@ -124,7 +124,7 @@ void PhysicsDemoController::Load()
 
 void PhysicsDemoController::Update(float dt)
 {
-    constexpr float SHOOT_CYCLE = 0.5f;
+    /*constexpr float SHOOT_CYCLE = 0.5f;
     static float    cycle = 0.0f;
     static BOOL      shootLeft = FALSE;
 
@@ -163,5 +163,5 @@ void PhysicsDemoController::Update(float dt)
         
         cycle = 0.0f;
         shootLeft = !shootLeft;
-    }
+    }*/
 }
