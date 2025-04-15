@@ -22,14 +22,14 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="RigidBody.h">
-      <Filter>RigidBody</Filter>
-    </ClInclude>
-    <ClInclude Include="Collider.h">
+    <ClInclude Include="ColliderBase.h">
       <Filter>Collider</Filter>
     </ClInclude>
-    <ClInclude Include="CharacterBody.h" />
-    <ClInclude Include="HeightFieldTerrain.h" />
+    <ClInclude Include="SphereCollider.h">
+      <Filter>Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="BroadPhase.h" />
+    <ClInclude Include="RigidActor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -39,13 +39,10 @@
       <Filter>pch</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsManager.cpp" />
-    <ClCompile Include="RigidBody.cpp">
-      <Filter>RigidBody</Filter>
-    </ClCompile>
-    <ClCompile Include="Collider.cpp">
+    <ClCompile Include="SphereCollider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
-    <ClCompile Include="CharacterBody.cpp" />
-    <ClCompile Include="HeightFieldTerrain.cpp" />
+    <ClCompile Include="BroadPhase.cpp" />
+    <ClCompile Include="RigidActor.cpp" />
   </ItemGroup>
 </Project>
