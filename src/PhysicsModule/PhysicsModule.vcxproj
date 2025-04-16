@@ -158,7 +158,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="RigidActor.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="SphereCollider.h" />
   </ItemGroup>
   <ItemGroup>
@@ -171,7 +171,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PhysicsManager.cpp" />
-    <ClCompile Include="RigidActor.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="SphereCollider.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

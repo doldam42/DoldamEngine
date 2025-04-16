@@ -29,11 +29,7 @@ interface ICollider
     virtual void SetPosition(const Vector3 &pos) = 0;
     virtual void SetRotation(const Quaternion &q) = 0;
     virtual void SetActive(BOOL isActive) = 0;
-};
 
-interface IRigidActor
-{
-    virtual BOOL IsDynamic() = 0;
     virtual BOOL IsCollisionEnter() = 0;
     virtual BOOL IsCollisionStay() = 0;
     virtual BOOL IsCollisionExit() = 0;
@@ -43,16 +39,16 @@ interface IRigidTrigger
 {
 };
 
-//interface IRigidBody
-//{
-//    virtual void    Update(IGameObject * pObj) = 0;
-//    virtual Vector3 GetVelocity() const = 0;
-//    virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
-//    virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
-//
-//    virtual void SetActive(BOOL isActive) = 0;
-//    virtual void Reset() = 0;
-//};
+interface IRigidBody
+{
+    virtual void    Update(IGameObject * pObj) = 0;
+    virtual Vector3 GetVelocity() const = 0;
+    virtual void    ApplyImpulseLinear(const Vector3 &impulse) = 0;
+    virtual void    ApplyImpulseAngular(const Vector3 &impulse) = 0;
+
+    virtual void SetActive(BOOL isActive) = 0;
+    virtual void Reset() = 0;
+};
 
 //interface ICharacterBody
 //{

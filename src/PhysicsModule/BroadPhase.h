@@ -41,8 +41,5 @@ class BroadPhase
     // return num candidate
     UINT QueryCollisionPairs(CollisionPair *pCollisionPairs, UINT maxCollision);
 
-    // return num candidate
-    UINT QueryIntersectRay(const Ray &ray, int *bodyIDs, UINT maxCollision);
-
     void Reset();
 };

@@ -29,7 +29,9 @@
       <Filter>Collider</Filter>
     </ClInclude>
     <ClInclude Include="BroadPhase.h" />
-    <ClInclude Include="RigidActor.h" />
+    <ClInclude Include="RigidBody.h">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -43,6 +45,8 @@
       <Filter>Collider</Filter>
     </ClCompile>
     <ClCompile Include="BroadPhase.cpp" />
-    <ClCompile Include="RigidActor.cpp" />
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>RigidBody</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

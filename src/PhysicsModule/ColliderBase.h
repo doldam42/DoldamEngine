@@ -1,9 +1,14 @@
 #pragma once
 
+struct RigidBody;
 struct Collider : public ICollider
 {
+    RigidBody *pBody = nullptr;
+
     UINT ID;
     BOOL IsActive;
+    BOOL IsCollide;
+    BOOL IsPrevCollide;
 
     Vector3    Position;
     Quaternion Rotation;
@@ -17,4 +22,8 @@ struct Collider : public ICollider
 
     virtual COLLIDER_TYPE GetType() const = 0;
     virtual Bounds        GetBounds() const = 0;
+
+    BOOL IsCollisionEnter() override { return (!IsPrevCollide && IsCollide); }
+    BOOL IsCollisionStay() override { return (IsPrevCollide && IsCollide); }
+    BOOL IsCollisionExit() override { return (IsPrevCollide && !IsCollide); }
 };
