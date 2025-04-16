@@ -299,11 +299,11 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         const Vector3 hitPoint = sphereCenter + dir * t0;
         const Vector3 ab = v1 - v0;
         const Vector3 ac = hitPoint - v0;
-        const Vector3 p = v0 + ab *(ac.Dot(ab) / ab.LengthSquared());
-        Vector3 n = hitPoint - p;
+        const Vector3 p = v0 + ab * (ac.Dot(ab) / ab.LengthSquared());
+        Vector3       n = hitPoint - p;
         n.Normalize();
 
-        *pOutContactPointA = hitPoint + n * sphereRadius; 
+        *pOutContactPointA = hitPoint + n * sphereRadius;
         *pOutContactPointB = p;
 
         *pOutToi = t0 * dt;
@@ -340,7 +340,8 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
 
     // normal 방향으로 이동한 삼각형과의 충돌처리
     if (RayTriangle(sphereCenter, dir, v0 + normal * sphereRadius, v1 + normal * sphereRadius,
-                    v2 + normal * sphereRadius, &t0) && t0 < tMax)
+                    v2 + normal * sphereRadius, &t0) &&
+        t0 < tMax)
     {
 
         //*pOutContactPointA = hitPoint + n * sphereRadius;
@@ -373,8 +374,7 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
 }
 
 BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
-                           Vector3 posB, Vector3 velocity, const float dt, Vector3 *pOutNormal,
-                           float *pOutToi)
+                           Vector3 posB, Vector3 velocity, const float dt, Vector3 *pOutNormal, float *pOutToi)
 {
     const float scale = minorRadiusA / majorRadiusA;
     const float invScale = 1.0f / scale;
@@ -458,4 +458,83 @@ BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius
     }*/
 
     return FALSE;
+}
+
+void SATtest(const Vector3 &axis, const Vector3 *pCorners, int numCorners, float &minAlong, float &maxAlong)
+{
+    minAlong = HUGE, maxAlong = -HUGE;
+    for (int i = 0; i < numCorners; i++)
+    {
+        // just dot it to get the min/max along this axis.
+        float dotVal = pCorners[i].Dot(axis);
+        if (dotVal < minAlong)
+            minAlong = dotVal;
+        if (dotVal > maxAlong)
+            maxAlong = dotVal;
+    }
+}
+
+// A, B의 projection이 축에서 겹치는지 검사
+bool OverlapOnAxis(const Vector3 &extentA, const Vector3 &extentB, const Vector3 &posA, const Vector3 &posB,
+                   Vector3 axis, Vector3 a_axes[3], Vector3 b_axes[3])
+{
+    if (axis.LengthSquared() < 1e-3f)
+        return true; // 축이 0이면 skip
+    axis.Normalize();
+
+    // 중심간 거리의 투영
+    Vector3 distance = posB - posA;
+    float   projectedDistance = fabsf(distance.Dot(axis));
+
+    // A와 B의 반지름 합
+    float rA = fabsf(a_axes[0].Dot(axis)) * extentA.x + fabsf(a_axes[1].Dot(axis)) * extentA.y +
+               fabsf(a_axes[2].Dot(axis)) * extentA.z;
+
+    float rB = fabsf(b_axes[0].Dot(axis)) * extentB.x + fabsf(b_axes[1].Dot(axis)) * extentB.y +
+               fabsf(b_axes[2].Dot(axis)) * extentB.z;
+
+    return projectedDistance <= (rA + rB);
+}
+
+void GetAxes(const Quaternion &q, Vector3 axes[3])
+{
+    Matrix m = Matrix::CreateFromQuaternion(q);
+    axes[0] = Vector3(m._11, m._12, m._13);
+    axes[1] = Vector3(m._21, m._22, m._23);
+    axes[2] = Vector3(m._31, m._32, m._33);
+}
+
+BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaternion &rotA, const Quaternion &rotB,
+                  const Vector3 &posA, const Vector3 &posB)
+{
+    Vector3 cornersA[8];
+    Vector3 cornersB[8];
+
+    Vector3 axesA[3], axesB[3];
+    GetAxes(rotA, axesA);
+    GetAxes(rotB, axesB);
+
+    Vector3 axesToTest[15];
+    int     axisCount = 0;
+
+    // 3 + 3 기본 축
+    for (int i = 0; i < 3; ++i)
+    {
+        axesToTest[axisCount++] = axesA[i];
+        axesToTest[axisCount++] = axesB[i];
+    }
+
+    // 9개의 교차 축
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            axesToTest[axisCount++] = axesA[i].Cross(axesB[j]);
+
+    for (int i = 0; i < axisCount; ++i)
+    {
+        if (!OverlapOnAxis(extentA, extentB, posA, posB, axesToTest[i], axesA, axesB))
+        {
+            return FALSE; // 분리축 발견
+        }
+    }
+    return TRUE;
 }

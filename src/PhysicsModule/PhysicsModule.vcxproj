@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BoxCollider.h" />
     <ClInclude Include="BroadPhase.h" />
     <ClInclude Include="ColliderBase.h" />
     <ClInclude Include="framework.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="SphereCollider.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoxCollider.cpp" />
     <ClCompile Include="BroadPhase.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp">

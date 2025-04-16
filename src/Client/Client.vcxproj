@@ -173,6 +173,7 @@
     <ClCompile Include="BasicScene.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="CollideTestScene.cpp" />
     <ClCompile Include="CollisionDemoController.cpp" />
     <ClCompile Include="Firework.cpp" />
     <ClCompile Include="InputManager.cpp" />
@@ -181,8 +182,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="PhysicsDemoController.cpp" />
-    <ClCompile Include="PlayerController.cpp" />
+    <ClCompile Include="PhysicsDemoController.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="PlayerController.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="RaytracingDemoController.cpp" />
     <ClCompile Include="TessellationDemoController.cpp" />
     <ClCompile Include="VideoManager.cpp" />
@@ -198,13 +203,18 @@
     <ClInclude Include="BasicScene.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Client.h" />
+    <ClInclude Include="CollideTestScene.h" />
     <ClInclude Include="CollisionDemoController.h" />
     <ClInclude Include="ControllerRegistry.h" />
     <ClInclude Include="Firework.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PhysicsDemoController.h" />
-    <ClInclude Include="PlayerController.h" />
+    <ClInclude Include="PhysicsDemoController.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="PlayerController.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="RaytracingDemoController.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SceneRegistry.h" />

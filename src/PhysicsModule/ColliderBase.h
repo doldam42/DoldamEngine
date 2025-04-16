@@ -3,12 +3,13 @@
 struct RigidBody;
 struct Collider : public ICollider
 {
+    IGameObject *pObj = nullptr;
     RigidBody *pBody = nullptr;
 
-    UINT ID;
-    BOOL IsActive;
-    BOOL IsCollide;
-    BOOL IsPrevCollide;
+    UINT ID = 0;
+    BOOL IsActive = TRUE;
+    BOOL IsCollide = FALSE;
+    BOOL IsPrevCollide = FALSE;
 
     Vector3    Position;
     Quaternion Rotation;
@@ -26,4 +27,6 @@ struct Collider : public ICollider
     BOOL IsCollisionEnter() override { return (!IsPrevCollide && IsCollide); }
     BOOL IsCollisionStay() override { return (IsPrevCollide && IsCollide); }
     BOOL IsCollisionExit() override { return (IsPrevCollide && !IsCollide); }
+
+    IGameObject *GetGameObject() override { return pObj; }
 };

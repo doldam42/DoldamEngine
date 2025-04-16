@@ -33,7 +33,7 @@ void GameObject::Cleanup()
     }
     if (m_pRigidBody)
     {
-        pPhysics->DeleteRigidBody(m_pRigidBody);
+        //pPhysics->DeleteRigidBody(m_pRigidBody);
         m_pRigidBody = nullptr;
     }
     if (m_pModel)
@@ -61,6 +61,12 @@ void GameObject::Update(float dt)
 
     if (m_IsUpdated)
     {
+        if (m_pCollider)
+        {
+            m_pCollider->SetPosition(m_transform.GetPosition());
+            m_pCollider->SetRotation(m_transform.GetRotation());
+        }
+
         m_worldMatrix = m_transform.GetMatrix();
 
         m_IsUpdated = false;

@@ -42,7 +42,6 @@ class GameObject : public IGameObject
     void SetRigidBody(IRigidBody *pBody) override
     {
         m_pRigidBody = pBody;
-        pBody->SetUserPtr(this);
     }
 
     virtual void Update(float dt);

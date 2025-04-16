@@ -5,7 +5,6 @@ class Terrain
     UINT  m_imgWidth = 0;
     UINT  m_imgHeight = 0;
 
-    IHeightFieldTerrainCollider *m_pCollider = nullptr;
     IRenderTerrain              *m_pRenderTerrain = nullptr;
 
     Vector3 m_terrainScale;

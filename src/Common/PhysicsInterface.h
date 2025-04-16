@@ -33,10 +33,8 @@ interface ICollider
     virtual BOOL IsCollisionEnter() = 0;
     virtual BOOL IsCollisionStay() = 0;
     virtual BOOL IsCollisionExit() = 0;
-};
 
-interface IRigidTrigger 
-{
+    virtual IGameObject *GetGameObject() = 0;
 };
 
 interface IRigidBody
@@ -68,9 +66,9 @@ interface IPhysicsManager : public IUnknown
 {
     virtual BOOL Initialize() = 0;
 
-    virtual ICollider *CreateSphereCollider(const float radius) = 0;
-    /*virtual ICollider *CreateBoxCollider(const Vector3 &halfExtents) = 0;
-    virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
+    virtual ICollider *CreateSphereCollider(IGameObject * pObj, const float radius) = 0;
+    virtual ICollider *CreateBoxCollider(IGameObject* pObj, const Vector3 &halfExtents) = 0;
+    /*virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
     virtual ICollider *CreateConvexCollider(const Vector3 *points, const int numPoints) = 0;*/
     virtual void       DeleteCollider(ICollider * pDel) = 0;
 
@@ -91,5 +89,5 @@ interface IPhysicsManager : public IUnknown
 
     //virtual void BuildScene() = 0;
 
-    //virtual BOOL Raycast(const Ray &ray, float *tHit, IRigidBody **ppHitted) = 0;
+    virtual BOOL Raycast(const Ray &ray, float *tHit, ICollider** pCollider) = 0;
 };

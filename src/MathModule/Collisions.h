@@ -37,3 +37,6 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
 BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius, Vector3 velocity, float dt,
                             Vector3 v0, Vector3 v1, Vector3 v2, Vector3 normal, Vector3 *pOutNormal,
                             float *pOutToi);
+
+BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaternion &rotA, const Quaternion &rotB,
+                  const Vector3 &posA, const Vector3 &posB);

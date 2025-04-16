@@ -25,7 +25,7 @@ void World::InsertObject(GameObject *pObject)
 {
     if (pObject->HasBounds())
     {
-        if (pObject->GetRigidBody() && pObject->GetRigidBody()->IsDynamic())
+        if (pObject->GetCollider())
             m_pTree->InsertObject(pObject->GetBounds(), pObject);
     }
 }

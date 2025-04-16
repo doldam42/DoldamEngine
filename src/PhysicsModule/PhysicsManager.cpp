@@ -3,6 +3,7 @@
 #include "BroadPhase.h"
 #include "ColliderBase.h"
 #include "SphereCollider.h"
+#include "BoxCollider.h"
 
 #include "PhysicsManager.h"
 
@@ -33,17 +34,28 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
 
     if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
     {
-        SphereCollider *pSphereA = (const SphereCollider *)pA;
-        SphereCollider *pSphereB = (const SphereCollider *)pB;
+        const SphereCollider *pSphereB = (const SphereCollider *)pB;
+        const SphereCollider *pSphereA = (const SphereCollider *)pA;
 
         Vector3 contactPointA;
         Vector3 contactPointB;
         if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
         {
-            pSphereA->IsCollide = TRUE;
-            pSphereB->IsCollide = TRUE;
+            return TRUE;
         }
     }
+    if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_BOX)
+    {
+        const BoxCollider *pBoxA = (const BoxCollider *)pA;
+        const BoxCollider *pBoxB = (const BoxCollider *)pB;
+        
+        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position, pBoxB->Position))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 BOOL PhysicsManager::Initialize()
@@ -54,11 +66,22 @@ BOOL PhysicsManager::Initialize()
     return TRUE;
 }
 
-ICollider *PhysicsManager::CreateSphereCollider(const float radius)
+ICollider *PhysicsManager::CreateSphereCollider(IGameObject *pObj, const float radius)
 {
     SphereCollider *pNew = new SphereCollider(radius);
     m_pColliders[m_colliderCount] = pNew;
     pNew->ID = m_colliderCount;
+    pNew->pObj = pObj;
+    m_colliderCount++;
+    return pNew;
+}
+
+ICollider *PhysicsManager::CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents)
+{
+    BoxCollider *pNew = new BoxCollider(halfExtents);
+    m_pColliders[m_colliderCount] = pNew;
+    pNew->ID = m_colliderCount;
+    pNew->pObj = pObj;
     m_colliderCount++;
     return pNew;
 }
@@ -74,12 +97,15 @@ void PhysicsManager::DeleteCollider(ICollider *pDel)
     delete pDel;
 }
 
+BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, ICollider **pCollider) { return 0; }
+
 void PhysicsManager::BeginCollision(float dt)
 {
     for (int i = 0; i < m_colliderCount; i++)
     {
         Collider *pCollider = m_pColliders[i];
         pCollider->IsPrevCollide = pCollider->IsCollide;
+        pCollider->IsCollide = FALSE;
     }
 
     m_pBroadPhase->Build(m_pColliders, m_colliderCount, dt);
@@ -96,29 +122,14 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         Collider *pA = m_pColliders[pair.a];
         Collider *pB = m_pColliders[pair.b];
 
-        if (pA->m_invMass == 0 && pB->m_invMass == 0)
+        if (pA->IsActive && pB->IsActive && Intersect(pA, pB))
         {
-            __debugbreak();
-            continue;
-        }
-        if (pA->m_isKinematic || pB->m_isKinematic)
-            continue;
-
-        Contact contact;
-        if (Intersect(pA, pB, dt, &contact))
-        {
-            if (contact.timeOfImpact == 0.0f)
-            {
-                // Static contact
-                AddContact(contact);
-            }
-            else
-            {
-                m_contacts[m_contactCount] = contact;
-                m_contactCount++;
-            }
+            pA->IsCollide = TRUE;
+            pB->IsCollide = TRUE;
         }
     }
+
+    return TRUE;
 }
 
 void PhysicsManager::EndCollision() {}

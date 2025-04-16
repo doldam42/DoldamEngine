@@ -39,8 +39,13 @@
       <Filter>Manager</Filter>
     </ClCompile>
     <ClCompile Include="PlayerController.cpp" />
-    <ClCompile Include="BasicScene.cpp" />
     <ClCompile Include="PhysicsDemoController.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="CollideTestScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
@@ -102,8 +107,13 @@
     </ClInclude>
     <ClInclude Include="PlayerController.h" />
     <ClInclude Include="SceneRegistry.h" />
-    <ClInclude Include="BasicScene.h" />
     <ClInclude Include="PhysicsDemoController.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="CollideTestScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>

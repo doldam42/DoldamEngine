@@ -7,7 +7,7 @@
 
 #include "PlayerController.h"
 
-REGISTER_CONTROLLER(PlayerController)
+//REGISTER_CONTROLLER(PlayerController)
 
 BOOL PlayerController::Start()
 {
@@ -18,8 +18,8 @@ BOOL PlayerController::Start()
     m_pPlayer = pGame->CreateGameObject();
     m_pPlayer->SetPosition(pos.x, pos.y, pos.z);
 
-    m_pPlayerBody = g_pClient->GetPhysics()->CreateCharacterBody(pos, 0.5f, 2.0f);
-    m_pPlayerBody->SetJumpSpeed(jumpSpeed);
+    /*m_pPlayerBody = g_pClient->GetPhysics()->CreateCharacterBody(pos, 0.5f, 2.0f);
+    m_pPlayerBody->SetJumpSpeed(jumpSpeed);*/
 
     pCam->SetFollowTarget(m_pPlayer, Vector3(0.0f, 2.0f, -3.0f));
 
@@ -28,7 +28,7 @@ BOOL PlayerController::Start()
 
 void PlayerController::Update(float dt)
 {
-    InputManager *pI = g_pClient->GetInputManager();
+    /*InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
 
     if (pI->IsKeyPressed(VK_LBUTTON, false))
@@ -77,7 +77,7 @@ void PlayerController::Update(float dt)
 
         m_pPlayerBody->Move((right * dx + forward * dz) * speed * dt);
     }
-    m_pPlayerBody->Update(m_pPlayer);
+    m_pPlayerBody->Update(m_pPlayer);*/
     //RayHit hit;
     //BOOL   isGrounded = pGame->Raycast(pos, Vector3::Down, &hit, 0.01f);
     //if (isGrounded)

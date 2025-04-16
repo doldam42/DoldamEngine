@@ -30,10 +30,10 @@ void BasicScene::Load()
     pGround->SetScale(30.0f, 0.2f, 30.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
 
-    ICollider  *pCollider = pPhysics->CreateBoxCollider(Vector3(30.0f, 0.2f, 30.0f));
-    IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider, Vector3::Zero, 0.0f, 0.5f, 0.5f, FALSE);
-    pGround->SetCollider(pCollider);
-    pGround->SetRigidBody(pBody);
+    //ICollider  *pCollider = pPhysics->CreateBoxCollider(Vector3(30.0f, 0.2f, 30.0f));
+    //IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider, Vector3::Zero, 0.0f, 0.5f, 0.5f, FALSE);
+    //pGround->SetCollider(pCollider);
+    //pGround->SetRigidBody(pBody);
 
     // Set CrossHair
     {

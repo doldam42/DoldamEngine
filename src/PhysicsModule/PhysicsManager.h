@@ -25,8 +25,11 @@ class PhysicsManager : public IPhysicsManager
   public:
     BOOL Initialize() override;
 
-    ICollider *CreateSphereCollider(const float radius) override;
+    ICollider *CreateSphereCollider(IGameObject* pObj, const float radius) override;
+    ICollider *CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents) override;
     void       DeleteCollider(ICollider *pDel) override;
+
+    BOOL Raycast(const Ray &ray, float *tHit, ICollider **pCollider) override;
 
     void BeginCollision(float dt) override;
     BOOL CollisionTestAll(float dt) override;
