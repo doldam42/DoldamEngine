@@ -51,26 +51,27 @@ void CollideTestScene::Load()
             float        x = -8.0f + row * 4.0f;
             IGameObject *pObj = pGame->CreateGameObject();
 
-            // if (row % 2) // odd
-            //{
-            //     IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-            //     pObj->SetModel(pModel);
-            //     ICollider  *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
-            //     pObj->SetCollider(pCollider);
-            // }
-            // else
-            //{
-            //     IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-            //     pObj->SetModel(pModel);
-            //     ICollider  *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
-            //     pObj->SetCollider(pCollider);
-            // }
+           if (row % 2) // odd
+            {
+                 IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+                 pObj->SetModel(pModel);
+                 ICollider  *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
+                 pObj->SetCollider(pCollider);
+             }
+             else
+            {
+                 IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                 pObj->SetModel(pModel);
+                 ICollider  *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
+                 pObj->SetCollider(pCollider);
+             }
 
-            IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+            /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
             pObj->SetModel(pModel);
             ICollider *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
-            pObj->SetCollider(pCollider);
+            pObj->SetCollider(pCollider);*/
             pObj->SetPosition(x, 1.0f, z);
+            pObj->SetRotationY(XM_PIDIV2 / 2);
             pObj->SetMaterials(&pMaterial, 1);
             m_pSpheres[col * 5 + row] = pObj;
         }
@@ -120,9 +121,11 @@ void CollideTestScene::Update(float dt)
     }
 
     offset += deltaPos;
+    
     if (abs(offset) > boundary)
     {
         speed = -speed;
+        offset = (offset > 0) ? boundary : -boundary;
     }
 }
 

@@ -538,3 +538,24 @@ BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaterni
     }
     return TRUE;
 }
+
+BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const Vector3 &obbHalfExtent,
+                     const Quaternion &obbRot, const Vector3 &boxPos)
+{
+    Vector3 axes[3];
+    GetAxes(obbRot, axes);
+
+    Vector3 delta = spherePos - boxPos;
+    Vector3 closestPoint = boxPos;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        float dist = delta.Dot(axes[i]);
+        float clamped = fmaxf(-obbHalfExtent[i], fminf(dist, obbHalfExtent[i]));
+        closestPoint += axes[i] * clamped;
+    }
+
+    Vector3 diff = spherePos - closestPoint;
+    float   distSq = diff.LengthSquared();
+    return distSq <= sphereRadius * sphereRadius;
+}

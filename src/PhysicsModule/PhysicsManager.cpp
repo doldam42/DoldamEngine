@@ -32,26 +32,51 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
     Vector3 posA = pA->Position;
     Vector3 posB = pB->Position;
 
-    if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
+    if (typeA == COLLIDER_TYPE_SPHERE)
     {
-        const SphereCollider *pSphereB = (const SphereCollider *)pB;
-        const SphereCollider *pSphereA = (const SphereCollider *)pA;
-
-        Vector3 contactPointA;
-        Vector3 contactPointB;
-        if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
+        if (typeB == COLLIDER_TYPE_SPHERE)
         {
-            return TRUE;
+            const SphereCollider *pSphereB = (const SphereCollider *)pB;
+            const SphereCollider *pSphereA = (const SphereCollider *)pA;
+
+            Vector3 contactPointA;
+            Vector3 contactPointB;
+            if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
+            {
+                return TRUE;
+            }
+        }
+        else if (typeB == COLLIDER_TYPE_BOX)
+        {
+            const SphereCollider *pSphere = (const SphereCollider *)pA;
+            const BoxCollider    *pBox = (const BoxCollider *)pB;
+            if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, pBox->Rotation, posB))
+            {
+                return TRUE;
+            }
         }
     }
-    if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_BOX)
+    else if (typeA == COLLIDER_TYPE_BOX)
     {
-        const BoxCollider *pBoxA = (const BoxCollider *)pA;
-        const BoxCollider *pBoxB = (const BoxCollider *)pB;
-        
-        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position, pBoxB->Position))
+        if (typeB == COLLIDER_TYPE_SPHERE)
         {
-            return TRUE;
+            const BoxCollider    *pBox = (const BoxCollider *)pA;
+            const SphereCollider *pSphere = (const SphereCollider *)pB;
+            if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, pBox->Rotation, posB))
+            {
+                return TRUE;
+            }
+        }
+        else if (typeB == COLLIDER_TYPE_BOX)
+        {
+            const BoxCollider *pBoxA = (const BoxCollider *)pA;
+            const BoxCollider *pBoxB = (const BoxCollider *)pB;
+
+            if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position,
+                             pBoxB->Position))
+            {
+                return TRUE;
+            }
         }
     }
 

@@ -3,18 +3,18 @@
 #include "PhysicsManager.h"
 
 #ifdef _DEBUG
-#pragma comment(lib, "BulletDynamics_vs2010_x64_debug.lib")
-#pragma comment(lib, "BulletCollision_vs2010_x64_debug.lib")
-#pragma comment(lib, "LinearMath_vs2010_x64_debug.lib")
+//#pragma comment(lib, "BulletDynamics_vs2010_x64_debug.lib")
+//#pragma comment(lib, "BulletCollision_vs2010_x64_debug.lib")
+//#pragma comment(lib, "LinearMath_vs2010_x64_debug.lib")
 
 #pragma comment(lib, "MathModule_x64_Debug.lib")
 #pragma comment(lib, "GenericModule_x64_Debug.lib")
 
 #else // _DEBUG
 
-#pragma comment(lib, "BulletDynamics_vs2010_x64_release.lib")
-#pragma comment(lib, "BulletCollision_vs2010_x64_release.lib")
-#pragma comment(lib, "LinearMath_vs2010_x64_release.lib")
+//#pragma comment(lib, "BulletDynamics_vs2010_x64_release.lib")
+//#pragma comment(lib, "BulletCollision_vs2010_x64_release.lib")
+//#pragma comment(lib, "LinearMath_vs2010_x64_release.lib")
 
 #pragma comment(lib, "MathModule_x64_Release.lib")
 #pragma comment(lib, "GenericModule_x64_Release.lib")
