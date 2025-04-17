@@ -173,6 +173,7 @@
     <ClCompile Include="BallisticDemo.cpp" />
     <ClCompile Include="BasicScene.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CollideTestScene.cpp" />
     <ClCompile Include="CollisionDemoController.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="BallisticDemo.h" />
     <ClInclude Include="BasicScene.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="CharacterController.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="CollideTestScene.h" />
     <ClInclude Include="CollisionDemoController.h" />

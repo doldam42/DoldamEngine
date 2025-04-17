@@ -48,6 +48,7 @@
     <ClCompile Include="CollideTestScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="CharacterController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="CollideTestScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="CharacterController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

@@ -15,7 +15,7 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_SPHERE = 0,
     COLLIDER_TYPE_BOX,
     COLLIDER_TYPE_CAPSULE,
-    COLLIDER_TYPE_ELLIPSE,
+    COLLIDER_TYPE_ELLIPSOID,
     COLLIDER_TYPE_CONVEX,
 };
 
@@ -33,6 +33,8 @@ interface ICollider
     virtual BOOL IsCollisionEnter() = 0;
     virtual BOOL IsCollisionStay() = 0;
     virtual BOOL IsCollisionExit() = 0;
+
+    virtual Bounds GetBounds() const = 0;
 
     virtual IGameObject *GetGameObject() = 0;
 };
@@ -68,8 +70,10 @@ interface IPhysicsManager : public IUnknown
 
     virtual ICollider *CreateSphereCollider(IGameObject * pObj, const float radius) = 0;
     virtual ICollider *CreateBoxCollider(IGameObject* pObj, const Vector3 &halfExtents) = 0;
-    /*virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
-    virtual ICollider *CreateConvexCollider(const Vector3 *points, const int numPoints) = 0;*/
+    virtual ICollider *CreateEllpsoidCollider(IGameObject * pObj, const float majorRadius,
+                                              const float minorRadius) = 0; // Major Axis: Y
+    //virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
+    //virtual ICollider *CreateConvexCollider(const Vector3 *points, const int numPoints) = 0;
     virtual void       DeleteCollider(ICollider * pDel) = 0;
 
     virtual void       BeginCollision(float dt) = 0;

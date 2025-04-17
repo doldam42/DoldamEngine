@@ -30,6 +30,9 @@ void CollideTestScene::Load()
     pGround->SetScale(30.0f, 0.2f, 30.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
 
+    ICollider *pCollider = pPhysics->CreateBoxCollider(pGround, Vector3(30.0f, 0.2f, 30.0f));
+    pGround->SetCollider(pCollider);
+
     for (int col = 0; col < 5; col++)
     {
         float z = -8.0f + col * 4.0f;
@@ -51,26 +54,38 @@ void CollideTestScene::Load()
             float        x = -8.0f + row * 4.0f;
             IGameObject *pObj = pGame->CreateGameObject();
 
-           if (row % 2) // odd
+            if (row % 2) // odd
             {
-                 IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-                 pObj->SetModel(pModel);
-                 ICollider  *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
-                 pObj->SetCollider(pCollider);
-             }
-             else
+                /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
+                pObj->SetCollider(pCollider);*/
+
+                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
+                pObj->SetCollider(pCollider);
+                pObj->SetScale(1.0f, 1.5f, 1.0f);
+            }
+            else
             {
-                 IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-                 pObj->SetModel(pModel);
-                 ICollider  *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
-                 pObj->SetCollider(pCollider);
-             }
+                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
+                pObj->SetCollider(pCollider);
+
+                /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
+                pObj->SetCollider(pCollider);
+                pObj->SetScale(1.0f, 1.5f, 1.0f);*/
+            }
 
             /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
             pObj->SetModel(pModel);
             ICollider *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
             pObj->SetCollider(pCollider);*/
-            pObj->SetPosition(x, 1.0f, z);
+            pObj->SetPosition(x, 2.0f, z);
             pObj->SetRotationY(XM_PIDIV2 / 2);
             pObj->SetMaterials(&pMaterial, 1);
             m_pSpheres[col * 5 + row] = pObj;
@@ -121,7 +136,7 @@ void CollideTestScene::Update(float dt)
     }
 
     offset += deltaPos;
-    
+
     if (abs(offset) > boundary)
     {
         speed = -speed;

@@ -252,7 +252,7 @@ void GameManager::Update(float dt)
     // Update Controller
     m_pControllerManager->Update(dt);
 
-    // Update Game Objects
+    // Update Visibility
     SORT_LINK *pCur = m_pGameObjLinkHead;
     while (pCur)
     {

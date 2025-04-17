@@ -9,6 +9,9 @@ BOOL RayTriangle(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &
 BOOL RayCylinder(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &p1, const Vector3 &p2,
                  const float radius, float *tHit);
 
+BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPos, const Vector3 &boxExtent,
+            const Quaternion &boxRot, float* tHit);
+
 BOOL RayEllipse(Vector3 rayStart, Vector3 rayDir, Vector3 center, float majorRadius, float minorRadius, float *pOutT1,
                 float *pOutT2);
 
@@ -43,3 +46,6 @@ BOOL BoxBoxStatic(const Vector3 &halfExtentA, const Vector3 &halfExtentB, const 
 
 BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const Vector3 &obbHalfExtent,
                      const Quaternion &obbRot, const Vector3 &boxPos);
+
+BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 obbPos, float majorRadius,
+                      float minorRadius,  Vector3 ellipsePos);

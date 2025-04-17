@@ -1,6 +1,5 @@
 #pragma once
-
-class PlayerController : public IController
+class CharacterController : public IController
 {
     static constexpr float SPEED = 8.0f;
 
@@ -8,6 +7,7 @@ class PlayerController : public IController
 
     float speed = SPEED;
     float jumpSpeed = 20.0f;
+
   public:
     BOOL Start() override;
     void Update(float dt) override;

@@ -360,7 +360,6 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
     const float scale = minorRadiusA / majorRadiusA;
     const float invScale = 1.0f / scale;
 
-    minorRadiusB *= scale;
     majorRadiusB *= scale;
     posA.y *= scale;
     posB.y *= scale;
@@ -368,9 +367,12 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
     Vector3 dir = posB - posA;
     dir.Normalize();
 
-    float dummyhitt0, dummyhitt1;
-    return RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &dummyhitt0,
-                      &dummyhitt1);
+    float hitt0, hitt1;
+    if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &hitt0, &hitt1) && hitt0 < 0.0f)
+    {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
@@ -558,4 +560,69 @@ BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const V
     Vector3 diff = spherePos - closestPoint;
     float   distSq = diff.LengthSquared();
     return distSq <= sphereRadius * sphereRadius;
+}
+
+BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 obbPos, float majorRadius,
+                      float minorRadius, Vector3 ellipsePos)
+{
+    const float scale = minorRadius / majorRadius;
+    const float invScale = 1.0f / scale;
+
+    // 장축(Y축)을 기준으로 Scale
+    obbHalfExtent.y *= scale;
+    obbPos.y *= scale;
+    ellipsePos.y *= scale;
+
+    if (SphereBoxStatic(minorRadius, ellipsePos, obbHalfExtent, obbRot, obbPos))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPos, const Vector3 &boxExtent,
+            const Quaternion &boxRot, float *tHit)
+{
+    const float EPSILON = 1e-6f;
+
+    Vector3 p = boxPos - rayStart;
+    float   tMin = -INFINITY;
+    float   tMax = INFINITY;
+
+    Vector3 axes[3];
+    GetAxes(boxRot, axes);
+    
+    float extents[3] = {boxExtent.x, boxExtent.y, boxExtent.z};
+
+    for (int i = 0; i < 3; ++i)
+    {
+        const Vector3 &axis = axes[i];
+        float          e = axis.Dot(p);
+        float          f = axis.Dot(rayDir);
+
+        if (fabsf(f) > EPSILON)
+        {
+            float t1 = (e + extents[i]) / f;
+            float t2 = (e - extents[i]) / f;
+
+            if (t1 > t2)
+                std::swap(t1, t2);
+
+            tMin = fmaxf(tMin, t1);
+            tMax = fminf(tMax, t2);
+
+            if (tMin > tMax)
+                return false; // no intersection
+        }
+        else
+        {
+            // ray is parallel to this slab
+            if (-e - extents[i] > 0.0f || -e + extents[i] < 0.0f)
+                return false; // ray is outside the box
+        }
+    }
+
+    *tHit = tMin;
+    return true;
 }

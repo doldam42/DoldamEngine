@@ -573,6 +573,111 @@ Model *GeometryGenerator::MakeSphere(const float radius, const int numslices, co
     return pModel;
 }
 
+Model *GeometryGenerator::MakeEllipsoid(const float majorRadius, const float minorRadius, const int numslices,
+                                        const int numstacks)
+{
+    // 참고: opengl sphere
+    // http://www.songho.ca/opengl/gl_sphere.html
+    // texture 좌표계때문에 (numslices + 1) 개의 버텍스 사용 (마지막에 닫아주는
+    // 버텍스가 중복) stack은 y 위쪽 방향으로 쌓아가는 방식
+
+    const float dtheta = -XM_2PI / float(numslices);
+    const float dphi = -XM_PI / float(numstacks);
+
+    vector<BasicVertex> vertices;
+    vertices.reserve(numstacks * numslices);
+
+    for (int j = 0; j <= numstacks; j++)
+    {
+
+        // 스택에 쌓일 수록 시작점을 x-y 평면에서 회전 시켜서 위로 올리는 구조
+        Vector3 stackstartpoint =
+            Vector3::Transform(Vector3(0.0f, -minorRadius, 0.0f), Matrix::CreateRotationZ(dphi * float(j)));
+        // 하층 (0, 1) - (1, 1)
+        // 상층 (0, 0) - (1, 0)
+        for (int i = 0; i <= numslices; i++)
+        {
+            BasicVertex v;
+
+            // 시작점을 x-z 평면에서 회전시키면서 원을 만드는 구조
+            v.position = Vector3::Transform(stackstartpoint, Matrix::CreateRotationY(dtheta * float(i)));
+
+            v.normal = v.position; // 원점이 구의 중심
+            v.normal.Normalize();
+            v.texcoord = Vector2(float(i) / numslices, 1.0f - float(j) / numstacks);
+
+            const Vector3 biTangent = Vector3(0.0f, 1.0f, 0.0f);
+            Vector3       normalOrth = v.normal - biTangent.Dot(v.normal) * v.normal;
+            normalOrth.Normalize();
+
+            v.tangent = biTangent.Cross(normalOrth);
+            v.tangent.Normalize();
+
+            /*if (vertices.size() == 2135)
+                __debugbreak();*/
+            vertices.push_back(v);
+        }
+    }
+
+    const float scale = majorRadius / minorRadius;
+    for (auto& vertex : vertices)
+    {
+        vertex.position.y *= scale;
+        vertex.normal.y *= scale;
+        vertex.tangent.y *= scale;
+    }
+
+    // cout << vertices.size() << endl;
+
+    vector<uint32_t> indices;
+    indices.reserve((numstacks + 1) * (numslices + 1) * 6);
+    for (int j = 0; j < numstacks; j++)
+    {
+        const int offset = (numslices + 1) * j;
+
+        for (int i = 0; i < numslices; i++)
+        {
+            /*indices.push_back(offset + i);
+            indices.push_back(offset + i + numslices + 1);
+            indices.push_back(offset + i + 1 + numslices + 1);
+
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + 1 + numslices + 1);
+            indices.push_back(offset + i + 1);*/
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + numstacks + 1);
+            indices.push_back(offset + i + numstacks + 2);
+
+            indices.push_back(offset + i);
+            indices.push_back(offset + i + numstacks + 2);
+            indices.push_back(offset + i + 1);
+        }
+    }
+
+    // cout << indices.size() << endl;
+    // for (int i = 0; i < indices.size(); i++) {
+    //     cout << indices[i] << " ";
+    // }
+    // cout << endl;
+
+    // CalcVerticeTangent(vertices.data(), vertices.size(), indices.data(), indices.size() / 3);
+    Model *pModel = new Model;
+
+    MeshObject *pObj = new MeshObject;
+    pObj->Initialize(MESH_TYPE_DEFAULT);
+    pObj->SetName(L"Sphere");
+
+    pObj->BeginCreateMesh(vertices.data(), vertices.size(), 1);
+    pObj->InsertFaceGroup(indices.data(), indices.size() / 3, 0);
+    pObj->EndCreateMesh();
+
+    MeshObject *ppObjs[] = {pObj};
+    Material    defaultMat = Material();
+    pModel->Initialize(&defaultMat, 1, reinterpret_cast<IGameMesh **>(ppObjs), 1);
+    pModel->AddRef();
+    return pModel;
+}
+
 // MeshData GeometryGenerator::MakeIcosahedron() {
 //
 //  // Luna DX12 교재 참고
