@@ -36,8 +36,11 @@ interface ICollider
 
     virtual Bounds GetBounds() const = 0;
 
+    virtual UINT GetCollidingColliders(ICollider * *ppOutColliders, UINT maxColliders = 7) = 0;
+
     virtual IGameObject *GetGameObject() = 0;
 };
+
 
 interface IRigidBody
 {

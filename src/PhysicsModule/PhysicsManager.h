@@ -1,8 +1,19 @@
 #pragma once
 
 #include "BroadPhase.h"
+#include "Contact.h"
 
 struct Collider;
+
+constexpr UINT MAX_PAIR_PER_COLLIDER = 7;
+
+struct ColliderData
+{
+    UINT PairCount = 0;
+    UINT PairIndices[MAX_PAIR_PER_COLLIDER] = {0};
+};
+
+
 class PhysicsManager : public IPhysicsManager
 {
   public:
@@ -17,10 +28,14 @@ class PhysicsManager : public IPhysicsManager
     UINT      m_colliderCount = 0;
 
     CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
+    Contact       m_contacts[MAX_COLLISION_COUNT];
+    UINT          m_contactCount = 0;
+
+    ColliderData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
 
     ULONG m_refCount = 1;
 
-    BOOL Intersect(Collider *pA, Collider *pB);
+    BOOL Intersect(Collider *pA, Collider *pB, Contact* pOutContact);
 
   public:
     BOOL Initialize() override;
@@ -36,7 +51,12 @@ class PhysicsManager : public IPhysicsManager
     BOOL CollisionTestAll(float dt) override;
     void EndCollision() override;
 
+    const ColliderData &GetColliderData(UINT colliderID) const { return m_colliderData[colliderID]; }
+    ICollider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
+
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 };
+
+extern PhysicsManager *g_pPhysics;

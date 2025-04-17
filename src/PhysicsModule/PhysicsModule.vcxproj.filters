@@ -38,6 +38,7 @@
     <ClInclude Include="EllipsoidCollider.h">
       <Filter>Collider</Filter>
     </ClInclude>
+    <ClInclude Include="Contact.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -60,5 +61,7 @@
     <ClCompile Include="EllipsoidCollider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
+    <ClCompile Include="Contact.cpp" />
+    <ClCompile Include="ColliderBase.cpp" />
   </ItemGroup>
 </Project>

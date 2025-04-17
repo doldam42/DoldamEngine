@@ -1,14 +1,27 @@
 #pragma once
-class CharacterController : public IController
+class CharacterController
 {
-    static constexpr float SPEED = 8.0f;
+    IPhysicsManager *m_pPhysics = nullptr;
 
-    IGameObject *m_pPlayer = nullptr;
+    IGameObject *m_pGameObject = nullptr;
+    ICollider   *m_pCollider = nullptr;
 
-    float speed = SPEED;
-    float jumpSpeed = 20.0f;
+    float m_height = 0.0f;
+    float m_radius = 0.0f;
+
+    BOOL m_isGrounded = TRUE;
+    BOOL m_isActive = TRUE;
+
+    Vector3 m_velocity;
+
+  private:
+    void ApplyGravity(float dt);
+    void UpdatePosition(float dt);
+    void CheckGrounded();
 
   public:
-    BOOL Start() override;
-    void Update(float dt) override;
+    BOOL Initialize(const Vector3 &startPosition, float height, float radius);
+
+    CharacterController() = default;
+    ~CharacterController();
 };

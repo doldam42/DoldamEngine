@@ -3,58 +3,63 @@
 #include "CameraController.h"
 #include "Client.h"
 #include "InputManager.h"
-#include "ControllerRegistry.h"
+
 #include "CharacterController.h"
 
-REGISTER_CONTROLLER(CharacterController)
-
-BOOL CharacterController::Start()
+void CharacterController::ApplyGravity(float dt) 
 {
-    IGameManager     *pGame = g_pClient->GetGameManager();
-    IPhysicsManager  *pPhysics = g_pClient->GetPhysics();
-    CameraController *pCam = g_pClient->GetCameraController();
-
-    const Vector3 pos(1.0f, 5.0f, -5.0f);
-    m_pPlayer = pGame->CreateGameObject();
-    m_pPlayer->SetPosition(pos.x, pos.y, pos.z);
-
-    ICollider *pCollider = pPhysics->CreateEllpsoidCollider(m_pPlayer, 2.0f, 1.0f);
-    m_pPlayer->SetCollider(pCollider);
-
-    pCam->SetFollowTarget(m_pPlayer, Vector3(0.0f, 2.0f, -3.0f));
-
-    return TRUE;
+    constexpr float gravity = -9.8f;
+    m_velocity.y += dt * gravity;
 }
 
-void CharacterController::Update(float dt)
+void CharacterController::UpdatePosition(float dt) 
+{ 
+    Vector3 curPos = m_pGameObject->GetPosition();
+    Vector3 deltaPos = curPos + m_velocity * dt;
+    Vector3 foot = curPos - Vector3(0.0f, m_height / 2, 0.0f);
+
+    Vector3 dir = deltaPos - curPos;
+
+    float length = dir.Length();
+
+    dir.Normalize();
+    Ray ray;
+    ray.direction = dir;
+    ray.position = foot;
+    ray.tmax = length;
+
+    ICollider *pHittedCollider = nullptr;
+    float tHit;
+    if (m_pPhysics->Raycast(ray, &tHit, &pHittedCollider))
+    {
+        deltaPos = curPos + dir * tHit * 0.99f;
+        if (pHittedCollider != m_pCollider)
+        {
+
+        }
+    }
+}
+
+void CharacterController::CheckGrounded() {}
+
+BOOL CharacterController::Initialize(const Vector3 &startPosition, float height, float radius)
 {
-    InputManager *pI = g_pClient->GetInputManager();
-    IGameManager *pGame = g_pClient->GetGameManager();
+    IGameManager    *pGame = g_pClient->GetGameManager();
+    IPhysicsManager *pPhysics = g_pClient->GetPhysics();
 
-    Vector3 pos = m_pPlayer->GetPosition();
-    
-    BOOL isGrounded = m_pPlayer->GetCollider()->IsCollisionEnter() || m_pPlayer->GetCollider()->IsCollisionStay();
-    // RayHit hit;
-    //BOOL   isGrounded = pGame->Raycast(pos, Vector3::Down, &hit, 0.01f);
-    if (isGrounded)
-    {
-        /*if (hit.tHit < 0.0f)
-            pos.y -= hit.tHit * dt;*/
-        jumpSpeed = (pI->IsKeyPressed(VK_SPACE, false)) ? 9.8 : 0.0f;
-        speed = (pI->IsKeyPressed(VK_SHIFT)) ? SPEED * 2.0f : SPEED;
-    }
-    else
-    {
-        jumpSpeed -= 9.8f * dt;
-    }
+    IGameObject *pObj = pGame->CreateGameObject();
+    ICollider   *pCollider = pPhysics->CreateEllpsoidCollider(pObj, height, radius);
 
-    const float dx = pI->GetXAxis();
-    const float dz = pI->GetZAxis();
+    pObj->SetCollider(pCollider);
+    pObj->SetPosition(startPosition.x, startPosition.y + 0.001f + height / 2, startPosition.z);
 
-    Vector3 forward = m_pPlayer->GetForward();
-    Vector3 right = Vector3::Up.Cross(forward);
+    m_pPhysics = pPhysics;
 
-    pos += (right * dx + forward * dz) * speed * dt;
-    pos.y += jumpSpeed * dt;
-    m_pPlayer->SetPosition(pos.x, pos.y, pos.z);
+    m_pGameObject = pObj;
+    m_pCollider = pCollider;
+
+    m_height = height;
+    m_radius = radius;
+
+    return TRUE;
 }

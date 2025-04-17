@@ -8,6 +8,8 @@
 
 #include "PhysicsManager.h"
 
+PhysicsManager *g_pPhysics = nullptr;
+
 HRESULT __stdcall PhysicsManager::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
 ULONG __stdcall PhysicsManager::AddRef(void)
@@ -25,7 +27,7 @@ ULONG __stdcall PhysicsManager::Release(void)
     return ref_count;
 }
 
-BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB) 
+BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
 { 
     COLLIDER_TYPE typeA = pA->GetType(); 
     COLLIDER_TYPE typeB = pB->GetType();
@@ -50,6 +52,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         Vector3 contactPointB;
         if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -59,6 +63,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         const BoxCollider    *pBox = (const BoxCollider *)pB;
         if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, pBox->Rotation, posB))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -69,6 +75,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         if (EllipseEllipseStatic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
             posB))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -80,6 +88,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position,
                          pBoxB->Position))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -89,6 +99,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         const EllipsoidCollider *pEllipse = (const EllipsoidCollider *)pB;
         if (BoxEllipseStatic(pBox->HalfExtent, pBox->Rotation, pBox->Position, pEllipse->MajorRadius, pEllipse->MinorRadius, pEllipse->Position))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -98,6 +110,8 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB)
         const EllipsoidCollider *pEllipseB = (const EllipsoidCollider *)pB;
         if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius, pEllipseB->MinorRadius, pEllipseA->Position, pEllipseB->Position))
         {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
             return TRUE;
         }
     }
@@ -109,6 +123,8 @@ BOOL PhysicsManager::Initialize()
 {
     m_pBroadPhase = new BroadPhase;
     m_pBroadPhase->Initialize(MAX_BODY_COUNT, Vector3::One);
+
+    g_pPhysics = this;
 
     return TRUE;
 }
@@ -192,6 +208,11 @@ void PhysicsManager::BeginCollision(float dt)
 
 BOOL PhysicsManager::CollisionTestAll(float dt)
 {
+    for (int i = 0; i < m_colliderCount; i++)
+    {
+        m_colliderData[i].PairCount = 0;
+    }
+
     ZeroMemory(m_collisionPairs, sizeof(CollisionPair) * MAX_COLLISION_CANDIDATE_COUNT);
     UINT numCandidate = m_pBroadPhase->QueryCollisionPairs(m_collisionPairs, MAX_COLLISION_CANDIDATE_COUNT);
     for (UINT i = 0; i < numCandidate; i++)
@@ -201,14 +222,28 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         Collider *pA = m_pColliders[pair.a];
         Collider *pB = m_pColliders[pair.b];
 
-        if (pA->IsActive && pB->IsActive && Intersect(pA, pB))
+        Contact contact;
+        if (pA->IsActive && pB->IsActive && Intersect(pA, pB, &contact))
         {
+            if (m_colliderData[pA->ID].PairCount < MAX_PAIR_PER_COLLIDER)
+            {
+                m_colliderData[pA->ID].PairIndices[m_colliderData[pA->ID].PairCount++] = pB->ID;
+            }
+            if (m_colliderData[pB->ID].PairCount < MAX_PAIR_PER_COLLIDER)
+            {
+                m_colliderData[pB->ID].PairIndices[m_colliderData[pB->ID].PairCount++] = pA->ID;
+            }
+
+            m_contacts[m_contactCount++] = contact;
             pA->IsCollide = TRUE;
             pB->IsCollide = TRUE;
         }
     }
 
-    return TRUE;
+    if (m_contactCount > 0)
+        __debugbreak();
+
+    return m_contactCount > 0;
 }
 
-void PhysicsManager::EndCollision() {}
+void PhysicsManager::EndCollision() { m_contactCount = 0; }
