@@ -187,9 +187,7 @@
     <ClCompile Include="PhysicsDemoController.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="PlayerController.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="PlayerController.cpp" />
     <ClCompile Include="RaytracingDemoController.cpp" />
     <ClCompile Include="TessellationDemoController.cpp" />
     <ClCompile Include="VideoManager.cpp" />
@@ -215,9 +213,7 @@
     <ClInclude Include="PhysicsDemoController.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="PlayerController.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="PlayerController.h" />
     <ClInclude Include="RaytracingDemoController.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SceneRegistry.h" />

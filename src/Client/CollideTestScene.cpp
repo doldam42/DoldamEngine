@@ -41,37 +41,17 @@ void CollideTestScene::Load()
             WCHAR name[MAX_NAME];
             ZeroMemory(name, sizeof(name));
             wsprintfW(name, L"material%d%d", col, row);
-            Material material = {};
-            material.metallicFactor = 0.0f;
-            material.reflectionFactor = 0.9f;
-            wcscpy_s(material.name, name);
-            wcscpy_s(material.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
-            wcscpy_s(material.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
-            wcscpy_s(material.normalTextureName, L"Tiles074_2K-JPG_NormalDX.jpg");
-            wcscpy_s(material.roughnessTextureName, L"Tiles074_2K-JPG_Roughness.jpg");
-            IRenderMaterial *pMaterial = pRenderer->CreateMaterialHandle(&material);
+            wcscpy_s(reflectiveMaterial.name, name);
+            IRenderMaterial *pMaterial = pRenderer->CreateMaterialHandle(&reflectiveMaterial);
 
             float        x = -8.0f + row * 4.0f;
             IGameObject *pObj = pGame->CreateGameObject();
 
             if (row % 2) // odd
             {
-                /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
                 pObj->SetModel(pModel);
                 ICollider *pCollider = pPhysics->CreateBoxCollider(pObj, Vector3::One);
-                pObj->SetCollider(pCollider);*/
-
-                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-                pObj->SetModel(pModel);
-                ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
-                pObj->SetCollider(pCollider);
-                pObj->SetScale(1.0f, 1.5f, 1.0f);
-            }
-            else
-            {
-                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
-                pObj->SetModel(pModel);
-                ICollider *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
                 pObj->SetCollider(pCollider);
 
                 /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
@@ -79,6 +59,19 @@ void CollideTestScene::Load()
                 ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
                 pObj->SetCollider(pCollider);
                 pObj->SetScale(1.0f, 1.5f, 1.0f);*/
+            }
+            else
+            {
+                /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateSphereCollider(pObj, 1.0f);
+                pObj->SetCollider(pCollider);*/
+
+                IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
+                pObj->SetModel(pModel);
+                ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
+                pObj->SetCollider(pCollider);
+                pObj->SetScale(1.0f, 1.5f, 1.0f);
             }
 
             /*IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
@@ -97,7 +90,7 @@ void CollideTestScene::Load()
     // pGround->SetCollider(pCollider);
     // pGround->SetRigidBody(pBody);
 
-    pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
+    //pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
 }
 
 void CollideTestScene::Update(float dt)

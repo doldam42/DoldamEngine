@@ -29,6 +29,7 @@ struct Collider : public ICollider
     BOOL IsCollisionExit() override { return (IsPrevCollide && !IsCollide); }
     
     UINT GetCollidingColliders(ICollider **ppOutColliders, UINT maxColliders = 7) override;
+    UINT QueryCollisionData(CollisionData **ppOutData, UINT maxCollision = 7) override;
 
     IGameObject *GetGameObject() override { return pObj; }
 };

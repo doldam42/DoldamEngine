@@ -355,7 +355,7 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
 }
 
 BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
-                          Vector3 posB)
+                          Vector3 posB, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB)
 {
     const float scale = minorRadiusA / majorRadiusA;
     const float invScale = 1.0f / scale;
@@ -368,8 +368,19 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
     dir.Normalize();
 
     float hitt0, hitt1;
-    if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &hitt0, &hitt1) && hitt0 < 0.0f)
+    if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &hitt0, &hitt1) &&
+        hitt0 < 0.0f)
     {
+        majorRadiusB *= invScale;
+        
+        Vector3 cpA = posA + dir * minorRadiusA;
+        Vector3 cpB = posA + dir * (minorRadiusA + hitt0);
+        cpA.y *= invScale;
+        cpB.y *= invScale;
+
+        *pOutContactPointA = cpA;
+        *pOutContactPointB = cpB;
+
         return TRUE;
     }
     return FALSE;
@@ -476,9 +487,14 @@ void SATtest(const Vector3 &axis, const Vector3 *pCorners, int numCorners, float
     }
 }
 
+float ProjectBox(const Vector3 &extent, const Vector3 axes[3], const Vector3 &axis)
+{
+    return fabs(axis.Dot(axes[0]) * extent.x) + fabs(axis.Dot(axes[1]) * extent.y) + fabs(axis.Dot(axes[2]) * extent.z);
+}
+
 // A, B의 projection이 축에서 겹치는지 검사
 bool OverlapOnAxis(const Vector3 &extentA, const Vector3 &extentB, const Vector3 &posA, const Vector3 &posB,
-                   Vector3 axis, Vector3 a_axes[3], Vector3 b_axes[3])
+                   Vector3 axis, Vector3 a_axes[3], Vector3 b_axes[3], float *pOutPenetration)
 {
     if (axis.LengthSquared() < 1e-3f)
         return true; // 축이 0이면 skip
@@ -489,13 +505,25 @@ bool OverlapOnAxis(const Vector3 &extentA, const Vector3 &extentB, const Vector3
     float   projectedDistance = fabsf(distance.Dot(axis));
 
     // A와 B의 반지름 합
-    float rA = fabsf(a_axes[0].Dot(axis)) * extentA.x + fabsf(a_axes[1].Dot(axis)) * extentA.y +
-               fabsf(a_axes[2].Dot(axis)) * extentA.z;
 
-    float rB = fabsf(b_axes[0].Dot(axis)) * extentB.x + fabsf(b_axes[1].Dot(axis)) * extentB.y +
-               fabsf(b_axes[2].Dot(axis)) * extentB.z;
+    float rA = ProjectBox(extentA, a_axes, axis);
+    float rB = ProjectBox(extentB, b_axes, axis);
 
-    return projectedDistance <= (rA + rB);
+    float centerA = axis.Dot(posA);
+    float centerB = axis.Dot(posB);
+
+    float minA = centerA - rA;
+    float maxA = centerA + rA;
+    float minB = centerB - rB;
+    float maxB = centerB + rB;
+
+    float overlap = min(maxA, maxB) - max(minA, minB);
+    if (projectedDistance <= (rA + rB))
+    {
+        *pOutPenetration = overlap;
+        return true;
+    }
+    return false;
 }
 
 void GetAxes(const Quaternion &q, Vector3 axes[3])
@@ -507,7 +535,7 @@ void GetAxes(const Quaternion &q, Vector3 axes[3])
 }
 
 BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaternion &rotA, const Quaternion &rotB,
-                  const Vector3 &posA, const Vector3 &posB)
+                  const Vector3 &posA, const Vector3 &posB, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB)
 {
     Vector3 cornersA[8];
     Vector3 cornersB[8];
@@ -531,18 +559,40 @@ BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaterni
         for (int j = 0; j < 3; ++j)
             axesToTest[axisCount++] = axesA[i].Cross(axesB[j]);
 
+    float   minPenetration = FLT_MAX;
+    Vector3 bestAxis;
     for (int i = 0; i < axisCount; ++i)
     {
-        if (!OverlapOnAxis(extentA, extentB, posA, posB, axesToTest[i], axesA, axesB))
+        float overlap;
+        if (!OverlapOnAxis(extentA, extentB, posA, posB, axesToTest[i], axesA, axesB, &overlap))
         {
             return FALSE; // 분리축 발견
         }
+
+        if (overlap < minPenetration)
+        {
+            minPenetration = overlap;
+            bestAxis = axesToTest[i];
+        }
     }
+
+    bestAxis.Normalize();
+    Vector3 centerDiff = posB - posA;
+    Vector3 normal = (centerDiff.Dot(bestAxis) < 0) ? -bestAxis : bestAxis;
+
+    // Contact Point 근사 계산 (중심 투영 기반)
+    Vector3 projectedA = posA + normal * ProjectBox(extentA, axesA, normal);
+    Vector3 projectedB = posB - normal * ProjectBox(extentB, axesB, normal);
+
+    *pOutContactPointA = projectedA;
+    *pOutContactPointB = projectedB;
+
     return TRUE;
 }
 
 BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const Vector3 &obbHalfExtent,
-                     const Quaternion &obbRot, const Vector3 &boxPos)
+                     const Quaternion &obbRot, const Vector3 &boxPos, Vector3 *pOutContactPointA,
+                     Vector3 *pOutContactPointB)
 {
     Vector3 axes[3];
     GetAxes(obbRot, axes);
@@ -557,13 +607,21 @@ BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const V
         closestPoint += axes[i] * clamped;
     }
 
-    Vector3 diff = spherePos - closestPoint;
+    Vector3 diff = closestPoint - spherePos;
     float   distSq = diff.LengthSquared();
-    return distSq <= sphereRadius * sphereRadius;
+
+    if (distSq <= sphereRadius * sphereRadius)
+    {
+        diff.Normalize();
+        *pOutContactPointA = spherePos + diff * sphereRadius;
+        *pOutContactPointB = closestPoint;
+        return true;
+    }
+    return false;
 }
 
 BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 obbPos, float majorRadius,
-                      float minorRadius, Vector3 ellipsePos)
+                      float minorRadius, Vector3 ellipsePos, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB)
 {
     const float scale = minorRadius / majorRadius;
     const float invScale = 1.0f / scale;
@@ -573,8 +631,15 @@ BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 o
     obbPos.y *= scale;
     ellipsePos.y *= scale;
 
-    if (SphereBoxStatic(minorRadius, ellipsePos, obbHalfExtent, obbRot, obbPos))
+    Vector3 cpA, cpB;
+    if (SphereBoxStatic(minorRadius, ellipsePos, obbHalfExtent, obbRot, obbPos, &cpA, &cpB))
     {
+        cpA.y *= invScale;
+        cpB.y *= invScale;
+
+        *pOutContactPointA = cpA;
+        *pOutContactPointB = cpB;
+
         return TRUE;
     }
 
@@ -592,7 +657,7 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
 
     Vector3 axes[3];
     GetAxes(boxRot, axes);
-    
+
     float extents[3] = {boxExtent.x, boxExtent.y, boxExtent.z};
 
     for (int i = 0; i < 3; ++i)

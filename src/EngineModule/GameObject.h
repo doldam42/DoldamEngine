@@ -13,6 +13,7 @@ class GameObject : public IGameObject
     Matrix    m_worldMatrix;
     BOOL      m_IsUpdated = false;
     UINT      m_materialCount = 0;
+    UINT      m_layer = 0;
 
     GameManager      *m_pGame = nullptr;
     IRenderer        *m_pRenderer = nullptr;
@@ -87,6 +88,9 @@ class GameObject : public IGameObject
     IRenderMaterial *GetMaterialAt(UINT index) override;
 
     virtual size_t GetID() override { return m_id; }
+
+    void SetLayer(UINT layer) override { m_layer = layer; }
+    UINT GetLayer() override { return m_layer; }
 
     GameObject();
     virtual ~GameObject();

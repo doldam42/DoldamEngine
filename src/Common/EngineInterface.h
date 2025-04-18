@@ -8,8 +8,8 @@
 
 #include <combaseapi.h>
 
-#include "../Common/RendererInterface.h"
 #include "../Common/PhysicsInterface.h"
+#include "../Common/RendererInterface.h"
 #include "../GenericModule/GenericHeaders.h"
 #include "../MathModule/MathHeaders.h"
 
@@ -112,6 +112,9 @@ interface IGameObject
     virtual void             SetMaterials(IRenderMaterial * *ppMaterials, const UINT numMaterials) = 0;
     virtual IRenderMaterial *GetMaterialAt(UINT index) = 0;
 
+    virtual void SetLayer(UINT layerID) = 0;
+    virtual UINT GetLayer() = 0;
+
     virtual ICollider  *GetCollider() const = 0;
     virtual IRigidBody *GetRigidBody() const = 0;
 };
@@ -131,10 +134,7 @@ interface IGameAnimation : public IUnknown, public ISerializable
     virtual void   EndCreateAnim() = 0;
 };
 
-interface IGameCharacter : public IGameObject 
-{ 
-    virtual void InsertAnimation(IGameAnimation * pClip) = 0; 
-};
+interface IGameCharacter : public IGameObject { virtual void InsertAnimation(IGameAnimation * pClip) = 0; };
 
 interface IGameSprite
 {
@@ -162,8 +162,8 @@ interface IGameSprite
 
 interface IGameManager : public IUnknown
 {
-    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, IPhysicsManager* pPhysics, bool useGUIEditor = false, UINT viewportWidth = 0,
-                            UINT viewportHeight = 0) = 0;
+    virtual BOOL Initialize(HWND hWnd, IRenderer * pRnd, IPhysicsManager * pPhysics, bool useGUIEditor = false,
+                            UINT viewportWidth = 0, UINT viewportHeight = 0) = 0;
 
     virtual void Start() = 0;
     virtual void Update(float dt) = 0;

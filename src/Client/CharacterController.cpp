@@ -6,41 +6,27 @@
 
 #include "CharacterController.h"
 
-void CharacterController::ApplyGravity(float dt) 
+void CharacterController::ApplyGravity(float dt)
 {
-    constexpr float gravity = -9.8f;
-    m_velocity.y += dt * gravity;
+    constexpr float gravity = 9.8f;
+    m_velocity.y -= dt * gravity;
 }
 
-void CharacterController::UpdatePosition(float dt) 
-{ 
-    Vector3 curPos = m_pGameObject->GetPosition();
-    Vector3 deltaPos = curPos + m_velocity * dt;
-    Vector3 foot = curPos - Vector3(0.0f, m_height / 2, 0.0f);
+void CharacterController::CheckGrounded()
+{
+    const Vector3 curPos = m_pGameObject->GetPosition();
+    const Vector3 foot = curPos - Vector3(0.0f, m_height / 2 + 0.02f, 0.0f);
 
-    Vector3 dir = deltaPos - curPos;
-
-    float length = dir.Length();
-
-    dir.Normalize();
     Ray ray;
-    ray.direction = dir;
+    ray.direction = Vector3::Down;
     ray.position = foot;
-    ray.tmax = length;
+    ray.tmax = 0.01f;
 
-    ICollider *pHittedCollider = nullptr;
-    float tHit;
-    if (m_pPhysics->Raycast(ray, &tHit, &pHittedCollider))
-    {
-        deltaPos = curPos + dir * tHit * 0.99f;
-        if (pHittedCollider != m_pCollider)
-        {
+    float      tHit;
+    ICollider *pHitted = nullptr;
 
-        }
-    }
+    m_isGrounded = m_pPhysics->Raycast(ray, &tHit, &pHitted);
 }
-
-void CharacterController::CheckGrounded() {}
 
 BOOL CharacterController::Initialize(const Vector3 &startPosition, float height, float radius)
 {
@@ -63,3 +49,32 @@ BOOL CharacterController::Initialize(const Vector3 &startPosition, float height,
 
     return TRUE;
 }
+
+void CharacterController::Update(float dt)
+{
+    CheckGrounded();
+    if (m_isGrounded && m_velocity.y < 0.01f)
+    {
+        m_velocity.y = 0;
+    }
+    else
+    {
+        ApplyGravity(dt);
+    }
+
+    m_pGameObject->AddPosition(m_velocity * dt);
+}
+
+void CharacterController::Move(const Vector3 &dir)
+{
+    m_velocity.x = dir.x;
+    m_velocity.z = dir.z;
+}
+
+void CharacterController::Stop()
+{
+    m_velocity.x = 0.0f;
+    m_velocity.z = 0.0f;
+}
+
+void CharacterController::Jump(float jumpSpeed) { m_velocity.y = jumpSpeed; }

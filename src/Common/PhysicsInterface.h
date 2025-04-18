@@ -20,6 +20,13 @@ enum COLLIDER_TYPE
 };
 
 interface IGameObject;
+interface ICollider;
+struct CollisionData
+{
+    ICollider *pOther;
+    Vector3    point;
+    Vector3    normal;
+};
 
 interface ICollider
 {
@@ -37,6 +44,8 @@ interface ICollider
     virtual Bounds GetBounds() const = 0;
 
     virtual UINT GetCollidingColliders(ICollider * *ppOutColliders, UINT maxColliders = 7) = 0;
+    
+    virtual UINT QueryCollisionData(CollisionData** ppOutData, UINT maxCollision = 7) = 0;
 
     virtual IGameObject *GetGameObject() = 0;
 };
@@ -85,9 +94,7 @@ interface IPhysicsManager : public IUnknown
 
     //virtual IRigidBody     *CreateRigidBody(ICollider * pCollider, const Vector3& pos, float mass, float elasticity,
     //                                        float friction, BOOL useGravity = TRUE) = 0;
-    //virtual ICharacterBody *CreateCharacterBody(const Vector3 &startPosition, const float radius,
-    //                                            const float height) = 0;
-
+    
     //virtual IHeightFieldTerrainCollider *CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth,
     //                                                      const UINT imgHeight, const Vector3 &scale,
     //                                                      const float minHeight, const float maxHeight) = 0;

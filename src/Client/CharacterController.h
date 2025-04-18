@@ -13,15 +13,23 @@ class CharacterController
     BOOL m_isActive = TRUE;
 
     Vector3 m_velocity;
+    Vector3 m_foot;
 
   private:
     void ApplyGravity(float dt);
-    void UpdatePosition(float dt);
     void CheckGrounded();
 
   public:
     BOOL Initialize(const Vector3 &startPosition, float height, float radius);
 
+    void Update(float dt);
+    void Move(const Vector3 &dir);
+    void Stop();
+    void Jump(float jumpSpeed);
+    IGameObject *GetGameObject() { return m_pGameObject; }
+
+    BOOL OnGround() { return m_isGrounded; }
+
     CharacterController() = default;
-    ~CharacterController();
+    ~CharacterController() {}
 };

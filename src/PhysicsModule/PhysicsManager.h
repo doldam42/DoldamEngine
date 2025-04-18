@@ -11,8 +11,8 @@ struct ColliderData
 {
     UINT PairCount = 0;
     UINT PairIndices[MAX_PAIR_PER_COLLIDER] = {0};
+    UINT ContactIndices[MAX_PAIR_PER_COLLIDER] = {0};
 };
-
 
 class PhysicsManager : public IPhysicsManager
 {
@@ -53,6 +53,7 @@ class PhysicsManager : public IPhysicsManager
 
     const ColliderData &GetColliderData(UINT colliderID) const { return m_colliderData[colliderID]; }
     ICollider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
+    const Contact &GetContact(UINT contactIdx) const { return m_contacts[contactIdx]; } 
 
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;

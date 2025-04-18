@@ -32,7 +32,7 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
 
 // 장축이 Y축이라 가정.
 BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
-                          Vector3 posB);
+                          Vector3 posB, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB);
 
 BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
                            Vector3 posB, Vector3 velocity, const float dt, Vector3 *pOutNormal, float *pOutToi);
@@ -41,11 +41,11 @@ BOOL EllipseTriangleDynamic(Vector3 center, float majorRadius, float minorRadius
                             Vector3 v0, Vector3 v1, Vector3 v2, Vector3 normal, Vector3 *pOutNormal,
                             float *pOutToi);
 
-BOOL BoxBoxStatic(const Vector3 &halfExtentA, const Vector3 &halfExtentB, const Quaternion &rotA, const Quaternion &rotB,
-                  const Vector3 &posA, const Vector3 &posB);
+BOOL BoxBoxStatic(const Vector3 &halfExtentA, const Vector3 &halfExtentB, const Quaternion &rotA, const Quaternion &rotB, const Vector3 &posA, const Vector3 &posB, Vector3 *pOutContactPointA,
+                  Vector3 *pOutContactPointB);
 
 BOOL SphereBoxStatic(const float sphereRadius, const Vector3 &spherePos, const Vector3 &obbHalfExtent,
-                     const Quaternion &obbRot, const Vector3 &boxPos);
+                     const Quaternion &obbRot, const Vector3 &boxPos, Vector3* pOutContactPointA, Vector3* pOutContactPointB);
 
 BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 obbPos, float majorRadius,
-                      float minorRadius,  Vector3 ellipsePos);
+                      float minorRadius, Vector3 ellipsePos, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB);
