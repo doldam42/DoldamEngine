@@ -655,9 +655,10 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.position = rayOrigin;
     ray.direction = rayDir;
     ray.tmax = maxDistance;
-
+    
+    Vector3 normal;
     ICollider *pBody = nullptr;
-    if (m_pPhysicsManager->Raycast(ray, &pOutHit->tHit, &pBody))
+    if (m_pPhysicsManager->Raycast(ray, &normal, &pOutHit->tHit, &pBody))
     {
         pOutHit->pHitted = pBody->GetGameObject();
         return TRUE;

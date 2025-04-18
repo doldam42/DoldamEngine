@@ -103,5 +103,5 @@ interface IPhysicsManager : public IUnknown
 
     //virtual void BuildScene() = 0;
 
-    virtual BOOL Raycast(const Ray &ray, float *tHit, ICollider** pCollider) = 0;
+    virtual BOOL Raycast(const Ray &ray, Vector3* pOutNormal, float *tHit, ICollider** pCollider) = 0;
 };

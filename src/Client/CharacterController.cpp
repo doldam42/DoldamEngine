@@ -25,7 +25,11 @@ void CharacterController::CheckGrounded()
     float      tHit;
     ICollider *pHitted = nullptr;
 
-    m_isGrounded = m_pPhysics->Raycast(ray, &tHit, &pHitted);
+    Vector3 normal;
+    m_isGrounded = m_pPhysics->Raycast(ray, &normal, &tHit, &pHitted);
+
+    if (m_isGrounded && normal.Dot(Vector3::Up) < 0.98)
+        __debugbreak();
 }
 
 BOOL CharacterController::Initialize(const Vector3 &startPosition, float height, float radius)

@@ -3,7 +3,7 @@
 #include "Collisions.h"
 
 BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sphereCenter, const float sphereRadius,
-               float *pOutT1, float *pOutT2)
+               Vector3 *pOutNormal, float *pOutT1, float *pOutT2)
 {
     const Vector3 m = sphereCenter - rayStart;
 
@@ -22,6 +22,9 @@ BOOL RaySphere(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &sp
     const float deltaRoot = sqrtf(delta);
     const float t1 = invA * (b - deltaRoot);
     const float t2 = invA * (b + deltaRoot);
+
+    const Vector3 contactPoint = rayStart + rayDir * t1;
+    *pOutNormal = contactPoint - sphereCenter;
 
     *pOutT1 = t1;
     *pOutT2 = t2;
@@ -101,8 +104,8 @@ BOOL RayCylinder(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &
     return true;
 }
 
-BOOL RayEllipse(Vector3 rayStart, Vector3 rayDir, Vector3 center, float majorRadius, float minorRadius, float *pOutT1,
-                float *pOutT2)
+BOOL RayEllipse(Vector3 rayStart, Vector3 rayDir, Vector3 center, float majorRadius, float minorRadius,
+                Vector3 *pOutNormal, float *pOutT1, float *pOutT2)
 {
     const float scale = minorRadius / majorRadius;
     const float invScale = 1.0f / scale;
@@ -111,9 +114,12 @@ BOOL RayEllipse(Vector3 rayStart, Vector3 rayDir, Vector3 center, float majorRad
     rayDir.y *= scale;
     center.y *= scale;
 
-    float t0, t1;
-    if (RaySphere(rayStart, rayDir, center, minorRadius, &t0, &t1))
+    Vector3 normal;
+    float   t0, t1;
+    if (RaySphere(rayStart, rayDir, center, minorRadius, &normal, &t0, &t1))
     {
+        normal.y *= invScale;
+        *pOutNormal = normal;
         *pOutT1 = t0;
         *pOutT2 = t1;
         return TRUE;
@@ -152,8 +158,9 @@ BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3
     const Vector3 endPtA = posA + relativeVelocity * dt;
     const Vector3 rayDir = endPtA - startPtA;
 
-    float t0 = 0;
-    float t1 = 0;
+    Vector3 normal;
+    float   t0 = 0;
+    float   t1 = 0;
     if (rayDir.LengthSquared() < 0.001f * 0.001f)
     {
         // Ray is too short, just check if already intersecting
@@ -164,7 +171,7 @@ BOOL SphereSphereDynamic(const float radiusA, const float radiusB, const Vector3
             return false;
         }
     }
-    else if (!RaySphere(posA, rayDir, posB, radiusA + radiusB, &t0, &t1))
+    else if (!RaySphere(posA, rayDir, posB, radiusA + radiusB, &normal, &t0, &t1))
     {
         return false;
     }
@@ -267,8 +274,9 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
     const float tMax = sphereVelocity.Length() * dt;
 
     // 삼각형의 3점을 중심으로 하는 원과의 충돌처리
-    float t0, t1;
-    if (RaySphere(sphereCenter, dir, v0, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
+    Vector3 n;
+    float   t0, t1;
+    if (RaySphere(sphereCenter, dir, v0, sphereRadius, &n, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
         *pOutContactPointB = v0;
@@ -276,7 +284,7 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
-    if (RaySphere(sphereCenter, dir, v1, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
+    if (RaySphere(sphereCenter, dir, v1, sphereRadius, &n, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
         *pOutContactPointB = v1;
@@ -284,7 +292,7 @@ BOOL SphereTriangleDynamic(const Vector3 &sphereCenter, const float sphereRadius
         *pOutToi = (t0 < 0.0f) ? 0.0f : t0;
         return TRUE;
     }
-    if (RaySphere(sphereCenter, dir, v2, sphereRadius, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
+    if (RaySphere(sphereCenter, dir, v2, sphereRadius, &n, &t0, &t1) && t0 < tMax && t1 >= 0.0f)
     {
         *pOutContactPointA = sphereCenter + dir * (t0 + sphereRadius);
         *pOutContactPointB = v2;
@@ -367,12 +375,13 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
     Vector3 dir = posB - posA;
     dir.Normalize();
 
+    Vector3 n;
     float hitt0, hitt1;
-    if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &hitt0, &hitt1) &&
+    if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &n, &hitt0, &hitt1) &&
         hitt0 < 0.0f)
     {
         majorRadiusB *= invScale;
-        
+
         Vector3 cpA = posA + dir * minorRadiusA;
         Vector3 cpB = posA + dir * (minorRadiusA + hitt0);
         cpA.y *= invScale;
@@ -401,8 +410,10 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
     posA.y *= scale;
     posB.y *= scale;
 
+    Vector3 n;
     float t0, t1;
-    if (!RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &t0, &t1) || t1 < 0.0f)
+    if (!RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &n, &t0, &t1) ||
+        t1 < 0.0f)
     {
         return FALSE;
     }
@@ -428,9 +439,11 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
         return false;
     }
 
-    const float majorRS = majorRadiusB * majorRadiusB;
+   /* const float majorRS = majorRadiusB * majorRadiusB;
     const float minorRS = minorRadiusB * minorRadiusB;
-    Vector3     n = (collisionPoint - posB) / Vector3(minorRS, majorRS, minorRS);
+    Vector3     n = (collisionPoint - posB) / Vector3(minorRS, majorRS, minorRS);*/
+
+    n.y *= invScale;
     n.Normalize();
 
     *pOutNormal = n;
@@ -647,7 +660,7 @@ BOOL BoxEllipseStatic(Vector3 obbHalfExtent, const Quaternion &obbRot, Vector3 o
 }
 
 BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPos, const Vector3 &boxExtent,
-            const Quaternion &boxRot, float *tHit)
+            const Quaternion &boxRot, Vector3 *pOutNormal, float *tHit)
 {
     const float EPSILON = 1e-6f;
 
@@ -660,21 +673,32 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
 
     float extents[3] = {boxExtent.x, boxExtent.y, boxExtent.z};
 
+    Vector3 bestAxis;
+
     for (int i = 0; i < 3; ++i)
     {
         const Vector3 &axis = axes[i];
-        float          e = axis.Dot(p);
-        float          f = axis.Dot(rayDir);
+
+        float e = axis.Dot(p);
+        float f = axis.Dot(rayDir);
 
         if (fabsf(f) > EPSILON)
         {
+            float sign = 1.0f;
             float t1 = (e + extents[i]) / f;
             float t2 = (e - extents[i]) / f;
 
             if (t1 > t2)
+            {
                 std::swap(t1, t2);
+                sign = -1.0f;
+            }
 
-            tMin = fmaxf(tMin, t1);
+            if (t1 > tMin)
+            {
+                tMin = t1;
+                bestAxis = sign * axis;
+            }
             tMax = fminf(tMax, t2);
 
             if (tMin > tMax)
@@ -688,6 +712,7 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
         }
     }
 
+    *pOutNormal = bestAxis;
     *tHit = tMin;
     return true;
 }

@@ -45,7 +45,7 @@ class PhysicsManager : public IPhysicsManager
     ICollider *CreateEllpsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius) override;
     void       DeleteCollider(ICollider *pDel) override;
 
-    BOOL Raycast(const Ray &ray, float *tHit, ICollider **pCollider) override;
+    BOOL Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider) override;
 
     void BeginCollision(float dt) override;
     BOOL CollisionTestAll(float dt) override;

@@ -199,16 +199,19 @@ void PhysicsManager::DeleteCollider(ICollider *pDel)
     delete pDel;
 }
 
-BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, ICollider **pCollider)
+BOOL PhysicsManager::Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider)
 {
+    Vector3    normal;
     float      tMin = FLT_MAX;
     ICollider *pResult = nullptr;
     for (int i = 0; i < m_colliderCount; i++)
     {
         Collider *pCollider = m_pColliders[i];
+        Vector3   n;
         float     t;
-        if (pCollider->RayTest(ray.position, ray.direction, &t) && t < tMin)
+        if (pCollider->RayTest(ray.position, ray.direction, &n, & t) && t < tMin)
         {
+            normal = n;
             tMin = t;
             pResult = pCollider;
         }
@@ -216,6 +219,7 @@ BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, ICollider **pCollider)
 
     if (tMin < ray.tmax)
     {
+        *pOutNormal = normal;
         *pCollider = pResult;
         *tHit = tMin;
         return TRUE;

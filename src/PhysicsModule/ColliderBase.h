@@ -22,7 +22,7 @@ struct Collider : public ICollider
     void SetActive(BOOL isActive) override { IsActive = isActive; }
 
     virtual COLLIDER_TYPE GetType() const = 0;
-    virtual BOOL          RayTest(const Vector3 rayStart, const Vector3 &rayDir, float *tHit) = 0;
+    virtual BOOL          RayTest(const Vector3 rayStart, const Vector3 &rayDir, Vector3 *pOutNormal, float *tHit) = 0;
 
     BOOL IsCollisionEnter() override { return (!IsPrevCollide && IsCollide); }
     BOOL IsCollisionStay() override { return (IsPrevCollide && IsCollide); }

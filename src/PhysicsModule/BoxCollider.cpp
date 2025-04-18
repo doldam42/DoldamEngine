@@ -1,10 +1,14 @@
 #include "pch.h"
 #include "BoxCollider.h"
 
-BOOL BoxCollider::RayTest(const Vector3 rayStart, const Vector3 &rayDir, float *tHit)
+BOOL BoxCollider::RayTest(const Vector3 rayStart, const Vector3 &rayDir, Vector3 *pOutNormal, float *tHit)
 { 
-    if (RayBox(rayStart, rayDir, Position, HalfExtent, Rotation, tHit))
+    Vector3 normal;
+    float   hitt;
+    if (RayBox(rayStart, rayDir, Position, HalfExtent, Rotation, &normal, &hitt))
     {
+        *tHit = hitt;
+        *pOutNormal = normal;
         return TRUE;
     }
     return FALSE;

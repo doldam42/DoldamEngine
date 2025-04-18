@@ -9,7 +9,7 @@ struct BoxCollider : public Collider
 
     COLLIDER_TYPE GetType() const override { return COLLIDER_TYPE_BOX; }
 
-    BOOL RayTest(const Vector3 rayStart, const Vector3 &rayDir, float* tHit) override;
+    BOOL RayTest(const Vector3 rayStart, const Vector3 &rayDir, Vector3 *pOutNormal, float *tHit) override;
 
     Bounds GetBounds() const override
     {

@@ -16,7 +16,7 @@ struct SphereCollider : public Collider
         return Bounds(mins, maxs);
     }
 
-    BOOL RayTest(const Vector3 rayStart, const Vector3 &rayDir, float* tHit) override;
+    BOOL RayTest(const Vector3 rayStart, const Vector3 &rayDir, Vector3 *pOutNormal, float *tHit) override;
 
     SphereCollider(float radius) : Radius(radius) {}
     ~SphereCollider() {}
