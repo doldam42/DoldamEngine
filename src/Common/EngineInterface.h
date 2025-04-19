@@ -121,6 +121,8 @@ interface IGameObject
 
 struct RayHit
 {
+    Vector3      normal;
+    Vector3      point;
     float        tHit;
     IGameObject *pHitted;
 };

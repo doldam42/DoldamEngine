@@ -436,7 +436,7 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
     float toi = (t0 < 0.0f) ? 0.0f : t0;
     if (toi > dt)
     {
-        return false;
+        return FALSE;
     }
 
    /* const float majorRS = majorRadiusB * majorRadiusB;

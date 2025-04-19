@@ -4,13 +4,13 @@
 #include "Camera.h"
 #include "Character.h"
 #include "ControllerManager.h"
+#include "GameManager.h"
 #include "GameObject.h"
 #include "GeometryGenerator.h"
 #include "MeshObject.h"
 #include "Model.h"
 #include "Sprite.h"
 #include "Terrain.h"
-#include "GameManager.h"
 
 GameManager *g_pGame = nullptr;
 
@@ -305,22 +305,19 @@ void GameManager::BuildScene()
     m_pWorld->EndCreateWorld();*/
 }
 
-void GameManager::PreUpdate(float dt)
-{
-    ProcessInput();
-}
+void GameManager::PreUpdate(float dt) { ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
     m_pPhysicsManager->BeginCollision(dt);
 
-    //m_pPhysicsManager->ApplyGravityImpulseAll(dt);
+    // m_pPhysicsManager->ApplyGravityImpulseAll(dt);
 
     m_pPhysicsManager->CollisionTestAll(dt);
 
-    //m_pPhysicsManager->ResolveContactsAll(dt);
+    // m_pPhysicsManager->ResolveContactsAll(dt);
 
-    //m_pPhysicsManager->EndCollision(dt);
+    // m_pPhysicsManager->EndCollision(dt);
     m_pPhysicsManager->EndCollision();
 }
 
@@ -637,7 +634,7 @@ BOOL GameManager::CreateTerrain(const Material *pMaterial, const Vector3 *pScale
 
     m_pTerrain = new Terrain;
     m_pTerrain->Initialize(pMaterial, *pScale, numSlice, numStack);
-    
+
     if (m_pTerrain)
         return TRUE;
     return FALSE;
@@ -655,11 +652,19 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     ray.position = rayOrigin;
     ray.direction = rayDir;
     ray.tmax = maxDistance;
-    
+
     Vector3 normal;
+    Vector3 point;
+    float   tHit;
+
     ICollider *pBody = nullptr;
-    if (m_pPhysicsManager->Raycast(ray, &normal, &pOutHit->tHit, &pBody))
+    if (m_pPhysicsManager->Raycast(ray, &normal, &tHit, &pBody))
     {
+        point = rayOrigin + rayDir * tHit;
+
+        pOutHit->point = point;
+        pOutHit->normal = normal;
+        pOutHit->tHit = tHit;
         pOutHit->pHitted = pBody->GetGameObject();
         return TRUE;
     }

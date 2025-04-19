@@ -91,11 +91,25 @@ void CollideTestScene::Load()
     // pGround->SetRigidBody(pBody);
 
     //pGame->SetCameraPosition(0.0f, 2.0f, -2.0f);
+
+    // Set CrossHair
+    {
+        UINT width = g_pClient->GetScreenWidth();
+        UINT height = g_pClient->GetScreenHeight();
+        m_crossHairPosX = (width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+        m_crossHairPosY = (height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+
+        IGameSprite *pSprite = pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds",
+                                                           m_crossHairImageSize, m_crossHairImageSize);
+        pSprite->SetScale(0.25);
+        pSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
+
+        m_pCrossHairSprite = pSprite;
+    }
 }
 
 void CollideTestScene::Update(float dt)
 {
-
     const float boundary = 10.0f;
 
     static float offset = 0.0f;
