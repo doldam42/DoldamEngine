@@ -7,8 +7,6 @@ class PlayerController : public IController
 
     CharacterController *m_pController = nullptr;
 
-    IGameObject *m_pPortal = nullptr;
-
   public:
     BOOL Start() override;
     void Update(float dt) override;

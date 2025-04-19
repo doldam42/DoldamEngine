@@ -18,11 +18,7 @@ BOOL PlayerController::Start()
 
     m_pController = new CharacterController;
     m_pController->Initialize(pos, 2.0f, 0.5f);
-
-    m_pPortal = pGame->CreateGameObject();
-    m_pPortal->SetModel(pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SQUARE));
-    m_pPortal->SetActive(FALSE);
-
+    
     // pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 2.0f, -3.0f));
     pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 1.5f, 0.0f));
 
@@ -34,25 +30,6 @@ void PlayerController::Update(float dt)
     InputManager *pI = g_pClient->GetInputManager();
     IGameManager *pGame = g_pClient->GetGameManager();
 
-    if (pI->IsKeyPressed(VK_LBUTTON, false))
-    {
-        Vector3 rayDir = pGame->GetCameraLookTo();
-        Vector3 rayPos = pGame->GetCameraPos();
-
-        RayHit hit;
-        if (pGame->Raycast(rayPos, rayDir, &hit))
-        {
-            IGameObject     *pHitted = hit.pHitted;
-
-            Vector3    pos = hit.point + hit.normal * 0.01f;
-            Quaternion rot = Quaternion::FromToRotation(Vector3::UnitZ, hit.normal);
-            m_pPortal->SetActive(TRUE);
-            m_pPortal->SetRotation(rot);
-            m_pPortal->SetPosition(pos.x, pos.y, pos.z);
-            //IRenderMaterial *pMaterial = pHitted->GetMaterialAt(0);
-            //pMaterial->UpdateEmissive(Vector3(1.0f, 0.0f, 0.0f));
-        }
-    }
     /*else if (pI->IsKeyPressed(VK_RBUTTON, false))
    {
        Vector3 rayDir = pGame->GetCameraLookTo();

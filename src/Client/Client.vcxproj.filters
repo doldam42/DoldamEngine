@@ -49,6 +49,7 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="PortalGunController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -118,6 +119,7 @@
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="CharacterController.h" />
+    <ClInclude Include="PortalGunController.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
