@@ -164,6 +164,8 @@ ICollider *PhysicsManager::CreateSphereCollider(IGameObject *pObj, const float r
     m_pColliders[m_colliderCount] = pNew;
     pNew->ID = m_colliderCount;
     pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
     m_colliderCount++;
     return pNew;
 }
@@ -174,6 +176,8 @@ ICollider *PhysicsManager::CreateBoxCollider(IGameObject *pObj, const Vector3 &h
     m_pColliders[m_colliderCount] = pNew;
     pNew->ID = m_colliderCount;
     pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
     m_colliderCount++;
     return pNew;
 }
@@ -184,6 +188,8 @@ ICollider *PhysicsManager::CreateEllpsoidCollider(IGameObject *pObj, const float
     m_pColliders[m_colliderCount] = pNew;
     pNew->ID = m_colliderCount;
     pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
     m_colliderCount++;
     return pNew;
 }

@@ -134,13 +134,13 @@ class RaytracingMeshObject : public IRenderMesh
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
-    void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, const Matrix *pWorldMat,
+    void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
                       IRenderMaterial *const* ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
                       ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
                       UINT numBones);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-              IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);
+              IRenderMaterial *const *ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);
 
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
     UINT            GetFaceGroupCount() const { return m_faceGroupCount; }

@@ -260,12 +260,12 @@ void GameManager::Update(float dt)
 
         pGameObj->Update(dt);
 
-        if (pGameObj->HasBounds() && m_pMainCamera->IsCulled(pGameObj->GetBounds()))
+        /*if (pGameObj->HasBounds() && m_pMainCamera->IsCulled(pGameObj->GetBounds()))
         {
             pGameObj->m_isVisible = FALSE;
             m_culledObjectCount++;
         }
-        else
+        else*/
         {
             pGameObj->m_isVisible = TRUE;
         }

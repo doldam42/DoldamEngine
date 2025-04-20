@@ -36,9 +36,10 @@ void Camera::Update()
 
         m_prevViewProjMatrix = m_viewProjMatrix;
         m_viewProjMatrix = m_viewMatrix * m_projMatrix;
-
+        
         // view proj 행렬로부터 평면의 방정식과 절두체 생성
         Matrix m = m_viewProjMatrix.Transpose();
+        //Matrix m = m_viewProjMatrix;
 
         Vector4 row1(m._11, m._12, m._13, m._14);
         Vector4 row2(m._21, m._22, m._23, m._24);

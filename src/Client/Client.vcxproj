@@ -189,6 +189,7 @@
     </ClCompile>
     <ClCompile Include="PlayerController.cpp" />
     <ClCompile Include="PortalGunController.cpp" />
+    <ClCompile Include="PortalScene.cpp" />
     <ClCompile Include="RaytracingDemoController.cpp" />
     <ClCompile Include="TessellationDemoController.cpp" />
     <ClCompile Include="VideoManager.cpp" />
@@ -216,6 +217,7 @@
     </ClInclude>
     <ClInclude Include="PlayerController.h" />
     <ClInclude Include="PortalGunController.h" />
+    <ClInclude Include="PortalScene.h" />
     <ClInclude Include="RaytracingDemoController.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SceneRegistry.h" />

@@ -256,7 +256,6 @@ void Model::Render(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT num
                                        numMaterials);
         }
     }
-    
     // Render Bounding Box
     //m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }

@@ -120,7 +120,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
     }
 }
 
-void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
+void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
                                         const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
                                         ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO,
                                         D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones)
@@ -165,15 +165,17 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
         pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
         pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
     }
+
+    Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
 }
 
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                                IRenderMaterial **ppMaterials, UINT numMaterials, const Matrix *pBoneMats,
+                                IRenderMaterial *const *ppMaterials, UINT numMaterials, const Matrix *pBoneMats,
                                 UINT numBones)
 {
     RaytracingManager    *m_pRaytracingManager = m_pRenderer->GetRaytracingManager();
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
-    ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+    //ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && pBoneMats != nullptr)
     {
@@ -211,7 +213,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
         src.Offset(m_descriptorSize, 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
-    /*m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
+    //m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,

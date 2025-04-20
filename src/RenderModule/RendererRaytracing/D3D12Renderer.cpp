@@ -577,7 +577,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 #elif defined(USE_FORWARD_RENDERING)
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, nullptr, 0);
+    pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, nullptr, 0);
 #endif
 }
 
@@ -614,7 +614,7 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
     ID3D12GraphicsCommandList4 *pCommandList = pCommadListPool->GetCurrentCommandList();
-    pObj->Draw(0, pCommandList, pWorldMat, nullptr, 0, pBoneMats, numBones);
+    pObj->Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterial, pBoneMats, numBones);
 #endif
 }
 

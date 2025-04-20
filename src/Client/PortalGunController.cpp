@@ -13,7 +13,6 @@ BOOL PortalGunController::Start()
 
     Material portalMaterial = {};
     portalMaterial.metallicFactor = 0.0f;
-    portalMaterial.reflectionFactor = 0.9f;
     wcscpy_s(portalMaterial.name, L"red_portal");
     wcscpy_s(portalMaterial.basePath, L"..\\..\\assets\\textures\\");
     wcscpy_s(portalMaterial.albedoTextureName, L"red_portal.png");
@@ -41,6 +40,21 @@ BOOL PortalGunController::Start()
     //pCollider = pPhysics->CreateBoxCollider(m_pBluePortal, Vector3(1.5f, 2.5f, 0.1f));
     //m_pBluePortal->SetCollider(pCollider);
 
+    // Set CrossHair
+    {
+        UINT width = g_pClient->GetScreenWidth();
+        UINT height = g_pClient->GetScreenHeight();
+        m_crossHairPosX = (width / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+        m_crossHairPosY = (height / 2) - m_crossHairImageSize * m_crossHairScale * 0.5f;
+
+        IGameSprite *pSprite = pGame->CreateSpriteFromFile(L"../../assets/textures/", L"crosshair.dds",
+                                                           m_crossHairImageSize, m_crossHairImageSize);
+        pSprite->SetScale(0.25);
+        pSprite->SetPosition(m_crossHairPosX, m_crossHairPosY);
+
+        m_pCrossHairSprite = pSprite;
+    }
+
     return TRUE;
 }
 
@@ -48,6 +62,7 @@ void PortalGunController::Update(float dt)
 {
     IGameManager *pGame = g_pClient->GetGameManager();
     InputManager *pI = g_pClient->GetInputManager();
+
     if (pI->IsKeyPressed(VK_LBUTTON, false))
     {
         Vector3 rayDir = pGame->GetCameraLookTo();
@@ -96,7 +111,7 @@ void PortalGunController::Update(float dt)
         RayHit hit;
         if (pGame->Raycast(rayPos, rayDir, &hit))
         {
-            Vector3 pos = hit.point + hit.normal * 0.01f;
+            Vector3 pos = hit.point + hit.normal * 0.02f;
 
             Vector3 portalForward = -hit.normal;
             portalForward.Normalize();

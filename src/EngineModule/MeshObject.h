@@ -15,7 +15,7 @@ struct FaceGroup
 
 class MeshObject : public IGameMesh, public BaseObject
 {
-  private:
+  private:    
     MESH_TYPE m_meshType = MESH_TYPE_UNKNOWN;
 
     UINT m_vertexCount = 0;

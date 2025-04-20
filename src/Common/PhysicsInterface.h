@@ -19,6 +19,16 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_CONVEX,
 };
 
+enum COLLIDER_LAYER
+{
+    COLLIDER_LAYER_DEFAULT = 0,
+    COLLIDER_LAYER_1,
+    COLLIDER_LAYER_2,
+    COLLIDER_LAYER_3,
+    COLLIDER_LAYER_4,
+    COLLIDER_LAYER_5,
+};
+
 interface IGameObject;
 interface ICollider;
 struct CollisionData

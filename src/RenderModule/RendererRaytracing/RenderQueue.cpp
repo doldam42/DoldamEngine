@@ -70,10 +70,10 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
     ID3D12Device5     *pD3DDevice = m_pRenderer->GetD3DDevice();
     RaytracingManager *pDXRSceneManager = m_pRenderer->GetRaytracingManager();
 
-    ID3D12GraphicsCommandList *ppCommandList[64] = {};
+    ID3D12GraphicsCommandList4 *ppCommandList[64] = {};
     UINT                       commandListCount = 0;
 
-    ID3D12GraphicsCommandList *pCommandList = nullptr;
+    ID3D12GraphicsCommandList4 *pCommandList = nullptr;
     UINT                       processedCount = 0;
     UINT                       processedCountPerCommandList = 0;
     const RENDER_ITEM         *pItem = nullptr;
