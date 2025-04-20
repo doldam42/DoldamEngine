@@ -363,9 +363,9 @@ void D3D12Renderer::EndRender()
     pCommandList->ResourceBarrier(_countof(barriers), barriers);
     D3D12_CPU_DESCRIPTOR_HANDLE gbufferHandle = GetSRVHandle(RENDER_TARGET_TYPE_DEFERRED);
 
-    m_pRaytracingManager->DispatchRay(GetCurrentThreadIndex(), pCommandList, pOutputView, uavHandle, gbufferHandle, 4);
+    m_pRaytracingManager->DispatchRay(0, pCommandList, pOutputView, uavHandle, gbufferHandle, 4);
 #else
-    m_pRaytracingManager->DispatchRay(GetCurrentThreadIndex(), pCommandList, pOutputView, uavHandle);
+    m_pRaytracingManager->DispatchRay(0, pCommandList, pOutputView, uavHandle);
 #endif
 
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
@@ -1095,7 +1095,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
                                           _countof(rtvs), passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
-    if (curCount == 0)
+    if (curCount == 0) 
     {
         SetEvent(m_hCompleteEvent);
     }

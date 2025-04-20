@@ -306,7 +306,7 @@ void RaytracingManager::DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4
     pCommandList->SetComputeRootSignature(Graphics::globalRS);
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
     pCommandList->SetComputeRootDescriptorTable(0, gpuHandles);
-    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
+    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(0));
 
     ID3D12Resource *pHitShaderTable = m_pHitShaderTables[m_curContextIndex]->GetResource();
     ID3D12Resource *pMissShaderTable = m_pMissShaderTable->GetResource();

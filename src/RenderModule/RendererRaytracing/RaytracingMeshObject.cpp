@@ -166,7 +166,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
         pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
     }
 
-    Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
+    Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
 }
 
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
@@ -207,7 +207,6 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         dest.Offset(m_descriptorSize);
 
         MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
-        m_pRootArgPerGeometries[i].cb.materialIndex = pMatHandle->index;
         pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
 
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
@@ -220,12 +219,14 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
                                                    m_descriptorSize);
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
+        MATERIAL_HANDLE          *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
         Graphics::LOCAL_ROOT_ARG *rootArg = m_pRootArgPerGeometries + i;
         rootArg->vertices = gpuHandlePerVB;
         rootArg->indices = gpuHandlePerGeom;
         gpuHandlePerGeom.Offset(m_descriptorSize);
         rootArg->textures = gpuHandlePerGeom;
         gpuHandlePerGeom.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
+        rootArg->cb.materialIndex = pMatHandle->index;
     }
     m_pRaytracingManager->InsertBLASInstance(m_bottomLevelAS.pResult, pWorldMat, 0, m_pRootArgPerGeometries,
                                              m_faceGroupCount);

@@ -388,9 +388,10 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     material.metallicFactor = (material.flags & MATERIAL_USE_METALLIC_MAP)
                                   ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).b
                                   : material.metallicFactor;
+    
     material.albedo = (material.flags & MATERIAL_USE_ALBEDO_MAP)
                           ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
-                          : material.albedo;
+                          : float4(material.albedo, 1.0f);
 
     material.emissive = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
                             ? l_emmisiveTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
