@@ -168,6 +168,7 @@
     <ClInclude Include="BVH.h" />
     <ClInclude Include="DBVH.h" />
     <ClInclude Include="EventListener.h" />
+    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="GenericHeaders.h" />
     <ClInclude Include="GeometryCommon.h" />
     <ClInclude Include="Grid.h" />
@@ -188,6 +189,7 @@
     <ClCompile Include="BVH.cpp" />
     <ClCompile Include="DBVH.cpp" />
     <ClCompile Include="EventListener.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="HashTable.cpp" />
     <ClCompile Include="ImageUtil.cpp" />

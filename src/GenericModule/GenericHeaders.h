@@ -23,3 +23,5 @@
 #include "BVH.h"
 #include "KDTree.h"
 #include "Grid.h"
+
+#include "FrameBuffer.h"

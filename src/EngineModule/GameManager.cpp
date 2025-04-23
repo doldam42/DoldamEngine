@@ -69,6 +69,11 @@ void GameManager::DeletePrimitiveMeshes()
 
 void GameManager::Cleanup()
 {
+    if (m_pMatrixFrameBuffer)
+    {
+        delete m_pMatrixFrameBuffer;
+        m_pMatrixFrameBuffer = nullptr;
+    }
     if (m_pFontHandle)
     {
         m_pRenderer->DeleteFontObject(m_pFontHandle);
@@ -190,6 +195,10 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, IPhysicsManager *pPhysi
     ZeroMemory(m_pTextImage, sizeof(BYTE) * m_TextImageWidth * m_TextImageHeight * 4);
     ZeroMemory(m_text, sizeof(m_text));
 
+
+    m_pMatrixFrameBuffer = new FrameBuffer;
+    m_pMatrixFrameBuffer->Initialize(sizeof(Matrix), MAX_WORLD_OBJECT_COUNT * 4);
+
     result = TRUE;
 lb_return:
     return result;
@@ -305,7 +314,8 @@ void GameManager::BuildScene()
     m_pWorld->EndCreateWorld();*/
 }
 
-void GameManager::PreUpdate(float dt) { ProcessInput(); }
+void GameManager::PreUpdate(float dt)
+{ ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
@@ -367,6 +377,8 @@ void GameManager::Render()
 
     m_pRenderer->EndRender();
     m_pRenderer->Present();
+
+    m_pMatrixFrameBuffer->Reset();
 }
 
 BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth, UINT viewportHeight)
@@ -669,6 +681,12 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
         return TRUE;
     }
     return FALSE;
+}
+
+Matrix *GameManager::AllocWorldMatrix(UINT numMatrices) 
+{ 
+    Matrix *pAlloced = (Matrix *)m_pMatrixFrameBuffer->Alloc(numMatrices);
+    return pAlloced;
 }
 
 GameManager::~GameManager()

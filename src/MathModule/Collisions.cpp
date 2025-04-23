@@ -673,7 +673,8 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
 
     float extents[3] = {boxExtent.x, boxExtent.y, boxExtent.z};
 
-    Vector3 bestAxis;
+    int hitAxis = -1;
+    int hitSign = 0;
 
     for (int i = 0; i < 3; ++i)
     {
@@ -684,10 +685,10 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
 
         if (fabsf(f) > EPSILON)
         {
-            float sign = 1.0f;
             float t1 = (e + extents[i]) / f;
             float t2 = (e - extents[i]) / f;
 
+            int sign = 1.0f;
             if (t1 > t2)
             {
                 std::swap(t1, t2);
@@ -697,7 +698,8 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
             if (t1 > tMin)
             {
                 tMin = t1;
-                bestAxis = sign * axis;
+                hitAxis = i;
+                hitSign = sign;
             }
             tMax = fminf(tMax, t2);
 
@@ -712,7 +714,12 @@ BOOL RayBox(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxPo
         }
     }
 
-    *pOutNormal = bestAxis;
+    if (tMax < 0)
+    {
+        return FALSE;
+    }
+    *pOutNormal = axes[hitAxis] * float(hitSign);
+    //*tHit = (tMin < 0.0f) ? tMax : tMin;
     *tHit = tMin;
-    return true;
+    return TRUE;
 }

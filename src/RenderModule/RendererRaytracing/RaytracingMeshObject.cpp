@@ -145,7 +145,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
-    pCommandList->SetGraphicsRootDescriptorTable(0, globalCBV);
+    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
     pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
     if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
     {
@@ -166,7 +166,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
         pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
     }
 
-    Draw(0, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
+    Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
 }
 
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,

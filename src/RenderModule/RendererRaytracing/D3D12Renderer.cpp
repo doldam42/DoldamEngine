@@ -294,7 +294,7 @@ void D3D12Renderer::BeginRender()
     // GUI Begin
     m_pGUIManager->BeginRender();
 
-    CommandListPool           *pCommandListPool = GetCommandListPool(0);
+    CommandListPool           *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     UpdateGlobal();
@@ -380,7 +380,7 @@ void D3D12Renderer::EndRender()
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = GetRTVHandle(RENDER_TARGET_TYPE_TEXTURE);
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 
-        m_pPostProcessor->Draw(GetCurrentThreadIndex(), pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, rtv);
 
         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexHandle->pTexture,
                                                                                D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -389,7 +389,7 @@ void D3D12Renderer::EndRender()
     else
     {
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
-        m_pPostProcessor->Draw(GetCurrentThreadIndex(), pCommandList, &m_Viewport, &m_ScissorRect, srvHandle,
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle,
                                backBufferRTV);
     }
 
@@ -786,7 +786,7 @@ void D3D12Renderer::UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix 
 {
     ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
     m_pGlobalCB = pCBPool->Alloc();
-
+    
     m_globalConsts.eyeWorld = eyeWorld;
     m_globalConsts.view = viewRow.Transpose();
     m_globalConsts.proj = projRow.Transpose();

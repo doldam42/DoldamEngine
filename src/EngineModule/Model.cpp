@@ -4,6 +4,7 @@
 #include "GameManager.h"
 #include "GameObject.h"
 #include "GeometryGenerator.h"
+
 #include "Model.h"
 
 size_t Model::g_id = 0;

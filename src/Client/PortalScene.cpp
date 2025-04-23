@@ -34,12 +34,12 @@ void PortalScene::Load()
     ICollider *pCollider = pPhysics->CreateBoxCollider(pGround, Vector3(30.0f, 0.2f, 30.0f));
     pGround->SetCollider(pCollider);
 
-    /*IGameObject *pCeiling = pGame->CreateGameObject();
+    IGameObject *pCeiling = pGame->CreateGameObject();
     pCeiling->SetModel(pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
     pCeiling->SetPosition(0.0f, 60.0f, 0.0f);
     pCeiling->SetScale(30.0f, 0.2f, 30.0f);
-    pCeiling->SetMaterials(&pGroundMaterial, 1);
-    pCeiling->SetCollider(pCollider = pPhysics->CreateBoxCollider(pCeiling, Vector3(30.0f, 0.2f, 30.0f)));*/
+    //pCeiling->SetMaterials(&pGroundMaterial, 1);
+    //pCeiling->SetCollider(pCollider = pPhysics->CreateBoxCollider(pCeiling, Vector3(30.0f, 0.2f, 30.0f)));
 
     // Walls
     float x, y, z;
@@ -63,7 +63,7 @@ void PortalScene::Load()
         pWall->SetModel(pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX));
         pWall->SetPosition(z, 30.0f, x);
         pWall->SetScale(x, y, z);
-        pWall->SetMaterials(&pGroundMaterial, 1);
+        //pWall->SetMaterials(&pGroundMaterial, 1);
         pWall->SetCollider(pPhysics->CreateBoxCollider(pWall, Vector3(x, y, z)));
     }
 }
