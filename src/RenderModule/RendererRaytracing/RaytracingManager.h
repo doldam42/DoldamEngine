@@ -12,6 +12,9 @@ class RaytracingManager
     CRITICAL_SECTION   m_cs = {};
     CONDITION_VARIABLE m_cv = {};
 
+    FrameBuffer *m_pLocalRootArgumentBuffers = nullptr;
+    UINT          m_maxThreadCount = 0;
+
     D3D12Renderer *m_pRenderer = nullptr;
 
     AccelerationStructureBuffers m_topLevelASBuffers;
@@ -33,18 +36,23 @@ class RaytracingManager
     void Cleanup();
 
   public:
-    BOOL Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandList4 *pCommandList, UINT maxInstanceCount);
+    BOOL Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandList4 *pCommandList, UINT maxInstanceCount, UINT maxThreadCount = 1);
 
     void CreateTopLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
     
     // Hit Group의 index를 반환함
     void InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID, Graphics::LOCAL_ROOT_ARG* pRootArgs, UINT numFaceGroup);
 
+    void InsertBLASInstanceAsync(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
+                                 Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup);
+
     void DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav);
 
     void DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers, UINT gbufferCount);
+
+    Graphics::LOCAL_ROOT_ARG *AllocLocalRootArg(UINT threadIndex, UINT numItems);
 
     void Reset();
 

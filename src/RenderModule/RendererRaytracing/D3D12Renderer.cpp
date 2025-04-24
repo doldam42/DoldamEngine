@@ -294,7 +294,7 @@ void D3D12Renderer::BeginRender()
     // GUI Begin
     m_pGUIManager->BeginRender();
 
-    CommandListPool           *pCommandListPool = GetCommandListPool(GetCurrentThreadIndex());
+    CommandListPool           *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     UpdateGlobal();
@@ -1091,8 +1091,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
 
     m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle,
-                                          GetGlobalDescriptorHandle(threadIndex), &m_Viewport, &m_ScissorRect,
-                                          _countof(rtvs), passType);
+                                          &m_Viewport, &m_ScissorRect, _countof(rtvs), passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
     if (curCount == 0) 

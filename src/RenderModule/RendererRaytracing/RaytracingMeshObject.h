@@ -136,7 +136,7 @@ class RaytracingMeshObject : public IRenderMesh
 
     void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
                       IRenderMaterial *const* ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
-                      ID3D12PipelineState *pPSO, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats,
+                      ID3D12PipelineState *pPSO, const Matrix *pBoneMats,
                       UINT numBones);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,

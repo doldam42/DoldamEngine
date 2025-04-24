@@ -63,7 +63,7 @@ lb_return:
 
 UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, ID3D12CommandQueue *pCommandQueue,
                           DWORD processCountPerCommandList, D3D12_CPU_DESCRIPTOR_HANDLE *rtvs,
-                          D3D12_CPU_DESCRIPTOR_HANDLE dsv, D3D12_GPU_DESCRIPTOR_HANDLE global,
+                          D3D12_CPU_DESCRIPTOR_HANDLE dsv,
                           const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
                           DRAW_PASS_TYPE passType)
 {
@@ -91,7 +91,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             pMeshObj->DrawDeferred(
                 threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
                 pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
-                Graphics::GetPSO(pItem->type, passType, pItem->fillMode), global, nullptr, 0);
+                Graphics::GetPSO(pItem->type, passType, pItem->fillMode), nullptr, 0);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
@@ -99,7 +99,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
                                    pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials,
                                    Graphics::GetRS(pItem->type, passType),
-                                   Graphics::GetPSO(pItem->type, passType, pItem->fillMode), global,
+                                   Graphics::GetPSO(pItem->type, passType, pItem->fillMode),
                            pItem->charObjParam.pBones, pItem->charObjParam.numBones);
         }
         break;
@@ -131,7 +131,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         case RENDER_ITEM_TYPE_TERRAIN:
         {
             Terrain *pTerrain = (Terrain *)pItem->pObjHandle;
-            pTerrain->Draw(threadIndex, pCommandList, global, passType, &pItem->terrainParam.scale,
+            pTerrain->Draw(threadIndex, pCommandList, passType, &pItem->terrainParam.scale,
                            pItem->terrainParam.fillMode);
         }
         break;

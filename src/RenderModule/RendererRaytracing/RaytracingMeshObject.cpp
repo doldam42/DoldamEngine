@@ -122,8 +122,8 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
 
 void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
                                         const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
-                                        ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO,
-                                        D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, const Matrix *pBoneMats, UINT numBones)
+                                        ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO, const Matrix *pBoneMats,
+                                        UINT numBones)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -173,9 +173,9 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
                                 IRenderMaterial *const *ppMaterials, UINT numMaterials, const Matrix *pBoneMats,
                                 UINT numBones)
 {
-    RaytracingManager    *m_pRaytracingManager = m_pRenderer->GetRaytracingManager();
-    DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
-    //ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
+    RaytracingManager *m_pRaytracingManager = m_pRenderer->GetRaytracingManager();
+    DescriptorPool    *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
+    // ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
     if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && pBoneMats != nullptr)
     {
@@ -212,7 +212,9 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
         src.Offset(m_descriptorSize, 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
-    //m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    // m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    Graphics::LOCAL_ROOT_ARG *pLocalRootArg = m_pRaytracingManager->AllocLocalRootArg(threadIndex, m_faceGroupCount);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,
@@ -220,7 +222,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
         MATERIAL_HANDLE          *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
-        Graphics::LOCAL_ROOT_ARG *rootArg = m_pRootArgPerGeometries + i;
+        Graphics::LOCAL_ROOT_ARG *rootArg = pLocalRootArg + i;
         rootArg->vertices = gpuHandlePerVB;
         rootArg->indices = gpuHandlePerGeom;
         gpuHandlePerGeom.Offset(m_descriptorSize);

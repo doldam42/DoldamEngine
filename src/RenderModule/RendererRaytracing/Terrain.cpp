@@ -156,7 +156,7 @@ BOOL Terrain::Initialize(D3D12Renderer *pRenderer, const Vector3 *pScale, const 
     return TRUE;
 }
 
-void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_GPU_DESCRIPTOR_HANDLE globalCBV,
+void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, 
                    DRAW_PASS_TYPE passType, const Vector3 *pScale, FILL_MODE fillMode)
 {
     // TODO: ADD Shadow
@@ -215,7 +215,7 @@ void Terrain::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3
 
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
-    pCommandList->SetGraphicsRootDescriptorTable(0, globalCBV);
+    pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
     pCommandList->SetGraphicsRootDescriptorTable(1, gpuHandle);
     gpuHandle.Offset(m_descriptorSize);
     pCommandList->SetGraphicsRootDescriptorTable(2, gpuHandle);
