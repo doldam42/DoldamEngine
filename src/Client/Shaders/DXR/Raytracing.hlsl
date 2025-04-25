@@ -37,7 +37,9 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
 
     if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
-        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
+        //rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        //rayPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, RayTCurrent());
         return rayPayload;
     }
 
@@ -128,7 +130,7 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // This can cause visual pop ins however, such as in a case of looking at the spaceship's
     // glass cockpit through a window in the house. The cockpit will be skipped in this case.
     bool cullNonOpaque = true;
-
+    
     rayPayload = TraceRadianceRay(ray, rayPayload.rayRecursionDepth, tMin, tMax, 0, cullNonOpaque);
 
     if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
@@ -179,7 +181,7 @@ float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, inou
 bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRayRecursionDepth,
                                   in bool retrieveTHit = true, in float TMax = FAR_PLANE)
 {
-    if (currentRayRecursionDepth >= 3)
+    if (currentRayRecursionDepth >= MAX_SHADOW_RAY_RECURSION_DEPTH)
     {
         return false;
     }
@@ -240,7 +242,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
     Ray   visibilityRay = {hitPosition + tOffset * N, direction};
     float dummyTHit = 0.0;
     return TraceShadowRayAndReportIfHit(dummyTHit, visibilityRay, N, rayPayload.rayRecursionDepth, false,
-                                        TMax); // TODO ASSERT
+                                        TMax);
 }
 
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPosition, in MaterialConstant material)
@@ -325,7 +327,7 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPo
         }
     }
 
-    return L + emissive;
+    return L;
 }
 
 float3 NormalMap(in float3 normal, in float2 texCoord, in Vertex vertices[3], in Attributes attr, in float lodLevel)
@@ -359,6 +361,12 @@ void ShadowClosestHit(inout ShadowHitInfo hit, Attributes bary)
 
 [shader("closesthit")] 
 void ClosestHit(inout HitInfo payload, Attributes attrib) {
+    if (payload.rayRecursionDepth > MAX_RADIENT_RAY_RECURSION_DEPTH)
+    {
+        payload.colorAndDistance.w = RayTCurrent();
+        return;
+    }
+
     const static float LOG_FAR_PLANE = log(1.0 + FAR_PLANE);
     MaterialConstant   material = g_materials[materialId];
 
@@ -404,7 +412,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     float3 color = Shade(payload, normal, V, hitPosition, material);
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
-    payload.colorAndDistance = float4(color, RayTCurrent());
+    payload.colorAndDistance = float4(color + material.emissive, RayTCurrent());
 }
 
 //***************************************************************************

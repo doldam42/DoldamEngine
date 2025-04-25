@@ -7,7 +7,11 @@ class PlayerController : public IController
 
     CharacterController *m_pController = nullptr;
 
+    void Cleanup();
+
   public:
     BOOL Start() override;
     void Update(float dt) override;
+
+    ~PlayerController();
 };

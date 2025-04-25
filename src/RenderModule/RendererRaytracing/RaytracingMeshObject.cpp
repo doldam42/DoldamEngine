@@ -230,7 +230,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         gpuHandlePerGeom.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
         rootArg->cb.materialIndex = pMatHandle->index;
     }
-    m_pRaytracingManager->InsertBLASInstance(m_bottomLevelAS.pResult, pWorldMat, 0, m_pRootArgPerGeometries,
+    m_pRaytracingManager->InsertBLASInstanceAsync(m_bottomLevelAS.pResult, pWorldMat, 0, pLocalRootArg,
                                              m_faceGroupCount);
 }
 

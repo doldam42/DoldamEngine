@@ -214,6 +214,7 @@ lb_exit:
 
     Graphics::InitCommonStates(m_pD3DDevice);
 
+#ifdef USE_MULTI_THREAD
     DWORD physicalCoreCount = 0;
     DWORD logicalCoreCount = 0;
     TryGetPhysicalCoreCount(&physicalCoreCount, &logicalCoreCount);
@@ -221,15 +222,15 @@ lb_exit:
     if (m_renderThreadCount > MAX_RENDER_THREAD_COUNT)
         m_renderThreadCount = MAX_RENDER_THREAD_COUNT;
 
-#ifdef USE_DEFERRED_RENDERING
     InitRenderThreadPool(m_renderThreadCount);
-
+#else
+    m_renderThreadCount = 1;
+#endif
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         m_ppRenderQueue[i] = new RenderQueue;
         m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
     }
-#endif
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {
@@ -250,7 +251,8 @@ lb_exit:
 
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
-    m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME);
+
+    m_pRaytracingManager->Initialize(this, pCommandList, MAX_DRAW_COUNT_PER_FRAME, m_renderThreadCount);
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     m_pSingleDescriptorAllocator = new SingleDescriptorAllocator;
@@ -335,20 +337,28 @@ void D3D12Renderer::BeginRender()
 
 void D3D12Renderer::EndRender()
 {
-#ifdef USE_DEFERRED_RENDERING
+    CommandListPool            *pCommandListPool = GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
+    D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = GetUAVHandle(RENDER_TARGET_TYPE_RAYTRACING);
+
+#if defined(USE_MULTI_THREAD) && defined(USE_DEFERRED_RENDERING)
     m_activeThreadCount = m_renderThreadCount;
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         SetEvent(m_pThreadDescList[i].hEventList[RENDER_THREAD_EVENT_TYPE_PROCESS]);
     }
     WaitForSingleObject(m_hCompleteEvent, INFINITE);
+#elif defined(USE_DEFERRED_RENDERING)
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED));
+    D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
+                                            rtvHandle.Offset(m_rtvDescriptorSize)};
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
+    m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle, &m_Viewport, &m_ScissorRect,
+                                _countof(rtvs), DRAW_PASS_TYPE_DEFERRED);
 #endif
-
-    CommandListPool            *pCommandListPool = GetCommandListPool(0);
-    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
-    ID3D12Resource             *pOutputView = m_pRaytracingOutputBuffers[m_uiFrameIndex];
-    D3D12_CPU_DESCRIPTOR_HANDLE uavHandle = GetUAVHandle(RENDER_TARGET_TYPE_RAYTRACING);
 
 #ifdef USE_DEFERRED_RENDERING
     CD3DX12_RESOURCE_BARRIER barriers[] = {

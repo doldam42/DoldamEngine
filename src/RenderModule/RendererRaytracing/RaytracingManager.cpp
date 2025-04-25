@@ -12,6 +12,13 @@
 
 void RaytracingManager::Cleanup()
 {
+    for (int i = 0; i < m_maxThreadCount; i++)
+    {
+        delete m_ppLocalRootArgumentBuffers[i];
+        m_ppLocalRootArgumentBuffers[i] = nullptr;
+    }
+    delete[] m_ppLocalRootArgumentBuffers;
+
     m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_TLASHandle);
     if (m_topLevelASBuffers.pInstanceDesc)
     {
@@ -146,10 +153,11 @@ BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandLis
 
     CreateShaderTables();
 
-    m_pLocalRootArgumentBuffers = new FrameBuffer[maxThreadCount];
+    m_ppLocalRootArgumentBuffers = new FrameBuffer*[maxThreadCount];
     for (int i = 0; i < maxThreadCount; i++)
     {
-        m_pLocalRootArgumentBuffers[i].Initialize(sizeof(Graphics::LOCAL_ROOT_ARG), 1024);
+        m_ppLocalRootArgumentBuffers[i] = new FrameBuffer;
+        m_ppLocalRootArgumentBuffers[i]->Initialize(sizeof(Graphics::LOCAL_ROOT_ARG), 1024);
     }
     m_maxThreadCount = maxThreadCount;
 
@@ -283,6 +291,11 @@ void RaytracingManager::Reset()
     m_pHitShaderTables[m_curContextIndex]->Reset();
 
     m_curContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
+
+    for (int i = 0; i < m_maxThreadCount; i++)
+    {
+        m_ppLocalRootArgumentBuffers[i]->Reset();
+    }
     /*m_pMissShaderTable->Reset();
     m_pRayGenShaderTable->Reset();*/
 }
@@ -405,5 +418,5 @@ void RaytracingManager::DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4
 
 Graphics::LOCAL_ROOT_ARG *RaytracingManager::AllocLocalRootArg(UINT threadIndex, UINT numItems)
 {
-    return (Graphics::LOCAL_ROOT_ARG *)m_pLocalRootArgumentBuffers[threadIndex].Alloc(numItems);
+    return (Graphics::LOCAL_ROOT_ARG *)m_ppLocalRootArgumentBuffers[threadIndex]->Alloc(numItems);
 }

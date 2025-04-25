@@ -12,7 +12,7 @@ class RaytracingManager
     CRITICAL_SECTION   m_cs = {};
     CONDITION_VARIABLE m_cv = {};
 
-    FrameBuffer *m_pLocalRootArgumentBuffers = nullptr;
+    FrameBuffer **m_ppLocalRootArgumentBuffers = nullptr;
     UINT          m_maxThreadCount = 0;
 
     D3D12Renderer *m_pRenderer = nullptr;

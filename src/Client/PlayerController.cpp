@@ -9,6 +9,15 @@
 
 REGISTER_CONTROLLER(PlayerController)
 
+void PlayerController::Cleanup()
+{
+    if (m_pController)
+    {
+        delete m_pController;
+        m_pController = nullptr;
+    }
+}
+
 BOOL PlayerController::Start()
 {
     IGameManager     *pGame = g_pClient->GetGameManager();
@@ -63,3 +72,5 @@ void PlayerController::Update(float dt)
     }
     m_pController->Update(dt);
 }
+
+PlayerController::~PlayerController() { Cleanup(); }

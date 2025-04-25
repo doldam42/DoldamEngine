@@ -1,11 +1,11 @@
 #pragma once
-#include <d3d12.h>
-#include <dxgi1_4.h>
 #include "ConstantBuffers.h"
 #include "RenderQueue.h"
+#include <d3d12.h>
+#include <dxgi1_4.h>
 
-#include "../MathModule/MathHeaders.h"
 #include "../Common/RendererInterface.h"
+#include "../MathModule/MathHeaders.h"
 
 #include "RendererTypedef.h"
 
@@ -36,8 +36,10 @@ class PostProcessor;
 struct MATERIAL_HANDLE;
 struct TEXTURE_HANDLE;
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
-//#define USE_FORWARD_RENDERING
-#define USE_DEFERRED_RENDERING
+ #define USE_FORWARD_RENDERING
+//#define USE_DEFERRED_RENDERING
+//#define USE_MULTI_THREAD
+
 enum GLOBAL_DESCRIPTOR_INDEX
 {
     GLOBAL_DESCRIPTOR_INDEX_GLOBALCB = 0,
@@ -63,7 +65,7 @@ class D3D12Renderer : public IRenderer
 
     Camera *m_pMainCamera = nullptr;
 
-    BOOL  m_useTextureOutput = FALSE;
+    BOOL m_useTextureOutput = FALSE;
 
     ULONG m_refCount = 1;
 
@@ -88,7 +90,7 @@ class D3D12Renderer : public IRenderer
     DescriptorPool        *m_ppDescriptorPool[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
-    
+
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;
 
@@ -133,7 +135,7 @@ class D3D12Renderer : public IRenderer
     TEXTURE_HANDLE   *m_renderableTextureHanldes[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
-    
+
     // Global
     Matrix  m_camViewRow;
     Matrix  m_camProjRow;
@@ -145,7 +147,7 @@ class D3D12Renderer : public IRenderer
 
     Light m_pLights[MAX_LIGHTS];
 
-    TEXTURE_HANDLE *m_pDefaultTexHandle = nullptr;
+    TEXTURE_HANDLE  *m_pDefaultTexHandle = nullptr;
     MATERIAL_HANDLE *m_pDefaultMaterial = nullptr;
 
     // for IBL
@@ -281,7 +283,7 @@ class D3D12Renderer : public IRenderer
 
     // 함수 호출시 TEXTURE_HANDLE의 REF_COUNT를 1 올림
 
-    TEXTURE_HANDLE *GetDefaultTex();
+    TEXTURE_HANDLE  *GetDefaultTex();
     MATERIAL_HANDLE *GetDefaultMaterial();
 
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
@@ -300,8 +302,12 @@ class D3D12Renderer : public IRenderer
 
     UINT GetCurrentThreadIndex()
     {
+#ifdef USE_MULTI_THREAD
         UINT index = m_curThreadIndex;
         m_curThreadIndex = (m_curThreadIndex + 1) % m_renderThreadCount;
+#else
+        UINT index = 0;
+#endif
         return index;
     }
 

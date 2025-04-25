@@ -68,7 +68,6 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
                           DRAW_PASS_TYPE passType)
 {
     ID3D12Device5     *pD3DDevice = m_pRenderer->GetD3DDevice();
-    RaytracingManager *pDXRSceneManager = m_pRenderer->GetRaytracingManager();
 
     ID3D12GraphicsCommandList4 *ppCommandList[64] = {};
     UINT                       commandListCount = 0;
