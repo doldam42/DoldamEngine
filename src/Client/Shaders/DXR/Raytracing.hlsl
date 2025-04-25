@@ -33,12 +33,13 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
                          float bounceContribution = 1, bool cullNonOpaque = false)
 {
     HitInfo rayPayload;
+    rayPayload.colorAndDistance = float4(0, 0, 0, 0);
     rayPayload.rayRecursionDepth = currentRayRecursionDepth + 1;
 
     if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
-        rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
-        //rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        //rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
+        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
         //rayPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, RayTCurrent());
         return rayPayload;
     }
@@ -327,6 +328,8 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPo
         }
     }
 
+    L += emissive;
+    
     return L;
 }
 
@@ -361,9 +364,9 @@ void ShadowClosestHit(inout ShadowHitInfo hit, Attributes bary)
 
 [shader("closesthit")] 
 void ClosestHit(inout HitInfo payload, Attributes attrib) {
-    if (payload.rayRecursionDepth > MAX_RADIENT_RAY_RECURSION_DEPTH)
+    if (payload.rayRecursionDepth > 1)
     {
-        payload.colorAndDistance.w = RayTCurrent();
+        payload.colorAndDistance = float4(0, 0, 0, RayTCurrent());
         return;
     }
 
@@ -412,20 +415,17 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     float3 color = Shade(payload, normal, V, hitPosition, material);
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
-    payload.colorAndDistance = float4(color + material.emissive, RayTCurrent());
+    payload.colorAndDistance = float4(color, RayTCurrent());
 }
 
 //***************************************************************************
 //***********************------ RayGen shaders -------**************************
-//***************************************************************************
+//***************************************************************************\
+#define DEFERRED
 #ifdef DEFERRED
 [shader("raygeneration")] 
 void DeferredRayGen()
 {
-    HitInfo payload;
-    payload.colorAndDistance = float4(0, 0, 0, 0);
-    payload.rayRecursionDepth = 0;
-
     uint2  launchIndex = DispatchRaysIndex().xy;
     float2 xy = launchIndex + 0.5f;
     float2 screenCoord = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
@@ -441,7 +441,7 @@ void DeferredRayGen()
         gOutput[launchIndex] = float4(envIBLTex.SampleLevel(g_sampler, ray.direction, 0).xyz, 1.0);
         return;
     }
-
+    
     float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
     float3 V = normalize(eyeWorld - posWorld);
     
@@ -470,9 +470,10 @@ void DeferredRayGen()
     material.opacityFactor = 1.0; // TODO: transparancy
     material.emissive = emission;
 
-    // float3 color = Shade(payload, normalWorld, posWorld, material);
+    HitInfo payload;
+    payload.colorAndDistance = float4(0, 0, 0, 0);
+    payload.rayRecursionDepth = 0;
     float3 color = Shade(payload, normalWorld, V, posWorld, material);
-
     gOutput[launchIndex] = float4(color, 1.0);
 }
 #endif
