@@ -114,9 +114,12 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    //float  tOffset = 0.005f;
-    float  tOffset = 0.05f;
-    float3 offsetAlongRay = tOffset * wi;
+    // Deferred 렌더링시 tOffset이 0.01 이하일 때 화면 깜빡임 발생. Depth Tex에서 Position을 가져올 때 생기는 산술 오차로 추정.
+    float  tOffset = 0.005f;
+    //float tOffset = 0.05f;
+    //float3 offsetAlongRay = N * max(0.05f, 0.01f * length(wi));
+    //float3 offsetAlongRay = tOffset * wi;
+    float3 offsetAlongRay = tOffset * N;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 

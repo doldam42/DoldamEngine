@@ -38,7 +38,7 @@ struct TEXTURE_HANDLE;
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
  //#define USE_FORWARD_RENDERING
 #define USE_DEFERRED_RENDERING
-#define USE_MULTI_THREAD
+//#define USE_MULTI_THREAD
 
 enum GLOBAL_DESCRIPTOR_INDEX
 {

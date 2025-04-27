@@ -39,7 +39,7 @@ void PortalScene::Load()
     pCeiling->SetPosition(0.0f, 60.0f, 0.0f);
     pCeiling->SetScale(30.0f, 0.2f, 30.0f);
     pCeiling->SetMaterials(&pGroundMaterial, 1);
-    //pCeiling->SetCollider(pCollider = pPhysics->CreateBoxCollider(pCeiling, Vector3(30.0f, 0.2f, 30.0f)));
+    pCeiling->SetCollider(pCollider = pPhysics->CreateBoxCollider(pCeiling, Vector3(30.0f, 0.2f, 30.0f)));
 
     // Walls
     float x, y, z;
