@@ -37,8 +37,8 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
 
     if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
-        rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
-        //rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        //rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
+        rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
         //rayPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, RayTCurrent());
         return rayPayload;
     }
@@ -113,7 +113,8 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float  tOffset = 0.005f;
+    //float  tOffset = 0.005f;
+    float  tOffset = 0.05f;
     float3 offsetAlongRay = tOffset * wi;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
@@ -361,12 +362,6 @@ void ShadowClosestHit(inout ShadowHitInfo hit, Attributes bary)
 
 [shader("closesthit")] 
 void ClosestHit(inout HitInfo payload, Attributes attrib) {
-    if (payload.rayRecursionDepth > MAX_RADIENT_RAY_RECURSION_DEPTH)
-    {
-        payload.colorAndDistance.w = RayTCurrent();
-        return;
-    }
-
     const static float LOG_FAR_PLANE = log(1.0 + FAR_PLANE);
     MaterialConstant   material = g_materials[materialId];
 
