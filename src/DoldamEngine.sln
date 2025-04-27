@@ -83,6 +83,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DXR", "DXR", "{E05839F0-998
 		Client\Shaders\DXR\HlslCompat.hlsli = Client\Shaders\DXR\HlslCompat.hlsli
 		Client\Shaders\DXR\Miss.hlsl = Client\Shaders\DXR\Miss.hlsl
 		Client\Shaders\DXR\RayGen.hlsl = Client\Shaders\DXR\RayGen.hlsl
+		Client\Shaders\DXR\Raytracing.hlsl = Client\Shaders\DXR\Raytracing.hlsl
 		Client\Shaders\DXR\RaytracingTypedef.hlsli = Client\Shaders\DXR\RaytracingTypedef.hlsli
 		Client\Shaders\DXR\ShadowRay.hlsl = Client\Shaders\DXR\ShadowRay.hlsl
 	EndProjectSection
