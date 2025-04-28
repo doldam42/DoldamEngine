@@ -36,24 +36,40 @@ void Camera::Update()
 
         m_prevViewProjMatrix = m_viewProjMatrix;
         m_viewProjMatrix = m_viewMatrix * m_projMatrix;
-        
+
         // view proj 행렬로부터 평면의 방정식과 절두체 생성
         Matrix m = m_viewProjMatrix.Transpose();
-        //Matrix m = m_viewProjMatrix;
 
-        Vector4 row1(m._11, m._12, m._13, m._14);
-        Vector4 row2(m._21, m._22, m._23, m._24);
-        Vector4 row3(m._31, m._32, m._33, m._34);
-        Vector4 row4(m._41, m._42, m._43, m._44);
+        // Left
+        //Vector4 Left(m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41);
+        //Vector4 Right(m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41);
+        //Vector4 Bottom(m._14 + m._12, m._24 + m._22, m._34 + m._32, m._44 + m._42);
+        //Vector4 Top(m._14 - m._12, m._24 - m._22, m._34 - m._32, m._44 - m._42);
+        //Vector4 Near(m._13, m._23, m._33, m._44);
+        //Vector4 Far(m._14 - m._13, m._24 - m._23, m._34 - m._33, m._44 - m._43);
 
-        std::array<Plane, 6> frustumPlanesFromMatrix = {
-            Plane(-(row4 - row2)), // up
-            Plane(-(row4 + row2)), // bottom
-            Plane(-(row4 - row1)), // right
-            Plane(-(row4 + row1)), // left
-            Plane(-(row4 - row3)), // far
-            Plane(-(row4 + row3)), // near
-        };
+        //std::array<Plane, 6> frustumPlanesFromMatrix = {
+        //    Plane(Top), // up
+        //    Plane(Bottom), // bottom
+        //    Plane(Right), // right
+        //    Plane(Left), // left
+        //    Plane(Far), // far
+        //    Plane(Near), // near
+        //};
+
+         Vector4 row1(m._11, m._12, m._13, m._14);
+         Vector4 row2(m._21, m._22, m._23, m._24);
+         Vector4 row3(m._31, m._32, m._33, m._34);
+         Vector4 row4(m._41, m._42, m._43, m._44);
+
+         std::array<Plane, 6> frustumPlanesFromMatrix = {
+             Plane(-(row4 - row2)), // up
+             Plane(-(row4 + row2)), // bottom
+             Plane(-(row4 - row1)), // right
+             Plane(-(row4 + row1)), // left
+             Plane(-(row4 - row3)), // far
+             Plane(-(row4 + row3)), // near
+         };
         m_frustumWS = Frustum(frustumPlanesFromMatrix);
     }
     m_isUpdated = FALSE;
@@ -153,8 +169,8 @@ void Camera::DisablePerspectiveProjection()
     m_isUpdated = TRUE;
 }
 
-BOOL Camera::IsCulled(const Bounds &inBounds) const 
-{ 
-    BoundCheckResult result = m_frustumWS.CheckBound(inBounds); 
+BOOL Camera::IsCulled(const Bounds &inBounds) const
+{
+    BoundCheckResult result = m_frustumWS.CheckBound(inBounds);
     return result == BoundCheckResult::Outside;
 }
