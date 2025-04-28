@@ -30,6 +30,7 @@ class RaytracingManager;
 class Terrain;
 class GUIManager;
 class SingleDescriptorAllocator;
+class DebugLine;
 
 class PostProcessor;
 
@@ -77,6 +78,8 @@ class D3D12Renderer : public IRenderer
     TextureManager       *m_pTextureManager = nullptr;
     MaterialManager      *m_pMaterialManager = nullptr;
     FontManager          *m_pFontManager = nullptr;
+
+    DebugLine *m_pDebugLine = nullptr;
 
     SingleDescriptorAllocator *m_pSingleDescriptorAllocator = nullptr;
 
@@ -350,6 +353,8 @@ class D3D12Renderer : public IRenderer
     IRenderMesh *CreateSphereMesh(const float radius, const int numSlices, const int numStacks) override;
     IRenderMesh *CreateBoxMesh(const float scale) override;
     IRenderMesh *CreateWireBoxMesh(const Vector3 center, const Vector3 extends) override;
+
+    void DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) override;
 };
 
 extern D3D12Renderer *g_pRenderer;

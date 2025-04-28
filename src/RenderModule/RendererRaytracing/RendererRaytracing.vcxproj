@@ -206,6 +206,7 @@
     <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="D3D12Renderer.h" />
     <ClInclude Include="D3DUtil.h" />
+    <ClInclude Include="DebugLine.h" />
     <ClInclude Include="MemoryMappedFile.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -312,6 +313,7 @@
     <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="D3D12Renderer.cpp" />
     <ClCompile Include="D3DUtil.cpp" />
+    <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MemoryMappedFile.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -396,6 +398,11 @@
       <FileType>Document</FileType>
     </CustomBuild>
     <CustomBuild Include="..\..\Client\Shaders\SpriteVS.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\Client\Shaders\DrawLine.hlsl">
       <FileType>Document</FileType>
     </CustomBuild>
   </ItemGroup>

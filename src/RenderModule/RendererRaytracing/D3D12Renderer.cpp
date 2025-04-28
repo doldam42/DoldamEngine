@@ -20,6 +20,8 @@
 #include "Terrain.h"
 #include "TextureManager.h"
 
+#include "DebugLine.h"
+
 #include "PostProcessor.h"
 
 #include "GUIManager.h"
@@ -206,6 +208,9 @@ lb_exit:
     m_pPostProcessor = new PostProcessor;
     m_pPostProcessor->Initialize(this);
 
+    m_pDebugLine = new DebugLine;
+    m_pDebugLine->Initialize(this, 1024);
+
     CreateDescriptorTables();
 
     CreateBuffers();
@@ -333,6 +338,8 @@ void D3D12Renderer::BeginRender()
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
+
+    m_pDebugLine->DrawLine(Vector3(-10.0f, 2.0f, 0.0f), Vector3(10.0f, 2.0f, 0.0f), {255, 0, 0, 255}); // Red
 }
 
 void D3D12Renderer::EndRender()
@@ -357,6 +364,17 @@ void D3D12Renderer::EndRender()
     m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle, &m_Viewport, &m_ScissorRect,
                                 _countof(rtvs), DRAW_PASS_TYPE_DEFERRED);
 #endif
+
+    // DrawLine Debug
+    {
+        pCommandList = pCommandListPool->GetCurrentCommandList();
+        pCommandList->RSSetViewports(1, &m_Viewport);
+        pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+        pCommandList->OMSetRenderTargets(1, &GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED), FALSE, &dsvHandle);
+        m_pDebugLine->DrawLineAll(0, pCommandList);
+        pCommandListPool->CloseAndExecute(m_pCommandQueue);
+    }
+
     pCommandList = pCommandListPool->GetCurrentCommandList();
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
@@ -1164,6 +1182,11 @@ IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector
     return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
+void D3D12Renderer::DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) 
+{
+    m_pDebugLine->DrawLine(start, end, color);
+}
+
 void D3D12Renderer::CreateDefaultResources()
 {
     m_pDefaultTexHandle = (TEXTURE_HANDLE *)CreateTiledTexture(512, 512, 255, 255, 255, 16);
@@ -1583,6 +1606,12 @@ void D3D12Renderer::Cleanup()
 #ifdef USE_DEFERRED_RENDERING
     CleanupRenderThreadPool();
 #endif
+
+    if (m_pDebugLine)
+    {
+        delete m_pDebugLine;
+        m_pDebugLine = nullptr;
+    }
 
     if (m_pSingleDescriptorAllocator)
     {

@@ -332,6 +332,9 @@ class D3D12Renderer : public IRenderer
     IRenderMesh *CreateSphereMesh(const float radius, const int numSlices, const int numStacks) override;
     IRenderMesh *CreateBoxMesh(const float scale) override;
     IRenderMesh *CreateWireBoxMesh(const Vector3 center, const Vector3 extends) override;
+
+    // Inherited via IRenderer
+    void DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) override;
 };
 
 extern D3D12Renderer *g_pRenderer;

@@ -54,6 +54,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{6295
 		Client\Shaders\DepthOnlyPS.hlsl = Client\Shaders\DepthOnlyPS.hlsl
 		Client\Shaders\DepthOnlySkinnedVS.hlsl = Client\Shaders\DepthOnlySkinnedVS.hlsl
 		Client\Shaders\DepthOnlyVS.hlsl = Client\Shaders\DepthOnlyVS.hlsl
+		Client\Shaders\DrawLine.hlsl = Client\Shaders\DrawLine.hlsl
 		Client\Shaders\DrawNormal.hlsl = Client\Shaders\DrawNormal.hlsl
 		Client\Shaders\HlslUtils.hlsli = Client\Shaders\HlslUtils.hlsli
 		Client\Shaders\LightOnlyPS.hlsl = Client\Shaders\LightOnlyPS.hlsl

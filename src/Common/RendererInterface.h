@@ -215,4 +215,6 @@ interface IRenderer : public IUnknown
     virtual float GetDPI() const = 0;
     virtual UINT  GetCommandListCount() = 0;
     virtual UINT  GetRenderThreadCount() = 0;
+
+    virtual void DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) = 0;
 };

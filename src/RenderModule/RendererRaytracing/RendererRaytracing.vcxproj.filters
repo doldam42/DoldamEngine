@@ -184,6 +184,7 @@
     <ClInclude Include="..\Common\PrimitiveGenerator.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="DebugLine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DUtil.cpp">
@@ -296,6 +297,7 @@
     <ClCompile Include="..\Common\PrimitiveGenerator.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="DebugLine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">
@@ -343,6 +345,9 @@
       <Filter>Shader</Filter>
     </CustomBuild>
     <CustomBuild Include="..\..\Client\Shaders\SpriteVS.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\DrawLine.hlsl">
       <Filter>Shader</Filter>
     </CustomBuild>
   </ItemGroup>
