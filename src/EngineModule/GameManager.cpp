@@ -314,8 +314,7 @@ void GameManager::BuildScene()
     m_pWorld->EndCreateWorld();*/
 }
 
-void GameManager::PreUpdate(float dt)
-{ ProcessInput(); }
+void GameManager::PreUpdate(float dt) { ProcessInput(); }
 
 void GameManager::UpdatePhysics(float dt)
 {
@@ -345,6 +344,55 @@ void GameManager::Render()
 
     // begin
     m_pRenderer->BeginRender();
+
+    // NDC 기준 Frustum 8 corners
+    static constexpr Vector3 ndcCorners[8] = {
+        {-1.0f, 1.0f, 0.0f},  // Near Top Left
+        {1.0f, 1.0f, 0.0f},   // Near Top Right
+        {-1.0f, -1.0f, 0.0f}, // Near Bottom Left
+        {1.0f, -1.0f, 0.0f},  // Near Bottom Right
+        {-1.0f, 1.0f, 1.0f},  // Far Top Left
+        {1.0f, 1.0f, 1.0f},   // Far Top Right
+        {-1.0f, -1.0f, 1.0f}, // Far Bottom Left
+        {1.0f, -1.0f, 1.0f},  // Far Bottom Right
+    };
+
+    const Matrix &viewProj = m_pMainCamera->GetViewProjMatrix();
+    const Matrix  invViewProj = viewProj.Invert();
+
+    Vector3 frustumCornersWS[8]; // World Space 코너
+    for (int i = 0; i < 8; ++i)
+    {
+        Vector3 ndc = ndcCorners[i];
+        Vector4 clipSpacePos = {ndc.x, ndc.y, ndc.z, 1.0f};
+
+        // NDC → Clip → World
+        Vector4 worldPos = Vector4::Transform(clipSpacePos, invViewProj);
+
+        // perspective divide
+        worldPos.x /= worldPos.w;
+        worldPos.y /= worldPos.w;
+        worldPos.z /= worldPos.w;
+
+        frustumCornersWS[i] = {worldPos.x, worldPos.y, worldPos.z};
+    }
+    // Near Plane
+    m_pRenderer->DrawLine(frustumCornersWS[0], frustumCornersWS[1], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[1], frustumCornersWS[3], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[3], frustumCornersWS[2], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[2], frustumCornersWS[0], {255, 0, 0, 255});
+
+    // Far Plane
+    m_pRenderer->DrawLine(frustumCornersWS[4], frustumCornersWS[5], {0, 255, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[5], frustumCornersWS[7], {0, 255, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[7], frustumCornersWS[6], {0, 255, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[6], frustumCornersWS[4], {0, 255, 0, 255});
+
+    // Side Edges
+    m_pRenderer->DrawLine(frustumCornersWS[0], frustumCornersWS[4], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[1], frustumCornersWS[5], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[2], frustumCornersWS[6], {255, 0, 0, 255});
+    m_pRenderer->DrawLine(frustumCornersWS[3], frustumCornersWS[7], {255, 0, 0, 255});
 
     m_pControllerManager->Render();
 
