@@ -252,6 +252,12 @@ lb_exit:
         }
     }
 
+    for (int i = 0; i < m_renderThreadCount; i++)
+    {
+        m_ppFrameBuffer[i] = new FrameBuffer;
+        m_ppFrameBuffer[i]->Initialize(MAX_DRAW_COUNT_PER_FRAME * 1024);
+    }
+
     m_pRaytracingManager = new RaytracingManager;
 
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
@@ -476,6 +482,8 @@ void D3D12Renderer::Present()
         m_ppConstantBufferManager[nextContextIndex][i]->Reset();
         m_ppDescriptorPool[nextContextIndex][i]->Reset();
         m_ppCommandListPool[nextContextIndex][i]->Reset();
+
+        m_ppFrameBuffer[i]->Reset();
     }
 
     m_curContextIndex = nextContextIndex;
@@ -1141,6 +1149,11 @@ IRenderGUI *D3D12Renderer::GetRenderGUI()
 {
     m_pGUIManager->AddRef();
     return m_pGUIManager;
+}
+
+void *D3D12Renderer::FrameAlloc(UINT threadIndex, UINT sizeInByte)
+{
+    return m_ppFrameBuffer[threadIndex]->Alloc(sizeInByte);
 }
 
 D3D12Renderer::~D3D12Renderer()

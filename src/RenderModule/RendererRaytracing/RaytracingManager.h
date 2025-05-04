@@ -12,7 +12,6 @@ class RaytracingManager
     CRITICAL_SECTION   m_cs = {};
     CONDITION_VARIABLE m_cv = {};
 
-    FrameBuffer **m_ppLocalRootArgumentBuffers = nullptr;
     UINT          m_maxThreadCount = 0;
 
     D3D12Renderer *m_pRenderer = nullptr;
@@ -51,8 +50,6 @@ class RaytracingManager
 
     void DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, ID3D12Resource *pOutputView,
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers, UINT gbufferCount);
-
-    Graphics::LOCAL_ROOT_ARG *AllocLocalRootArg(UINT threadIndex, UINT numItems);
 
     void Reset();
 

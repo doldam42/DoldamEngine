@@ -82,7 +82,7 @@ class GameManager : public IGameManager
     IGameSprite *m_pTextSprite = nullptr;
     IFontHandle   *m_pFontHandle = nullptr;
 
-    FrameBuffer *m_pMatrixFrameBuffer = nullptr;
+    FrameBuffer *m_pFrameBuffer = nullptr;
 
   private:
     void LoadPrimitiveMeshes();
@@ -166,7 +166,7 @@ class GameManager : public IGameManager
 
     BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = 1000.f) override;
 
-    Matrix *AllocWorldMatrix(UINT numMatrices);
+    void   *FrameAlloc(UINT sizeInByte);
 
     GameManager() = default;
     ~GameManager();

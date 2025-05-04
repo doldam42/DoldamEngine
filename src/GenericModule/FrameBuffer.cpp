@@ -1,26 +1,27 @@
-#include "FrameBuffer.h"
 #include "pch.h"
 
-void FrameBuffer::Initialize(UINT itemSizePerByte, UINT maxItemCount)
+#include "FrameBuffer.h"
+
+void FrameBuffer::Initialize(UINT maxBufferSize) 
 {
-    m_pBuffer = new BYTE[itemSizePerByte * maxItemCount];
-    m_maxItemCount = maxItemCount;
-    m_itemSize = itemSizePerByte;
+    m_pBuffer = new BYTE[maxBufferSize];
+    m_maxBufferSize = maxBufferSize;
 }
 
-void *FrameBuffer::Alloc(UINT numItem)
+void *FrameBuffer::Alloc(UINT sizeInByte)
 {
-    if (m_allocedItemCount + numItem > m_maxItemCount)
+    if (m_offset + sizeInByte > m_maxBufferSize)
     {
         DASSERT(false);
         return nullptr;
     }
-    BYTE *pAlloced = m_pBuffer + (m_allocedItemCount * m_itemSize);
-    m_allocedItemCount += numItem;
+
+    BYTE *pAlloced = m_pBuffer + m_offset;
+    m_offset += sizeInByte;
     return pAlloced;
 }
 
-void FrameBuffer::Reset() { m_allocedItemCount = 0; }
+void FrameBuffer::Reset() { m_offset = 0; }
 
 FrameBuffer::~FrameBuffer()
 {

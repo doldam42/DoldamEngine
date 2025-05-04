@@ -95,6 +95,8 @@ class D3D12Renderer : public IRenderer
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
 
+    FrameBuffer *m_ppFrameBuffer[MAX_RENDER_THREAD_COUNT] = {};
+
     UINT m_renderThreadCount = 0;
     UINT m_curThreadIndex = 0;
 
@@ -339,6 +341,8 @@ class D3D12Renderer : public IRenderer
     void WaitForGPU();
 
     IRenderGUI *GetRenderGUI() override;
+
+    void *FrameAlloc(UINT threadIndex, UINT sizeInByte);
 
     D3D12Renderer() = default;
     ~D3D12Renderer();

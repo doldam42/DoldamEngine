@@ -214,7 +214,8 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
     }
     // m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    Graphics::LOCAL_ROOT_ARG *pLocalRootArg = m_pRaytracingManager->AllocLocalRootArg(threadIndex, m_faceGroupCount);
+    Graphics::LOCAL_ROOT_ARG *pLocalRootArg = (Graphics::LOCAL_ROOT_ARG *)m_pRenderer->FrameAlloc(
+        threadIndex, sizeof(Graphics::LOCAL_ROOT_ARG) * m_faceGroupCount);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,

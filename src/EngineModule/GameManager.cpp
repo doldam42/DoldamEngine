@@ -69,10 +69,10 @@ void GameManager::DeletePrimitiveMeshes()
 
 void GameManager::Cleanup()
 {
-    if (m_pMatrixFrameBuffer)
+    if (m_pFrameBuffer)
     {
-        delete m_pMatrixFrameBuffer;
-        m_pMatrixFrameBuffer = nullptr;
+        delete m_pFrameBuffer;
+        m_pFrameBuffer = nullptr;
     }
     if (m_pFontHandle)
     {
@@ -196,8 +196,8 @@ BOOL GameManager::Initialize(HWND hWnd, IRenderer *pRnd, IPhysicsManager *pPhysi
     ZeroMemory(m_text, sizeof(m_text));
 
 
-    m_pMatrixFrameBuffer = new FrameBuffer;
-    m_pMatrixFrameBuffer->Initialize(sizeof(Matrix), MAX_WORLD_OBJECT_COUNT * 4);
+    m_pFrameBuffer = new FrameBuffer;
+    m_pFrameBuffer->Initialize(sizeof(Matrix) * MAX_WORLD_OBJECT_COUNT * 4);
 
     result = TRUE;
 lb_return:
@@ -378,7 +378,7 @@ void GameManager::Render()
     m_pRenderer->EndRender();
     m_pRenderer->Present();
 
-    m_pMatrixFrameBuffer->Reset();
+    m_pFrameBuffer->Reset();
 }
 
 BOOL GameManager::OnUpdateWindowSize(UINT width, UINT height, UINT viewportWidth, UINT viewportHeight)
@@ -683,11 +683,7 @@ BOOL GameManager::Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit 
     return FALSE;
 }
 
-Matrix *GameManager::AllocWorldMatrix(UINT numMatrices) 
-{ 
-    Matrix *pAlloced = (Matrix *)m_pMatrixFrameBuffer->Alloc(numMatrices);
-    return pAlloced;
-}
+void *GameManager::FrameAlloc(UINT sizeInByte) { return m_pFrameBuffer->Alloc(sizeInByte); }
 
 GameManager::~GameManager()
 {
