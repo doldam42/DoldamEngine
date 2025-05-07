@@ -1185,6 +1185,8 @@ IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector
     return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
+void D3D12Renderer::DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) {}
+
 void D3D12Renderer::CreateDefaultTex()
 {
     DXGI_FORMAT TexFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

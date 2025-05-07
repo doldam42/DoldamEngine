@@ -46,8 +46,7 @@ class Terrain : public IRenderTerrain
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, const Vector3* pScale, const Material *pMaterial, const int numSlice = 1,
                     const int numStack = 1);
-    void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList,
-              D3D12_GPU_DESCRIPTOR_HANDLE globalCBV, DRAW_PASS_TYPE passType, const Vector3* pScale, FILL_MODE fillMode);
+    void Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, DRAW_PASS_TYPE passType, const Vector3* pScale, FILL_MODE fillMode);
     Terrain() = default;
     ~Terrain();
 

@@ -33,7 +33,7 @@ void GameObject::Cleanup()
     }
     if (m_pRigidBody)
     {
-        pPhysics->DeleteRigidBody(m_pRigidBody);
+        //pPhysics->DeleteRigidBody(m_pRigidBody);
         m_pRigidBody = nullptr;
     }
     if (m_pModel)
@@ -90,6 +90,12 @@ void GameObject::SetPosition(float x, float y, float z)
 {
     Vector3 pos(x, y, z);
     m_transform.SetPosition(pos);
+
+    if (m_pCollider)
+    {
+        m_pCollider->SetPosition(m_transform.GetPosition());
+    }
+
     m_IsUpdated = true;
 }
 
@@ -107,7 +113,12 @@ void GameObject::SetScale(float s)
 
 void GameObject::SetRotationY(float rotY)
 {
-    m_transform.SetRotation(Quaternion::CreateFromYawPitchRoll(rotY, 0, 0));
+    Quaternion q = Quaternion::CreateFromYawPitchRoll(rotY, 0, 0);
+    m_transform.SetRotation(q);
+    if (m_pCollider)
+    {
+        m_pCollider->SetRotation(q);
+    }
     m_IsUpdated = true;
 }
 
@@ -130,25 +141,43 @@ GameObject::~GameObject() { Cleanup(); }
 
 void GameObject::SetRotationX(float rotX)
 {
-    m_transform.SetRotation(Quaternion::CreateFromYawPitchRoll(0, rotX, 0));
+    Quaternion q = Quaternion::CreateFromYawPitchRoll(0, rotX, 0);
+    m_transform.SetRotation(q);
+    if (m_pCollider)
+    {
+        m_pCollider->SetRotation(q);
+    }
     m_IsUpdated = true;
 }
 
 void GameObject::SetRotationZ(float rotZ)
 {
-    m_transform.SetRotation(Quaternion::CreateFromYawPitchRoll(0, 0, rotZ));
+    Quaternion q = Quaternion::CreateFromYawPitchRoll(0, 0, rotZ);
+    m_transform.SetRotation(q);
+    if (m_pCollider)
+    {
+        m_pCollider->SetRotation(q);
+    }
     m_IsUpdated = true;
 }
 
 void GameObject::SetRotation(Quaternion q)
 {
     m_transform.SetRotation(q);
+    if (m_pCollider)
+    {
+        m_pCollider->SetRotation(q);
+    }
     m_IsUpdated = true;
 }
 
 void GameObject::AddPosition(Vector3 deltaPos)
 {
     m_transform.AddPosition(deltaPos);
+    if (m_pCollider)
+    {
+        m_pCollider->SetPosition(m_transform.GetPosition());
+    }
     m_IsUpdated = true;
 }
 
@@ -194,8 +223,17 @@ IRenderMaterial *GameObject::GetMaterialAt(UINT index)
 Bounds GameObject::GetBounds() const
 {
     Bounds box;
-    m_pModel->GetBoundingBox().Transform(&box, m_transform.GetMatrix());
-    return box;
+    if (m_pCollider)
+    {
+        return m_pCollider->GetBounds();
+    }
+    if (m_pModel)
+    {
+        m_pModel->GetBoundingBox().Transform(&box, m_transform.GetMatrix());
+        return box;
+    }
+    __debugbreak();
+    return Bounds();
 }
 
 bool GameObject::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const

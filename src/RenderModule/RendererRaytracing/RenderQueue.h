@@ -74,8 +74,8 @@ class RenderQueue
     BOOL Add(const RENDER_ITEM *pItem);
     UINT Process(UINT threadIndex, CommandListPool *pCommandListPool, ID3D12CommandQueue *pCommandQueue,
                  DWORD processCountPerCommandList, D3D12_CPU_DESCRIPTOR_HANDLE *rtvs, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
-                 D3D12_GPU_DESCRIPTOR_HANDLE global, const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect,
-                 UINT rtvCount, DRAW_PASS_TYPE passType);
+                 const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
+                 DRAW_PASS_TYPE passType);
     void Reset();
     void Revert();
 

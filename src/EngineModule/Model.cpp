@@ -4,6 +4,7 @@
 #include "GameManager.h"
 #include "GameObject.h"
 #include "GeometryGenerator.h"
+
 #include "Model.h"
 
 size_t Model::g_id = 0;
@@ -256,7 +257,6 @@ void Model::Render(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT num
                                        numMaterials);
         }
     }
-    
     // Render Bounding Box
     //m_pRenderer->RenderMeshObject(m_pBoundingBoxMesh, &worldMat, nullptr, 0, true);
 }

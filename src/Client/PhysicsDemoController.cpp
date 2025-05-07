@@ -5,7 +5,7 @@
 
 #include "PhysicsDemoController.h"
 
-REGISTER_SCENE(PhysicsDemoController)
+//REGISTER_SCENE(PhysicsDemoController)
 
 void PhysicsDemoController::UnLoad() {}
 

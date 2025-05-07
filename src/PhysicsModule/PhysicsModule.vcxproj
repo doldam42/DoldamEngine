@@ -78,6 +78,10 @@
     <OutDir>$(SolutionDir)..\DLL\</OutDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+    <VcpkgManifestInstall>false</VcpkgManifestInstall>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -153,19 +157,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CharacterBody.h" />
-    <ClInclude Include="Collider.h" />
+    <ClInclude Include="BoxCollider.h" />
+    <ClInclude Include="BroadPhase.h" />
+    <ClInclude Include="ColliderBase.h" />
+    <ClInclude Include="Contact.h" />
+    <ClInclude Include="EllipsoidCollider.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="HeightFieldTerrain.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="RigidBody.h" />
+    <ClInclude Include="SphereCollider.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CharacterBody.cpp" />
-    <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="BoxCollider.cpp" />
+    <ClCompile Include="BroadPhase.cpp" />
+    <ClCompile Include="ColliderBase.cpp" />
+    <ClCompile Include="Contact.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="HeightFieldTerrain.cpp" />
+    <ClCompile Include="EllipsoidCollider.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -174,6 +183,7 @@
     </ClCompile>
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="RigidBody.cpp" />
+    <ClCompile Include="SphereCollider.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,58 +1,63 @@
 #pragma once
 
+#include "BroadPhase.h"
+#include "Contact.h"
+
+struct Collider;
+
+constexpr UINT MAX_PAIR_PER_COLLIDER = 7;
+
+struct ColliderData
+{
+    UINT PairCount = 0;
+    UINT PairIndices[MAX_PAIR_PER_COLLIDER] = {0};
+    UINT ContactIndices[MAX_PAIR_PER_COLLIDER] = {0};
+};
+
 class PhysicsManager : public IPhysicsManager
 {
-    const static UINT MAX_BODY_COUNT = 1024;
+  public:
+    static constexpr size_t MAX_BODY_COUNT = 1024;
+    static constexpr size_t MAX_COLLISION_CANDIDATE_COUNT = 2048;
+    static constexpr size_t MAX_COLLISION_COUNT = 512;
 
   private:
+    BroadPhase *m_pBroadPhase = nullptr;
+
+    Collider *m_pColliders[MAX_BODY_COUNT] = {nullptr};
+    UINT      m_colliderCount = 0;
+
+    CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
+    Contact       m_contacts[MAX_COLLISION_COUNT];
+    UINT          m_contactCount = 0;
+
+    ColliderData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
+
     ULONG m_refCount = 1;
 
-    btDefaultCollisionConfiguration     *m_pCollisionConfiguration = nullptr;
-    btCollisionDispatcher               *m_pDispatcher = nullptr;
-    btBroadphaseInterface               *m_pOverlappingPairCache = nullptr;
-    btSequentialImpulseConstraintSolver *m_pSolver = nullptr;
-    btDiscreteDynamicsWorld             *m_pDynamicWorld = nullptr;
-    btAlignedObjectArray<btCollisionShape *> m_collisionShapes;
-
-    void Cleanup();
+    BOOL Intersect(Collider *pA, Collider *pB, Contact* pOutContact);
 
   public:
     BOOL Initialize() override;
 
-    // Inherited via IPhysicsManager
-    ICollider  *CreateSphereCollider(const float radius) override;
-    ICollider  *CreateBoxCollider(const Vector3 &halfExtents) override;
-    ICollider  *CreateCapsuleCollider(const float radius, const float height) override;
-    ICollider  *CreateConvexCollider(const Vector3 *points, const int numPoints) override;
+    ICollider *CreateSphereCollider(IGameObject* pObj, const float radius) override;
+    ICollider *CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents) override;
+    ICollider *CreateEllpsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius) override;
+    void       DeleteCollider(ICollider *pDel) override;
 
-    IRigidBody *CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity, float friction,
-                                BOOL useGravity) override;
-    ICharacterBody *CreateCharacterBody(const Vector3 &startPosition, const float radius,
-                                        const float height) override;
+    BOOL Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider) override;
 
-    void DeleteCollider(ICollider *pDel);
-    void DeleteRigidBody(IRigidBody *pDel);
+    void BeginCollision(float dt) override;
+    BOOL CollisionTestAll(float dt) override;
+    void EndCollision() override;
 
-    IHeightFieldTerrainCollider *CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth, const UINT imgHeight,
-                                                  const Vector3 &scale, const float minHeight,
-                                                  const float maxHeight) override;
+    const ColliderData &GetColliderData(UINT colliderID) const { return m_colliderData[colliderID]; }
+    ICollider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
+    const Contact &GetContact(UINT contactIdx) const { return m_contacts[contactIdx]; } 
 
-    void RemoveFromWorld(btRigidBody *pBody);
-    void AddToWorld(btRigidBody *pBody);
-
-    void        BuildScene() override;
-    void        BeginCollision(float dt) override;
-    BOOL        CollisionTestAll(float dt) override;
-    void        EndCollision() override;
-    BOOL        Raycast(const Ray &ray, float *tHit, IRigidBody **ppHitted) override;
-
-    // Inherited via IPhysicsManager
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
-
-    PhysicsManager() = default;
-    ~PhysicsManager();
 };
 
 extern PhysicsManager *g_pPhysics;

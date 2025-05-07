@@ -96,7 +96,11 @@ bool Character::IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const
     return GameObject::IntersectRay(ray, hitt0, hitt1);
 }
 
-bool Character::Intersect(const Bounds& b) const { return GameObject::Intersect(b); }
+bool Character::Intersect(const Bounds &b) const { return GameObject::Intersect(b); }
+
+void Character::SetLayer(UINT layer) { GameObject::SetLayer(layer); }
+
+UINT Character::GetLayer() { return GameObject::GetLayer(); }
 
 ICollider *Character::GetCollider() const { return GameObject::GetCollider(); }
 

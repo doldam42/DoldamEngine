@@ -80,6 +80,7 @@
     <ClInclude Include="GeometryCommon.h">
       <Filter>DataStructure</Filter>
     </ClInclude>
+    <ClInclude Include="FrameBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StringUtil.cpp">
@@ -121,5 +122,6 @@
     <ClCompile Include="DBVH.cpp">
       <Filter>DataStructure</Filter>
     </ClCompile>
+    <ClCompile Include="FrameBuffer.cpp" />
   </ItemGroup>
 </Project>

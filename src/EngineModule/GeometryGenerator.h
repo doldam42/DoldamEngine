@@ -22,6 +22,9 @@ class GeometryGenerator
     static Model *MakeWireBox(const Vector3 center, const Vector3 extends);
     static Model *MakeSphere(const float radius, const int numSlices, const int numStacks);
 
+    static Model *MakeEllipsoid(const float majorRadius, const float minorRadius, const int numSlices,
+                                const int numStacks);
+
     static Model *MakeDiamond(const float scale = 1.0f);
 
     static Model *MakeCylinder(const float bottomRadius, const float topRadius, float height, int numSlices);

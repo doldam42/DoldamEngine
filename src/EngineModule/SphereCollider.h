@@ -1,12 +1,9 @@
 #pragma once
 
-class GameObject;
+#include "ColliderBase.h"
+
 class SphereCollider : public ICollider
 {
-    GameObject *m_pGameObject = nullptr;
-    Matrix      m_inertiaTensor;
-    Vector3     m_centerOfMass;
-    Vector3     m_worldCenterOfMass;
     float       m_radius = 0.0f;
 
   public:

@@ -82,6 +82,8 @@ class GameManager : public IGameManager
     IGameSprite *m_pTextSprite = nullptr;
     IFontHandle   *m_pFontHandle = nullptr;
 
+    FrameBuffer *m_pFrameBuffer = nullptr;
+
   private:
     void LoadPrimitiveMeshes();
     void DeletePrimitiveMeshes();
@@ -163,6 +165,8 @@ class GameManager : public IGameManager
     IPhysicsManager *GetPhysicsManager() const { return m_pPhysicsManager; }
 
     BOOL Raycast(const Vector3 rayOrigin, const Vector3 rayDir, RayHit *pOutHit, float maxDistance = 1000.f) override;
+
+    void   *FrameAlloc(UINT sizeInByte);
 
     GameManager() = default;
     ~GameManager();

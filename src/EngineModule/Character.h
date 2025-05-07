@@ -59,6 +59,9 @@ class Character : public IGameCharacter, public GameObject
     bool   IntersectRay(const Ray &ray, float *hitt0, float *hitt1) const;
     bool   Intersect(const Bounds& b) const;
 
+    void SetLayer(UINT layer) override;
+    UINT GetLayer() override;
+
     // Inherited via IGameCharacter
     ICollider *GetCollider() const override;
     IRigidBody *GetRigidBody() const override;

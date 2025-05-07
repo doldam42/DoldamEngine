@@ -53,7 +53,8 @@ void RaytracingManager::Cleanup()
     }
 }
 
-BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandList4 *pCommandList, UINT maxInstanceCount)
+BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandList4 *pCommandList, UINT maxInstanceCount,
+                                   UINT maxThreadCount)
 {
     BOOL                                               result = FALSE;
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
@@ -144,6 +145,9 @@ BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandLis
     pD3DDevice->CreateShaderResourceView(nullptr, &srvDesc, m_TLASHandle.cpuHandle);
 
     CreateShaderTables();
+
+    m_maxThreadCount = maxThreadCount;
+
     result = TRUE;
 lb_return:
     return result;
@@ -227,10 +231,11 @@ void RaytracingManager::CreateShaderTables()
 void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
                                            Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup)
 {
-    // EnterCriticalSection(&m_cs);
-
     if (m_AllocatedInstanceCount >= m_maxInstanceCount)
         __debugbreak();
+
+    UINT instanceId = m_AllocatedInstanceCount;
+    m_AllocatedInstanceCount++;
 
     // Insert Hit Group Record
     void *hitGroupShaderIdentifier = Graphics::rtStateObjectProps->GetShaderIdentifier(L"HitGroup");
@@ -248,18 +253,23 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
                                                             pRootArgPerGeometry, sizeof(Graphics::LOCAL_ROOT_ARG));
     }
 
-    D3D12_RAYTRACING_INSTANCE_DESC *pInstanceDesc = m_pInstanceDescsCPU + m_AllocatedInstanceCount;
+    D3D12_RAYTRACING_INSTANCE_DESC *pInstanceDesc = m_pInstanceDescsCPU + instanceId;
     memcpy(pInstanceDesc->Transform, &pTM->Transpose(), sizeof(pInstanceDesc->Transform));
 
     pInstanceDesc->AccelerationStructure = pBLAS->GetGPUVirtualAddress();
-    pInstanceDesc->InstanceID = m_AllocatedInstanceCount;
+    pInstanceDesc->InstanceID = instanceId;
     pInstanceDesc->InstanceContributionToHitGroupIndex = shaderRecordOffset;
     pInstanceDesc->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     pInstanceDesc->InstanceMask = ~0;
-    m_AllocatedInstanceCount++;
+    //WakeConditionVariable(&m_cv);
+}
 
-    /*LeaveCriticalSection(&m_cs);
-    WakeConditionVariable(&m_cv);*/
+void RaytracingManager::InsertBLASInstanceAsync(ID3D12Resource *pBLAS, const Matrix *pTM, UINT instanceID,
+                                                Graphics::LOCAL_ROOT_ARG *pRootArgs, UINT numFaceGroup)
+{
+    EnterCriticalSection(&m_cs);
+    InsertBLASInstance(pBLAS, pTM, instanceID, pRootArgs, numFaceGroup);
+    LeaveCriticalSection(&m_cs);
 }
 
 void RaytracingManager::Reset()
@@ -306,7 +316,7 @@ void RaytracingManager::DispatchRay(UINT threadIndex, ID3D12GraphicsCommandList4
     pCommandList->SetComputeRootSignature(Graphics::globalRS);
     pCommandList->SetDescriptorHeaps(1, &pDescriptorHeap);
     pCommandList->SetComputeRootDescriptorTable(0, gpuHandles);
-    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(0));
+    pCommandList->SetComputeRootDescriptorTable(1, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
 
     ID3D12Resource *pHitShaderTable = m_pHitShaderTables[m_curContextIndex]->GetResource();
     ID3D12Resource *pMissShaderTable = m_pMissShaderTable->GetResource();

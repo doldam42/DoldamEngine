@@ -33,11 +33,14 @@ HitInfo TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth, float tMi
                          float bounceContribution = 1, bool cullNonOpaque = false)
 {
     HitInfo rayPayload;
+    rayPayload.colorAndDistance = float4(0, 0, 0, 0);
     rayPayload.rayRecursionDepth = currentRayRecursionDepth + 1;
 
     if (currentRayRecursionDepth >= MAX_RADIENT_RAY_RECURSION_DEPTH)
     {
+        //rayPayload.colorAndDistance = float4(10.0f, 10.0f, 10.0f, RayTCurrent());
         rayPayload.colorAndDistance = float4(133 / 255.0, 161 / 255.0, 179 / 255.0, RayTCurrent());
+        //rayPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, RayTCurrent());
         return rayPayload;
     }
 
@@ -111,8 +114,12 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // Here we offset ray start along the ray direction instead of surface normal
     // so that the reflected ray projects to the same screen pixel.
     // Offsetting by surface normal would result in incorrect mappating in temporally accumulated buffer.
-    float  tOffset = 0.005f;
-    float3 offsetAlongRay = tOffset * wi;
+    // Deferred 렌더링시 tOffset이 0.01 이하일 때 화면 깜빡임 발생. Depth Tex에서 Position을 가져올 때 생기는 산술 오차로 추정.
+    //float  tOffset = 0.005f;
+    float tOffset = 0.05f;
+    //float3 offsetAlongRay = N * max(0.05f, 0.01f * length(wi));
+    //float3 offsetAlongRay = tOffset * wi;
+    float3 offsetAlongRay = tOffset * N;
 
     float3 adjustedHitPosition = hitPosition + offsetAlongRay;
 
@@ -128,7 +135,7 @@ float3 TraceReflectiveRay(in float3 hitPosition, in float3 wi, in float3 N, inou
     // This can cause visual pop ins however, such as in a case of looking at the spaceship's
     // glass cockpit through a window in the house. The cockpit will be skipped in this case.
     bool cullNonOpaque = true;
-
+    
     rayPayload = TraceRadianceRay(ray, rayPayload.rayRecursionDepth, tMin, tMax, 0, cullNonOpaque);
 
     if (rayPayload.colorAndDistance.w != HitDistanceOnMiss)
@@ -179,7 +186,7 @@ float3 TraceRefractiveRay(in float3 hitPosition, in float3 wt, in float3 N, inou
 bool TraceShadowRayAndReportIfHit(out float tHit, in Ray ray, in uint currentRayRecursionDepth,
                                   in bool retrieveTHit = true, in float TMax = FAR_PLANE)
 {
-    if (currentRayRecursionDepth >= 3)
+    if (currentRayRecursionDepth >= MAX_SHADOW_RAY_RECURSION_DEPTH)
     {
         return false;
     }
@@ -240,7 +247,7 @@ bool TraceShadowRayAndReportIfHit(in float3 hitPosition, in float3 direction, in
     Ray   visibilityRay = {hitPosition + tOffset * N, direction};
     float dummyTHit = 0.0;
     return TraceShadowRayAndReportIfHit(dummyTHit, visibilityRay, N, rayPayload.rayRecursionDepth, false,
-                                        TMax); // TODO ASSERT
+                                        TMax);
 }
 
 float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPosition, in MaterialConstant material)
@@ -325,7 +332,9 @@ float3 Shade(inout HitInfo rayPayload, in float3 N, in float3 V, in float3 hitPo
         }
     }
 
-    return L + emissive;
+    L += emissive;
+    
+    return L;
 }
 
 float3 NormalMap(in float3 normal, in float2 texCoord, in Vertex vertices[3], in Attributes attr, in float lodLevel)
@@ -388,9 +397,10 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     material.metallicFactor = (material.flags & MATERIAL_USE_METALLIC_MAP)
                                   ? l_metallicRoughnessTex.SampleLevel(g_sampler, texcoord, lodLevel).b
                                   : material.metallicFactor;
+    
     material.albedo = (material.flags & MATERIAL_USE_ALBEDO_MAP)
                           ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
-                          : material.albedo;
+                          : float4(material.albedo, 1.0f);
 
     material.emissive = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
                             ? l_emmisiveTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
@@ -408,15 +418,12 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
 
 //***************************************************************************
 //***********************------ RayGen shaders -------**************************
-//***************************************************************************
+//***************************************************************************\
+#define DEFERRED
 #ifdef DEFERRED
 [shader("raygeneration")] 
 void DeferredRayGen()
 {
-    HitInfo payload;
-    payload.colorAndDistance = float4(0, 0, 0, 0);
-    payload.rayRecursionDepth = 0;
-
     uint2  launchIndex = DispatchRaysIndex().xy;
     float2 xy = launchIndex + 0.5f;
     float2 screenCoord = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
@@ -432,7 +439,7 @@ void DeferredRayGen()
         gOutput[launchIndex] = float4(envIBLTex.SampleLevel(g_sampler, ray.direction, 0).xyz, 1.0);
         return;
     }
-
+    
     float3 posWorld = CalculateWorldPositionFromDepthMap(screenCoord, depth, invView, invProj);
     float3 V = normalize(eyeWorld - posWorld);
     
@@ -461,9 +468,10 @@ void DeferredRayGen()
     material.opacityFactor = 1.0; // TODO: transparancy
     material.emissive = emission;
 
-    // float3 color = Shade(payload, normalWorld, posWorld, material);
+    HitInfo payload;
+    payload.colorAndDistance = float4(0, 0, 0, 0);
+    payload.rayRecursionDepth = 0;
     float3 color = Shade(payload, normalWorld, V, posWorld, material);
-
     gOutput[launchIndex] = float4(color, 1.0);
 }
 #endif

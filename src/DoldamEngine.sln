@@ -54,6 +54,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{6295
 		Client\Shaders\DepthOnlyPS.hlsl = Client\Shaders\DepthOnlyPS.hlsl
 		Client\Shaders\DepthOnlySkinnedVS.hlsl = Client\Shaders\DepthOnlySkinnedVS.hlsl
 		Client\Shaders\DepthOnlyVS.hlsl = Client\Shaders\DepthOnlyVS.hlsl
+		Client\Shaders\DrawLine.hlsl = Client\Shaders\DrawLine.hlsl
 		Client\Shaders\DrawNormal.hlsl = Client\Shaders\DrawNormal.hlsl
 		Client\Shaders\HlslUtils.hlsli = Client\Shaders\HlslUtils.hlsli
 		Client\Shaders\LightOnlyPS.hlsl = Client\Shaders\LightOnlyPS.hlsl
@@ -83,6 +84,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DXR", "DXR", "{E05839F0-998
 		Client\Shaders\DXR\HlslCompat.hlsli = Client\Shaders\DXR\HlslCompat.hlsli
 		Client\Shaders\DXR\Miss.hlsl = Client\Shaders\DXR\Miss.hlsl
 		Client\Shaders\DXR\RayGen.hlsl = Client\Shaders\DXR\RayGen.hlsl
+		Client\Shaders\DXR\Raytracing.hlsl = Client\Shaders\DXR\Raytracing.hlsl
 		Client\Shaders\DXR\RaytracingTypedef.hlsli = Client\Shaders\DXR\RaytracingTypedef.hlsli
 		Client\Shaders\DXR\ShadowRay.hlsl = Client\Shaders\DXR\ShadowRay.hlsl
 	EndProjectSection
@@ -122,6 +124,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A5B322
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhysicsModule", "PhysicsModule\PhysicsModule.vcxproj", "{E3E5E05C-2EF4-48CF-9051-E100157C1158}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1998335C-26A7-43B2-981D-AEF7D3E4602C} = {1998335C-26A7-43B2-981D-AEF7D3E4602C}
+		{AE40AE55-B9AB-4D88-AC04-6E406D084E50} = {AE40AE55-B9AB-4D88-AC04-6E406D084E50}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

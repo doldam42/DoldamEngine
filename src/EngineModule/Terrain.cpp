@@ -28,7 +28,7 @@ BOOL Terrain::Initialize(const Material *pMaterial, const Vector3 &scale, const 
     BOOL result = CreateHeightMapFromFile(filename, &pImage, &width, &height);
     DASSERT(result);
 
-    m_pCollider = pPhysics->CreateHeightFieldTerrain(pImage, width, height, scale, 0.0f, scale.y);
+    //m_pCollider = pPhysics->CreateHeightFieldTerrain(pImage, width, height, scale, 0.0f, scale.y);
     m_terrainScale = scale;
     m_pImage = pImage;
     return TRUE;

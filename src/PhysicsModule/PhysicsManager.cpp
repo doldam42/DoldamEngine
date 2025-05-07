@@ -1,238 +1,14 @@
 #include "pch.h"
 
-#include "CharacterBody.h"
-#include "Collider.h"
-#include "RigidBody.h"
-#include "HeightFieldTerrain.h"
+#include "BoxCollider.h"
+#include "BroadPhase.h"
+#include "ColliderBase.h"
+#include "EllipsoidCollider.h"
+#include "SphereCollider.h"
 
 #include "PhysicsManager.h"
 
 PhysicsManager *g_pPhysics = nullptr;
-
-void PhysicsManager::Cleanup()
-{
-    int i;
-    // remove the rigidbodies from the dynamics world and delete them
-    for (i = m_pDynamicWorld->getNumCollisionObjects() - 1; i >= 0; i--)
-    {
-        btCollisionObject *obj = m_pDynamicWorld->getCollisionObjectArray()[i];
-        btRigidBody       *body = btRigidBody::upcast(obj);
-        if (body && body->getMotionState())
-        {
-            delete body->getMotionState();
-        }
-        m_pDynamicWorld->removeCollisionObject(obj);
-        delete obj;
-    }
-
-    // delete dynamics world
-    delete m_pDynamicWorld;
-
-    // delete solver
-    delete m_pSolver;
-
-    // delete broadphase
-    delete m_pOverlappingPairCache;
-
-    // delete dispatcher
-    delete m_pDispatcher;
-
-    delete m_pCollisionConfiguration;
-}
-
-BOOL PhysicsManager::Initialize()
-{
-    /// collision configuration contains default setup for memory, collision setup. Advanced users can create their own
-    /// configuration.
-    btDefaultCollisionConfiguration *collisionConfiguration = new btDefaultCollisionConfiguration();
-
-    /// use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see
-    /// Extras/BulletMultiThreaded)
-    btCollisionDispatcher *dispatcher = new btCollisionDispatcher(collisionConfiguration);
-    
-    /// btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-    btBroadphaseInterface *overlappingPairCache = new btDbvtBroadphase();
-    overlappingPairCache->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-
-    /// the default constraint solver. For parallel processing you can use a different solver (see
-    /// Extras/BulletMultiThreaded)
-    btSequentialImpulseConstraintSolver *solver = new btSequentialImpulseConstraintSolver;
-
-    btDiscreteDynamicsWorld *dynamicsWorld =
-        new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-
-    dynamicsWorld->setGravity(btVector3(0, -10, 0));
-
-    g_pPhysics = this;
-
-    m_pCollisionConfiguration = collisionConfiguration;
-    m_pDispatcher = dispatcher;
-    m_pOverlappingPairCache = overlappingPairCache;
-    m_pSolver = solver;
-    m_pDynamicWorld = dynamicsWorld;
-
-    return TRUE;
-}
-
-ICollider *PhysicsManager::CreateSphereCollider(const float radius)
-{
-    Collider *pNew = Collider::CreateSphereCollider(radius);
-    m_collisionShapes.push_back(pNew->Get());
-    return pNew;
-}
-
-ICollider *PhysicsManager::CreateBoxCollider(const Vector3 &halfExtents)
-{
-    Collider *pNew = Collider::CreateBoxCollider(halfExtents);
-    m_collisionShapes.push_back(pNew->Get());
-    return pNew;
-}
-
-ICollider *PhysicsManager::CreateCapsuleCollider(const float radius, const float height)
-{
-    Collider *pNew = Collider::CreateCapsuleCollider(radius, height);
-    m_collisionShapes.push_back(pNew->Get());
-    return pNew;
-}
-
-ICollider *PhysicsManager::CreateConvexCollider(const Vector3 *points, const int numPoints) 
-{
-    Collider *pNew = Collider::CreateConvexCollider(points, numPoints);
-    m_collisionShapes.push_back(pNew->Get());
-    return pNew;
-}
-
-IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity,
-                                            float friction, BOOL useGravity)
-{
-    Collider *pBase = (Collider *)pCollider;
-
-    btTransform startTransform;
-    startTransform.setIdentity();
-    startTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
-
-    btVector3 localInertia;
-    localInertia.setZero();
-    if (mass > 0.0f)
-        pBase->m_pShape->calculateLocalInertia(mass, localInertia);
-
-    btDefaultMotionState                    *myMotionState = new btDefaultMotionState(startTransform);
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(btScalar(mass), myMotionState, pBase->m_pShape, localInertia);
-
-    RigidBody *pBody = new RigidBody(rbInfo);
-    pBody->setFriction(friction);
-    pBody->setDamping(1.0f - elasticity, 1.0f - elasticity);
-
-    m_pDynamicWorld->addRigidBody(pBody);
-    
-    return pBody;
-}
-
-ICharacterBody *PhysicsManager::CreateCharacterBody(const Vector3 &startPosition, const float radius,
-                                                    const float height)
-{
-    CharacterBody *pNew = new CharacterBody;
-    pNew->Initialize(m_pDynamicWorld, startPosition, radius, height);
-    return pNew;
-}
-
-void PhysicsManager::DeleteCollider(ICollider *pDel)
-{
-    Collider *pCollider = (Collider *)pDel;
-    if (pCollider)
-    {
-        delete pDel;
-        pDel = nullptr;
-    }
-}
-
-void PhysicsManager::DeleteRigidBody(IRigidBody *pDel)
-{
-    RigidBody *pBody = (RigidBody *)pDel;
-    m_pDynamicWorld->removeRigidBody(pBody);
-    delete pBody;
-}
-
-IHeightFieldTerrainCollider *PhysicsManager::CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth,
-                                                              const UINT imgHeight, const Vector3 &scale,
-                                                              const float minHeight, const float maxHeight)
-{
-    HeightFieldTerrain *pNew = new HeightFieldTerrain;
-    pNew->Initialize(m_pDynamicWorld, m_collisionShapes, pImage, imgWidth, imgHeight, scale, minHeight, maxHeight);
-    return pNew;
-}
-
-void PhysicsManager::RemoveFromWorld(btRigidBody *pBody) { m_pDynamicWorld->removeRigidBody(pBody); }
-
-void PhysicsManager::AddToWorld(btRigidBody *pBody) { m_pDynamicWorld->addRigidBody(pBody); }
-
-void PhysicsManager::BuildScene() {}
-
-void PhysicsManager::BeginCollision(float dt)
-{
-    m_pDynamicWorld->stepSimulation(dt, 10);
-}
-
-BOOL PhysicsManager::CollisionTestAll(float dt)
-{
-    btCollisionObjectArray &arr = m_pDynamicWorld->getCollisionObjectArray();
-    for (int j = m_pDynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--)
-    {
-        btCollisionObject *obj = arr[j];
-        btRigidBody       *body = btRigidBody::upcast(obj);
-        if (!body)
-            continue;
-        RigidBody  *pBody = (RigidBody *)body;
-        btTransform trans;
-        if (body && body->getMotionState())
-        {
-            body->getMotionState()->getWorldTransform(trans);
-        }
-        else
-        {
-            trans = obj->getWorldTransform();
-        }
-
-        if (pBody)
-        {
-            btVector3   &btOrigin = trans.getOrigin();
-            btQuaternion btQ = trans.getRotation();
-            
-            pBody->SetPositionInternal(Vector3(btOrigin.getX(), btOrigin.getY(), btOrigin.getZ()));
-            pBody->SetRotationInternal(Quaternion(btQ.getX(), btQ.getY(), btQ.getZ(), btQ.getW()));
-        }
-    }
-
-    return TRUE;
-}
-
-void PhysicsManager::EndCollision() {}
-
-BOOL PhysicsManager::Raycast(const Ray &ray, float *tHit, IRigidBody **ppHitted)
-{
-    Vector3   from = ray.position;
-    Vector3   to = from + ray.direction * ray.tmax;
-    btVector3 btFrom(from.x, from.y, from.z);
-    btVector3 btTo(to.x, to.y, to.z);
-
-    btCollisionWorld::ClosestRayResultCallback cb(btFrom, btTo);
-    /*cb.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
-    cb.m_collisionFilterMask = btBroadphaseProxy::AllFilter;
-    cb.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;*/
-
-    m_pDynamicWorld->rayTest(btFrom, btTo, cb);
-    if (cb.hasHit())
-    {
-        const btRigidBody *pBody = btRigidBody::upcast(cb.m_collisionObject);
-        RigidBody         *pMyBody = (RigidBody *)pBody;
-
-        *tHit = ray.tmax * cb.m_closestHitFraction;
-        *ppHitted = pMyBody;
-
-        return TRUE;
-    }
-    return FALSE;
-}
 
 HRESULT __stdcall PhysicsManager::QueryInterface(REFIID riid, void **ppvObject) { return E_NOTIMPL; }
 
@@ -251,7 +27,265 @@ ULONG __stdcall PhysicsManager::Release(void)
     return ref_count;
 }
 
-PhysicsManager::~PhysicsManager()
+BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
 {
-    Cleanup();
+    COLLIDER_TYPE typeA = pA->GetType();
+    COLLIDER_TYPE typeB = pB->GetType();
+
+    Vector3 posA = pA->Position;
+    Vector3 posB = pB->Position;
+
+    // 정렬해서 중복 제거
+    if (typeA > typeB)
+    {
+        std::swap(typeA, typeB);
+        std::swap(pA, pB);
+        std::swap(posA, posB);
+    }
+
+    Vector3 contactPointA;
+    Vector3 contactPointB;
+    if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
+    {
+        const SphereCollider *pSphereB = (const SphereCollider *)pB;
+        const SphereCollider *pSphereA = (const SphereCollider *)pA;
+
+        if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+
+            return TRUE;
+        }
+    }
+    else if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_BOX)
+    {
+        const SphereCollider *pSphere = (const SphereCollider *)pA;
+        const BoxCollider    *pBox = (const BoxCollider *)pB;
+        if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, pBox->Rotation, posB, &contactPointA,
+                            &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_ELLIPSOID)
+    {
+        const SphereCollider    *pSphere = (const SphereCollider *)pA;
+        const EllipsoidCollider *pEllipse = (const EllipsoidCollider *)pB;
+        if (EllipseEllipseStatic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
+                                 posB, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_BOX)
+    {
+        const BoxCollider *pBoxA = (const BoxCollider *)pA;
+        const BoxCollider *pBoxB = (const BoxCollider *)pB;
+
+        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position,
+                         pBoxB->Position, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_ELLIPSOID)
+    {
+        const BoxCollider       *pBox = (const BoxCollider *)pA;
+        const EllipsoidCollider *pEllipse = (const EllipsoidCollider *)pB;
+        if (BoxEllipseStatic(pBox->HalfExtent, pBox->Rotation, pBox->Position, pEllipse->MajorRadius,
+                             pEllipse->MinorRadius, pEllipse->Position, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == COLLIDER_TYPE_ELLIPSOID && typeB == COLLIDER_TYPE_ELLIPSOID)
+    {
+        const EllipsoidCollider *pEllipseA = (const EllipsoidCollider *)pA;
+        const EllipsoidCollider *pEllipseB = (const EllipsoidCollider *)pB;
+        if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
+                                 pEllipseB->MinorRadius, pEllipseA->Position, pEllipseB->Position, &contactPointA,
+                                 &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
+
+BOOL PhysicsManager::Initialize()
+{
+    m_pBroadPhase = new BroadPhase;
+    m_pBroadPhase->Initialize(MAX_BODY_COUNT, Vector3::One);
+
+    g_pPhysics = this;
+
+    return TRUE;
+}
+
+ICollider *PhysicsManager::CreateSphereCollider(IGameObject *pObj, const float radius)
+{
+    SphereCollider *pNew = new SphereCollider(radius);
+    m_pColliders[m_colliderCount] = pNew;
+    pNew->ID = m_colliderCount;
+    pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
+    m_colliderCount++;
+    return pNew;
+}
+
+ICollider *PhysicsManager::CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents)
+{
+    BoxCollider *pNew = new BoxCollider(halfExtents);
+    m_pColliders[m_colliderCount] = pNew;
+    pNew->ID = m_colliderCount;
+    pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
+    m_colliderCount++;
+    return pNew;
+}
+
+ICollider *PhysicsManager::CreateEllpsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius)
+{
+    EllipsoidCollider *pNew = new EllipsoidCollider(majorRadius, minorRadius);
+    m_pColliders[m_colliderCount] = pNew;
+    pNew->ID = m_colliderCount;
+    pNew->pObj = pObj;
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
+    m_colliderCount++;
+    return pNew;
+}
+
+void PhysicsManager::DeleteCollider(ICollider *pDel)
+{
+    Collider *pCol = (Collider *)pDel;
+
+    UINT idx = pCol->ID;
+    m_pColliders[idx] = m_pColliders[m_colliderCount - 1];
+    m_colliderCount--;
+    m_pColliders[idx]->ID = idx;
+    delete pDel;
+}
+
+BOOL PhysicsManager::Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider)
+{
+    Vector3    normal;
+    float      tMin = FLT_MAX;
+    ICollider *pResult = nullptr;
+    for (int i = 0; i < m_colliderCount; i++)
+    {
+        Collider *pCollider = m_pColliders[i];
+        Vector3   n;
+        float     t;
+        if (pCollider->RayTest(ray.position, ray.direction, &n, & t) && t < tMin)
+        {
+            normal = n;
+            tMin = t;
+            pResult = pCollider;
+        }
+    }
+
+    if (tMin < ray.tmax)
+    {
+        *pOutNormal = normal;
+        *pCollider = pResult;
+        *tHit = tMin;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void PhysicsManager::BeginCollision(float dt)
+{
+    for (int i = 0; i < m_colliderCount; i++)
+    {
+        Collider *pCollider = m_pColliders[i];
+        pCollider->IsPrevCollide = pCollider->IsCollide;
+        pCollider->IsCollide = FALSE;
+    }
+
+    m_pBroadPhase->Build(m_pColliders, m_colliderCount, dt);
+}
+
+BOOL PhysicsManager::CollisionTestAll(float dt)
+{
+    for (int i = 0; i < m_colliderCount; i++)
+    {
+        m_colliderData[i].PairCount = 0;
+    }
+
+    ZeroMemory(m_collisionPairs, sizeof(CollisionPair) * MAX_COLLISION_CANDIDATE_COUNT);
+    UINT numCandidate = m_pBroadPhase->QueryCollisionPairs(m_collisionPairs, MAX_COLLISION_CANDIDATE_COUNT);
+    for (UINT i = 0; i < numCandidate; i++)
+    {
+        const CollisionPair &pair = m_collisionPairs[i];
+
+        Collider *pA = m_pColliders[pair.a];
+        Collider *pB = m_pColliders[pair.b];
+
+        Contact contact;
+        if (pA->IsActive && pB->IsActive && Intersect(pA, pB, &contact))
+        {
+            ColliderData &dataA = m_colliderData[pA->ID];
+            ColliderData &dataB = m_colliderData[pB->ID];
+            if (dataA.PairCount < MAX_PAIR_PER_COLLIDER)
+            {
+                dataA.PairIndices[dataA.PairCount] = pB->ID;
+                dataA.ContactIndices[dataA.PairCount] = m_contactCount;
+                dataA.PairCount++;
+            }
+            if (dataB.PairCount < MAX_PAIR_PER_COLLIDER)
+            {
+                dataB.PairIndices[dataB.PairCount] = pA->ID;
+                dataB.ContactIndices[dataB.PairCount] = m_contactCount;
+                dataB.PairCount++;
+            }
+
+            m_contacts[m_contactCount++] = contact;
+            pA->IsCollide = TRUE;
+            pB->IsCollide = TRUE;
+        }
+    }
+
+    return m_contactCount > 0;
+}
+
+void PhysicsManager::EndCollision() { m_contactCount = 0; }
