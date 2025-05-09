@@ -30,7 +30,8 @@ TextureCube irradianceIBLTex : register(t12);
 Texture2D brdfTex : register(t13);
 Texture2D projectionTex : register(t14);
 
-Texture2D shadowMaps[MAX_LIGHTS] : register(t15);
+Texture2D shadowMaps[MAX_LIGHTS] : register(t15);  // t15~t17
+
 
 struct Light
 {

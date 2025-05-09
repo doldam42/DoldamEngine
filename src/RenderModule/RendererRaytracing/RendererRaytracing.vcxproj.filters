@@ -350,5 +350,11 @@
     <CustomBuild Include="..\..\Client\Shaders\DrawLine.hlsl">
       <Filter>Shader</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\Transparency.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\Client\Shaders\FragmentList.hlsl">
+      <Filter>Shader</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
