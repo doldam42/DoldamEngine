@@ -144,7 +144,6 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     return radiance;
 }
 
-// TODO: Shadow Map
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
 {
     // Directional light

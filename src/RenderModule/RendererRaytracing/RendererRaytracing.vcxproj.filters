@@ -303,6 +303,9 @@
     <None Include="packages.config">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\Client\Shaders\PBR.hlsli">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\Client\Shaders\DXR\DeferredRaygen.hlsl">
@@ -350,11 +353,13 @@
     <CustomBuild Include="..\..\Client\Shaders\DrawLine.hlsl">
       <Filter>Shader</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\Client\Shaders\Transparency.hlsl">
+    <CustomBuild Include="..\..\Client\Shaders\FragmentList.hlsli">
       <Filter>Shader</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\Client\Shaders\FragmentList.hlsl">
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Client\Shaders\TransparencyPS.hlsl">
       <Filter>Shader</Filter>
-    </CustomBuild>
+    </FxCompile>
   </ItemGroup>
 </Project>

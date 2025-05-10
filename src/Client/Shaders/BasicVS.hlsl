@@ -53,8 +53,9 @@ PSInput main(VSInput input)
 
     output.posWorld = posWorld.xyz;
 
-    float4 posProj = mul(posWorld, viewProj);
-    output.posProj = posProj;
+    output.posProj = mul(posWorld, viewProj);
+
+    output.posView = mul(posWorld, view);
 
     output.texcoord = input.texcoord;
 

@@ -27,7 +27,7 @@
 // Structs
 //////////////////////////////////////////////
 
-struct FragmentListNode : register(b10)
+struct FragmentListNode
 {
     uint  next;
     float depth;
