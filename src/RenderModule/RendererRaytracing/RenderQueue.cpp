@@ -83,6 +83,11 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         pCommandList->RSSetScissorRects(1, pScissorRect);
         pCommandList->OMSetRenderTargets(rtvCount, rtvs, FALSE, &dsv);
         
+        if (passType == DRAW_PASS_TYPE_TRANSPARENCY)
+        {
+            pCommandList->SetGraphicsRootDescriptorTable(4, m_pRenderer->GetOITDescriptorHandle(threadIndex));
+        }
+
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {

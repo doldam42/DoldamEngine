@@ -49,6 +49,20 @@ enum GLOBAL_DESCRIPTOR_INDEX
     GLOBAL_DESCRIPTOR_INDEX_COUNT
 };
 
+struct OITFragmentList
+{
+    ID3D12Resource *pFragmentListFirstNodeAddress;
+    ID3D12Resource *pFragmentList;
+
+    DESCRIPTOR_HANDLE fragmentListDescriptorTable;
+};
+
+struct FragmentListNode
+{
+    UINT  next;
+    float depth;
+    UINT  color;
+};
 
 class D3D12Renderer : public IRenderer
 {
@@ -142,6 +156,10 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
 
+    OITFragmentList m_OITFragmentLists[SWAP_CHAIN_FRAME_COUNT] = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandle[MAX_RENDER_THREAD_COUNT];
+
+
     // Global
     Matrix  m_camViewRow;
     Matrix  m_camProjRow;
@@ -180,6 +198,9 @@ class D3D12Renderer : public IRenderer
 
     UINT64 Fence();
     void   WaitForFenceValue(UINT64 ExpectedFenceValue);
+
+    void CreateOITFragmentListBuffers();
+    void CleanupOITFragmentListBuffers();
 
     void CreateBuffers();
     void CleanupBuffers();
@@ -295,6 +316,11 @@ class D3D12Renderer : public IRenderer
     CB_CONTAINER *INL_GetGlobalCB() { return m_pGlobalCB; }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetOITDescriptorHandle(UINT threadIndex)
+    {
+        return m_OITFragmentListDescriptorHandle[threadIndex];
+    }
 
     DescriptorPool *GetDescriptorPool(UINT threadIndex) const
     {

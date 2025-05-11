@@ -553,6 +553,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     rangesPerSprite[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 : Shader Resource View(Tex)
 
     // Ranges Per OIT Fragment List
+    // |  FRAGMENTLISTFIRSTNODEADDRESS UAV | FRAGMENTLIST UAV |  FRAGMENTLISTFIRSTNODEADDRESS SRV | FRAGMENTLIST SRV | 
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerFragmentList[2] = {};
     rangesPerFragmentList[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0); // u0~u1
     rangesPerFragmentList[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 18); // t18~19
@@ -819,26 +820,31 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
 
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
-        /*psoDesc.PrimitiveTopologyType = (itemType == RENDER_ITEM_TYPE_TERRAIN) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH
-                                                                               :
-           D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;*/
         for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)
         {
             if (!rootSignatures[itemType][passType])
                 continue;
-            if (passType == DRAW_PASS_TYPE_DEFERRED)
+            switch (passType)
             {
+            case DRAW_PASS_TYPE_DEFERRED:
                 psoDesc.NumRenderTargets = 3;
                 psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            }
-            else
-            {
+                break;
+            case DRAW_PASS_TYPE_TRANSPARENCY:
+                psoDesc.NumRenderTargets = 0;
+                psoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+                psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
+                psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+                break;
+            default:
                 psoDesc.NumRenderTargets = 1;
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+                break;
             }
+
             psoDesc.InputLayout = g_shaderData[itemType][passType].inputLayout;
             psoDesc.pRootSignature = rootSignatures[itemType][passType];
             psoDesc.VS = g_shaderData[itemType][passType].VS;
@@ -852,7 +858,6 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 if (fillMode == FILL_MODE_SOLID)
                 {
                     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-                    // psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
                 }
                 else if (fillMode == FILL_MODE_WIRED)
                 {
@@ -860,8 +865,9 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                     psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
                 }
 
-                if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc,
-                                                                   IID_PPV_ARGS(&PSO[itemType][passType][fillMode]))))
+                hr =
+                    pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&PSO[itemType][passType][fillMode]));
+                if (FAILED(hr))
                 {
                     __debugbreak();
                 }

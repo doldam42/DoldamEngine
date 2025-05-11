@@ -815,6 +815,13 @@ void D3D12Renderer::UpdateGlobal()
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         m_globalGpuDescriptorHandle[i] = gpuHandle;
+
+
+        pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 4);
+        m_pD3DDevice->CopyDescriptorsSimple(4, cpuHandle,
+                                            m_OITFragmentLists[m_curContextIndex].fragmentListDescriptorTable.cpuHandle,
+                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_OITFragmentListDescriptorHandle[i] = gpuHandle;
     }
 }
 
@@ -1256,9 +1263,10 @@ BOOL D3D12Renderer::CreateDescriptorTables()
 {
     HRESULT hr = S_OK;
 
-    // 렌더타겟용 디스크립터 테이블
+    
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
+        // 렌더타겟용 디스크립터 테이블
         m_pResourceManager->AllocRTVDescriptorTable(&m_backRTVDescriptorTables[i]);
 
         m_pResourceManager->AllocRTVDescriptorTable(&m_intermediateRTVDescriptorTables[i]);
@@ -1271,26 +1279,24 @@ BOOL D3D12Renderer::CreateDescriptorTables()
         {
             m_pResourceManager->AllocRTVDescriptorTable(&m_renderableTextureRTVTables[i]);
         }
-    }
 
-    // 레이트레이싱용 디스크립터 테이블
-    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
-    {
+        // 레이트레이싱용 디스크립터 테이블
         m_pResourceManager->AllocDescriptorTable(&m_raytracingSRVDescriptorTables[i], 1);
         m_pResourceManager->AllocDescriptorTable(&m_raytracingUAVDescriptorTables[i], 1);
+
+        // Deferred Rendering 용 디스크립터 테이블
+        m_pResourceManager->AllocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
+        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i],
+                                                 DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
+
+        // OIT FragmentList용 디스크립터 테이블
+        m_pResourceManager->AllocDescriptorTable(&m_OITFragmentLists[i].fragmentListDescriptorTable, 4);
     }
 
     // Descriptor Size 저장
     m_rtvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_srvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    // Deferred Rendering 용 디스크립터 테이블
-    for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
-    {
-        m_pResourceManager->AllocRTVDescriptorTable(&m_deferredRTVDescriptorTables[i], DEFERRED_RENDER_TARGET_COUNT);
-        m_pResourceManager->AllocDescriptorTable(&m_deferredSRVDescriptorTables[i],
-                                                 DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
-    }
     return TRUE;
 }
 
@@ -1312,6 +1318,9 @@ void D3D12Renderer::CleanupDescriptorTables()
 
         // DEPTH STENCIL
         m_pResourceManager->DeallocDSVDescriptorTable(&m_depthStencilDescriptorTables[i]);
+
+        // OIT FragmentList
+        m_pResourceManager->DeallocDescriptorTable(&m_OITFragmentLists[i].fragmentListDescriptorTable);
     }
 }
 
@@ -1330,6 +1339,90 @@ void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
     {
         m_pFence->SetEventOnCompletion(ExpectedFenceValue, m_hFenceEvent);
         WaitForSingleObject(m_hFenceEvent, INFINITE);
+    }
+}
+
+// OIT FRAGMENT LIST TABLE
+// |  fragmentListNodeFirstAddressUAV | fragmentListUAV |  fragmentListNodeFirstAddressSRV | fragmentListSRV |
+void D3D12Renderer::CreateOITFragmentListBuffers() 
+{ 
+    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
+    {
+        ID3D12Resource *pFragmentListNodeFirstAddress = nullptr;
+        ID3D12Resource *pFragmentListNode = nullptr;
+
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_UINT, m_Viewport.Width, m_Viewport.Height, 1, 1,
+                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNodeFirstAddress))))
+        {
+            __debugbreak();
+        }
+
+        UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height) * 8;
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(FragmentListNode) * maxFragmentListNodeCount,
+                                               D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNode))))
+        {
+            __debugbreak();
+        }
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_OITFragmentLists[n].fragmentListDescriptorTable.cpuHandle);
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        uavDesc.Format = DXGI_FORMAT_R32_UINT;
+        uavDesc.Texture2D.MipSlice = 0;
+        uavDesc.Texture2D.PlaneSlice = 0;
+        m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNodeFirstAddress, nullptr, &uavDesc, cpuHandle);
+        cpuHandle.Offset(m_srvDescriptorSize);
+
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+        uavDesc.Buffer.CounterOffsetInBytes = 0;
+        uavDesc.Buffer.FirstElement = 0;
+        uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+        uavDesc.Buffer.NumElements = maxFragmentListNodeCount;
+        uavDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
+        m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNode, nullptr, &uavDesc, cpuHandle);
+        cpuHandle.Offset(m_srvDescriptorSize);
+
+        m_pD3DDevice->CreateShaderResourceView(pFragmentListNodeFirstAddress, nullptr, cpuHandle);
+        cpuHandle.Offset(m_srvDescriptorSize);
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+        srvDesc.Buffer.FirstElement = 0;
+        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+        srvDesc.Buffer.NumElements = maxFragmentListNodeCount;
+        srvDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        m_pD3DDevice->CreateShaderResourceView(pFragmentListNode, &srvDesc, cpuHandle);
+        cpuHandle.Offset(m_srvDescriptorSize);
+
+        m_OITFragmentLists[n].pFragmentList = pFragmentListNode;
+        m_OITFragmentLists[n].pFragmentListFirstNodeAddress = pFragmentListNodeFirstAddress;
+    }
+}
+
+void D3D12Renderer::CleanupOITFragmentListBuffers() 
+{ 
+    for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
+    {
+        if (m_OITFragmentLists[n].pFragmentList)
+        {
+            m_OITFragmentLists[n].pFragmentList->Release();
+            m_OITFragmentLists[n].pFragmentList = nullptr;
+        }
+        if (m_OITFragmentLists[n].pFragmentListFirstNodeAddress)
+        {
+            m_OITFragmentLists[n].pFragmentListFirstNodeAddress->Release();
+            m_OITFragmentLists[n].pFragmentListFirstNodeAddress = nullptr;
+        }
     }
 }
 
@@ -1556,6 +1649,7 @@ void D3D12Renderer::CreateBuffers()
                                              m_depthStencilDescriptorTables[n].cpuHandle);
     }
 
+
     if (m_useTextureOutput)
     {
         for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
@@ -1570,11 +1664,16 @@ void D3D12Renderer::CreateBuffers()
     }
 
     CreateDeferredBuffers();
+
+    CreateOITFragmentListBuffers();
 }
 
 void D3D12Renderer::CleanupBuffers()
 {
     CleanupDeferredBuffers();
+
+    CleanupOITFragmentListBuffers();
+
     // Cleanup Render Targets
     for (UINT i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {

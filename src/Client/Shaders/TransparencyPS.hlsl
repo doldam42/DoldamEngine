@@ -69,17 +69,16 @@ void main(PSInput input, in uint coverageMask : SV_Coverage)
 
     float4 texColor = (material.flags & MATERIAL_USE_ALBEDO_MAP) ? albedoTex.Sample(linearWrapSampler, input.texcoord)
                                                                  : float4(material.albedo, 1.0);
-    if (useTextureProjection)
-    {
-        float2 projTexcoord;
-        projTexcoord.x = input.projTexcoord.x / input.projTexcoord.w * 0.5 + 0.5;
-        projTexcoord.y = -input.projTexcoord.y / input.projTexcoord.w * 0.5 + 0.5;
-        if ((saturate(projTexcoord.x) == projTexcoord.x) && (saturate(projTexcoord.y) == projTexcoord.y))
-        {
-            texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
-        }
-    }
-
+    //if (useTextureProjection)
+    //{
+    //    float2 projTexcoord;
+    //    projTexcoord.x = input.projTexcoord.x / input.projTexcoord.w * 0.5 + 0.5;
+    //    projTexcoord.y = -input.projTexcoord.y / input.projTexcoord.w * 0.5 + 0.5;
+    //    if ((saturate(projTexcoord.x) == projTexcoord.x) && (saturate(projTexcoord.y) == projTexcoord.y))
+    //    {
+    //        texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
+    //    }
+    //}
     
     float3 albedo = texColor.rgb;
     float  opacity = texColor.a * material.opacityFactor;
@@ -96,7 +95,8 @@ void main(PSInput input, in uint coverageMask : SV_Coverage)
                           ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb
                           : material.emissive;
 
-    float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
+    //float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
+    float3 ambientLighting = albedo * 0.02;
 
     float3 directLighting = 0;
     [unroll]

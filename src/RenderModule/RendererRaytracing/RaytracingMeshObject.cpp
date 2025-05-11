@@ -94,11 +94,6 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
         m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GEOMETRY, threadIndex);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE dest(descriptorTable);
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
-    else
-        dest.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
-
     pGeomCBs = pGeometryConstantBufferPool->Alloc(m_faceGroupCount);
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
@@ -128,12 +123,22 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
-    pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, m_descriptorCountPerDraw);
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandlePerObj = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandlePerObj = {};
+    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
+    {
+        pDescriptorPool->Alloc(&cpuHandlePerObj, &gpuHandlePerObj, DESCRIPTOR_COUNT_PER_BASIC_OBJECT);
+    }
+    else if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
+    {
+        pDescriptorPool->Alloc(&cpuHandlePerObj, &gpuHandlePerObj, DESCRIPTOR_COUNT_PER_SKINNED_OBJECT);
+    }
+    UpdateDescriptorTablePerObj(cpuHandlePerObj, threadIndex, pWorldMat, 1, pBoneMats, numBones);
 
-    UpdateDescriptorTablePerObj(cpuHandle, threadIndex, pWorldMat, 1, pBoneMats, numBones);
-    UpdateDescriptorTablePerFaceGroup(cpuHandle, threadIndex, ppMaterials, numMaterials);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandlePerFaceGroup = {};
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerFaceGroup  = {};
+    pDescriptorPool->Alloc(&cpuHandlePerFaceGroup, &gpuHandlePerFaceGroup, DESCRIPTOR_COUNT_PER_MATERIAL * m_faceGroupCount);
+    UpdateDescriptorTablePerFaceGroup(cpuHandlePerFaceGroup, threadIndex, ppMaterials, numMaterials);
 
     // set RootSignature
     pCommandList->SetGraphicsRootSignature(pRS);
@@ -143,23 +148,13 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    CD3DX12_GPU_DESCRIPTOR_HANDLE _gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle);
     pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
-    pCommandList->SetGraphicsRootDescriptorTable(1, _gpuHandle);
-    if (m_type == RENDER_ITEM_TYPE_MESH_OBJ)
-    {
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_STATIC_OBJ);
-    }
-    else
-    {
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_COUNT_PER_DYNAMIC_OBJ);
-    }
+    pCommandList->SetGraphicsRootDescriptorTable(1, gpuHandlePerObj);
 
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
-        pCommandList->SetGraphicsRootDescriptorTable(2, _gpuHandle);
-        _gpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+        pCommandList->SetGraphicsRootDescriptorTable(2, gpuHandlePerFaceGroup);
+        gpuHandlePerFaceGroup.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
 
         INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
         pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
@@ -205,30 +200,28 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         INDEXED_FACE_GROUP *pFace = m_pFaceGroups + i;
         m_pD3DDevice->CopyDescriptorsSimple(1, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(m_descriptorSize);
+        src.Offset(m_descriptorSize);
 
         MATERIAL_HANDLE *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
         pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
-
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
-        src.Offset(m_descriptorSize, 1 + DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
-    // m_pD3DDevice->CopyDescriptorsSimple(descriptorCount, dest, src, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
+    
     Graphics::LOCAL_ROOT_ARG *pLocalRootArg = (Graphics::LOCAL_ROOT_ARG *)m_pRenderer->FrameAlloc(
         threadIndex, sizeof(Graphics::LOCAL_ROOT_ARG) * m_faceGroupCount);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerVB(gpuHandle);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerGeom(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,
-                                                   m_descriptorSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerFaceGroup(gpuHandle, ROOT_ARG_DESCRIPTOR_INDEX_PER_BLAS_COUNT,
+                                                        m_descriptorSize);
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
         MATERIAL_HANDLE          *pMatHandle = (MATERIAL_HANDLE *)ppMaterials[i];
         Graphics::LOCAL_ROOT_ARG *rootArg = pLocalRootArg + i;
         rootArg->vertices = gpuHandlePerVB;
-        rootArg->indices = gpuHandlePerGeom;
-        gpuHandlePerGeom.Offset(m_descriptorSize);
-        rootArg->textures = gpuHandlePerGeom;
-        gpuHandlePerGeom.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
+        rootArg->indices = gpuHandlePerFaceGroup;
+        gpuHandlePerFaceGroup.Offset(m_descriptorSize);
+        rootArg->textures = gpuHandlePerFaceGroup;
+        gpuHandlePerFaceGroup.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
         rootArg->cb.materialIndex = pMatHandle->index;
     }
     m_pRaytracingManager->InsertBLASInstanceAsync(m_bottomLevelAS.pResult, pWorldMat, 0, pLocalRootArg,
@@ -255,7 +248,7 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
     }
 
     // Alloc Descriptor Table
-    m_descriptorCountPerDraw = DESCRIPTOR_COUNT_PER_BLAS + numFaceGroup * DESCRIPTOR_COUNT_PER_RAY_FACEGROUP;
+    m_descriptorCountPerDraw = DESCRIPTOR_COUNT_PER_BLAS + numFaceGroup;
     if (!pResourceManager->AllocDescriptorTable(&m_rootArgDescriptorTable, m_descriptorCountPerDraw))
     {
         __debugbreak();
@@ -629,7 +622,6 @@ void RaytracingMeshObject::CreateRootArgsSRV()
         srvDesc.Buffer.NumElements = pFace->numTriangles * 3;
         m_pD3DDevice->CreateShaderResourceView(pFace->pIndexBuffer, &srvDesc, cpuHandle);
         cpuHandle.Offset(m_descriptorSize);
-        cpuHandle.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
 }
 
