@@ -1,10 +1,10 @@
 #pragma once
 
 // TODO: BIT FLAG 적용하기
+#include "ConstantBuffers.h"
 #include <d3d12.h>
 #include <d3dx12.h>
 #include <dxcapi.h>
-#include "ConstantBuffers.h"
 
 namespace Graphics
 {
@@ -50,6 +50,7 @@ struct LOCAL_ROOT_ARG
 enum ADDITIONAL_PIPELINE_TYPE
 {
     ADDITIONAL_PIPELINE_TYPE_POST_PROCESS,
+    ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE,
     ADDITIONAL_PIPELINE_TYPE_COUNT
 };
 
@@ -69,7 +70,7 @@ static const D3D12_INPUT_ELEMENT_DESC simpleIEs[] = {
     {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 static const D3D12_INPUT_ELEMENT_DESC lineIEs[] = {
-    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}, 
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 static const D3D12_INPUT_ELEMENT_DESC basicIEs[] = {
     {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -98,6 +99,12 @@ extern GraphicsShaderSet g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_COUNT];
 extern ID3D12RootSignature *basicRS;
 extern ID3D12RootSignature *skinnedRS;
 extern ID3D12RootSignature *spriteRS;
+
+extern ID3D12RootSignature *transparentBasicRS;
+extern ID3D12RootSignature *transparentSkinnedRS;
+extern ID3D12RootSignature *transparentSpriteRS;
+
+extern ID3D12RootSignature *OITResolveRS;
 
 extern ID3D12RootSignature *emptyRS;
 extern ID3D12RootSignature *presentRS;
@@ -157,5 +164,9 @@ void DeleteRaytracingStates();
 
 void SerializeAndCreateRootSignature(ID3D12Device5 *pDevice, const D3D12_ROOT_SIGNATURE_DESC *pDesc,
                                      ID3D12RootSignature **ppOutRS, const WCHAR *rootSigName);
+
+void SerializeAndCreateVersionedRootSignature(ID3D12Device5 *pDevice, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC *pDesc,
+                                              D3D_ROOT_SIGNATURE_VERSION version, ID3D12RootSignature **ppOutRS,
+                                              const WCHAR *rootSigName);
 
 } // namespace Graphics

@@ -130,8 +130,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     return radiance;
 }
 
-float3 Shade
-(
+float3 Shade(
 in float3 albedo,
 in float3 radiance,
 in float metallic,

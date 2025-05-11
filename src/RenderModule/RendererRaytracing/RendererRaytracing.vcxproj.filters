@@ -306,6 +306,9 @@
     <None Include="..\..\Client\Shaders\PBR.hlsli">
       <Filter>Shader</Filter>
     </None>
+    <None Include="..\..\Client\Shaders\AOIT.hlsli">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\Client\Shaders\DXR\DeferredRaygen.hlsl">
@@ -362,6 +365,9 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Client\Shaders\TransparentSpritePS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\OITResolvePS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

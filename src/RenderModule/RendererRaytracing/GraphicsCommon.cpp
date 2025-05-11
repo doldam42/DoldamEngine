@@ -37,6 +37,8 @@ ID3DBlob *spriteDeferredPS = nullptr;
 ID3DBlob *transparencyPS = nullptr;
 ID3DBlob *transparentSpritePS = nullptr;
 
+ID3DBlob *OITReslovePS = nullptr;
+
 ID3DBlob *skyboxVS = nullptr;
 ID3DBlob *skyboxPS = nullptr;
 
@@ -68,6 +70,12 @@ IDxcBlob *terrainDeferredPS = nullptr;
 ID3D12RootSignature *basicRS = nullptr;
 ID3D12RootSignature *skinnedRS = nullptr;
 ID3D12RootSignature *spriteRS = nullptr;
+
+ID3D12RootSignature *transparentBasicRS = nullptr;
+ID3D12RootSignature *transparentSkinnedRS = nullptr;
+ID3D12RootSignature *transparentSpriteRS = nullptr;
+
+ID3D12RootSignature *OITResolveRS = nullptr;
 
 ID3D12RootSignature *emptyRS = nullptr;
 ID3D12RootSignature *skyboxRS = nullptr;
@@ -248,6 +256,12 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    hr = D3DCompileFromFile(L"./Shaders/OITResolvePS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "ps_5_1", compileFlags, 0, &OITReslovePS, nullptr);
+
+    if (FAILED(hr))
+        __debugbreak();
+
     // Tesselation
     {
         tessellatedQuadVS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"VSMain", L"vs_6_1", TRUE);
@@ -363,7 +377,6 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         {},
     };
 
-
     // Tessellation
     /*g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
         terrainIL,
@@ -402,6 +415,14 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         simpleIL,
         CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
         CD3DX12_SHADER_BYTECODE(presentPS->GetBufferPointer(), presentPS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
+    g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE] = {
+        simpleIL,
+        CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(OITReslovePS->GetBufferPointer(), OITReslovePS->GetBufferSize()),
         {},
         {},
         {},
@@ -492,36 +513,13 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
 
-    ID3DBlob *pSignature = nullptr;
-    ID3DBlob *pError = nullptr;
-
     // Create an empty root signature.
     {
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-        if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pError)))
-        {
-            __debugbreak();
-        }
-
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&emptyRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(0, nullptr, 0, nullptr,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion, &emptyRS,
+                                                 L"EmptyRS");
     }
 
     // Ranges Per Global
@@ -532,200 +530,102 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     rangesPerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);  // b0 : globalConsts
     rangesPerGlobal[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 20); // t20 : materials
     rangesPerGlobal[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10); // t10 : EnvIBL
+
+    // Ranges Per Basic Object  
+    // |  TR Matrix(b1)   |
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerBasicObj[1] = {};
+    rangesPerBasicObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+    // Ranges Per Skinned Object
+    // |  TR Matrix(b1)   |  Bone Matrix |
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerSkinnedObj[1] = {};
+    rangesPerSkinnedObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2, 1);
+
+    // Ranges Per Material
+    // |   Geometry(b5)   |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4) | heightTex(t5) | 
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerMaterial[2] = {};
+    rangesPerMaterial[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 5);
+    rangesPerMaterial[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0);
+
+    // Ranges Per Sprite
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerSprite[2] = {};
+    rangesPerSprite[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0 : Constant Buffer View
+    rangesPerSprite[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 : Shader Resource View(Tex)
+
+    // Ranges Per OIT Fragment List
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerFragmentList[2] = {};
+    rangesPerFragmentList[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0); // u0~u1
+    rangesPerFragmentList[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 18); // t18~19
+    
     // Init Basic Root Signature
     {
+        // | Ranges Per Global          |
+        // | Ranges Per Basic Object    |
+        // | Ranges Per Material        |
         CD3DX12_ROOT_PARAMETER1   rootParameters[3] = {};
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1] = {};
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerMesh[2] = {};
-
-        // Root Paramaters
-        // |  Global Params   |
-        // |  TR Matrix(b1)   |
-        // |   Geometry(b5)   |  albedoTex(t0) | normalTex(t1) | aoTex(t2) | metallicRoughnesesTex(t3) | emissiveTex(t4)
-        // | heightTex(t5) |
-        rangesPerObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
-                             1); // b1 : TR Matrix
-        rangesPerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
-                              5); // b5 : Geometry
-        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6,
-                              0); // textures
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerObj), &rangesPerObj[0], D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMesh), &rangesPerMesh[0],
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerBasicObj), &rangesPerBasicObj[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
         rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, _countof(samplerStates), samplerStates,
                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-        hr =
-            D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &pSignature, &pError);
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&basicRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion, &basicRS,
+                                                 L"BasicRS");
     }
 
     // Init Skinned Root Signature
     {
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerObj[1];
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerMesh[2];
-        CD3DX12_ROOT_PARAMETER1   rootParameters[3];
-
-        // Root Paramaters
-        // | Global Params |
-        // |   TR Matrix   | Bone Matrix |
-        // |   Geometry    |   Textures   |
-        rangesPerObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2,
-                             1); // b1 : TR Matrix, b2 : Bone Matrix
-        rangesPerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1,
-                              5); // b5 : Geometry
-        rangesPerMesh[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6,
-                              0); // t0 : Texture
+        // | Ranges Per Global          |
+        // | Ranges Per Skinned Object  |
+        // | Ranges Per Material        |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[3] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
-                                                D3D12_SHADER_VISIBILITY_ALL); // t20 : Materials
-        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerObj), &rangesPerObj[0], D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMesh), &rangesPerMesh[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerSkinnedObj), &rangesPerSkinnedObj[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
         rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-        hr =
-            D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &pSignature, &pError);
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&skinnedRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion, &skinnedRS,
+                                                 L"SkinnedRS");
     }
 
     // Init Skybox Root Signature
     {
-        CD3DX12_DESCRIPTOR_RANGE1 rangesPerEnv[1];
-        CD3DX12_ROOT_PARAMETER1   rootParameters[2];
-        rangesPerEnv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 10); // | Env | specular | irradiance | brdf |
-        rootParameters[0].InitAsConstantBufferView(0);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerEnv), &rangesPerEnv[0], D3D12_SHADER_VISIBILITY_ALL);
 
+        CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
         rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-        hr =
-            D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &pSignature, &pError);
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&skyboxRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion, &skyboxRS,
+                                                 L"SkyboxRS");
     }
 
     // Init Sprite Root Signature
     {
-        CD3DX12_DESCRIPTOR_RANGE ranges[2] = {};
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0 : Constant Buffer View
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 : Shader Resource View(Tex)
-
-        CD3DX12_ROOT_PARAMETER rootParameters[1] = {};
-        rootParameters[0].InitAsDescriptorTable(_countof(ranges), ranges, D3D12_SHADER_VISIBILITY_ALL);
-
-        // Allow input layout and deny uneccessary access to certain pipeline stages.
-        D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+        CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerSprite), rangesPerSprite,
+                                                D3D12_SHADER_VISIBILITY_ALL);
 
         // Create an empty root signature.
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        // rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-        rootSignatureDesc.Init(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
                                D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-        if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pError)))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&spriteRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
-
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion, &spriteRS,
+                                                 L"SpriteRS");
     }
 
-    // Init Skinning Root Signature
+    // Init Skinning(Deforming Vertex) Root Signature
     {
         CD3DX12_DESCRIPTOR_RANGE ranges[3] = {};
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
@@ -755,43 +655,100 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Init DepthOnly Basic Root Signature
     {
         // Root Paramaters
-        // | Global Consts |
-        // |   TR Matrix   |
-        CD3DX12_DESCRIPTOR_RANGE rangePerGlobal[1] = {};
-        rangePerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
+        // | Ranges Per Global |
+        // | Ranges Per Basic Object |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+        rootParameters[0].InitAsDescriptorTable(1, &rangesPerGlobal[0], D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerBasicObj), rangesPerBasicObj,
+                                                D3D12_SHADER_VISIBILITY_ALL);
 
-        CD3DX12_DESCRIPTOR_RANGE rangePerMesh[1] = {};
-        rangePerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1); // b1
-
-        CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
-        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), rangePerGlobal, D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
-
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
-                                                      samplerStates,
-                                                      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-        SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlyBasicRS, L"DepthOnly Basic RS");
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc(
+            ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &depthOnlyBasicRS, L"DepthOnly Basic RS");
     }
+    
     // Init DepthOnly Skinned Root Signature
     {
         // Root Paramaters
-        // | Global Params |
-        // |   TR Matrix   | Bone Matrix |
-        CD3DX12_DESCRIPTOR_RANGE rangePerGlobal[1] = {};
-        rangePerGlobal[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
-
-        CD3DX12_DESCRIPTOR_RANGE rangePerMesh[1] = {};
-        rangePerMesh[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2, 1); // b1~b2
-
-        CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
-        rootParameters[0].InitAsDescriptorTable(_countof(rangePerGlobal), &rangePerGlobal[0],
+        // | Ranges Per Global |
+        // | Ranges Per Skinned Object |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+        rootParameters[0].InitAsDescriptorTable(1, &rangesPerGlobal[0], D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerSkinnedObj), rangesPerSkinnedObj,
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangePerMesh), rangePerMesh, D3D12_SHADER_VISIBILITY_ALL);
 
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT,
-                                                      samplerStates,
-                                                      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-        SerializeAndCreateRootSignature(pD3DDevice, &rootSignatureDesc, &depthOnlySkinnedRS, L"depthOnly Skinned RS");
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc(
+            ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &depthOnlySkinnedRS, L"DepthOnly Skinned RS");
+    }
+
+    // Init Transparent Basic Root Signature
+    {
+        // | Ranges Per Global            |
+        // | Ranges Per Basic Object      |
+        // | Ranges Per Material          |
+        // | Ranges Per OIT Fragment List |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerBasicObj), &rangesPerBasicObj[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, _countof(samplerStates), samplerStates,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &transparentBasicRS, L"transparentBasicRS");
+    }
+
+    // Init transparent Skinned Root Signature
+    {
+        // | Ranges Per Global          |
+        // | Ranges Per Skinned Object  |
+        // | Ranges Per Material        |
+        // | Ranges Per OIT Fragment List |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerSkinnedObj), &rangesPerSkinnedObj[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &transparentSkinnedRS, L"transparentSkinnedRS");
+    }
+
+    // Init transparent Sprite Root Signature
+    {
+        // | Ranges Per Sprite            |
+        // | Ranges Per OIT Fragment List |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerSprite), rangesPerSprite,
+                                                D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+                                                D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &transparentSpriteRS, L"transparentSpriteRS");
     }
 
     // Init Second Pass Root Signature
@@ -811,32 +768,24 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
         rootSignatureDesc.Init_1_1(ARRAYSIZE(rootParameters), rootParameters, SAMPLER_TYPE_COUNT, samplerStates,
                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &secondPassRS, L"SecondPassRS");
+    }
 
-        hr =
-            D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &pSignature, &pError);
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
+    // Init OIT Resolve Root Signature
+    {
+        // Root Paramaters
+        // | ranges per OIT FragmentList |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
 
-        if (FAILED(pD3DDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-                                                   IID_PPV_ARGS(&secondPassRS))))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerFragmentList), rangesPerFragmentList,
+                                                D3D12_SHADER_VISIBILITY_ALL);
 
-        if (pSignature)
-        {
-            pSignature->Release();
-            pSignature = nullptr;
-        }
-        if (pError)
-        {
-            pError->Release();
-            pError = nullptr;
-        }
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+        rootSignatureDesc.Init_1_1(ARRAYSIZE(rootParameters), rootParameters, 0, nullptr,
+                                   D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        SerializeAndCreateVersionedRootSignature(pD3DDevice, &rootSignatureDesc, featureData.HighestVersion,
+                                                 &OITResolveRS, L"OITResolveRS");
     }
 
     rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_DEFERRED] = basicRS;
@@ -847,17 +796,11 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
 
     rootSignatures[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFERRED] = basicRS;
 
-lb_return:
-    if (pSignature)
-    {
-        pSignature->Release();
-        pSignature = nullptr;
-    }
-    if (pError)
-    {
-        pError->Release();
-        pError = nullptr;
-    }
+    rootSignatures[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_TRANSPARENCY] = transparentBasicRS;
+
+    rootSignatures[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_TRANSPARENCY] = transparentSkinnedRS;
+
+    rootSignatures[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_TRANSPARENCY] = transparentSpriteRS;
 }
 
 void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
@@ -877,7 +820,8 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
         /*psoDesc.PrimitiveTopologyType = (itemType == RENDER_ITEM_TYPE_TERRAIN) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH
-                                                                               : D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;*/
+                                                                               :
+           D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;*/
         for (UINT passType = 0; passType < DRAW_PASS_TYPE_COUNT; passType++)
         {
             if (!rootSignatures[itemType][passType])
@@ -908,7 +852,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 if (fillMode == FILL_MODE_SOLID)
                 {
                     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-                    //psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+                    // psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
                 }
                 else if (fillMode == FILL_MODE_WIRED)
                 {
@@ -1000,8 +944,7 @@ void Graphics::InitRaytracingShaders(CD3DX12_STATE_OBJECT_DESC *raytracingPipeli
     raytracingLibrary =
         CompileShaderLibrary(L"./Shaders/DXR/Raytracing.hlsl", disableOptimize, defines, _countof(defines));
 #else
-    raytracingLibrary =
-        CompileShaderLibrary(L"./Shaders/DXR/Raytracing.hlsl", disableOptimize, nullptr, 0);
+    raytracingLibrary = CompileShaderLibrary(L"./Shaders/DXR/Raytracing.hlsl", disableOptimize, nullptr, 0);
 #endif // USE_DEFERRED_RENDERING
 
     auto lib = raytracingPipeline->CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
@@ -1436,6 +1379,42 @@ void Graphics::SerializeAndCreateRootSignature(ID3D12Device5 *pDevice, const D3D
     hr = D3D12SerializeRootSignature(pDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pError);
     if (FAILED(hr))
         __debugbreak();
+
+    if (FAILED(pDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
+                                            IID_PPV_ARGS(&pRootSignature))))
+        __debugbreak();
+
+    pRootSignature->SetName(rootSigName);
+    (*ppOutRS) = pRootSignature;
+
+    if (pSignature)
+    {
+        pSignature->Release();
+        pSignature = nullptr;
+    }
+    if (pError)
+    {
+        pError->Release();
+        pError = nullptr;
+    }
+}
+
+void Graphics::SerializeAndCreateVersionedRootSignature(ID3D12Device5                             *pDevice,
+                                                        const D3D12_VERSIONED_ROOT_SIGNATURE_DESC *pDesc,
+                                                        D3D_ROOT_SIGNATURE_VERSION                 version,
+                                                        ID3D12RootSignature **ppOutRS, const WCHAR *rootSigName)
+{
+    HRESULT              hr = S_OK;
+    ID3DBlob            *pSignature = nullptr;
+    ID3DBlob            *pError = nullptr;
+    ID3D12RootSignature *pRootSignature = nullptr;
+
+    hr = D3DX12SerializeVersionedRootSignature(pDesc, version, &pSignature, &pError);
+    if (FAILED(hr))
+    {
+        OutputDebugStringA((LPCSTR)pError->GetBufferPointer());
+        __debugbreak();
+    }
 
     if (FAILED(pDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
                                             IID_PPV_ARGS(&pRootSignature))))

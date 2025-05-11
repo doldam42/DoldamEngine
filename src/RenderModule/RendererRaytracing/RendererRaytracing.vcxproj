@@ -366,6 +366,7 @@
     <CustomBuild Include="..\..\Client\Shaders\DXR\HlslUtils.hlsli">
       <FileType>Document</FileType>
     </CustomBuild>
+    <None Include="..\..\Client\Shaders\AOIT.hlsli" />
     <None Include="..\..\Client\Shaders\PBR.hlsli" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -421,6 +422,13 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="..\..\Client\Shaders\OITResolvePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
     <FxCompile Include="..\..\Client\Shaders\TransparencyPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
