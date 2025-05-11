@@ -34,6 +34,9 @@ ID3DBlob *spritePS = nullptr;
 ID3DBlob *deferredPS = nullptr;
 ID3DBlob *spriteDeferredPS = nullptr;
 
+ID3DBlob *transparencyPS = nullptr;
+ID3DBlob *transparentSpritePS = nullptr;
+
 ID3DBlob *skyboxVS = nullptr;
 ID3DBlob *skyboxPS = nullptr;
 
@@ -233,6 +236,18 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     if (FAILED(hr))
         __debugbreak();
 
+    hr = D3DCompileFromFile(L"./Shaders/TransparencyPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "ps_5_1", compileFlags, 0, &transparencyPS, nullptr);
+
+    if (FAILED(hr))
+        __debugbreak();
+
+    hr = D3DCompileFromFile(L"./Shaders/TransparentSpritePS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
+                            "ps_5_1", compileFlags, 0, &transparentSpritePS, nullptr);
+
+    if (FAILED(hr))
+        __debugbreak();
+
     // Tesselation
     {
         tessellatedQuadVS = CompileGraphicsShader(L"./Shaders/TessellatedQuad.hlsl", L"VSMain", L"vs_6_1", TRUE);
@@ -277,6 +292,14 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         {},
         {},
     };
+    g_shaderData[RENDER_ITEM_TYPE_MESH_OBJ][DRAW_PASS_TYPE_TRANSPARENCY] = {
+        basicIL,
+        CD3DX12_SHADER_BYTECODE(basicVS->GetBufferPointer(), basicVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(transparencyPS->GetBufferPointer(), transparencyPS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
 
     // Skinned Object
     g_shaderData[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_DEFAULT] = {
@@ -303,6 +326,14 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         {},
         {},
     };
+    g_shaderData[RENDER_ITEM_TYPE_CHAR_OBJ][DRAW_PASS_TYPE_TRANSPARENCY] = {
+        skinnedIL,
+        CD3DX12_SHADER_BYTECODE(basicSkinnedVS->GetBufferPointer(), basicSkinnedVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(transparencyPS->GetBufferPointer(), transparencyPS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
 
     // Sprite
     g_shaderData[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_DEFAULT] = {
@@ -322,6 +353,16 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         {},
         {},
     };
+
+    g_shaderData[RENDER_ITEM_TYPE_SPRITE][DRAW_PASS_TYPE_TRANSPARENCY] = {
+        simpleIL,
+        CD3DX12_SHADER_BYTECODE(spriteVS->GetBufferPointer(), spriteVS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(transparentSpritePS->GetBufferPointer(), transparentSpritePS->GetBufferSize()),
+        {},
+        {},
+        {},
+    };
+
 
     // Tessellation
     /*g_shaderData[RENDER_ITEM_TYPE_TERRAIN][DRAW_PASS_TYPE_DEFAULT] = {
@@ -1213,6 +1254,16 @@ void Graphics::DeleteShaders()
     {
         lightOnlyPS->Release();
         lightOnlyPS = nullptr;
+    }
+    if (transparencyPS)
+    {
+        transparencyPS->Release();
+        transparencyPS = nullptr;
+    }
+    if (transparentSpritePS)
+    {
+        transparentSpritePS->Release();
+        transparentSpritePS = nullptr;
     }
 }
 

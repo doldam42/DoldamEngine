@@ -361,5 +361,8 @@
     <FxCompile Include="..\..\Client\Shaders\TransparencyPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Client\Shaders\TransparentSpritePS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
