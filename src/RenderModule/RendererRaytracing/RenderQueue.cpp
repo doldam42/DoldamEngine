@@ -92,19 +92,16 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
             RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
-            pMeshObj->DrawDeferred(
-                threadIndex, pCommandList, &pItem->meshObjParam.worldTM, pItem->meshObjParam.ppMaterials,
-                pItem->meshObjParam.numMaterials, Graphics::GetRS(pItem->type, passType),
-                Graphics::GetPSO(pItem->type, passType, pItem->fillMode), nullptr, 0);
+            pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
+                                   pItem->meshObjParam.ppMaterials, pItem->meshObjParam.numMaterials, passType,
+                                   pItem->fillMode, nullptr, 0);
         }
         break;
         case RENDER_ITEM_TYPE_CHAR_OBJ: {
             RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
             pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
-                                   pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials,
-                                   Graphics::GetRS(pItem->type, passType),
-                                   Graphics::GetPSO(pItem->type, passType, pItem->fillMode),
-                           pItem->charObjParam.pBones, pItem->charObjParam.numBones);
+                                   pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials, passType,
+                                   pItem->fillMode, pItem->charObjParam.pBones, pItem->charObjParam.numBones);
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {

@@ -140,8 +140,7 @@ class RaytracingMeshObject : public IRenderMesh
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                      IRenderMaterial *const* ppMaterials, UINT numMaterials, ID3D12RootSignature *pRS,
-                      ID3D12PipelineState *pPSO, const Matrix *pBoneMats,
+                      IRenderMaterial *const* ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType, FILL_MODE fillMode, const Matrix *pBoneMats,
                       UINT numBones);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,

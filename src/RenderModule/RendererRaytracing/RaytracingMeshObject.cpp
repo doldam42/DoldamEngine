@@ -117,7 +117,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
 
 void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
                                         const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
-                                        ID3D12RootSignature *pRS, ID3D12PipelineState *pPSO, const Matrix *pBoneMats,
+                                        DRAW_PASS_TYPE passType, FILL_MODE fillMode, const Matrix *pBoneMats,
                                         UINT numBones)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
@@ -141,15 +141,20 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     UpdateDescriptorTablePerFaceGroup(cpuHandlePerFaceGroup, threadIndex, ppMaterials, numMaterials);
 
     // set RootSignature
-    pCommandList->SetGraphicsRootSignature(pRS);
+    pCommandList->SetGraphicsRootSignature(Graphics::GetRS(m_type, passType));
     ID3D12DescriptorHeap *ppHeaps[] = {pDescriptorHeap};
     pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    pCommandList->SetPipelineState(pPSO);
+    pCommandList->SetPipelineState(Graphics::GetPSO(m_type, passType, fillMode));
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     pCommandList->SetGraphicsRootDescriptorTable(0, m_pRenderer->GetGlobalDescriptorHandle(threadIndex));
     pCommandList->SetGraphicsRootDescriptorTable(1, gpuHandlePerObj);
+
+    if (passType == DRAW_PASS_TYPE_TRANSPARENCY)
+    {
+        pCommandList->SetGraphicsRootDescriptorTable(3, m_pRenderer->GetOITDescriptorHandle(threadIndex));
+    }
 
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {

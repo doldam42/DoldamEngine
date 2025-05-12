@@ -1270,6 +1270,26 @@ void Graphics::DeleteRootSignatures()
         secondPassRS->Release();
         secondPassRS = nullptr;
     }
+    if (transparentBasicRS)
+    {
+        transparentBasicRS->Release();
+        transparentBasicRS = nullptr;
+    }
+    if (transparentSkinnedRS)
+    {
+        transparentSkinnedRS->Release();
+        transparentSkinnedRS = nullptr;
+    }
+    if (transparentSpriteRS)
+    {
+        transparentSpriteRS->Release();
+        transparentSpriteRS = nullptr;
+    }
+    if (OITResolveRS)
+    {
+        OITResolveRS->Release();
+        OITResolveRS = nullptr;
+    }
 }
 
 void Graphics::DeletePipelineStates()
