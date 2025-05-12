@@ -28,8 +28,8 @@ BOOL PlayerController::Start()
     m_pController = new CharacterController;
     m_pController->Initialize(pos, 2.0f, 0.5f);
     
-    // pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 2.0f, -3.0f));
-    pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 62.0f, 0.0f));
+     pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 2.0f, -3.0f));
+    //pCam->SetFollowTarget(m_pController->GetGameObject(), Vector3(0.0f, 62.0f, 0.0f));
 
     return TRUE;
 }
