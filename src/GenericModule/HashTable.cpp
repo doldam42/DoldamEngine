@@ -1,37 +1,56 @@
 #include "HashTable.h"
 #include "pch.h"
 
-UINT HashTable::CreateKey(const void *pData, UINT size, UINT bucketNum) const
+UINT fnv1a32(const void* pData, UINT size)
 {
-    UINT keyData = 0;
+    constexpr uint32_t FNV_OFFSET_BASIS_32 = 0x811C9DC5;
+    constexpr uint32_t FNV_PRIME_32 = 16777619;
 
+    UINT hash = FNV_OFFSET_BASIS_32;
+    const char *pEntry = (char *)pData;
+    for (UINT i = 0; i < size; i++)
+    {
+        hash ^= (BYTE)(pEntry[i]);
+        hash *= FNV_PRIME_32;
+    }
+    return hash;
+}
+
+UINT shift_hash(const void* pData, UINT size)
+{ 
+    UINT hash = 0;
     const char *pEntry = (char *)pData;
     if (size & 0x00000001)
     {
-        keyData += (UINT)(*(BYTE *)pEntry);
+        hash += (UINT)(*(BYTE *)pEntry);
         pEntry++;
         size--;
     }
     if (!size)
-        goto lb_exit;
+        return hash;
     if (size & 0x00000002)
     {
-        keyData += (UINT)(*(WORD *)pEntry);
+        hash += (UINT)(*(WORD *)pEntry);
         pEntry += 2;
         size -= 2;
     }
     if (!size)
-        goto lb_exit;
+        return hash;
 
     size = (size >> 2);
 
     for (UINT i = 0; i < size; i++)
     {
-        keyData += *(UINT *)pEntry;
+        hash += *(UINT *)pEntry;
         pEntry += 4;
     }
 
-lb_exit:
+    return hash;
+}
+
+UINT HashTable::CreateKey(const void *pData, UINT size, UINT bucketNum) const
+{
+    UINT keyData = fnv1a32(pData, size);
     UINT index = keyData % bucketNum;
 
     return index;
