@@ -99,7 +99,7 @@ bool FL_AllocNode(out uint newNodeAddress1D)
 {
     // alloc a new node
     newNodeAddress1D = gFragmentListNodesUAV.IncrementCounter();
-
+    
     // running out of memory?
     return newNodeAddress1D <= mMaxListNodes;
 }

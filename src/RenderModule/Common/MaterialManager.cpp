@@ -70,6 +70,7 @@ void MaterialManager::InitMaterialTextures(MATERIAL_HANDLE *pOutMaterial, Materi
     if (!pAlbedoTexHandle)
     {
         pAlbedoTexHandle = m_pRenderer->GetDefaultTex();
+        pOutConsts->flags &= ~MATERIAL_USE_ALBEDO_MAP;
     }
     if (!pNormalTexHandle)
     {
@@ -174,8 +175,7 @@ MATERIAL_HANDLE *MaterialManager::AllocMaterialHandle(const Material *pMaterial)
     materialCB.emissive = pMaterial->emissive;
     materialCB.metallicFactor = pMaterial->metallicFactor;
     materialCB.roughnessFactor = pMaterial->roughnessFactor;
-    // materialCB.opacityFactor = pMaterial->opacityFactor;
-    materialCB.opacityFactor = 1.0f;
+    materialCB.opacityFactor = pMaterial->opacityFactor;
     materialCB.reflectionFactor = pMaterial->reflectionFactor;
 
     InitMaterialTextures(pMatHandle, &materialCB, pMaterial);
@@ -293,12 +293,12 @@ lb_return:
     return result;
 }
 
-MATERIAL_HANDLE *MaterialManager::CreateMaterial(const Material *pInMaterial)
+MATERIAL_HANDLE *MaterialManager::CreateMaterial(const Material *pInMaterial, MATERIAL_TYPE type)
 {
     MATERIAL_HANDLE *pMatHandle = nullptr;
 
-    Material         m;
-    const WCHAR     *materialName;
+    Material     m;
+    const WCHAR *materialName;
     if (!pInMaterial)
     {
         materialName = L"default";
@@ -317,6 +317,9 @@ MATERIAL_HANDLE *MaterialManager::CreateMaterial(const Material *pInMaterial)
     else
     {
         pMatHandle = AllocMaterialHandle(&m);
+
+        pMatHandle->type = (m.opacityFactor < 1.0f || type == MATERIAL_TYPE_TRANSLUCENT) ? MATERIAL_TYPE_TRANSLUCENT
+                                                                                         : MATERIAL_TYPE_DEFAULT;
 
         m_isUpdated = true;
 
@@ -342,7 +345,7 @@ BOOL MaterialManager::UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material
         return FALSE;
 
     CleanupMaterial(pMatHandle);
-    MATERIAL_HANDLE *pNew = CreateMaterial(pInMaterial);
+    MATERIAL_HANDLE *pNew = CreateMaterial(pInMaterial, pMatHandle->type);
     *pMatHandle = *pNew;
     m_pMaterialHandlePool->Dealloc(pNew);
 

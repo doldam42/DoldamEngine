@@ -20,6 +20,12 @@ enum TEXTURE_TYPE
     TEXTURE_TYPE_COUNT
 };
 
+enum MATERIAL_TYPE
+{
+    MATERIAL_TYPE_DEFAULT = 0,
+    MATERIAL_TYPE_TRANSLUCENT,
+};
+
 interface IFontHandle{};
 interface ITextureHandle{};
 interface ILightHandle{};
@@ -111,6 +117,8 @@ interface IRenderMaterial : public IUnknown
     virtual BOOL UpdateEmissive(const Vector3& emisive) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
 
+    virtual MATERIAL_TYPE GetType() = 0;
+
     virtual ITextureHandle *GetTexture(TEXTURE_TYPE type) = 0;
 };
 
@@ -183,7 +191,7 @@ interface IRenderer : public IUnknown
     virtual void            UpdateTextureWithTexture(ITextureHandle * pDestTex, ITextureHandle * pSrcTex, UINT srcWidth,
                                                      UINT srcHeight) = 0;
 
-    virtual IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial = nullptr) = 0;
+    virtual IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial, MATERIAL_TYPE type = MATERIAL_TYPE_DEFAULT) = 0;
     virtual IRenderMaterial *CreateDynamicMaterial(const WCHAR *name) = 0;
     virtual void             DeleteMaterialHandle(IRenderMaterial * pInMaterial) = 0;
     virtual void             UpdateMaterialHandle(IRenderMaterial * pInMaterial, const Material *pMaterial) = 0;

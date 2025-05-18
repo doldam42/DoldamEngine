@@ -24,6 +24,7 @@ struct MATERIAL_HANDLE : IRenderMaterial
     void *pSysMemAddr = nullptr;
     void *pSearchHandle = nullptr;
 
+    MATERIAL_TYPE   type;
     TEXTURE_HANDLE *pAlbedoTexHandle = nullptr;
     TEXTURE_HANDLE *pNormalTexHandle = nullptr;
     TEXTURE_HANDLE *pAOTexHandle = nullptr;
@@ -58,6 +59,8 @@ struct MATERIAL_HANDLE : IRenderMaterial
     BOOL UpdateEmissive(const Vector3 &emmisive) override;
 
     BOOL UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type) override;
+
+    MATERIAL_TYPE GetType() override { return type; }
 
     ITextureHandle* GetTexture(TEXTURE_TYPE type) override
     {
@@ -115,7 +118,7 @@ class MaterialManager
   public:
     bool Initialize(D3D12Renderer *pRenderer, UINT sizePerMat, UINT maxMatNum);
 
-    MATERIAL_HANDLE *CreateMaterial(const Material *pInMaterial);
+    MATERIAL_HANDLE *CreateMaterial(const Material *pInMaterial, MATERIAL_TYPE type);
     void             DeleteMaterial(MATERIAL_HANDLE *pMatHandle);
 
     BOOL UpdateMaterial(MATERIAL_HANDLE *pMatHandle, const Material *pInMaterial);

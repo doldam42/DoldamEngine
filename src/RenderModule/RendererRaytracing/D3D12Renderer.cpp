@@ -235,6 +235,9 @@ lb_exit:
     {
         m_ppRenderQueue[i] = new RenderQueue;
         m_ppRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
+
+        m_ppTranslucentRenderQueue[i] = new RenderQueue;
+        m_ppTranslucentRenderQueue[i]->Initialize(this, MAX_DRAW_COUNT_PER_FRAME);
     }
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
@@ -343,6 +346,35 @@ void D3D12Renderer::BeginRender()
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
 
+    // Clear OIT Buffers
+    {
+        const UINT clearValue[] = {0, 0, 0, 0};
+
+        CD3DX12_RESOURCE_BARRIER barriers[] = {
+            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentList,
+                                                 D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST),
+            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
+                                                 D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)};
+        pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(
+            m_OITFragmentLists[m_curContextIndex].fragmentListDescriptorTable.cpuHandle);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_OITFragmentListDescriptorHandleGPU[0]);
+
+        ID3D12DescriptorHeap *heaps[] = {m_ppDescriptorPool[m_curContextIndex][0]->GetDescriptorHeap()};
+        pCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
+        pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle,
+                                                   m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
+                                                   clearValue, 0, nullptr);
+
+        pCommandList->CopyBufferRegion(m_OITFragmentLists[m_curContextIndex].pFragmentList, 0,
+                                       m_pUAVCounterClearResource, 0, sizeof(UINT));
+
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                             m_OITFragmentLists[m_curContextIndex].pFragmentList,
+                                             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+    }
+
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     m_pDebugLine->DrawLine(Vector3(-10.0f, 2.0f, 0.0f), Vector3(10.0f, 2.0f, 0.0f), {255, 0, 0, 255}); // Red
@@ -378,6 +410,23 @@ void D3D12Renderer::EndRender()
         pCommandList->RSSetScissorRects(1, &m_ScissorRect);
         pCommandList->OMSetRenderTargets(1, &GetRTVHandle(RENDER_TARGET_TYPE_DEFERRED), FALSE, &dsvHandle);
         m_pDebugLine->DrawLineAll(0, pCommandList);
+        pCommandListPool->CloseAndExecute(m_pCommandQueue);
+    }
+
+    // Render Translucent Objects (OIT)
+    {
+        m_ppTranslucentRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, nullptr, dsvHandle,
+                                               &m_Viewport, &m_ScissorRect, 0, DRAW_PASS_TYPE_TRANSPARENCY);
+
+        pCommandList = pCommandListPool->GetCurrentCommandList();
+
+        CD3DX12_RESOURCE_BARRIER barriers[] = {
+            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentList,
+                                                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON),
+            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
+                                                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON)};
+        pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
         pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
@@ -423,8 +472,7 @@ void D3D12Renderer::EndRender()
     else
     {
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = GetSRVHandle(RENDER_TARGET_TYPE_RAYTRACING);
-        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle,
-                               backBufferRTV);
+        m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
     }
 
     pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
@@ -433,6 +481,7 @@ void D3D12Renderer::EndRender()
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                            D3D12_RESOURCE_STATE_PRESENT));
+
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     m_pRaytracingManager->Reset();
@@ -440,6 +489,7 @@ void D3D12Renderer::EndRender()
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
         m_ppRenderQueue[i]->Reset();
+        m_ppTranslucentRenderQueue[i]->Reset();
     }
 #endif
 }
@@ -587,6 +637,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
                                      UINT numMaterial, bool isWired, UINT numInstance)
 {
     RaytracingMeshObject *pObj = (RaytracingMeshObject *)pMeshObj;
+
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
     item.pObjHandle = pObj;
@@ -606,9 +657,26 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
         }
         item.meshObjParam.numMaterials = numMaterial;
     }
-    
+
     if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
+
+    // Draw Translucent Object
+    {
+        BOOL isTranslucent = FALSE;
+        for (int i = 0; i < numMaterial; i++)
+        {
+            MATERIAL_HANDLE *pMaterial = (MATERIAL_HANDLE *)ppMaterials[i];
+
+            if (pMaterial->type == MATERIAL_TYPE_TRANSLUCENT)
+            {
+                isTranslucent = TRUE;
+                break;
+            }
+        }
+        if (isTranslucent && !m_ppTranslucentRenderQueue[GetCurrentThreadIndex()]->Add(&item))
+            __debugbreak();
+    }
 
 #elif defined(USE_FORWARD_RENDERING)
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
@@ -645,6 +713,23 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
 
     if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
         __debugbreak();
+
+    // Draw Translucent Object
+    {
+        BOOL isTranslucent = FALSE;
+        for (int i = 0; i < numMaterial; i++)
+        {
+            MATERIAL_HANDLE *pMaterial = (MATERIAL_HANDLE *)ppMaterials[i];
+
+            if (pMaterial->type == MATERIAL_TYPE_TRANSLUCENT)
+            {
+                isTranslucent = TRUE;
+                break;
+            }
+        }
+        if (isTranslucent && !m_ppTranslucentRenderQueue[GetCurrentThreadIndex()]->Add(&item))
+            __debugbreak();
+    }
 
 #elif defined(USE_FORWARD_RENDERING)
     RaytracingMeshObject       *pObj = (RaytracingMeshObject *)pCharObj;
@@ -816,12 +901,12 @@ void D3D12Renderer::UpdateGlobal()
 
         m_globalGpuDescriptorHandle[i] = gpuHandle;
 
-
         pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 4);
         m_pD3DDevice->CopyDescriptorsSimple(4, cpuHandle,
                                             m_OITFragmentLists[m_curContextIndex].fragmentListDescriptorTable.cpuHandle,
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_OITFragmentListDescriptorHandle[i] = gpuHandle;
+        m_OITFragmentListDescriptorHandleGPU[i] = gpuHandle;
+        m_OITFragmentListDescriptorHandleCPU[i] = cpuHandle;
     }
 }
 
@@ -829,7 +914,7 @@ void D3D12Renderer::UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix 
 {
     ConstantBufferPool *pCBPool = GetConstantBufferPool(CONSTANT_BUFFER_TYPE_GLOBAL, 0);
     m_pGlobalCB = pCBPool->Alloc();
-    
+
     m_globalConsts.eyeWorld = eyeWorld;
     m_globalConsts.view = viewRow.Transpose();
     m_globalConsts.proj = projRow.Transpose();
@@ -995,9 +1080,9 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
     pLight->type = LIGHT_OFF;
 }
 
-IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
+IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial, MATERIAL_TYPE type)
 {
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial, type);
     return pMatHandle;
 }
 
@@ -1005,7 +1090,7 @@ IRenderMaterial *D3D12Renderer::CreateDynamicMaterial(const WCHAR *name)
 {
     Material mat;
     wcscpy_s(mat.name, name);
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat, MATERIAL_TYPE_DEFAULT);
     return pMatHandle;
 }
 
@@ -1137,7 +1222,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
                                           &m_Viewport, &m_ScissorRect, _countof(rtvs), passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);
-    if (curCount == 0) 
+    if (curCount == 0)
     {
         SetEvent(m_hCompleteEvent);
     }
@@ -1202,7 +1287,7 @@ IRenderMesh *D3D12Renderer::CreateWireBoxMesh(const Vector3 center, const Vector
     return PrimitiveGenerator::MakeWireBox(center, extends);
 }
 
-void D3D12Renderer::DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color) 
+void D3D12Renderer::DrawLine(const Vector3 &start, const Vector3 &end, const RGBA &color)
 {
     m_pDebugLine->DrawLine(start, end, color);
 }
@@ -1212,7 +1297,7 @@ void D3D12Renderer::CreateDefaultResources()
     m_pDefaultTexHandle = (TEXTURE_HANDLE *)CreateTiledTexture(512, 512, 255, 255, 255, 16);
 
     Material defaultMaterial;
-    m_pDefaultMaterial = m_pMaterialManager->CreateMaterial(&defaultMaterial);
+    m_pDefaultMaterial = m_pMaterialManager->CreateMaterial(&defaultMaterial, MATERIAL_TYPE_DEFAULT);
 }
 
 void D3D12Renderer::CleanupDefaultResources()
@@ -1263,7 +1348,6 @@ BOOL D3D12Renderer::CreateDescriptorTables()
 {
     HRESULT hr = S_OK;
 
-    
     for (int i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
     {
         // 렌더타겟용 디스크립터 테이블
@@ -1344,8 +1428,26 @@ void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
 
 // OIT FRAGMENT LIST TABLE
 // |  fragmentListNodeFirstAddressUAV | fragmentListUAV |  fragmentListNodeFirstAddressSRV | fragmentListSRV |
-void D3D12Renderer::CreateOITFragmentListBuffers() 
-{ 
+void D3D12Renderer::CreateOITFragmentListBuffers()
+{
+    if (FAILED(m_pD3DDevice->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(sizeof(UINT), D3D12_RESOURCE_FLAG_NONE), D3D12_RESOURCE_STATE_COPY_SOURCE,
+            nullptr, IID_PPV_ARGS(&m_pUAVCounterClearResource))))
+    {
+        __debugbreak();
+    }
+    
+    UINT *pSysMem = nullptr;
+    m_pUAVCounterClearResource->Map(0, nullptr, reinterpret_cast<void **>(pSysMem));
+    if (pSysMem)
+    {
+        UINT clearValue = 0;
+        memcpy(pSysMem, &clearValue, sizeof(UINT));
+        m_pUAVCounterClearResource->Unmap(0, nullptr);
+        pSysMem = nullptr;
+    }
+
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         ID3D12Resource *pFragmentListNodeFirstAddress = nullptr;
@@ -1353,8 +1455,8 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
 
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_UINT, m_Viewport.Width, m_Viewport.Height, 1, 1,
-                                              1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_UINT, m_Viewport.Width, m_Viewport.Height, 1, 1, 1, 0,
+                                              D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNodeFirstAddress))))
         {
             __debugbreak();
@@ -1363,12 +1465,13 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
         UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height) * 8;
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(FragmentListNode) * maxFragmentListNodeCount,
+                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(FragmentListNode) * maxFragmentListNodeCount + sizeof(UINT),
                                                D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNode))))
         {
             __debugbreak();
         }
+        m_maxFragmentListNodeCount = maxFragmentListNodeCount;
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_OITFragmentLists[n].fragmentListDescriptorTable.cpuHandle);
 
@@ -1387,7 +1490,8 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
         uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
         uavDesc.Buffer.NumElements = maxFragmentListNodeCount;
         uavDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
-        m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNode, nullptr, &uavDesc, cpuHandle);
+
+        m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNode, pFragmentListNode, &uavDesc, cpuHandle);
         cpuHandle.Offset(m_srvDescriptorSize);
 
         m_pD3DDevice->CreateShaderResourceView(pFragmentListNodeFirstAddress, nullptr, cpuHandle);
@@ -1409,8 +1513,14 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
     }
 }
 
-void D3D12Renderer::CleanupOITFragmentListBuffers() 
-{ 
+void D3D12Renderer::CleanupOITFragmentListBuffers()
+{
+    if (m_pUAVCounterClearResource)
+    {
+        m_pUAVCounterClearResource->Release();
+        m_pUAVCounterClearResource = nullptr;
+    }
+
     for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
     {
         if (m_OITFragmentLists[n].pFragmentList)
@@ -1649,7 +1759,6 @@ void D3D12Renderer::CreateBuffers()
                                              m_depthStencilDescriptorTables[n].cpuHandle);
     }
 
-
     if (m_useTextureOutput)
     {
         for (UINT n = 0; n < SWAP_CHAIN_FRAME_COUNT; n++)
@@ -1749,6 +1858,21 @@ void D3D12Renderer::Cleanup()
     }
 
     Graphics::DeleteCommonStates();
+
+    for (UINT i = 0; i < m_renderThreadCount; i++)
+    {
+        if (m_ppRenderQueue[i])
+        {
+            delete m_ppRenderQueue[i];
+            m_ppRenderQueue[i] = nullptr;
+        }
+
+        if (m_ppTranslucentRenderQueue[i])
+        {
+            delete m_ppTranslucentRenderQueue[i];
+            m_ppTranslucentRenderQueue[i] = nullptr;
+        }
+    }
 
     for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
     {

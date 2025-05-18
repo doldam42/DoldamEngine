@@ -37,9 +37,9 @@ class PostProcessor;
 struct MATERIAL_HANDLE;
 struct TEXTURE_HANDLE;
 // Raytracing은 ID3D12GraphicsCommandList4 부터 사용가능
- //#define USE_FORWARD_RENDERING
+// #define USE_FORWARD_RENDERING
 #define USE_DEFERRED_RENDERING
-//#define USE_MULTI_THREAD
+// #define USE_MULTI_THREAD
 
 enum GLOBAL_DESCRIPTOR_INDEX
 {
@@ -109,6 +109,8 @@ class D3D12Renderer : public IRenderer
     ConstantBufferManager *m_ppConstantBufferManager[MAX_PENDING_FRAME_COUNT][MAX_RENDER_THREAD_COUNT] = {};
     RenderQueue           *m_ppRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
 
+    RenderQueue *m_ppTranslucentRenderQueue[MAX_RENDER_THREAD_COUNT] = {};
+
     FrameBuffer *m_ppFrameBuffer[MAX_RENDER_THREAD_COUNT] = {};
 
     UINT m_renderThreadCount = 0;
@@ -156,9 +158,12 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
 
-    OITFragmentList m_OITFragmentLists[SWAP_CHAIN_FRAME_COUNT] = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandle[MAX_RENDER_THREAD_COUNT];
+    OITFragmentList             m_OITFragmentLists[SWAP_CHAIN_FRAME_COUNT] = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleGPU[MAX_RENDER_THREAD_COUNT];
+    D3D12_CPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleCPU[MAX_RENDER_THREAD_COUNT];
+    UINT                        m_maxFragmentListNodeCount = 0;
 
+    ID3D12Resource *m_pUAVCounterClearResource = nullptr;
 
     // Global
     Matrix  m_camViewRow;
@@ -281,7 +286,8 @@ class D3D12Renderer : public IRenderer
                                   BOOL hasShadow = true) override;
     void          DeleteLight(ILightHandle *pLightHandle);
 
-    IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial) override;
+    IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial,
+                                          MATERIAL_TYPE   type = MATERIAL_TYPE_DEFAULT) override;
     IRenderMaterial *CreateDynamicMaterial(const WCHAR *name) override;
     void             DeleteMaterialHandle(IRenderMaterial *pInMaterial) override;
     void             UpdateMaterialHandle(IRenderMaterial *pInMaterial, const Material *pMaterial) override;
@@ -319,7 +325,7 @@ class D3D12Renderer : public IRenderer
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetOITDescriptorHandle(UINT threadIndex)
     {
-        return m_OITFragmentListDescriptorHandle[threadIndex];
+        return m_OITFragmentListDescriptorHandleGPU[threadIndex];
     }
 
     DescriptorPool *GetDescriptorPool(UINT threadIndex) const

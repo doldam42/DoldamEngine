@@ -248,7 +248,7 @@ class D3D12Renderer : public IRenderer
                                   BOOL hasShadow = true) override;
     void          DeleteLight(ILightHandle *pLightHandle);
 
-    IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial) override;
+    IRenderMaterial *CreateMaterialHandle(const Material *pInMaterial, MATERIAL_TYPE type = MATERIAL_TYPE_DEFAULT) override;
     IRenderMaterial *CreateDynamicMaterial(const WCHAR *name) override;
     void             DeleteMaterialHandle(IRenderMaterial *pInMaterial) override;
     void             UpdateMaterialHandle(IRenderMaterial *pInMaterial, const Material *pMaterial) override;

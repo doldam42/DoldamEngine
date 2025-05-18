@@ -15,7 +15,7 @@ void BasicScene::Load()
     // Create Material
     Material reflectiveMaterial = {};
     reflectiveMaterial.metallicFactor = 0.0f;
-    reflectiveMaterial.reflectionFactor = 0.9f;
+    reflectiveMaterial.reflectionFactor = 0.7f;
     wcscpy_s(reflectiveMaterial.name, L"ground");
     wcscpy_s(reflectiveMaterial.basePath, L"..\\..\\assets\\textures\\Tiles074\\");
     wcscpy_s(reflectiveMaterial.albedoTextureName, L"Tiles074_2K-JPG_Color.jpg");
@@ -30,10 +30,27 @@ void BasicScene::Load()
     pGround->SetScale(30.0f, 0.2f, 30.0f);
     pGround->SetMaterials(&pGroundMaterial, 1);
 
-    //ICollider  *pCollider = pPhysics->CreateBoxCollider(Vector3(30.0f, 0.2f, 30.0f));
+    ICollider  *pCollider = pPhysics->CreateBoxCollider(pGround, Vector3(30.0f, 0.2f, 30.0f));
     //IRigidBody *pBody = pPhysics->CreateRigidBody(pCollider, Vector3::Zero, 0.0f, 0.5f, 0.5f, FALSE);
-    //pGround->SetCollider(pCollider);
+    pGround->SetCollider(pCollider);
     //pGround->SetRigidBody(pBody);
+
+    // Create Material
+    Material translucentMaterial = {};
+    wcscpy_s(translucentMaterial.name, L"translucent");
+    translucentMaterial.metallicFactor = 0.0f;
+    translucentMaterial.roughnessFactor = 1.0f;
+    translucentMaterial.reflectionFactor = 0.0f;
+    translucentMaterial.albedo = Vector3(1.0f, 0.0f, 0.0f);
+    translucentMaterial.opacityFactor = 0.5f;
+    
+    IRenderMaterial *pTranslucentMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+
+    IGameModel *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+    IGameObject *pBox = pGame->CreateGameObject();
+    pBox->SetModel(pBoxModel);
+    pBox->SetMaterials(&pTranslucentMaterial, 1);
+    pBox->SetPosition(0.0f, 1.0f, 0.0f);
 
     // Set CrossHair
     {

@@ -95,7 +95,7 @@ namespace BxDF
     // Fresnel reflectance - schlick approximation.
     float3 Fresnel(in float3 F0, in float cos_thetai)
     {
-        return F0 + (1 - F0) * pow(1 - cos_thetai, 5);
+        return F0 + (1 - F0) * pow(abs(1 - cos_thetai), 5);
     }
 
     namespace Specular

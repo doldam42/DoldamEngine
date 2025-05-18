@@ -988,9 +988,9 @@ void D3D12Renderer::DeleteLight(ILightHandle *pLightHandle)
     pLight->type = LIGHT_OFF;
 }
 
-IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial)
+IRenderMaterial *D3D12Renderer::CreateMaterialHandle(const Material *pInMaterial, MATERIAL_TYPE type)
 {
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(pInMaterial, type);
     return pMatHandle;
 }
 
@@ -998,7 +998,7 @@ IRenderMaterial *D3D12Renderer::CreateDynamicMaterial(const WCHAR *name)
 {
     Material mat;
     wcscpy_s(mat.name, name);
-    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat);
+    MATERIAL_HANDLE *pMatHandle = m_pMaterialManager->CreateMaterial(&mat, MATERIAL_TYPE_DEFAULT);
     return pMatHandle;
 }
 

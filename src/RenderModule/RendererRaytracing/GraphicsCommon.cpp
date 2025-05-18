@@ -37,7 +37,7 @@ ID3DBlob *spriteDeferredPS = nullptr;
 ID3DBlob *transparencyPS = nullptr;
 ID3DBlob *transparentSpritePS = nullptr;
 
-ID3DBlob *OITReslovePS = nullptr;
+ID3DBlob *OITResolvePS = nullptr;
 
 ID3DBlob *skyboxVS = nullptr;
 ID3DBlob *skyboxPS = nullptr;
@@ -257,7 +257,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
         __debugbreak();
 
     hr = D3DCompileFromFile(L"./Shaders/OITResolvePS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main",
-                            "ps_5_1", compileFlags, 0, &OITReslovePS, nullptr);
+                            "ps_5_1", compileFlags, 0, &OITResolvePS, nullptr);
 
     if (FAILED(hr))
         __debugbreak();
@@ -422,7 +422,7 @@ void Graphics::InitShaders(ID3D12Device5 *pD3DDevice)
     g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE] = {
         simpleIL,
         CD3DX12_SHADER_BYTECODE(presentVS->GetBufferPointer(), presentVS->GetBufferSize()),
-        CD3DX12_SHADER_BYTECODE(OITReslovePS->GetBufferPointer(), OITReslovePS->GetBufferSize()),
+        CD3DX12_SHADER_BYTECODE(OITResolvePS->GetBufferPointer(), OITResolvePS->GetBufferSize()),
         {},
         {},
         {},
@@ -552,11 +552,14 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     rangesPerSprite[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0 : Constant Buffer View
     rangesPerSprite[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 : Shader Resource View(Tex)
 
-    // Ranges Per OIT Fragment List
-    // |  FRAGMENTLISTFIRSTNODEADDRESS UAV | FRAGMENTLIST UAV |  FRAGMENTLISTFIRSTNODEADDRESS SRV | FRAGMENTLIST SRV | 
-    CD3DX12_DESCRIPTOR_RANGE1 rangesPerFragmentList[2] = {};
-    rangesPerFragmentList[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0); // u0~u1
-    rangesPerFragmentList[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 18); // t18~19
+    // Ranges Per OIT Fragment List UAV
+    // |  FRAGMENT_LIST_FIRST_NODE_ADDRESS UAV | FRAGMENT_LIST UAV |
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerFragmentListUAV[1] = {};
+    rangesPerFragmentListUAV[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0); // u0~u1
+
+   //  FRAGMENT_LIST_FIRST_NODE_ADDRESS SRV | FRAGMENT_LIST SRV | 
+    CD3DX12_DESCRIPTOR_RANGE1 rangesPerFragmentListSRV[1] = {};
+    rangesPerFragmentListSRV[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 18); // t18~19
     
     // Init Basic Root Signature
     {
@@ -692,7 +695,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         // | Ranges Per Global            |
         // | Ranges Per Basic Object      |
         // | Ranges Per Material          |
-        // | Ranges Per OIT Fragment List |
+        // | Ranges Per OIT Fragment List UAV |
         CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
@@ -700,7 +703,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -715,7 +718,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         // | Ranges Per Global          |
         // | Ranges Per Skinned Object  |
         // | Ranges Per Material        |
-        // | Ranges Per OIT Fragment List |
+        // | Ranges Per OIT Fragment List UAV |
         CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
@@ -723,7 +726,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -741,7 +744,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerSprite), rangesPerSprite,
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerFragmentList), &rangesPerFragmentList[0],
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -776,10 +779,10 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Init OIT Resolve Root Signature
     {
         // Root Paramaters
-        // | ranges per OIT FragmentList |
+        // | ranges per OIT FragmentList SRV|
         CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
 
-        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerFragmentList), rangesPerFragmentList,
+        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerFragmentListSRV), rangesPerFragmentListSRV,
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -873,6 +876,43 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 }
             }
         }
+    }
+
+    // OIT Resolve PSO
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+        psoDesc.pRootSignature = presentRS;
+        psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].inputLayout;
+        psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].VS;
+        psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].PS;
+
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.SampleDesc.Count = 1;
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        psoDesc.BlendState.RenderTarget[0].BlendEnable = true;
+        psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+        psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_ALPHA;
+        psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+        psoDesc.NumRenderTargets = 1;
+        psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        psoDesc.DepthStencilState.DepthEnable = FALSE;
+        psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
+        psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+        psoDesc.DepthStencilState.StencilEnable = TRUE;
+        psoDesc.DepthStencilState.StencilReadMask = 0xFF;
+        psoDesc.DepthStencilState.StencilWriteMask = 0x00;
+        psoDesc.DepthStencilState.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
+        psoDesc.DepthStencilState.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+        psoDesc.DepthStencilState.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
+
     }
 
     // present PSO

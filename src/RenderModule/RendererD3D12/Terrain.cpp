@@ -137,7 +137,7 @@ BOOL Terrain::Initialize(D3D12Renderer *pRenderer, const Vector3 *pScale, const 
     InitMesh(heightFilename, numSlice, numStack);
 
     MaterialManager *pMatManager = m_pRenderer->GetMaterialManager();
-    m_pMaterialHandle = pMatManager->CreateMaterial(pMaterial);
+    m_pMaterialHandle = pMatManager->CreateMaterial(pMaterial, MATERIAL_TYPE_DEFAULT);
 
     m_scale = *pScale;
     m_descriptorSize = pRenderer->GetSRVDescriptorSize();

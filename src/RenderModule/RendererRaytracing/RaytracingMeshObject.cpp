@@ -87,7 +87,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
                                                              UINT threadIndex, IRenderMaterial *const *ppMaterials,
                                                              UINT numMaterial)
 {
-    assert(numMaterial == m_faceGroupCount);
+    DASSERT(numMaterial == m_faceGroupCount);
 
     CB_CONTAINER       *pGeomCBs;
     ConstantBufferPool *pGeometryConstantBufferPool =
@@ -158,12 +158,17 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
 
     for (UINT i = 0; i < m_faceGroupCount; i++)
     {
-        pCommandList->SetGraphicsRootDescriptorTable(2, gpuHandlePerFaceGroup);
-        gpuHandlePerFaceGroup.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
+        MATERIAL_TYPE mType = ppMaterials[i]->GetType();
+        if ((mType == MATERIAL_TYPE_TRANSLUCENT && passType == DRAW_PASS_TYPE_TRANSPARENCY) ||
+            (mType == MATERIAL_TYPE_DEFAULT && passType != DRAW_PASS_TYPE_TRANSPARENCY))
+        {
+            pCommandList->SetGraphicsRootDescriptorTable(2, gpuHandlePerFaceGroup);
+            gpuHandlePerFaceGroup.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_FACE_GROUP_COUNT);
 
-        INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
-        pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
-        pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
+            INDEXED_FACE_GROUP *pFaceGroup = m_pFaceGroups + i;
+            pCommandList->IASetIndexBuffer(&pFaceGroup->IndexBufferView);
+            pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
+        }
     }
 
     Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
@@ -246,20 +251,16 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
-    if (numFaceGroup > MAX_FACE_GROUP_COUNT_PER_OBJ)
-    {
-        __debugbreak();
-        goto lb_return;
-    }
+    DASSERT(numFaceGroup <= MAX_FACE_GROUP_COUNT_PER_OBJ);
 
     // Alloc Descriptor Table
+    // | VERTEX BUFFER SRV | INDEX BUFFER SRV0 | INDEX BUFFER SRV1 | ... |
     m_descriptorCountPerDraw = DESCRIPTOR_COUNT_PER_BLAS + numFaceGroup;
     if (!pResourceManager->AllocDescriptorTable(&m_rootArgDescriptorTable, m_descriptorCountPerDraw))
     {
         __debugbreak();
         goto lb_return;
     }
-
     switch (m_type)
     {
     case RENDER_ITEM_TYPE_MESH_OBJ: {
