@@ -304,7 +304,7 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
 
     m_pFaceGroups = new INDEXED_FACE_GROUP[m_maxFaceGroupCount];
     memset(m_pFaceGroups, 0, sizeof(INDEXED_FACE_GROUP) * m_maxFaceGroupCount);
-
+    
     m_pBLASGeometries = new D3D12_RAYTRACING_GEOMETRY_DESC[m_maxFaceGroupCount];
     memset(m_pBLASGeometries, 0, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC) * m_maxFaceGroupCount);
 

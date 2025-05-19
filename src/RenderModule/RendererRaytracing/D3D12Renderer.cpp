@@ -400,7 +400,7 @@ void D3D12Renderer::EndRender()
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
-    m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle, &m_Viewport, &m_ScissorRect,
+    m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, &dsvHandle, &m_Viewport, &m_ScissorRect,
                                 _countof(rtvs), DRAW_PASS_TYPE_DEFERRED);
 #endif
 
@@ -416,7 +416,7 @@ void D3D12Renderer::EndRender()
 
     // Render Translucent Objects (OIT)
     {
-        m_ppTranslucentRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, nullptr, dsvHandle,
+        m_ppTranslucentRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, nullptr, &dsvHandle,
                                                &m_Viewport, &m_ScissorRect, 0, DRAW_PASS_TYPE_TRANSPARENCY);
 
         pCommandList = pCommandListPool->GetCurrentCommandList();
@@ -1247,7 +1247,7 @@ void D3D12Renderer::ProcessByThread(UINT threadIndex, DRAW_PASS_TYPE passType)
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
 
-    m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, dsvHandle,
+    m_ppRenderQueue[threadIndex]->Process(threadIndex, pCommandListPool, m_pCommandQueue, 400, rtvs, &dsvHandle,
                                           &m_Viewport, &m_ScissorRect, _countof(rtvs), passType);
 
     LONG curCount = _InterlockedDecrement(&m_activeThreadCount);

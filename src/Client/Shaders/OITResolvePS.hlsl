@@ -56,7 +56,8 @@ float4 main(PSInput input) : SV_TARGET
         // Unpack color
         float4       nodeColor = FL_UnpackColor(node.color);
         AOITFragment frag = AOITFindFragment(data, depth);
-        float        vis = frag.index == 0 ? 1.0f : frag.transA;
+        float vis = frag.index == 0 ? 1.0f : frag.transA;
+        //float        vis = frag.transA;
         color += nodeColor.xyz * nodeColor.www * vis.xxx;
 
         // Move to next node

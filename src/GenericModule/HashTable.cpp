@@ -3,8 +3,8 @@
 
 UINT fnv1a32(const void* pData, UINT size)
 {
-    constexpr uint32_t FNV_OFFSET_BASIS_32 = 0x811C9DC5;
-    constexpr uint32_t FNV_PRIME_32 = 16777619;
+    constexpr UINT FNV_OFFSET_BASIS_32 = 0x811C9DC5;
+    constexpr UINT FNV_PRIME_32 = 16777619;
 
     UINT hash = FNV_OFFSET_BASIS_32;
     const char *pEntry = (char *)pData;

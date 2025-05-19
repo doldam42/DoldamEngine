@@ -27,7 +27,8 @@
 #endif
 
 #define OIT_FIRT_NODE_TRANS	(1)
-#define OIT_RT_COUNT			(OIT_NODE_COUNT / 4)
+#define OIT_RT_COUNT            (OIT_NODE_COUNT / 4)
+
 #define OIT_LOOP_COUNT			4
 #define IOT_EMPTY_NODE_DEPTH	(1E30)
 

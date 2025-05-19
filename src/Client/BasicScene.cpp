@@ -77,8 +77,8 @@ void BasicScene::Load()
             {
                 pBox->SetMaterials(&pTranslucentBMaterial, 1);
             }
-            
-            pBox->SetPosition(i, 1.0f + i - j, j);
+
+            pBox->SetPosition(i * 2, 4.0f + (i - j) * 2, j * 2);
             offset++;
         }
     }

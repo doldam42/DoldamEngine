@@ -122,6 +122,7 @@ void main(PSInput input, in uint coverageMask : SV_Coverage)
     //result = clamp(result, 0.0, 1.0);
 
     float4 result = float4(albedo, opacity);
+    result = clamp(result, 0.0, 1.0);
 
     float surfaceDepth = input.posView.z;
 

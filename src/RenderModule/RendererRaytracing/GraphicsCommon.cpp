@@ -836,17 +836,21 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
                 break;
             case DRAW_PASS_TYPE_TRANSPARENCY:
                 psoDesc.NumRenderTargets = 0;
                 psoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+                psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+
                 break;
             default:
                 psoDesc.NumRenderTargets = 1;
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+                psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
                 break;
             }
 
@@ -903,7 +907,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         psoDesc.DepthStencilState.DepthEnable = FALSE;
         psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
         psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-        psoDesc.DepthStencilState.StencilEnable = TRUE;
+        psoDesc.DepthStencilState.StencilEnable = FALSE;
         psoDesc.DepthStencilState.StencilReadMask = 0xFF;
         psoDesc.DepthStencilState.StencilWriteMask = 0x00;
         psoDesc.DepthStencilState.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
