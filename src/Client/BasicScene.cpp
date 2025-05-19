@@ -35,23 +35,54 @@ void BasicScene::Load()
     pGround->SetCollider(pCollider);
     //pGround->SetRigidBody(pBody);
 
-    // Create Material
+    // Create Material R,G,B
     Material translucentMaterial = {};
-    wcscpy_s(translucentMaterial.name, L"translucent");
     translucentMaterial.metallicFactor = 0.0f;
     translucentMaterial.roughnessFactor = 1.0f;
     translucentMaterial.reflectionFactor = 0.0f;
-    translucentMaterial.albedo = Vector3(1.0f, 0.0f, 0.0f);
     translucentMaterial.opacityFactor = 0.5f;
+
+     // TranslucentR
+    wcscpy_s(translucentMaterial.name, L"translucentR");
+    translucentMaterial.albedo = Vector3(1.0f, 0.0f, 0.0f);
+    IRenderMaterial *pTranslucentRMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+
+    // TranslucentG
+    wcscpy_s(translucentMaterial.name, L"translucentG");
+    translucentMaterial.albedo = Vector3(0.0f, 1.0, 0.0f);
+    IRenderMaterial *pTranslucentGMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
     
-    IRenderMaterial *pTranslucentMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
-
-    IGameModel *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
-    IGameObject *pBox = pGame->CreateGameObject();
-    pBox->SetModel(pBoxModel);
-    pBox->SetMaterials(&pTranslucentMaterial, 1);
-    pBox->SetPosition(0.0f, 1.0f, 0.0f);
-
+    // TranslucentB
+    wcscpy_s(translucentMaterial.name, L"translucentB");
+    translucentMaterial.albedo = Vector3(0.0f, 0.0, 1.0f);
+    IRenderMaterial *pTranslucentBMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+    
+    int offset = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
+            IGameObject *pBox = pGame->CreateGameObject();
+            pBox->SetModel(pBoxModel);
+            if (offset % 3 == 0)
+            {
+                pBox->SetMaterials(&pTranslucentRMaterial, 1);
+            }
+            else if (offset % 3 == 1)
+            {
+                pBox->SetMaterials(&pTranslucentGMaterial, 1);
+            }
+            else
+            {
+                pBox->SetMaterials(&pTranslucentBMaterial, 1);
+            }
+            
+            pBox->SetPosition(i, 1.0f + i - j, j);
+            offset++;
+        }
+    }
+    
     // Set CrossHair
     {
         UINT width = g_pClient->GetScreenWidth();

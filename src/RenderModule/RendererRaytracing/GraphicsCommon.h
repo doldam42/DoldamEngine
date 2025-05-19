@@ -125,6 +125,8 @@ extern ID3D12PipelineState *skyboxPSO;
 
 extern ID3D12PipelineState *secondPassPSO;
 
+extern ID3D12PipelineState *OITResolvePSO;
+
 // #DXR
 extern IDxcBlob *rayGenLibrary;
 extern IDxcBlob *missLibrary;

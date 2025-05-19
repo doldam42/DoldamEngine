@@ -64,5 +64,6 @@ float4 main(PSInput input) : SV_TARGET
     }
 
     float4 blendColor = float4(color, data.trans[OIT_RT_COUNT - 1][3]);
+    //float4 blendColor = float4(color, 1.0f);
     return blendColor;
 }

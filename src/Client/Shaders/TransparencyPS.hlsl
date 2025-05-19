@@ -82,44 +82,46 @@ void main(PSInput input, in uint coverageMask : SV_Coverage)
     
     float3 albedo = texColor.rgb;
     float  opacity = texColor.a * material.opacityFactor;
-    
-    float ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
-    float roughness = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
-                          ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
-                          : material.roughnessFactor;
-    float metallic = (material.flags & MATERIAL_USE_METALLIC_MAP)
-                         ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
-                         : material.metallicFactor;
+    //
+    //float ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
+    //float roughness = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
+    //                      ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
+    //                      : material.roughnessFactor;
+    //float metallic = (material.flags & MATERIAL_USE_METALLIC_MAP)
+    //                     ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
+    //                     : material.metallicFactor;
 
-    float3 emission = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
-                          ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb
-                          : material.emissive;
+    //float3 emission = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
+    //                      ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb
+    //                      : material.emissive;
 
-    //float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
-    float3 ambientLighting = albedo * 0.02;
+    ////float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
+    //float3 ambientLighting = albedo * 0.02;
 
-    float3 directLighting = 0;
-    [unroll]
-    for (int i = 0; i < MAX_LIGHTS; i++)
-    {
-        float3 L = lights[i].position - input.posWorld;
-        float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));
-        float3 centerToRay = dot(L, r) * r - L;
-        float3 representativePoint = L + centerToRay * clamp(lights[i].radius / length(centerToRay), 0.0, 1.0);
-        representativePoint += input.posWorld;
-        float3 lightVec =
-            (lights[i].type & LIGHT_DIRECTIONAL) ? -lights[i].direction : representativePoint - input.posWorld;
+    //float3 directLighting = 0;
+    //[unroll]
+    //for (int i = 0; i < MAX_LIGHTS; i++)
+    //{
+    //    float3 L = lights[i].position - input.posWorld;
+    //    float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));
+    //    float3 centerToRay = dot(L, r) * r - L;
+    //    float3 representativePoint = L + centerToRay * clamp(lights[i].radius / length(centerToRay), 0.0, 1.0);
+    //    representativePoint += input.posWorld;
+    //    float3 lightVec =
+    //        (lights[i].type & LIGHT_DIRECTIONAL) ? -lights[i].direction : representativePoint - input.posWorld;
 
-        float lightDist = length(lightVec);
-        lightVec /= lightDist;
+    //    float lightDist = length(lightVec);
+    //    lightVec /= lightDist;
 
-        float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
+    //    float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
 
-        directLighting += Shade(albedo, radiance, metallic, roughness, normalWorld, pixelToEye, lightVec);
-    }
+    //    directLighting += Shade(albedo, radiance, metallic, roughness, normalWorld, pixelToEye, lightVec);
+    //}
 
-    float4 result = float4(ambientLighting + directLighting + emission, opacity);
-    result = clamp(result, 0.0, 1000.0);
+    //float4 result = float4(ambientLighting + directLighting + emission, opacity);
+    //result = clamp(result, 0.0, 1.0);
+
+    float4 result = float4(albedo, opacity);
 
     float surfaceDepth = input.posView.z;
 

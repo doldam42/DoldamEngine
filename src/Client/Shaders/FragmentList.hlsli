@@ -39,7 +39,7 @@ struct FragmentListNode
 //////////////////////////////////////////////
 
 //cbuffer FL_Constants { uint mMaxListNodes; };
-#define mMaxListNodes (700 * 1424 * 8)
+#define mMaxListNodes (4096 * 25 * 16) // 16MB
 
 //////////////////////////////////////////////
 // Resources

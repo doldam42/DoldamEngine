@@ -100,6 +100,8 @@ ID3D12PipelineState *skyboxPSO = nullptr;
 // Deferred
 ID3D12PipelineState *secondPassPSO = nullptr;
 
+ID3D12PipelineState *OITResolvePSO = nullptr;
+
 ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE_COUNT] = {nullptr};
 
 // #DXR
@@ -881,10 +883,10 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     // OIT Resolve PSO
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.pRootSignature = presentRS;
-        psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].inputLayout;
-        psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].VS;
-        psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_POST_PROCESS].PS;
+        psoDesc.pRootSignature = OITResolveRS;
+        psoDesc.InputLayout = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE].inputLayout;
+        psoDesc.VS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE].VS;
+        psoDesc.PS = g_additionalShaderData[ADDITIONAL_PIPELINE_TYPE_OIT_RESOLVE].PS;
 
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.SampleDesc.Count = 1;
@@ -913,6 +915,10 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
         psoDesc.DepthStencilState.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
         psoDesc.DepthStencilState.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
+        if (FAILED(pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&OITResolvePSO))))
+        {
+            __debugbreak();
+        }
     }
 
     // present PSO
@@ -1101,7 +1107,7 @@ void Graphics::InitRaytracingStateObjects(CD3DX12_STATE_OBJECT_DESC *raytracingP
     shadowHitGroup->SetClosestHitShaderImport(hitShaderNames[1]);
     shadowHitGroup->SetHitGroupExport(hitGroupNames[1]);
     shadowHitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
-
+    
     // Shader config
     // Defines the maximum sizes in bytes for the ray rayPayload and attribute structure.
     auto shaderConfig = raytracingPipeline->CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
@@ -1254,6 +1260,11 @@ void Graphics::DeleteShaders()
         transparentSpritePS->Release();
         transparentSpritePS = nullptr;
     }
+    if (OITResolvePS)
+    {
+        OITResolvePS->Release();
+        OITResolvePS = nullptr;
+    }
 }
 
 void Graphics::DeleteSamplers() {}
@@ -1343,6 +1354,11 @@ void Graphics::DeletePipelineStates()
     {
         presentPSO->Release();
         presentPSO = nullptr;
+    }
+    if (OITResolvePSO)
+    {
+        OITResolvePSO->Release();
+        OITResolvePSO = nullptr;
     }
     if (D32ToRgbaPSO)
     {

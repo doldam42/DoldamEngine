@@ -367,7 +367,8 @@ void D3D12Renderer::BeginRender()
                                                    m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
                                                    clearValue, 0, nullptr);
 
-        pCommandList->CopyBufferRegion(m_OITFragmentLists[m_curContextIndex].pFragmentList, 0,
+        pCommandList->CopyBufferRegion(m_OITFragmentLists[m_curContextIndex].pFragmentList,
+                                       m_maxFragmentListNodeCount * sizeof(FragmentListNode),
                                        m_pUAVCounterClearResource, 0, sizeof(UINT));
 
         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -431,6 +432,7 @@ void D3D12Renderer::EndRender()
     }
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
+
     m_pRaytracingManager->CreateTopLevelAS(pCommandList);
 
 #ifdef USE_DEFERRED_RENDERING
@@ -476,6 +478,28 @@ void D3D12Renderer::EndRender()
     }
 
     pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
+
+    // Resolve OIT
+    {
+        ID3D12DescriptorHeap *pHeaps[] = {GetDescriptorPool(0)->GetDescriptorHeap()}; 
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GetOITDescriptorHandle(0));
+        gpuHandle.Offset(m_srvDescriptorSize, 2);  // | UAV0 | UAV1 | (SRV0) | SRV1 |
+
+        pCommandList->RSSetViewports(1, &m_Viewport);
+        pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+        pCommandList->SetGraphicsRootSignature(Graphics::OITResolveRS);
+        pCommandList->SetPipelineState(Graphics::OITResolvePSO);
+
+        pCommandList->SetDescriptorHeaps(1, pHeaps);
+        
+        pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
+
+        pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pCommandList->IASetVertexBuffers(0, 1, &m_pPostProcessor->GetVertexBufferView());
+        pCommandList->IASetIndexBuffer(&m_pPostProcessor->GetIndexBufferView());
+        pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    }
+
     m_pGUIManager->EndRender(pCommandList);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
@@ -658,9 +682,6 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
         item.meshObjParam.numMaterials = numMaterial;
     }
 
-    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
-        __debugbreak();
-
     // Draw Translucent Object
     {
         BOOL isTranslucent = FALSE;
@@ -676,7 +697,15 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
         }
         if (isTranslucent && !m_ppTranslucentRenderQueue[GetCurrentThreadIndex()]->Add(&item))
             __debugbreak();
+
+        if (isTranslucent)
+        {
+            return;
+        }
     }
+
+    if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))
+        __debugbreak();
 
 #elif defined(USE_FORWARD_RENDERING)
     CommandListPool            *pCommadListPool = m_ppCommandListPool[m_curContextIndex][0];
@@ -1462,10 +1491,12 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
             __debugbreak();
         }
 
-        UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height) * 8;
+        //UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height);
+        UINT maxFragmentListNodeCount = 4096 * 25 * 16; // 16MB
+        UINT maxFragmentListbufferSizeInByte = maxFragmentListNodeCount * sizeof(FragmentListNode);  // 192MB
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(FragmentListNode) * maxFragmentListNodeCount + sizeof(UINT),
+                &CD3DX12_RESOURCE_DESC::Buffer(maxFragmentListbufferSizeInByte + sizeof(UINT),
                                                D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNode))))
         {
@@ -1485,7 +1516,7 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
 
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
         uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-        uavDesc.Buffer.CounterOffsetInBytes = 0;
+        uavDesc.Buffer.CounterOffsetInBytes = maxFragmentListbufferSizeInByte;
         uavDesc.Buffer.FirstElement = 0;
         uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
         uavDesc.Buffer.NumElements = maxFragmentListNodeCount;
