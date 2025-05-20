@@ -205,6 +205,7 @@
     <ClInclude Include="..\Common\SingleDescriptorAllocator.h" />
     <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="D3D12Renderer.h" />
+    <ClInclude Include="D3D12ResourceRecyclingBin.h" />
     <ClInclude Include="D3DUtil.h" />
     <ClInclude Include="DebugLine.h" />
     <ClInclude Include="MemoryMappedFile.h">
@@ -312,6 +313,7 @@
     </ClCompile>
     <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="D3D12Renderer.cpp" />
+    <ClCompile Include="D3D12ResourceRecyclingBin.cpp" />
     <ClCompile Include="D3DUtil.cpp" />
     <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="dllmain.cpp" />

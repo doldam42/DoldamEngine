@@ -185,6 +185,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="DebugLine.h" />
+    <ClInclude Include="D3D12ResourceRecyclingBin.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DUtil.cpp">
@@ -298,6 +299,7 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="DebugLine.cpp" />
+    <ClCompile Include="D3D12ResourceRecyclingBin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">
