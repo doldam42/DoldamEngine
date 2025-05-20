@@ -130,10 +130,10 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     return radiance;
 }
 
-float3 BeerLambertTransmittance(float3 absorptionColor, float distance)
+float3 BeerLambertTransmittance(float3 absorptionColor, float thickness = 0.5)
 {
     // absorptionColor: RGB별 흡수 계수 (σ)
-    return exp(-absorptionColor * distance);
+    return exp(-absorptionColor * thickness);
 }
 
 float3 Shade(
@@ -147,19 +147,19 @@ in float3 L,
 in bool opacity)
 {
     const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
-    
-    float NdotI = max(0.0, dot(N, L));
+    const float3 halfway = normalize(V + L);
+ 
+    float3 directLighting = 0;
+   
     roughness = max(0.1, roughness);
     float3 F0 = lerp(Fdielectric, albedo, metallic);
-    float3 directLighting = 0;
-    
+    float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
+    float NdotI = max(0.0, dot(N, L));
     if (NdotI > 0)
     {
-        const float3 halfway = normalize(V + L);
-    
         float NdotH = max(0.0, dot(N, halfway));
         float NdotO = max(0.0, dot(N, V));
-        float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
+        
         float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
         float3 diffuseBRDF = kd * albedo;
 
@@ -172,9 +172,8 @@ in bool opacity)
     
     if (opacity > 0.001)
     {
-        const float3 halfway = normalize(V + L);
-        float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
-        directLighting += (1 - F) * BeerLambertTransmittance(opacity, 0.5) * albedo;
+        //directLighting += (1 - F) * BeerLambertTransmittance(opacity) * albedo;
+        directLighting += (1 - F) * exp(1 - opacity) * albedo;
     }
     
     return directLighting;

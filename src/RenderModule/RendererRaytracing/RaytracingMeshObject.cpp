@@ -380,7 +380,8 @@ void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *
     descriptor->Triangles.IndexCount = indexCount;
     descriptor->Triangles.Transform3x4 =
         transformBuffer ? (transformBuffer->GetGPUVirtualAddress() + transformOffsetInBytes) : 0;
-    descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    //descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
 void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,

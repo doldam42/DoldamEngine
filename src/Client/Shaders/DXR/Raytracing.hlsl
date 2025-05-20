@@ -400,7 +400,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
     
     material.albedo = (material.flags & MATERIAL_USE_ALBEDO_MAP)
                           ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
-                          : float4(material.albedo, 1.0f);
+                          : material.albedo;
 
     material.emissive = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
                             ? l_emmisiveTex.SampleLevel(g_sampler, texcoord, lodLevel).xyz
@@ -414,6 +414,40 @@ void ClosestHit(inout HitInfo payload, Attributes attrib) {
 
     // float3 color = l_diffuseTex.SampleLevel(g_sampler, texcoord, 0).xyz;
     payload.colorAndDistance = float4(color, RayTCurrent());
+}
+
+[shader("anyhit")] 
+void AnyHit(inout HitInfo payload, Attributes attrib) 
+{
+    const static float LOG_FAR_PLANE = log(1.0 + FAR_PLANE);
+    MaterialConstant   material = g_materials[materialId];
+
+    // For LOD
+    float distance = log(1.0 + RayTCurrent()) / LOG_FAR_PLANE; // log scale
+    // float distance = RayTCurrent() / FAR_PLANE; // [0, 1]         // linear scale
+    float lodLevel = lerp(0.0, 4.0, distance);
+    // float lodLevel = 0;
+
+    uint        startIndex = PrimitiveIndex() * 3;
+    const uint3 indices = {l_IB[startIndex], l_IB[startIndex + 1], l_IB[startIndex + 2]};
+    Vertex      v[3] = {l_VB[indices[0]], l_VB[indices[1]], l_VB[indices[2]]};
+
+    float2 vertexTexCoords[3] = {v[0].texcoord, v[1].texcoord, v[2].texcoord};
+    float2 texcoord = HitAttribute(vertexTexCoords, attrib);
+
+    float4 texColor = (material.flags & MATERIAL_USE_ALBEDO_MAP)
+                          ? l_albedoTex.SampleLevel(g_sampler, texcoord, lodLevel)
+                          : float4(material.albedo, 1.0f);
+
+    float opacity = texColor.w * material.opacityFactor; 
+    if (opacity < 0.001)
+    {
+        IgnoreHit();
+    }
+    else
+    {
+
+    }
 }
 
 //***************************************************************************

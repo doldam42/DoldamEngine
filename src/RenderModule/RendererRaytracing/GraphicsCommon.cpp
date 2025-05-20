@@ -106,7 +106,7 @@ ID3D12PipelineState *PSO[RENDER_ITEM_TYPE_COUNT][DRAW_PASS_TYPE_COUNT][FILL_MODE
 
 // #DXR
 const wchar_t *missShaderNames[2] = {L"Miss", L"ShadowMiss"};
-const wchar_t *hitShaderNames[2] = {L"ClosestHit", L"ShadowClosestHit"};
+const wchar_t *hitShaderNames[3] = {L"ClosestHit", L"ShadowClosestHit", L"AnyHit"};
 const wchar_t *hitGroupNames[2] = {L"HitGroup", L"ShadowHitGroup"};
 
 IDxcBlob *rayGenLibrary = nullptr;
@@ -1103,6 +1103,7 @@ void Graphics::InitRaytracingStateObjects(CD3DX12_STATE_OBJECT_DESC *raytracingP
     // Create Hit Group
     auto hitGroup = raytracingPipeline->CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
     hitGroup->SetClosestHitShaderImport(hitShaderNames[0]);
+    hitGroup->SetAnyHitShaderImport(hitShaderNames[2]);
     hitGroup->SetHitGroupExport(hitGroupNames[0]);
     hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 

@@ -9,7 +9,7 @@
 namespace Graphics
 {
 extern const wchar_t *hitGroupNames[2];
-extern const wchar_t *hitShaderNames[2];
+extern const wchar_t *hitShaderNames[3];
 extern const wchar_t *missShaderNames[2];
 
 enum GLOBAL_ROOT_PARAM_INDEX
