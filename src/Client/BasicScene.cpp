@@ -38,7 +38,7 @@ void BasicScene::Load()
     // Create Material R,G,B
     Material translucentMaterial = {};
     translucentMaterial.metallicFactor = 0.0f;
-    translucentMaterial.roughnessFactor = 1.0f;
+    translucentMaterial.roughnessFactor = 0.5f;
     translucentMaterial.reflectionFactor = 0.0f;
     translucentMaterial.opacityFactor = 0.5f;
 

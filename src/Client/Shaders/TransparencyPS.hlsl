@@ -1,7 +1,6 @@
 #include "Common.hlsli"
-#include "PBR.hlsli"
 #include "FragmentList.hlsli"
-
+#include "PBR.hlsli"
 
 //--------------------------------------------------------------------------------------
 // Resources
@@ -14,7 +13,6 @@ Texture2D aoTex : register(t2);
 Texture2D metallicRoughnessTex : register(t3);
 Texture2D emissiveTex : register(t4);
 
-
 //--------------------------------------------------------------------------------------
 // Constant Buffers
 //--------------------------------------------------------------------------------------
@@ -26,7 +24,6 @@ cbuffer cb : register(b5)
     uint useHeightMap;
     uint cbDummy[61];
 };
-
 
 //--------------------------------------------------------------------------------------
 // Helper Functions
@@ -55,13 +52,11 @@ float3 GetNormal(PSInput input, bool useNormalMap)
     return normalWorld;
 }
 
-
 //--------------------------------------------------------------------------------------
 // Capture fragments phase
 //--------------------------------------------------------------------------------------
-[earlydepthstencil] 
-void main(PSInput input, in uint coverageMask : SV_Coverage) 
-{
+[earlydepthstencil] void main(PSInput input, in uint coverageMask
+                              : SV_Coverage) {
     MaterialConstant material = g_materials[materialId];
 
     float3 pixelToEye = normalize(eyeWorld - input.posWorld);
@@ -69,60 +64,60 @@ void main(PSInput input, in uint coverageMask : SV_Coverage)
 
     float4 texColor = (material.flags & MATERIAL_USE_ALBEDO_MAP) ? albedoTex.Sample(linearWrapSampler, input.texcoord)
                                                                  : float4(material.albedo, 1.0);
-    //if (useTextureProjection)
+    // if (useTextureProjection)
     //{
-    //    float2 projTexcoord;
-    //    projTexcoord.x = input.projTexcoord.x / input.projTexcoord.w * 0.5 + 0.5;
-    //    projTexcoord.y = -input.projTexcoord.y / input.projTexcoord.w * 0.5 + 0.5;
-    //    if ((saturate(projTexcoord.x) == projTexcoord.x) && (saturate(projTexcoord.y) == projTexcoord.y))
-    //    {
-    //        texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
-    //    }
-    //}
-    
+    //     float2 projTexcoord;
+    //     projTexcoord.x = input.projTexcoord.x / input.projTexcoord.w * 0.5 + 0.5;
+    //     projTexcoord.y = -input.projTexcoord.y / input.projTexcoord.w * 0.5 + 0.5;
+    //     if ((saturate(projTexcoord.x) == projTexcoord.x) && (saturate(projTexcoord.y) == projTexcoord.y))
+    //     {
+    //         texColor = projectionTex.Sample(linearWrapSampler, projTexcoord);
+    //     }
+    // }
+
     float3 albedo = texColor.rgb;
     float  opacity = texColor.a * material.opacityFactor;
-    //
-    //float ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
-    //float roughness = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
-    //                      ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
-    //                      : material.roughnessFactor;
-    //float metallic = (material.flags & MATERIAL_USE_METALLIC_MAP)
-    //                     ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
-    //                     : material.metallicFactor;
 
-    //float3 emission = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
-    //                      ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb
-    //                      : material.emissive;
+    float ao = (material.flags & MATERIAL_USE_AO_MAP) ? aoTex.Sample(linearWrapSampler, input.texcoord).r : 1.0;
+    float roughness = (material.flags & MATERIAL_USE_ROUGHNESS_MAP)
+                          ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).g
+                          : material.roughnessFactor;
+    float metallic = (material.flags & MATERIAL_USE_METALLIC_MAP)
+                         ? metallicRoughnessTex.Sample(linearWrapSampler, input.texcoord).b
+                         : material.metallicFactor;
 
-    ////float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
-    //float3 ambientLighting = albedo * 0.02;
+    float3 emission = (material.flags & MATERIAL_USE_EMISSIVE_MAP)
+                          ? emissiveTex.Sample(linearWrapSampler, input.texcoord).rgb
+                          : material.emissive;
 
-    //float3 directLighting = 0;
-    //[unroll]
-    //for (int i = 0; i < MAX_LIGHTS; i++)
-    //{
-    //    float3 L = lights[i].position - input.posWorld;
-    //    float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));
-    //    float3 centerToRay = dot(L, r) * r - L;
-    //    float3 representativePoint = L + centerToRay * clamp(lights[i].radius / length(centerToRay), 0.0, 1.0);
-    //    representativePoint += input.posWorld;
-    //    float3 lightVec =
-    //        (lights[i].type & LIGHT_DIRECTIONAL) ? -lights[i].direction : representativePoint - input.posWorld;
+    // float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * 0.2;
+    float3 ambientLighting = albedo * 0.02;
 
-    //    float lightDist = length(lightVec);
-    //    lightVec /= lightDist;
+    float3 directLighting = 0;
+    [unroll] for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        float3 L = lights[i].position - input.posWorld;
+        float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));
+        float3 centerToRay = dot(L, r) * r - L;
+        float3 representativePoint = L + centerToRay * clamp(lights[i].radius / length(centerToRay), 0.0, 1.0);
+        representativePoint += input.posWorld;
+        float3 lightVec =
+            (lights[i].type & LIGHT_DIRECTIONAL) ? -lights[i].direction : representativePoint - input.posWorld;
 
-    //    float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
+        float lightDist = length(lightVec);
+        lightVec /= lightDist;
 
-    //    directLighting += Shade(albedo, radiance, metallic, roughness, normalWorld, pixelToEye, lightVec);
-    //}
+        float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
 
-    //float4 result = float4(ambientLighting + directLighting + emission, opacity);
-    //result = clamp(result, 0.0, 1.0);
+        directLighting += Shade(albedo, radiance, metallic, roughness, normalWorld, pixelToEye, lightVec, opacity);
+    }
 
-    float4 result = float4(albedo, opacity);
+    float4 result = float4(ambientLighting + directLighting + emission, opacity);
+
     result = clamp(result, 0.0, 1.0);
+
+    /* float4 result = float4(albedo, opacity);
+     result = clamp(result, 0.0, 1.0);*/
 
     float surfaceDepth = input.posView.z;
 
