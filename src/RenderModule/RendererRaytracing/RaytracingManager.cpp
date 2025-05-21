@@ -252,7 +252,7 @@ void RaytracingManager::InsertBLASInstance(ID3D12Resource *pBLAS, const Matrix *
         m_pHitShaderTables[m_curContextIndex]->InsertRecord(shadowHitGroupShaderIdentifier, shaderIdentifierSize,
                                                             pRootArgPerGeometry, sizeof(Graphics::LOCAL_ROOT_ARG));
     }
-
+    
     D3D12_RAYTRACING_INSTANCE_DESC *pInstanceDesc = m_pInstanceDescsCPU + instanceId;
     memcpy(pInstanceDesc->Transform, &pTM->Transpose(), sizeof(pInstanceDesc->Transform));
 
