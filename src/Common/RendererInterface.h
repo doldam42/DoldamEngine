@@ -153,8 +153,8 @@ interface IRenderer : public IUnknown
     virtual IRenderMesh *CreateBoxMesh(const float scale = 1.0f) = 0;
     virtual IRenderMesh *CreateWireBoxMesh(const Vector3 center, const Vector3 extends) = 0;
     
-    virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices, const Joint* pJoint, UINT numJoint,
-                                 UINT numFaceGroup) = 0;
+    virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
+                                 const Joint *pJoint, UINT numJoint, UINT numFaceGroup) = 0;
     virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles) = 0;
     virtual void EndCreateMesh(IRenderMesh * pMeshObjHandle) = 0;
 
@@ -166,8 +166,8 @@ interface IRenderer : public IUnknown
 
     virtual void RenderMeshObject(IRenderMesh * pMeshObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
                                   UINT numMaterial, bool isWired = false, UINT numInstance = 1) = 0;
-    virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                       UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial,
+    virtual void RenderCharacterObject(IRenderMesh * pCharObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                       UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount,
                                        bool isWired = false) = 0;
 
     virtual void RenderSprite(IRenderSprite * pSprObjHandle, int iPosX, int iPosY, float fScaleX, float fScaleY,

@@ -88,7 +88,6 @@ class RaytracingMeshObject : public IRenderMesh
     UINT                m_maxFaceGroupCount = 0;
 
     Joint *m_pJoints = nullptr;
-    Matrix *m_pBoneMatrices = nullptr;
     UINT m_jointCount = 0;
 
     UINT m_indexCount = 0; // Number of indiecs = 3 * number of triangles
@@ -115,7 +114,8 @@ class RaytracingMeshObject : public IRenderMesh
 
   private:
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
-                                     const Matrix *pWorldMat, UINT numInstance, const Matrix *pBoneMats, UINT numBones);
+                                     const Matrix *pWorldMat, UINT numInstance, Keyframe **ppKeyframes,
+                                     UINT frameCount);
     void UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                            IRenderMaterial *const *ppMaterials, UINT numMaterial);
 
@@ -133,9 +133,9 @@ class RaytracingMeshObject : public IRenderMesh
 
     // 현재는 Prebuild한 resource크기의 2배를 미리 잡아놓는다.
     BOOL CreateBottomLevelAS(ID3D12GraphicsCommandList4 *pCommandList);
-    void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
+    void DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes, UINT frameCount);
 
-    void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats, UINT numBones);
+    void UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes, UINT frameCount);
 
     void CleanupMesh();
     void Cleanup();
@@ -144,11 +144,11 @@ class RaytracingMeshObject : public IRenderMesh
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
     void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                      IRenderMaterial *const* ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType, FILL_MODE fillMode, const Matrix *pBoneMats,
-                      UINT numBones);
+                      IRenderMaterial *const *ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType,
+                      FILL_MODE fillMode, Keyframe **ppKeyframes, UINT frameCount);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-              IRenderMaterial *const *ppMaterials, UINT numMaterials, const Matrix *pBoneMats, UINT numBones);
+              IRenderMaterial *const *ppMaterials, UINT numMaterials, Keyframe **ppKeyframes, UINT frameCount);
 
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
     UINT            GetFaceGroupCount() const { return m_faceGroupCount; }

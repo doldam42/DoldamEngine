@@ -40,7 +40,7 @@ BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE
  */
 void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                                        const Matrix *pWorldMat, UINT numInstance,
-                                                       const Matrix *pBoneMats, UINT numBones)
+                                                       Keyframe **ppKeyframes, UINT frameCount)
 {
     CB_CONTAINER       *pSkinnedCB;
     CB_CONTAINER       *pMeshCB;
@@ -64,17 +64,32 @@ void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HAND
     m_pD3DDevice->CopyDescriptorsSimple(DESCRIPTOR_COUNT_PER_STATIC_OBJ, dest, pMeshCB->CBVHandle,
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
+    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr) 
     {
+        Matrix boneMatrics[64];
+        for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+        {
+            Joint    *pJoint = m_pJoints + boneId;
+            Keyframe *pKeyframe = ppKeyframes[boneId];
+
+            const int    parentIdx = pJoint->parentIndex;
+            const Matrix parentMatrix = parentIdx >= 0 ? boneMatrics[parentIdx] : Matrix::Identity;
+
+            int    numKeys = pKeyframe->NumKeys;
+            Matrix TM = numKeys > 0 ? pKeyframe->pKeys[frameCount % numKeys] : Matrix::Identity;
+
+            boneMatrics[boneId] = TM * parentMatrix;
+        }
+        for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+        {
+            boneMatrics[boneId] = (m_pJoints[boneId].globalBindposeInverse * boneMatrics[boneId]).Transpose();
+        }
+
         dest.Offset(m_descriptorSize);
         pSkinnedConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
         pSkinnedCB = pSkinnedConstantBufferPool->Alloc();
-        Matrix *pBoneTMs = (Matrix *)pSkinnedCB->pSystemMemAddr;
-        for (UINT i = 0; i < numBones; i++)
-        {
-            Matrix *pBoneTM = pBoneTMs + i;
-            memcpy(pBoneTM, &pBoneMats[i].Transpose(), sizeof(Matrix));
-        }
+        memcpy(pSkinnedCB->pSystemMemAddr, boneMatrics, sizeof(Matrix) * m_jointCount);
+
         m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 }
@@ -117,8 +132,8 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
 
 void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
                                         const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
-                                        DRAW_PASS_TYPE passType, FILL_MODE fillMode, const Matrix *pBoneMats,
-                                        UINT numBones)
+                                        DRAW_PASS_TYPE passType, FILL_MODE fillMode, Keyframe **ppKeyframes,
+                                        UINT frameCount)
 {
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
@@ -133,7 +148,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     {
         pDescriptorPool->Alloc(&cpuHandlePerObj, &gpuHandlePerObj, DESCRIPTOR_COUNT_PER_SKINNED_OBJECT);
     }
-    UpdateDescriptorTablePerObj(cpuHandlePerObj, threadIndex, pWorldMat, 1, pBoneMats, numBones);
+    UpdateDescriptorTablePerObj(cpuHandlePerObj, threadIndex, pWorldMat, 1, ppKeyframes, frameCount);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandlePerFaceGroup = {};
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerFaceGroup  = {};
@@ -176,16 +191,16 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
 }
 
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                                IRenderMaterial *const *ppMaterials, UINT numMaterials, const Matrix *pBoneMats,
-                                UINT numBones)
+                                IRenderMaterial *const *ppMaterials, UINT numMaterials, Keyframe **ppKeyframes,
+                                UINT frameCount)
 {
     RaytracingManager *m_pRaytracingManager = m_pRenderer->GetRaytracingManager();
     DescriptorPool    *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     // ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
-    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && pBoneMats != nullptr)
+    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr)
     {
-        UpdateSkinnedBLAS(pCommandList, pBoneMats, numBones);
+        UpdateSkinnedBLAS(pCommandList, ppKeyframes, frameCount);
     }
 
     UINT descriptorCount =
@@ -315,7 +330,6 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
     if (numJoint > 0)
     {
         m_pJoints = new Joint[numJoint];
-        m_pBoneMatrices = new Matrix[numJoint];
         m_jointCount = numJoint;
         memcpy(m_pJoints, pJoint, sizeof(Joint) * numJoint);
     }
@@ -711,11 +725,6 @@ void RaytracingMeshObject::CleanupMesh()
     {
         delete[] m_pJoints;
         m_pJoints = nullptr;
-    }
-    if (m_pBoneMatrices)
-    {
-        delete[] m_pBoneMatrices;
-        m_pBoneMatrices = nullptr;
     }
 }
 

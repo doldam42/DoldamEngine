@@ -714,8 +714,9 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 #endif
 }
 
-void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
+void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                          UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount,
+                                          bool isWired = false)
 {
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -723,8 +724,8 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     item.pObjHandle = pCharObj;
     item.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.charObjParam.worldTM = *pWorldMat;
-    item.charObjParam.pBones = pBoneMats;
-    item.charObjParam.numBones = numBones;
+    item.charObjParam.ppKeyframes = ppKeyframes;
+    item.charObjParam.frameCount = frameCount;
 
     if (!ppMaterials)
     {
@@ -856,10 +857,10 @@ BOOL D3D12Renderer::WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT des
 }
 
 BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
-                                    UINT numFaceGroup)
+                                    const Joint *pJoint, UINT numJoint, UINT numFaceGroup)
 {
     RaytracingMeshObject *pMeshObj = dynamic_cast<RaytracingMeshObject *>(pMeshObjHandle);
-    BOOL                  result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup);
+    BOOL                  result = pMeshObj->BeginCreateMesh(pVertices, numVertices, pJoint, numJoint, numFaceGroup);
     return result;
 }
 
