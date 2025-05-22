@@ -53,9 +53,6 @@
     <Filter Include="DirectXTex">
       <UniqueIdentifier>{6ab5c538-cd9a-4c0f-b0d2-18bec8071ce8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NewFilter1">
-      <UniqueIdentifier>{071aaa81-52a3-4e59-9363-c79a98fdf45b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DUtil.h">

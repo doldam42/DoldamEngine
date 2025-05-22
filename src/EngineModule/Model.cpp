@@ -226,7 +226,7 @@ void Model::UpdateAnimation(AnimationClip *pClip, int frameCount)
         const int    parentIdx = pJoint->parentIndex;
         const Matrix parentMatrix = parentIdx >= 0 ? m_pBoneMatrices[parentIdx] : Matrix::Identity;
 
-        int    numKeys = pKeyframe->Header.NumKeys;
+        int    numKeys = pKeyframe->NumKeys;
         Matrix TM = numKeys > 0 ? pKeyframe->pKeys[frameCount % numKeys] : Matrix::Identity;
 
         m_pBoneMatrices[boneId] = TM * parentMatrix;

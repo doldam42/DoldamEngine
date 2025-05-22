@@ -87,6 +87,10 @@ class RaytracingMeshObject : public IRenderMesh
     UINT                m_faceGroupCount = 0;
     UINT                m_maxFaceGroupCount = 0;
 
+    Joint *m_pJoints = nullptr;
+    Matrix *m_pBoneMatrices = nullptr;
+    UINT m_jointCount = 0;
+
     UINT m_indexCount = 0; // Number of indiecs = 3 * number of triangles
     UINT m_vertexCount = 0;
 
@@ -154,7 +158,8 @@ class RaytracingMeshObject : public IRenderMesh
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 
-    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
+    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
+                         UINT numFaceGroup) override;
     BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh() override;
     void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);

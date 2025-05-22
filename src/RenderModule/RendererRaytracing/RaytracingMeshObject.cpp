@@ -246,7 +246,8 @@ void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pComman
     BuildBottomLevelAS(pCommandList, m_bottomLevelAS.pScratch, m_bottomLevelAS.pResult, true, m_bottomLevelAS.pResult);
 }
 
-BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup)
+BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
+                                           UINT numFaceGroup)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -311,6 +312,14 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
     m_pRootArgPerGeometries = new Graphics::LOCAL_ROOT_ARG[m_maxFaceGroupCount];
     memset(m_pRootArgPerGeometries, 0, sizeof(Graphics::LOCAL_ROOT_ARG) * m_maxFaceGroupCount);
 
+    if (numJoint > 0)
+    {
+        m_pJoints = new Joint[numJoint];
+        m_pBoneMatrices = new Matrix[numJoint];
+        m_jointCount = numJoint;
+        memcpy(m_pJoints, pJoint, sizeof(Joint) * numJoint);
+    }
+   
     result = TRUE;
 lb_return:
     return result;
@@ -696,6 +705,17 @@ void RaytracingMeshObject::CleanupMesh()
     {
         m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_skinningDescriptors);
         m_skinningDescriptors = {};
+    }
+
+    if (m_pJoints)
+    {
+        delete[] m_pJoints;
+        m_pJoints = nullptr;
+    }
+    if (m_pBoneMatrices)
+    {
+        delete[] m_pBoneMatrices;
+        m_pBoneMatrices = nullptr;
     }
 }
 

@@ -33,6 +33,7 @@
     <ClInclude Include="Vector12.h" />
     <ClInclude Include="Matrix12.h" />
     <ClInclude Include="MatN.h" />
+    <ClInclude Include="Keyframe.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -53,6 +54,7 @@
     <ClCompile Include="Vector12.cpp" />
     <ClCompile Include="Matrix12.cpp" />
     <ClCompile Include="MatN.cpp" />
+    <ClCompile Include="Keyframe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">

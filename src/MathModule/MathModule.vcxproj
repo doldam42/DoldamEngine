@@ -172,6 +172,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Joint.h" />
+    <ClInclude Include="Keyframe.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MathHeaders.h" />
     <ClInclude Include="MathUtils.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="Collisions.cpp" />
     <ClCompile Include="ColorUtils.cpp" />
     <ClCompile Include="Frustum.cpp" />
+    <ClCompile Include="Keyframe.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="MatN.cpp" />
     <ClCompile Include="Matrix12.cpp" />

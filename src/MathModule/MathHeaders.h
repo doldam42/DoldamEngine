@@ -51,9 +51,11 @@ inline constexpr float gamma(int n) { return (n * MachineEpsilon) / (1 - n * Mac
 
 #include "Plane.h"
 #include "Frustum.h"
-
 #include "Camera.h"
+
 #include "Joint.h"
+#include "Keyframe.h"
+
 #include "Material.h"
 
 #include "Transform.h"

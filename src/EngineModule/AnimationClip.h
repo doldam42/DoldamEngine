@@ -3,35 +3,6 @@
 #include "../Common/EngineInterface.h"
 #include "GameUtils.h"
 
-struct KEYFRAME_HEADER
-{
-    wchar_t  BindingJointName[MAX_NAME] = {0};
-    uint32_t NumKeys = 0;
-};
-
-struct Keyframe
-{
-    KEYFRAME_HEADER Header;
-    Matrix          pKeys[0];
-
-    static inline Keyframe *Alloc(const KEYFRAME_HEADER &header)
-    {
-        int       requredSize = sizeof(Keyframe) + sizeof(Matrix) * header.NumKeys;
-        Keyframe *pData = (Keyframe *)malloc(requredSize);
-        if (!pData)
-        {
-            return nullptr;
-        }
-        pData->Header.NumKeys = header.NumKeys;
-        wcscpy_s(pData->Header.BindingJointName, header.BindingJointName);
-        return pData;
-    }
-
-    static inline void Dealloc(Keyframe *pKeyframe) { free(pKeyframe); }
-
-    inline size_t GetSize() { return sizeof(Keyframe) + sizeof(Matrix) * Header.NumKeys; }
-};
-
 class AnimationClip : public IGameAnimation
 {
     wchar_t m_name[MAX_NAME] = {L'\0'};
@@ -66,8 +37,8 @@ class AnimationClip : public IGameAnimation
     Keyframe *GetKeyframeByName(const wchar_t *jointName);
 
     // Setter
-    void SetName(const WCHAR *name) override;
-    const WCHAR* GetName() { return m_name; }
+    void         SetName(const WCHAR *name) override;
+    const WCHAR *GetName() { return m_name; }
 
     AnimationClip() = default;
     AnimationClip(const WCHAR *name) { SetName(name); }

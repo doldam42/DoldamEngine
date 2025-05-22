@@ -11,7 +11,7 @@ void AnimationClip::Cleanup()
         for (uint32_t i = 0; i < m_jointCount; i++)
         {
             Keyframe *pKeyframe = m_ppKeyframes[i];
-            Keyframe::Dealloc(pKeyframe);
+            DeleteKeyframe(pKeyframe);
             m_ppKeyframes[i] = nullptr;
         }
         delete[] m_ppKeyframes;
@@ -49,15 +49,17 @@ void AnimationClip::ReadFile(const char *filename)
 
     fread(&jointCount, sizeof(uint32_t), 1, fp);
     ppKeyframe = new Keyframe *[jointCount];
+
+    WCHAR jointName[MAX_NAME];
     for (uint32_t i = 0; i < jointCount; i++)
     {
-        KEYFRAME_HEADER header;
+        UINT numKeys = 0;
+        memset(jointName, 0, sizeof(jointName));
+        fread(jointName, sizeof(jointName), 1, fp);
+        fread(&numKeys, sizeof(UINT), 1, fp);
+        fread(pKeys, sizeof(Matrix), numKeys, fp);
 
-        fread(&header, sizeof(KEYFRAME_HEADER), 1, fp);
-        fread(pKeys, sizeof(Matrix), header.NumKeys, fp);
-
-        ppKeyframe[i] = Keyframe::Alloc(header);
-        memcpy(ppKeyframe[i]->pKeys, pKeys, sizeof(Matrix) * header.NumKeys);
+        ppKeyframe[i] = CreateKeyframe(jointName, pKeys, numKeys);
     }
 
     m_curKeyframeCount = 0;
@@ -78,12 +80,7 @@ void AnimationClip::BeginCreateAnim(int jointCount)
 
 void AnimationClip::InsertKeyframes(const wchar_t *bindingJointName, const Matrix *pInKeys, uint32_t numKeys)
 {
-    KEYFRAME_HEADER header;
-    wcscpy_s(header.BindingJointName, bindingJointName);
-    header.NumKeys = numKeys;
-
-    Keyframe *pKeyframe = Keyframe::Alloc(header);
-    memcpy(pKeyframe->pKeys, pInKeys, sizeof(Matrix) * numKeys);
+    Keyframe *pKeyframe = CreateKeyframe(bindingJointName, pInKeys, numKeys);
 
     m_ppKeyframes[m_curKeyframeCount] = pKeyframe;
     m_curKeyframeCount++;
@@ -104,7 +101,7 @@ Keyframe *AnimationClip::GetKeyframeByName(const wchar_t *jointName)
     {
         Keyframe *pKeyframe = m_ppKeyframes[i];
         // Joint를 찾으면
-        if (!wcscmp(pKeyframe->Header.BindingJointName, jointName))
+        if (!wcscmp(pKeyframe->BindingJointName, jointName))
         {
             return pKeyframe;
         }
@@ -112,7 +109,7 @@ Keyframe *AnimationClip::GetKeyframeByName(const wchar_t *jointName)
     return nullptr;
 }
 
-void AnimationClip::SetName(const WCHAR *name) 
+void AnimationClip::SetName(const WCHAR *name)
 {
     ZeroMemory(m_name, sizeof(m_name));
     wcscpy_s(m_name, name);
@@ -128,7 +125,8 @@ ULONG __stdcall AnimationClip::AddRef(void)
     return ref_count;
 }
 
-ULONG __stdcall AnimationClip::Release(void) { 
+ULONG __stdcall AnimationClip::Release(void)
+{
     LONG returnRefCount = ref_count - 1;
     g_pGame->DeleteAnimation(this);
     return returnRefCount;
