@@ -35,7 +35,7 @@ class MeshObject : public IGameMesh, public BaseObject
     BOOL Initialize(MESH_TYPE meshType) override;
     BOOL Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex, int childCount,
                     MESH_TYPE meshType);
-    BOOL InitRenderComponent(IRenderer *pRnd);
+    BOOL InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints);
 
     void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
@@ -44,7 +44,7 @@ class MeshObject : public IGameMesh, public BaseObject
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;
 
-    void Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices, const UINT numJoints,
+    void Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe** ppKeyframes, UINT frameCount,
                 IRenderMaterial **ppMaterials, const UINT numMaterial);
 
     inline BOOL IsSkinned() const { return m_meshType == MESH_TYPE_SKINNED; }

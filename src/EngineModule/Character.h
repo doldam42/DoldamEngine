@@ -16,7 +16,7 @@ class Character : public IGameCharacter, public GameObject
 
   public:
     void Initialize(GameManager *pGameEngine, UINT maxClipCount);
-    void Update(float dt) override;
+    void Render() override;
 
     void InsertAnimation(IGameAnimation *pClip) override;
     void SetCurrentAnimationByName(const WCHAR *pAnimationName);

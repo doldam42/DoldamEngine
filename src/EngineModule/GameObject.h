@@ -12,16 +12,18 @@ class GameObject : public IGameObject
     Transform m_transform;
     Matrix    m_worldMatrix;
     BOOL      m_IsUpdated = false;
-    UINT      m_materialCount = 0;
     UINT      m_layer = 0;
 
-    GameManager      *m_pGame = nullptr;
-    IRenderer        *m_pRenderer = nullptr;
-    Model            *m_pModel = nullptr;
-    IRenderMaterial **m_ppMaterials = nullptr;
+    GameManager *m_pGame = nullptr;
+    IRenderer   *m_pRenderer = nullptr;
 
     ICollider  *m_pCollider = nullptr;
     IRigidBody *m_pRigidBody = nullptr;
+
+  protected:
+    Model            *m_pModel = nullptr;
+    IRenderMaterial **m_ppMaterials = nullptr;
+    UINT              m_materialCount = 0;
 
   public:
     SORT_LINK m_LinkInGame;
@@ -40,13 +42,10 @@ class GameObject : public IGameObject
     void Initialize(GameManager *pGameEngine);
 
     void SetCollider(ICollider *pCollider) override { m_pCollider = pCollider; }
-    void SetRigidBody(IRigidBody *pBody) override
-    {
-        m_pRigidBody = pBody;
-    }
+    void SetRigidBody(IRigidBody *pBody) override { m_pRigidBody = pBody; }
 
-    virtual void Update(float dt);
-    void         Render();
+    void Update(float dt);
+    virtual void Render();
 
     // Getter
     const Transform &GetTransform() { return m_transform; }

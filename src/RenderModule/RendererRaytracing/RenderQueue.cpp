@@ -97,7 +97,7 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
             pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
                                    pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials, passType,
-                                   pItem->fillMode, pItem->charObjParam.pBones, pItem->charObjParam.numBones);
+                                   pItem->fillMode, pItem->charObjParam.ppKeyframes, pItem->charObjParam.frameCount);
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {

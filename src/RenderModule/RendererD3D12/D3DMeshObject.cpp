@@ -202,7 +202,8 @@ void D3DMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTOR_HANDL
     }
 }
 
-BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup)
+BOOL D3DMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
+                                    UINT numFaceGroup)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();

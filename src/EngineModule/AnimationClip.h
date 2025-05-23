@@ -36,6 +36,8 @@ class AnimationClip : public IGameAnimation
     Keyframe *GetKeyframeByIdx(int jointIdx);
     Keyframe *GetKeyframeByName(const wchar_t *jointName);
 
+    Keyframe **GetKeyframes() const { return m_ppKeyframes; }
+
     // Setter
     void         SetName(const WCHAR *name) override;
     const WCHAR *GetName() { return m_name; }

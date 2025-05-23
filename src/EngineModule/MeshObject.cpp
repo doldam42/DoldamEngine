@@ -51,17 +51,17 @@ BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     return TRUE;
 }
 
-BOOL MeshObject::InitRenderComponent(IRenderer *pRnd)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints)
 {
     if (IsSkinned())
     {
         m_pMeshHandle = pRnd->CreateSkinnedObject();
-        m_pMeshHandle->BeginCreateMesh(m_pSkinnedVertices, m_vertexCount, m_faceGroupCount);
+        m_pMeshHandle->BeginCreateMesh(m_pSkinnedVertices, m_vertexCount, pJoints, numJoints, m_faceGroupCount);
     }
     else
     {
         m_pMeshHandle = pRnd->CreateMeshObject();
-        m_pMeshHandle->BeginCreateMesh(m_pBasicVertices, m_vertexCount, m_faceGroupCount);
+        m_pMeshHandle->BeginCreateMesh(m_pBasicVertices, m_vertexCount, nullptr, 0, m_faceGroupCount);
     }
 
     for (int i = 0; i < m_faceGroupCount; i++)
@@ -169,8 +169,8 @@ void MeshObject::WriteFile(FILE *fp)
     }
 }
 
-void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *pBoneMatrices,
-                        const UINT numJoints, IRenderMaterial **ppMaterials, const UINT numMaterial)
+void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount,
+                        IRenderMaterial **ppMaterials, const UINT numMaterial)
 {
     IRenderMaterial *pMaterials[12];
     for (int i = 0; i < m_faceGroupCount; i++)
@@ -186,8 +186,7 @@ void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, const Matrix *
         pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pBoneMatrices, numJoints, pMaterials,
-                                    m_faceGroupCount);
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount, ppKeyframes, frameCount);
         break;
     default:
 #ifdef _DEBUG

@@ -108,7 +108,8 @@ class D3DMeshObject : public IRenderMesh
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
 
-    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
+    BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
+                         UINT numFaceGroup) override;
     BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) override;
     void EndCreateMesh() override;
 };

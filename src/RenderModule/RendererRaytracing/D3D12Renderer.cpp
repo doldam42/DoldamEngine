@@ -716,7 +716,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
                                           UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount,
-                                          bool isWired = false)
+                                          bool isWired)
 {
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};

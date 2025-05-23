@@ -51,7 +51,8 @@ class Model : public IGameModel
 
     void UpdateAnimation(AnimationClip *pClip, int frameCount);
 
-    void Render(GameObject *pGameObj, IRenderMaterial **ppMaterials = nullptr, UINT numMaterials = 0);
+    void Render(GameObject *pGameObj, IRenderMaterial **ppMaterials = nullptr, UINT numMaterials = 0,
+                AnimationClip *pClip= nullptr, int frameCount = 0);
 
     // Getter
     inline UINT        GetObjectCount() const { return m_objectCount; }

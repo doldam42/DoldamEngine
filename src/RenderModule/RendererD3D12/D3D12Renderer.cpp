@@ -576,8 +576,9 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     // Shadow Map
 }
 
-void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, const Matrix *pBoneMats,
-                                          UINT numBones, IRenderMaterial **ppMaterials, UINT numMaterial, bool isWired)
+void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
+                                          UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount,
+                                          bool isWired)
 {
     D3DMeshObject *pMeshObject = (D3DMeshObject *)pCharObj;
 
@@ -587,8 +588,8 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     item.charObjParam = {};
     item.charObjParam.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.charObjParam.worldTM = (*pWorldMat);
-    item.charObjParam.pBones = pBoneMats;
-    item.charObjParam.numBones = numBones;
+    item.charObjParam.pBones = nullptr;
+    item.charObjParam.numBones = 0;
     item.charObjParam.ppMaterials = ppMaterials;
     item.charObjParam.numMaterials = numMaterial;
 
@@ -699,10 +700,10 @@ BOOL D3D12Renderer::WriteTextToBitmap(BYTE *pDestImage, UINT destWidth, UINT des
 }
 
 BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices,
-                                    UINT numFaceGroup)
+                                    const Joint *pJoint, UINT numJoint, UINT numFaceGroup)
 {
     D3DMeshObject *pMeshObj = dynamic_cast<D3DMeshObject *>(pMeshObjHandle);
-    BOOL           result = pMeshObj->BeginCreateMesh(pVertices, numVertices, numFaceGroup);
+    BOOL           result = pMeshObj->BeginCreateMesh(pVertices, numVertices, pJoint, numJoint, numFaceGroup);
     return result;
 }
 

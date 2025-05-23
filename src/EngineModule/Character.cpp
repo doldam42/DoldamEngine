@@ -30,14 +30,15 @@ void Character::Initialize(GameManager *pGameEngine, UINT maxClipCount)
     m_ppAnimationClips = new AnimationClip *[maxClipCount];
 }
 
-void Character::Update(float dt)
+void Character::Render()
 {
-    GameObject::Update(dt);
-
-    AnimationClip *clip = m_ppAnimationClips[m_clipId];
-    GetModel()->UpdateAnimation(clip, m_frameCount);
-    m_frameCount++;
-    m_frameCount %= 3600;
+    if (m_isVisible && m_isActive && m_pModel)
+    {
+        AnimationClip *clip = m_ppAnimationClips[m_clipId];
+        m_pModel->Render(this, m_ppMaterials, m_materialCount, clip, m_frameCount);
+        m_frameCount++;
+        m_frameCount %= 3600;
+    }
 }
 
 Character::~Character() { Cleanup(); }
