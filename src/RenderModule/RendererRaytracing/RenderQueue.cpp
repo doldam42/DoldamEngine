@@ -2,11 +2,11 @@
 
 #include "CommandListPool.h"
 #include "D3D12Renderer.h"
-#include "RaytracingMeshObject.h"
+#include "MaterialManager.h"
 #include "RaytracingManager.h"
+#include "RaytracingMeshObject.h"
 #include "SpriteObject.h"
 #include "Terrain.h"
-#include "MaterialManager.h"
 
 #include "RenderQueue.h"`
 
@@ -64,40 +64,42 @@ lb_return:
 
 UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, ID3D12CommandQueue *pCommandQueue,
                           DWORD processCountPerCommandList, D3D12_CPU_DESCRIPTOR_HANDLE *rtvs,
-                          D3D12_CPU_DESCRIPTOR_HANDLE* dsv,
-                          const D3D12_VIEWPORT *pViewport, const D3D12_RECT *pScissorRect, UINT rtvCount,
-                          DRAW_PASS_TYPE passType)
+                          D3D12_CPU_DESCRIPTOR_HANDLE *dsv, const D3D12_VIEWPORT *pViewport,
+                          const D3D12_RECT *pScissorRect, UINT rtvCount, DRAW_PASS_TYPE passType)
 {
-    ID3D12Device5     *pD3DDevice = m_pRenderer->GetD3DDevice();
+    ID3D12Device5 *pD3DDevice = m_pRenderer->GetD3DDevice();
 
     ID3D12GraphicsCommandList4 *ppCommandList[64] = {};
-    UINT                       commandListCount = 0;
+    UINT                        commandListCount = 0;
 
     ID3D12GraphicsCommandList4 *pCommandList = nullptr;
-    UINT                       processedCount = 0;
-    UINT                       processedCountPerCommandList = 0;
-    const RENDER_ITEM         *pItem = nullptr;
+    UINT                        processedCount = 0;
+    UINT                        processedCountPerCommandList = 0;
+    const RENDER_ITEM          *pItem = nullptr;
     while (pItem = Dispatch())
     {
         pCommandList = pCommandListPool->GetCurrentCommandList();
         pCommandList->RSSetViewports(1, pViewport);
         pCommandList->RSSetScissorRects(1, pScissorRect);
         pCommandList->OMSetRenderTargets(rtvCount, rtvs, FALSE, dsv);
-        
+
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
-            RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
-            pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
-                                   pItem->meshObjParam.ppMaterials, pItem->meshObjParam.numMaterials, passType,
-                                   pItem->fillMode, nullptr, 0);
-        }
-        break;
-        case RENDER_ITEM_TYPE_CHAR_OBJ: {
-            RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
-            pMeshObj->DrawDeferred(threadIndex, pCommandList, &pItem->charObjParam.worldTM,
-                                   pItem->charObjParam.ppMaterials, pItem->charObjParam.numMaterials, passType,
-                                   pItem->fillMode, pItem->charObjParam.ppKeyframes, pItem->charObjParam.frameCount);
+            RaytracingMeshObject   *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
+            IRenderMaterial *const *ppMaterials = pItem->meshObjParam.ppMaterials;
+            if (ppMaterials)
+            {
+                pMeshObj->DrawWithMaterial(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
+                                           pItem->meshObjParam.ppMaterials, pItem->meshObjParam.numMaterials, passType,
+                                           pItem->fillMode, pItem->meshObjParam.ppKeyframes,
+                                           pItem->meshObjParam.frameCount);
+            }
+            else
+            {
+                pMeshObj->Draw(threadIndex, pCommandList, &pItem->meshObjParam.worldTM, passType, pItem->fillMode,
+                               pItem->meshObjParam.ppKeyframes, pItem->meshObjParam.frameCount);
+            }
         }
         break;
         case RENDER_ITEM_TYPE_SPRITE: {
@@ -118,15 +120,14 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
             }
             else
             {
-                Vector2       Pos = {(float)pItem->spriteParam.posX, (float)pItem->spriteParam.posY};
-                Vector2       Scale = {pItem->spriteParam.scaleX, pItem->spriteParam.scaleY};
+                Vector2 Pos = {(float)pItem->spriteParam.posX, (float)pItem->spriteParam.posY};
+                Vector2 Scale = {pItem->spriteParam.scaleX, pItem->spriteParam.scaleY};
 
                 pSpriteObj->Draw(threadIndex, pCommandList, &Pos, &Scale, Z);
             }
         }
         break;
-        case RENDER_ITEM_TYPE_TERRAIN:
-        {
+        case RENDER_ITEM_TYPE_TERRAIN: {
             Terrain *pTerrain = (Terrain *)pItem->pObjHandle;
             pTerrain->Draw(threadIndex, pCommandList, passType, &pItem->terrainParam.scale,
                            pItem->terrainParam.fillMode);

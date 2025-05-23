@@ -60,7 +60,6 @@ class RaytracingMeshObject : public IRenderMesh
 {
     struct INDEXED_FACE_GROUP
     {
-        DRAW_PASS_TYPE          passType = DRAW_PASS_TYPE_DEFAULT;
         ID3D12Resource         *pIndexBuffer = nullptr;
         D3D12_INDEX_BUFFER_VIEW IndexBufferView = {};
         UINT                    numTriangles = 0;
@@ -87,11 +86,12 @@ class RaytracingMeshObject : public IRenderMesh
     UINT                m_faceGroupCount = 0;
     UINT                m_maxFaceGroupCount = 0;
 
+    IRenderMaterial **m_ppMaterials = nullptr;
+
     Matrix *m_pBoneMatrices = nullptr;
     Joint *m_pJoints = nullptr;
     UINT m_jointCount = 0;
 
-    UINT m_indexCount = 0; // Number of indiecs = 3 * number of triangles
     UINT m_vertexCount = 0;
 
     UINT m_descriptorSize = 0;
@@ -146,9 +146,12 @@ class RaytracingMeshObject : public IRenderMesh
   public:
     BOOL Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE type);
 
-    void DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                      IRenderMaterial *const *ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType,
-                      FILL_MODE fillMode, Keyframe **ppKeyframes, UINT frameCount);
+    void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
+              DRAW_PASS_TYPE passType, FILL_MODE fillMode, Keyframe **ppKeyframes = nullptr, UINT frameCount = 0);
+
+    void DrawWithMaterial(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
+                          IRenderMaterial *const *ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType,
+                          FILL_MODE fillMode, Keyframe **ppKeyframes = nullptr, UINT frameCount = 0);
 
     void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
               IRenderMaterial *const *ppMaterials, UINT numMaterials, Keyframe **ppKeyframes, UINT frameCount);

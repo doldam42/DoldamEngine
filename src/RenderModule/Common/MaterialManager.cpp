@@ -445,6 +445,22 @@ BOOL MaterialManager::UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE
     return TRUE;
 }
 
+BOOL MaterialManager::UpdateMaterialParams(MATERIAL_HANDLE *pMatHandle, const Vector3 &albedo, float roughness,
+                                           float metallic, const Vector3 &emissive, float opacity, float reflection)
+{
+    MaterialConstants *pMatConst = (MaterialConstants *)pMatHandle->pSysMemAddr;
+
+    pMatConst->albedo = albedo;
+    pMatConst->metallicFactor = metallic;
+    pMatConst->roughnessFactor = roughness;
+    pMatConst->emissive = emissive;
+    pMatConst->opacityFactor = opacity;
+    pMatConst->reflectionFactor = reflection;
+
+    m_isUpdated = TRUE;
+    return TRUE;
+}
+
 void MaterialManager::Update(ID3D12GraphicsCommandList *pCommandList)
 {
     if (!m_isUpdated)
@@ -464,22 +480,26 @@ MaterialManager::~MaterialManager() { Cleanup(); }
 BOOL MATERIAL_HANDLE::UpdateAlbedo(const Vector3 &albedo)
 {
     MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
-    BOOL             result = pMaterialManager->UpdateMaterialAlbedo(this, albedo);
-    return result;
+    return pMaterialManager->UpdateMaterialAlbedo(this, albedo);
 }
 
 BOOL MATERIAL_HANDLE::UpdateMetallicRoughness(float metallic, float roughness)
 {
     MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
-    BOOL             result = pMaterialManager->UpdateMaterialMetallicRoughness(this, metallic, roughness);
-    return result;
+    return pMaterialManager->UpdateMaterialMetallicRoughness(this, metallic, roughness);
 }
 
 BOOL MATERIAL_HANDLE::UpdateEmissive(const Vector3 &emmisive)
 {
     MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager();
-    BOOL             result = pMaterialManager->UpdateMaterialEmmisive(this, emmisive);
-    return result;
+    return pMaterialManager->UpdateMaterialEmmisive(this, emmisive);
+}
+
+BOOL MATERIAL_HANDLE::UpdatePrams(const Vector3 &albedo, float roughness, float metallic, const Vector3 &emissive,
+                                  float opacity, float reflection)
+{
+    MaterialManager *pMaterialManager = g_pRenderer->GetMaterialManager(); 
+    return pMaterialManager->UpdateMaterialParams(this, albedo, roughness, metallic, emissive, opacity, reflection);
 }
 
 BOOL MATERIAL_HANDLE::UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type)

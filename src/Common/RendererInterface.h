@@ -117,6 +117,9 @@ interface IRenderMaterial : public IUnknown
     virtual BOOL UpdateEmissive(const Vector3& emisive) = 0;
     virtual BOOL UpdateTextureWithTexture(ITextureHandle * pTexture, TEXTURE_TYPE type) = 0;
 
+    virtual BOOL UpdatePrams(const Vector3 &albedo, float roughness, float metallic, const Vector3 &emissive,
+                             float opacity, float reflection) = 0;
+
     virtual MATERIAL_TYPE GetType() = 0;
 
     virtual ITextureHandle *GetTexture(TEXTURE_TYPE type) = 0;

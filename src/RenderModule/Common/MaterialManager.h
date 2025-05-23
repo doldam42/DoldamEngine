@@ -32,9 +32,9 @@ struct MATERIAL_HANDLE : IRenderMaterial
     TEXTURE_HANDLE *pMetallicRoughnessTexHandle = nullptr;
     TEXTURE_HANDLE *pHeightTexHandle = nullptr;
 
-    inline void CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT descriptorSize) const
+    inline void CopyDescriptors(ID3D12Device *pDevice, D3D12_CPU_DESCRIPTOR_HANDLE destination, UINT descriptorSize) const
     {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dest(cpuHandle);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE dest(destination);
         pDevice->CopyDescriptorsSimple(1, dest, pAlbedoTexHandle->srv.cpuHandle,
                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         dest.Offset(descriptorSize);
@@ -57,6 +57,8 @@ struct MATERIAL_HANDLE : IRenderMaterial
     BOOL UpdateAlbedo(const Vector3 &albedo) override;
     BOOL UpdateMetallicRoughness(float metallic, float roughness) override;
     BOOL UpdateEmissive(const Vector3 &emmisive) override;
+    BOOL UpdatePrams(const Vector3 &albedo, float roughness, float metallic, const Vector3 &emissive, float opacity,
+                     float reflection) override;
 
     BOOL UpdateTextureWithTexture(ITextureHandle *pTexture, TEXTURE_TYPE type) override;
 
@@ -126,6 +128,9 @@ class MaterialManager
     BOOL UpdateMaterialMetallicRoughness(MATERIAL_HANDLE *pMatHandle, float metallic, float roughness);
     BOOL UpdateMaterialEmmisive(MATERIAL_HANDLE *pMatHandle, const Vector3 &emisive);
     BOOL UpdateMaterialTexture(MATERIAL_HANDLE *pMatHandle, TEXTURE_HANDLE* pTexHandle, TEXTURE_TYPE type);
+
+    BOOL UpdateMaterialParams(MATERIAL_HANDLE *pMatHandle, const Vector3 &albedo, float roughness, float metallic,
+                              const Vector3 &emissive, float opacity, float reflection);
 
     void Update(ID3D12GraphicsCommandList *pCommandList);
 

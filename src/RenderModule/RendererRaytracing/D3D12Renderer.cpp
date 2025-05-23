@@ -668,6 +668,8 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.type = RENDER_ITEM_TYPE_MESH_OBJ;
     item.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
     item.meshObjParam.worldTM = *pWorldMat;
+    item.meshObjParam.ppKeyframes = nullptr;
+    item.meshObjParam.frameCount = 0;
     if (!ppMaterials)
     {
         item.meshObjParam.ppMaterials[0] = m_pDefaultMaterial;
@@ -723,22 +725,22 @@ void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *p
     item.type = RENDER_ITEM_TYPE_CHAR_OBJ;
     item.pObjHandle = pCharObj;
     item.fillMode = isWired ? FILL_MODE_WIRED : FILL_MODE_SOLID;
-    item.charObjParam.worldTM = *pWorldMat;
-    item.charObjParam.ppKeyframes = ppKeyframes;
-    item.charObjParam.frameCount = frameCount;
+    item.meshObjParam.worldTM = *pWorldMat;
+    item.meshObjParam.ppKeyframes = ppKeyframes;
+    item.meshObjParam.frameCount = frameCount;
 
     if (!ppMaterials)
     {
-        item.charObjParam.ppMaterials[0] = m_pDefaultMaterial;
-        item.charObjParam.numMaterials = 1;
+        item.meshObjParam.ppMaterials[0] = m_pDefaultMaterial;
+        item.meshObjParam.numMaterials = 1;
     }
     else
     {
         for (UINT i = 0; i < numMaterial; i++)
         {
-            item.charObjParam.ppMaterials[i] = ppMaterials[i];
+            item.meshObjParam.ppMaterials[i] = ppMaterials[i];
         }
-        item.charObjParam.numMaterials = numMaterial;
+        item.meshObjParam.numMaterials = numMaterial;
     }
 
     if (!m_ppRenderQueue[GetCurrentThreadIndex()]->Add(&item))

@@ -132,11 +132,19 @@ void RaytracingMeshObject::UpdateDescriptorTablePerFaceGroup(D3D12_CPU_DESCRIPTO
     }
 }
 
-void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
-                                        const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials, UINT numMaterials,
-                                        DRAW_PASS_TYPE passType, FILL_MODE fillMode, Keyframe **ppKeyframes,
-                                        UINT frameCount)
+void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
+                                DRAW_PASS_TYPE passType, FILL_MODE fillMode, Keyframe **ppKeyframes, UINT frameCount)
 {
+    DrawWithMaterial(threadIndex, pCommandList, pWorldMat, m_ppMaterials, m_faceGroupCount, passType, fillMode,
+                     ppKeyframes, frameCount);
+}
+
+void RaytracingMeshObject::DrawWithMaterial(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
+                                            const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials,
+                                            UINT numMaterials, DRAW_PASS_TYPE passType, FILL_MODE fillMode,
+                                            Keyframe **ppKeyframes, UINT frameCount)
+{
+#ifdef USE_DEFERRED_RENDERING
     DescriptorPool       *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     ID3D12DescriptorHeap *pDescriptorHeap = pDescriptorPool->GetDescriptorHeap();
 
@@ -154,8 +162,9 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     UpdateDescriptorTablePerObj(cpuHandlePerObj, threadIndex, pWorldMat, 1, ppKeyframes, frameCount);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandlePerFaceGroup = {};
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerFaceGroup  = {};
-    pDescriptorPool->Alloc(&cpuHandlePerFaceGroup, &gpuHandlePerFaceGroup, DESCRIPTOR_COUNT_PER_MATERIAL * m_faceGroupCount);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandlePerFaceGroup = {};
+    pDescriptorPool->Alloc(&cpuHandlePerFaceGroup, &gpuHandlePerFaceGroup,
+                           DESCRIPTOR_COUNT_PER_MATERIAL * m_faceGroupCount);
     UpdateDescriptorTablePerFaceGroup(cpuHandlePerFaceGroup, threadIndex, ppMaterials, numMaterials);
 
     // set RootSignature
@@ -188,7 +197,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
             pCommandList->DrawIndexedInstanced(pFaceGroup->numTriangles * 3, 1, 0, 0, 0);
         }
     }
-
+#endif
     if (passType != DRAW_PASS_TYPE_TRANSPARENCY)
         Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, ppKeyframes, frameCount);
 }
@@ -407,8 +416,8 @@ void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *
     descriptor->Triangles.IndexCount = indexCount;
     descriptor->Triangles.Transform3x4 =
         transformBuffer ? (transformBuffer->GetGPUVirtualAddress() + transformOffsetInBytes) : 0;
-    //descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
-    descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    //descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
 void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes,

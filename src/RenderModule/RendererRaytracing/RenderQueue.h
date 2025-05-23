@@ -7,21 +7,21 @@ struct RENDER_MESH_OBJ_PARAM
     Matrix worldTM;
 
     IRenderMaterial *ppMaterials[12];
-
-    UINT numMaterials;
-};
-
-struct RENDER_CHAR_OBJ_PARAM
-{
-    Matrix worldTM;
-
-    IRenderMaterial *ppMaterials[12];
-
+    Keyframe       **ppKeyframes;
     UINT numMaterials;
     UINT frameCount;
-
-    Keyframe **ppKeyframes;
 };
+
+//
+//struct RENDER_CHAR_OBJ_PARAM
+//{
+//    Matrix worldTM;
+//
+//    IRenderMaterial *ppMaterials[12];
+//
+//    UINT numMaterials;
+//    
+//};
 
 struct RENDER_SPRITE_PARAM
 {
@@ -48,7 +48,7 @@ struct RENDER_ITEM
     FILL_MODE          fillMode;
     IRenderableObject *pObjHandle;
     union {
-        RENDER_CHAR_OBJ_PARAM charObjParam;
+        //RENDER_CHAR_OBJ_PARAM charObjParam;
         RENDER_MESH_OBJ_PARAM meshObjParam;
         RENDER_SPRITE_PARAM   spriteParam;
         RENDER_TERRAIN_PARAM  terrainParam;
