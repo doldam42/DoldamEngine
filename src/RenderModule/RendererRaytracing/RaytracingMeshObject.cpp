@@ -33,6 +33,27 @@ BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE
     return TRUE;
 }
 
+void RaytracingMeshObject::UpdateBoneMatrices(Keyframe **ppKeyframes, UINT frameCount) 
+{
+    for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+    {
+        Joint    *pJoint = m_pJoints + boneId;
+        Keyframe *pKeyframe = ppKeyframes[boneId];
+
+        const int    parentIdx = pJoint->parentIndex;
+        const Matrix parentMatrix = parentIdx >= 0 ? m_pBoneMatrices[parentIdx] : Matrix::Identity;
+
+        int    numKeys = pKeyframe->NumKeys;
+        Matrix TM = numKeys > 0 ? pKeyframe->pKeys[frameCount % numKeys] : Matrix::Identity;
+
+        m_pBoneMatrices[boneId] = TM * parentMatrix;
+    }
+    for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
+    {
+        m_pBoneMatrices[boneId] = (m_pJoints[boneId].globalBindposeInverse * m_pBoneMatrices[boneId]).Transpose();
+    }
+}
+
 /*
  *  Descriptor Table Per Obj - Offset : 0
  *  Basic Mesh :   | World TM |
@@ -66,29 +87,10 @@ void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HAND
 
     if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr) 
     {
-        Matrix boneMatrics[64];
-        for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
-        {
-            Joint    *pJoint = m_pJoints + boneId;
-            Keyframe *pKeyframe = ppKeyframes[boneId];
-
-            const int    parentIdx = pJoint->parentIndex;
-            const Matrix parentMatrix = parentIdx >= 0 ? boneMatrics[parentIdx] : Matrix::Identity;
-
-            int    numKeys = pKeyframe->NumKeys;
-            Matrix TM = numKeys > 0 ? pKeyframe->pKeys[frameCount % numKeys] : Matrix::Identity;
-
-            boneMatrics[boneId] = TM * parentMatrix;
-        }
-        for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
-        {
-            boneMatrics[boneId] = (m_pJoints[boneId].globalBindposeInverse * boneMatrics[boneId]).Transpose();
-        }
-
         dest.Offset(m_descriptorSize);
         pSkinnedConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
         pSkinnedCB = pSkinnedConstantBufferPool->Alloc();
-        memcpy(pSkinnedCB->pSystemMemAddr, boneMatrics, sizeof(Matrix) * m_jointCount);
+        memcpy(pSkinnedCB->pSystemMemAddr, m_pBoneMatrices, sizeof(Matrix) * m_jointCount);
 
         m_pD3DDevice->CopyDescriptorsSimple(1, dest, pSkinnedCB->CBVHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
@@ -144,8 +146,9 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     {
         pDescriptorPool->Alloc(&cpuHandlePerObj, &gpuHandlePerObj, DESCRIPTOR_COUNT_PER_BASIC_OBJECT);
     }
-    else if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ)
+    else if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr)
     {
+        UpdateBoneMatrices(ppKeyframes, frameCount);
         pDescriptorPool->Alloc(&cpuHandlePerObj, &gpuHandlePerObj, DESCRIPTOR_COUNT_PER_SKINNED_OBJECT);
     }
     UpdateDescriptorTablePerObj(cpuHandlePerObj, threadIndex, pWorldMat, 1, ppKeyframes, frameCount);
@@ -187,7 +190,7 @@ void RaytracingMeshObject::DrawDeferred(UINT threadIndex, ID3D12GraphicsCommandL
     }
 
     if (passType != DRAW_PASS_TYPE_TRANSPARENCY)
-        Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, pBoneMats, numBones);
+        Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, ppKeyframes, frameCount);
 }
 
 void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
@@ -254,10 +257,10 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
                                              m_faceGroupCount);
 }
 
-void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
-                                             UINT numBones)
+void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, Keyframe** ppKeyframes,
+                                             UINT frameCount)
 {
-    DeformingVerticesUAV(pCommandList, pBoneMats, numBones);
+    DeformingVerticesUAV(pCommandList, ppKeyframes, frameCount);
     BuildBottomLevelAS(pCommandList, m_bottomLevelAS.pScratch, m_bottomLevelAS.pResult, true, m_bottomLevelAS.pResult);
 }
 
@@ -329,6 +332,7 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
 
     if (numJoint > 0)
     {
+        m_pBoneMatrices = new Matrix[numJoint];
         m_pJoints = new Joint[numJoint];
         m_jointCount = numJoint;
         memcpy(m_pJoints, pJoint, sizeof(Joint) * numJoint);
@@ -407,8 +411,8 @@ void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *
     descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
-void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pBoneMats,
-                                                UINT numBones)
+void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes,
+                                                UINT frameCount)
 {
     if (m_type != RENDER_ITEM_TYPE_CHAR_OBJ)
     {
@@ -424,13 +428,7 @@ void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCom
     // CB Data Binding
     CB_CONTAINER *pSkinnedCB = nullptr;
     pSkinnedCB = pSkinnedConstantBufferPool->Alloc();
-
-    Matrix *pBoneTMs = (Matrix *)pSkinnedCB->pSystemMemAddr;
-    for (UINT i = 0; i < numBones; i++)
-    {
-        Matrix *pBoneTM = pBoneTMs + i;
-        memcpy(pBoneTM, &pBoneMats[i].Transpose(), sizeof(Matrix));
-    }
+    memcpy(pSkinnedCB, m_pBoneMatrices, sizeof(Matrix) * m_jointCount);
 
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
@@ -725,6 +723,11 @@ void RaytracingMeshObject::CleanupMesh()
     {
         delete[] m_pJoints;
         m_pJoints = nullptr;
+    }
+    if (m_pBoneMatrices)
+    {
+        delete[] m_pBoneMatrices;
+        m_pBoneMatrices = nullptr;
     }
 }
 

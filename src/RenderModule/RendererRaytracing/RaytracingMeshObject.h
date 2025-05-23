@@ -87,6 +87,7 @@ class RaytracingMeshObject : public IRenderMesh
     UINT                m_faceGroupCount = 0;
     UINT                m_maxFaceGroupCount = 0;
 
+    Matrix *m_pBoneMatrices = nullptr;
     Joint *m_pJoints = nullptr;
     UINT m_jointCount = 0;
 
@@ -113,6 +114,8 @@ class RaytracingMeshObject : public IRenderMesh
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS m_BLASFlags = {};
 
   private:
+    void UpdateBoneMatrices(Keyframe** ppKeyframes, UINT frameCount);
+
     void UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HANDLE descriptorTable, UINT threadIndex,
                                      const Matrix *pWorldMat, UINT numInstance, Keyframe **ppKeyframes,
                                      UINT frameCount);
