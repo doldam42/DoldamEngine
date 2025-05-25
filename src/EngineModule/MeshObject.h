@@ -15,7 +15,7 @@ struct FaceGroup
 
 class MeshObject : public IGameMesh, public BaseObject
 {
-  private:    
+  private:
     MESH_TYPE m_meshType = MESH_TYPE_UNKNOWN;
 
     UINT m_vertexCount = 0;
@@ -24,8 +24,8 @@ class MeshObject : public IGameMesh, public BaseObject
 
     BasicVertex   *m_pBasicVertices = nullptr;
     SkinnedVertex *m_pSkinnedVertices = nullptr;
-    
-    FaceGroup     *m_pFaceGroups = nullptr;
+
+    FaceGroup   *m_pFaceGroups = nullptr;
     IRenderMesh *m_pMeshHandle = nullptr;
 
   private:
@@ -35,7 +35,8 @@ class MeshObject : public IGameMesh, public BaseObject
     BOOL Initialize(MESH_TYPE meshType) override;
     BOOL Initialize(const WCHAR *name, const Transform *pLocalTransform, int parentIndex, int childCount,
                     MESH_TYPE meshType);
-    BOOL InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints);
+    BOOL InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints, IRenderMaterial **pMaterials,
+                             UINT numMaterials);
 
     void BeginCreateMesh(const void *pVertices, UINT numVertices, UINT numFaceGroup) override;
     void InsertFaceGroup(const UINT *pIndices, UINT numTriangles, int materialIndex) override;
@@ -44,8 +45,10 @@ class MeshObject : public IGameMesh, public BaseObject
     virtual void ReadFile(FILE *fp) override;
     virtual void WriteFile(FILE *fp) override;
 
-    void Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe** ppKeyframes, UINT frameCount,
-                IRenderMaterial **ppMaterials, const UINT numMaterial);
+    void Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount);
+
+    void RenderWithMaterial(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount,
+                            IRenderMaterial **ppMaterials, const UINT numMaterial);
 
     inline BOOL IsSkinned() const { return m_meshType == MESH_TYPE_SKINNED; }
 
@@ -63,6 +66,6 @@ class MeshObject : public IGameMesh, public BaseObject
     inline void AddChildCount() override { BaseObject::AddChildCount(); }
 
     MeshObject() = default;
-    MeshObject(const BaseObject &obj) : BaseObject(obj){};
+    MeshObject(const BaseObject &obj) : BaseObject(obj) {};
     virtual ~MeshObject() override;
 };

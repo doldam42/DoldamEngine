@@ -86,7 +86,7 @@ IRenderMesh *PrimitiveGenerator::MakeSquare(const float scale)
 
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 4, nullptr, 0, 1);
-    pObj->InsertFaceGroup(indices, 2);
+    pObj->InsertFaceGroup(indices, 2, nullptr);
     pObj->EndCreateMesh();
 
     return pObj;
@@ -135,7 +135,7 @@ IRenderMesh *PrimitiveGenerator::MakeSquareGrid(const int numSlices, const int n
 
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(vertices.data(), vertices.size(), nullptr, 0, 1);
-    pObj->InsertFaceGroup(indices.data(), indices.size());
+    pObj->InsertFaceGroup(indices.data(), indices.size(), nullptr);
     pObj->EndCreateMesh();
 
     return pObj;
@@ -283,7 +283,7 @@ IRenderMesh *PrimitiveGenerator::MakeBox(const float scale)
 
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 24, nullptr, 0, 1);
-    pObj->InsertFaceGroup(indices, 12);
+    pObj->InsertFaceGroup(indices, 12, nullptr);
     pObj->EndCreateMesh();
 
     return pObj;
@@ -376,7 +376,7 @@ IRenderMesh *PrimitiveGenerator::MakeWireBox(const Vector3 center, const Vector3
 
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(pVertices, 24, nullptr, 0, 1);
-    pObj->InsertFaceGroup(indices, 12);
+    pObj->InsertFaceGroup(indices, 12, nullptr);
     pObj->EndCreateMesh();
 
     return pObj;
@@ -522,7 +522,7 @@ IRenderMesh *PrimitiveGenerator::MakeSphere(const float radius, const int numsli
     Material     m;
     IRenderMesh *pObj = g_pRenderer->CreateMeshObject();
     pObj->BeginCreateMesh(vertices.data(), vertices.size(), nullptr, 0, 1);
-    pObj->InsertFaceGroup(indices.data(), indices.size() / 3);
+    pObj->InsertFaceGroup(indices.data(), indices.size() / 3, nullptr);
     pObj->EndCreateMesh();
 
     return pObj;

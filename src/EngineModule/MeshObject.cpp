@@ -51,7 +51,8 @@ BOOL MeshObject::Initialize(const WCHAR *name, const Transform *pLocalTransform,
     return TRUE;
 }
 
-BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints)
+BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJoints, IRenderMaterial **pMaterials,
+                                     UINT numMaterials)
 {
     if (IsSkinned())
     {
@@ -67,7 +68,7 @@ BOOL MeshObject::InitRenderComponent(IRenderer *pRnd, Joint *pJoints, UINT numJo
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
-        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles);
+        m_pMeshHandle->InsertFaceGroup(pFace->pIndices, pFace->numTriangles, pMaterials[pFace->materialIndex]);
     }
     m_pMeshHandle->EndCreateMesh();
     return TRUE;
@@ -169,10 +170,30 @@ void MeshObject::WriteFile(FILE *fp)
     }
 }
 
-void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount,
-                        IRenderMaterial **ppMaterials, const UINT numMaterial)
+void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount) 
 {
-    IRenderMaterial *pMaterials[12];
+    Matrix finalMatrix = GetLocalTransform()->LocalToWorld(*pWorldMat).GetMatrix();
+    switch (m_meshType)
+    {
+    case MESH_TYPE_DEFAULT:
+        pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, nullptr, 0);
+        break;
+    case MESH_TYPE_SKINNED:
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, nullptr, 0, ppKeyframes,
+                                    frameCount);
+        break;
+    default:
+#ifdef _DEBUG
+        __debugbreak();
+#endif // _DEBUG
+        break;
+    }
+}
+
+void MeshObject::RenderWithMaterial(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppKeyframes, UINT frameCount,
+                                    IRenderMaterial **ppMaterials, const UINT numMaterial)
+{
+    IRenderMaterial *pMaterials[12] = {nullptr};
     for (int i = 0; i < m_faceGroupCount; i++)
     {
         FaceGroup *pFace = m_pFaceGroups + i;
@@ -186,7 +207,8 @@ void MeshObject::Render(IRenderer *pRnd, const Matrix *pWorldMat, Keyframe **ppK
         pRnd->RenderMeshObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount);
         break;
     case MESH_TYPE_SKINNED:
-        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount, ppKeyframes, frameCount);
+        pRnd->RenderCharacterObject(m_pMeshHandle, &finalMatrix, pMaterials, m_faceGroupCount, ppKeyframes,
+                                    frameCount);
         break;
     default:
 #ifdef _DEBUG

@@ -94,4 +94,16 @@ struct AccelerationStructureBuffers
     ID3D12Resource *pInstanceDesc = nullptr;
 };
 
+struct DECOMP_PROJ
+{
+    float rcp_m11;
+    float rcp_m22;
+    float m21;
+    float m31;
+    float m32;
+    float m33;
+    float m43;
+    float Reserved0;
+};
+
 constexpr const wchar_t *DEFAULT_LOCALE_NAME = L"ko-kr";

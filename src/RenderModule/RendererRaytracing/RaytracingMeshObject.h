@@ -99,7 +99,7 @@ class RaytracingMeshObject : public IRenderMesh
 
     ULONG m_refCount = 0;
     
-    RENDER_ITEM_TYPE m_type;
+    RENDER_ITEM_TYPE m_type = RENDER_ITEM_TYPE_MESH_OBJ;
 
     ID3D12Resource   *m_pDeformedVertexBuffer = nullptr;
     DESCRIPTOR_HANDLE m_skinningDescriptors = {}; // Vertex Buffer (SRV) | Vertex Buffer (UAV)
@@ -153,7 +153,7 @@ class RaytracingMeshObject : public IRenderMesh
                           IRenderMaterial *const *ppMaterials, UINT numMaterials, DRAW_PASS_TYPE passType,
                           FILL_MODE fillMode, Keyframe **ppKeyframes = nullptr, UINT frameCount = 0);
 
-    void Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
+    void RecordBlasInstance(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
               IRenderMaterial *const *ppMaterials, UINT numMaterials, Keyframe **ppKeyframes, UINT frameCount);
 
     ID3D12Resource *GetBottomLevelAS() const { return m_bottomLevelAS.pResult; }
@@ -166,7 +166,7 @@ class RaytracingMeshObject : public IRenderMesh
 
     BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
                          UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) override;
+    BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, IRenderMaterial* pMaterial) override;
     void EndCreateMesh() override;
     void EndCreateMesh(ID3D12GraphicsCommandList4 *pCommandList);
 

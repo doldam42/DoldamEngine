@@ -262,7 +262,8 @@ class D3D12Renderer : public IRenderer
 
     BOOL BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVertices, UINT numVertices, const Joint *pJoint,
                          UINT numJoint, UINT numFaceGroup) override;
-    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles) override;
+    BOOL InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+                         IRenderMaterial *pMaterial) override;
     void EndCreateMesh(IRenderMesh *pMeshObjHandle) override;
 
     void UpdateCamera(const Vector3 &eyeWorld, const Matrix &viewRow, const Matrix &projRow);

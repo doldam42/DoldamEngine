@@ -86,14 +86,13 @@ UINT RenderQueue::Process(UINT threadIndex, CommandListPool *pCommandListPool, I
         switch (pItem->type)
         {
         case RENDER_ITEM_TYPE_MESH_OBJ: {
-            RaytracingMeshObject   *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
-            IRenderMaterial *const *ppMaterials = pItem->meshObjParam.ppMaterials;
-            if (ppMaterials)
+            RaytracingMeshObject *pMeshObj = (RaytracingMeshObject *)pItem->pObjHandle;
+            UINT                  numMaterials = pItem->meshObjParam.numMaterials;
+            if (numMaterials > 0)
             {
                 pMeshObj->DrawWithMaterial(threadIndex, pCommandList, &pItem->meshObjParam.worldTM,
-                                           pItem->meshObjParam.ppMaterials, pItem->meshObjParam.numMaterials, passType,
-                                           pItem->fillMode, pItem->meshObjParam.ppKeyframes,
-                                           pItem->meshObjParam.frameCount);
+                                           pItem->meshObjParam.ppMaterials, numMaterials, passType, pItem->fillMode,
+                                           pItem->meshObjParam.ppKeyframes, pItem->meshObjParam.frameCount);
             }
             else
             {

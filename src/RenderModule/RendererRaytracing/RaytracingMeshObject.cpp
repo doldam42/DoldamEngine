@@ -33,7 +33,7 @@ BOOL RaytracingMeshObject::Initialize(D3D12Renderer *pRenderer, RENDER_ITEM_TYPE
     return TRUE;
 }
 
-void RaytracingMeshObject::UpdateBoneMatrices(Keyframe **ppKeyframes, UINT frameCount) 
+void RaytracingMeshObject::UpdateBoneMatrices(Keyframe **ppKeyframes, UINT frameCount)
 {
     for (uint32_t boneId = 0; boneId < m_jointCount; boneId++)
     {
@@ -85,7 +85,7 @@ void RaytracingMeshObject::UpdateDescriptorTablePerObj(D3D12_CPU_DESCRIPTOR_HAND
     m_pD3DDevice->CopyDescriptorsSimple(DESCRIPTOR_COUNT_PER_STATIC_OBJ, dest, pMeshCB->CBVHandle,
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr) 
+    if (m_type == RENDER_ITEM_TYPE_CHAR_OBJ && ppKeyframes != nullptr)
     {
         dest.Offset(m_descriptorSize);
         pSkinnedConstantBufferPool = m_pRenderer->GetConstantBufferPool(CONSTANT_BUFFER_TYPE_SKINNED, threadIndex);
@@ -199,12 +199,12 @@ void RaytracingMeshObject::DrawWithMaterial(UINT threadIndex, ID3D12GraphicsComm
     }
 #endif
     if (passType != DRAW_PASS_TYPE_TRANSPARENCY)
-        Draw(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, ppKeyframes, frameCount);
+        RecordBlasInstance(threadIndex, pCommandList, pWorldMat, ppMaterials, numMaterials, ppKeyframes, frameCount);
 }
 
-void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList, const Matrix *pWorldMat,
-                                IRenderMaterial *const *ppMaterials, UINT numMaterials, Keyframe **ppKeyframes,
-                                UINT frameCount)
+void RaytracingMeshObject::RecordBlasInstance(UINT threadIndex, ID3D12GraphicsCommandList4 *pCommandList,
+                                              const Matrix *pWorldMat, IRenderMaterial *const *ppMaterials,
+                                              UINT numMaterials, Keyframe **ppKeyframes, UINT frameCount)
 {
     RaytracingManager *m_pRaytracingManager = m_pRenderer->GetRaytracingManager();
     DescriptorPool    *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
@@ -244,7 +244,7 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         pMatHandle->CopyDescriptors(m_pD3DDevice, dest, m_descriptorSize);
         dest.Offset(m_descriptorSize, DESCRIPTOR_INDEX_PER_MATERIAL_COUNT);
     }
-    
+
     Graphics::LOCAL_ROOT_ARG *pLocalRootArg = (Graphics::LOCAL_ROOT_ARG *)m_pRenderer->FrameAlloc(
         threadIndex, sizeof(Graphics::LOCAL_ROOT_ARG) * m_faceGroupCount);
 
@@ -263,10 +263,10 @@ void RaytracingMeshObject::Draw(UINT threadIndex, ID3D12GraphicsCommandList4 *pC
         rootArg->cb.materialIndex = pMatHandle->index;
     }
     m_pRaytracingManager->InsertBLASInstanceAsync(m_bottomLevelAS.pResult, pWorldMat, 0, pLocalRootArg,
-                                             m_faceGroupCount);
+                                                  m_faceGroupCount);
 }
 
-void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, Keyframe** ppKeyframes,
+void RaytracingMeshObject::UpdateSkinnedBLAS(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes,
                                              UINT frameCount)
 {
     DeformingVerticesUAV(pCommandList, ppKeyframes, frameCount);
@@ -332,7 +332,7 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
 
     m_pFaceGroups = new INDEXED_FACE_GROUP[m_maxFaceGroupCount];
     memset(m_pFaceGroups, 0, sizeof(INDEXED_FACE_GROUP) * m_maxFaceGroupCount);
-    
+
     m_pBLASGeometries = new D3D12_RAYTRACING_GEOMETRY_DESC[m_maxFaceGroupCount];
     memset(m_pBLASGeometries, 0, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC) * m_maxFaceGroupCount);
 
@@ -346,13 +346,14 @@ BOOL RaytracingMeshObject::BeginCreateMesh(const void *pVertices, UINT numVertic
         m_jointCount = numJoint;
         memcpy(m_pJoints, pJoint, sizeof(Joint) * numJoint);
     }
-   
+    m_ppMaterials = new IRenderMaterial*[m_maxFaceGroupCount];
+
     result = TRUE;
 lb_return:
     return result;
 }
 
-BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles)
+BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangles, IRenderMaterial *pMaterial)
 {
     BOOL                  result = FALSE;
     ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
@@ -381,8 +382,10 @@ BOOL RaytracingMeshObject::InsertFaceGroup(const UINT *pIndices, UINT numTriangl
     ID3D12Resource *pVertices = (m_type == RENDER_ITEM_TYPE_CHAR_OBJ) ? m_pDeformedVertexBuffer : m_pVertexBuffer;
     AddBLASGeometry(m_faceGroupCount, pVertices, 0, m_vertexCount, sizeof(BasicVertex), pIndexBuffer, 0,
                     numTriangles * 3, 0, 0);
+    m_ppMaterials[m_faceGroupCount] = pMaterial;
 
     m_faceGroupCount++;
+
     result = TRUE;
 lb_return:
     return result;
@@ -417,7 +420,7 @@ void RaytracingMeshObject::AddBLASGeometry(UINT faceGroupIndex, ID3D12Resource *
     descriptor->Triangles.Transform3x4 =
         transformBuffer ? (transformBuffer->GetGPUVirtualAddress() + transformOffsetInBytes) : 0;
     descriptor->Flags = isOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
-    //descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    // descriptor->Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 }
 
 void RaytracingMeshObject::DeformingVerticesUAV(ID3D12GraphicsCommandList4 *pCommandList, Keyframe **ppKeyframes,
@@ -727,7 +730,11 @@ void RaytracingMeshObject::CleanupMesh()
         m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_skinningDescriptors);
         m_skinningDescriptors = {};
     }
-
+    if (m_ppMaterials)
+    {
+        delete[] m_ppMaterials;
+        m_ppMaterials = nullptr;
+    }
     if (m_pJoints)
     {
         delete[] m_pJoints;

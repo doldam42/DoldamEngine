@@ -12,17 +12,6 @@ struct RENDER_MESH_OBJ_PARAM
     UINT frameCount;
 };
 
-//
-//struct RENDER_CHAR_OBJ_PARAM
-//{
-//    Matrix worldTM;
-//
-//    IRenderMaterial *ppMaterials[12];
-//
-//    UINT numMaterials;
-//    
-//};
-
 struct RENDER_SPRITE_PARAM
 {
     int   posX;

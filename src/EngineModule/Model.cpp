@@ -106,7 +106,7 @@ void Model::InitRenderComponents(IRenderer *pRenderer)
 
     for (UINT i = 0; i < m_objectCount; i++)
     {
-        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pJoints, m_jointCount);
+        m_ppMeshObjects[i]->InitRenderComponent(pRenderer, m_pJoints, m_jointCount, m_ppMaterials, m_materialCount);
     }
 
     m_pRenderer = pRenderer;
@@ -249,16 +249,15 @@ void Model::Render(GameObject *pGameObj, IRenderMaterial **ppMaterials, UINT num
     {
         for (UINT i = 0; i < m_objectCount; i++)
         {
-            m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, ppKeyframes, frameCount, m_ppMaterials,
-                                       m_materialCount);
+            m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, ppKeyframes, frameCount);
         }
     }
     else
     {
         for (UINT i = 0; i < m_objectCount; i++)
         {
-            m_ppMeshObjects[i]->Render(m_pRenderer, &worldMat, ppKeyframes, frameCount, ppMaterials,
-                                       numMaterials);
+            m_ppMeshObjects[i]->RenderWithMaterial(m_pRenderer, &worldMat, ppKeyframes, frameCount, ppMaterials,
+                                                   numMaterials);
         }
     }
     // Render Bounding Box

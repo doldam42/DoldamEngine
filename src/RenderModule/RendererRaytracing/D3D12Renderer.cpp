@@ -670,18 +670,13 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
     item.meshObjParam.worldTM = *pWorldMat;
     item.meshObjParam.ppKeyframes = nullptr;
     item.meshObjParam.frameCount = 0;
-    if (!ppMaterials)
-    {
-        item.meshObjParam.ppMaterials[0] = m_pDefaultMaterial;
-        item.meshObjParam.numMaterials = 1;
-    }
-    else
+    item.meshObjParam.numMaterials = numMaterial;
+    if (numMaterial > 0)
     {
         for (UINT i = 0; i < numMaterial; i++)
         {
             item.meshObjParam.ppMaterials[i] = ppMaterials[i];
         }
-        item.meshObjParam.numMaterials = numMaterial;
     }
 
     // Draw Translucent Object
@@ -866,10 +861,11 @@ BOOL D3D12Renderer::BeginCreateMesh(IRenderMesh *pMeshObjHandle, const void *pVe
     return result;
 }
 
-BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles)
+BOOL D3D12Renderer::InsertFaceGroup(IRenderMesh *pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+                                    IRenderMaterial *pMaterial)
 {
     RaytracingMeshObject *pMeshObj = reinterpret_cast<RaytracingMeshObject *>(pMeshObjHandle);
-    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles);
+    BOOL                  result = pMeshObj->InsertFaceGroup(pIndices, numTriangles, pMaterial);
 
     return result;
 }

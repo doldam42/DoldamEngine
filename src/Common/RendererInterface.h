@@ -132,7 +132,7 @@ interface IRenderMesh : public IRenderableObject
 {
     virtual BOOL BeginCreateMesh(const void *pVertices, UINT numVertices, const Joint *pJoint, UINT numJoint,
                                  UINT numFaceGroup) = 0;
-    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles) = 0;
+    virtual BOOL InsertFaceGroup(const UINT *pIndices, UINT numTriangles, IRenderMaterial* pMaterial) = 0;
     virtual void EndCreateMesh() = 0;
 };
 
@@ -158,7 +158,8 @@ interface IRenderer : public IUnknown
     
     virtual BOOL BeginCreateMesh(IRenderMesh * pMeshObjHandle, const void *pVertices, UINT numVertices,
                                  const Joint *pJoint, UINT numJoint, UINT numFaceGroup) = 0;
-    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles) = 0;
+    virtual BOOL InsertFaceGroup(IRenderMesh * pMeshObjHandle, const UINT *pIndices, UINT numTriangles,
+                                 IRenderMaterial *pMaterial) = 0;
     virtual void EndCreateMesh(IRenderMesh * pMeshObjHandle) = 0;
 
     virtual IRenderSprite *CreateSpriteObject() = 0;

@@ -4,7 +4,7 @@
 
 // Helper to compute aligned buffer sizes
 #ifndef ROUND_UP
-#define ROUND_UP(v, powerOf2Alignment) (((v) + (powerOf2Alignment)-1) & ~((powerOf2Alignment)-1))
+#define ROUND_UP(v, powerOf2Alignment) (((v) + (powerOf2Alignment) - 1) & ~((powerOf2Alignment) - 1))
 #endif
 
 enum CONSTANT_BUFFER_TYPE
@@ -82,6 +82,24 @@ struct GlobalConstants
 
 static_assert((sizeof(GlobalConstants) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
+struct RTGlobalConstancts
+{
+    Matrix      viewProj;
+    Matrix      invView;
+    DECOMP_PROJ decompProj;
+
+    Vector3 eyeWorld;
+
+    float Near;
+    float Far;
+    UINT  maxRadianceRayRecursionDepth;
+    UINT  maxShadowRayRecursionDepth;
+    UINT  Reserved0;
+    Light lights[MAX_LIGHTS];
+};
+
+static_assert((sizeof(RTGlobalConstancts) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+
 enum MATERIAL_USE_FLAGS : UINT
 {
     MATERIAL_USE_DEFAULT = 0,
@@ -152,4 +170,3 @@ struct RaytracingFaceGroupCB
     UINT materialIndex;
     UINT reserved;
 };
-
