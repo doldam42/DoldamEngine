@@ -7,11 +7,33 @@
 #include "GraphicsCommon.h"
 #include "RaytracingMeshObject.h"
 #include "ShaderTable.h"
+#include "D3DResourceRecycleBin.h"
 
 #include "RaytracingManager.h"
 
 void RaytracingManager::Cleanup()
 {
+    if (m_pResourceBinBLAS)
+    {
+        delete m_pResourceBinBLAS;
+        m_pResourceBinBLAS = nullptr;
+    }
+    if (m_pResourceBinTLAS)
+    {
+        delete m_pResourceBinTLAS;
+        m_pResourceBinTLAS = nullptr;
+    }
+    if (m_pResourceBinScratchResource)
+    {
+        delete m_pResourceBinScratchResource;
+        m_pResourceBinScratchResource = nullptr;
+    }
+    if (m_pResourceBinTLASInstanceDescList)
+    {
+        delete m_pResourceBinTLASInstanceDescList;
+        m_pResourceBinTLASInstanceDescList = nullptr;
+    }
+
     m_pRenderer->GetResourceManager()->DeallocDescriptorTable(&m_TLASHandle);
     if (m_topLevelASBuffers.pInstanceDesc)
     {
@@ -65,7 +87,22 @@ BOOL RaytracingManager::Initialize(D3D12Renderer *pRnd, ID3D12GraphicsCommandLis
     m_pRenderer = pRnd;
 
     ID3D12Device5 *pD3DDevice = pRnd->GetD3DDevice();
-
+    
+    m_pResourceBinBLAS = new D3DResourceRecycleBin;
+    m_pResourceBinBLAS->Initialize(pD3DDevice, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+                                   D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+                                   L"BottomLevelAccelerationStructure");
+    m_pResourceBinTLAS = new D3DResourceRecycleBin;
+    m_pResourceBinTLAS->Initialize(pD3DDevice, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+                                   D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+                                   L"TopLevelAccelerationStructure");
+    m_pResourceBinScratchResource = new D3DResourceRecycleBin;
+    m_pResourceBinScratchResource->Initialize(pD3DDevice, D3D12_HEAP_TYPE_DEFAULT,
+                                              D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
+                                              L"ScratchResource");
+    m_pResourceBinTLASInstanceDescList = new D3DResourceRecycleBin;
+    m_pResourceBinTLASInstanceDescList->Initialize(pD3DDevice, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE,
+                                               D3D12_RESOURCE_STATE_GENERIC_READ, L"InstanceDesces");
     InitializeCriticalSection(&m_cs);
     InitializeConditionVariable(&m_cv);
 
@@ -280,6 +317,16 @@ void RaytracingManager::Reset()
     m_curContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     /*m_pMissShaderTable->Reset();
     m_pRayGenShaderTable->Reset();*/
+    //UpdateManagedResource();
+}
+
+void RaytracingManager::UpdateManagedResource()
+{
+    ULONGLONG CurTick = GetTickCount64();
+    m_pResourceBinTLAS->Update(CurTick);
+    m_pResourceBinBLAS->Update(CurTick);
+    m_pResourceBinScratchResource->Update(CurTick);
+    m_pResourceBinTLASInstanceDescList->Update(CurTick);
 }
 
 RaytracingManager::~RaytracingManager() { Cleanup(); }

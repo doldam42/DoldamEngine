@@ -5,16 +5,23 @@
 #include "D3D12Renderer.h"
 #include "GraphicsCommon.h"
 
+#include "D3DResourceRecycleBin.h"
+
 struct DESCRIPTOR_HANDLE;
 class ShaderTable;
+class D3DResourceRecycleBin;
 class RaytracingManager
 {
     CRITICAL_SECTION   m_cs = {};
     CONDITION_VARIABLE m_cv = {};
 
     UINT          m_maxThreadCount = 0;
-
     D3D12Renderer *m_pRenderer = nullptr;
+
+    D3DResourceRecycleBin *m_pResourceBinTLAS = nullptr;
+    D3DResourceRecycleBin *m_pResourceBinBLAS = nullptr;
+    D3DResourceRecycleBin *m_pResourceBinScratchResource = nullptr;
+    D3DResourceRecycleBin *m_pResourceBinTLASInstanceDescList = nullptr;
 
     AccelerationStructureBuffers m_topLevelASBuffers;
     DESCRIPTOR_HANDLE            m_TLASHandle = {};
@@ -52,6 +59,7 @@ class RaytracingManager
                      D3D12_CPU_DESCRIPTOR_HANDLE outputViewUav, D3D12_CPU_DESCRIPTOR_HANDLE gbuffers, UINT gbufferCount);
 
     void Reset();
+    void UpdateManagedResource();
 
     RaytracingManager() = default;
     ~RaytracingManager();
