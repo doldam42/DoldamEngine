@@ -40,22 +40,23 @@ void BasicScene::Load()
     translucentMaterial.metallicFactor = 0.0f;
     translucentMaterial.roughnessFactor = 0.5f;
     translucentMaterial.reflectionFactor = 0.0f;
-    translucentMaterial.opacityFactor = 0.5f;
+    translucentMaterial.opacityFactor = 0.7f;
 
+    IRenderMaterial *materialRGBs[3] = {nullptr};
      // TranslucentR
     wcscpy_s(translucentMaterial.name, L"translucentR");
-    translucentMaterial.albedo = Vector3(1.0f, 0.0f, 0.0f);
-    IRenderMaterial *pTranslucentRMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+    translucentMaterial.albedo = Vector3(242.0f/255.0f, 132.0f/255.0f, 130.0f/255.0f);
+    materialRGBs[0] = pRenderer->CreateMaterialHandle(&translucentMaterial);
 
     // TranslucentG
     wcscpy_s(translucentMaterial.name, L"translucentG");
-    translucentMaterial.albedo = Vector3(0.0f, 1.0, 0.0f);
-    IRenderMaterial *pTranslucentGMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+    translucentMaterial.albedo = Vector3(132.0f/255.0f, 165.0f/255.0f, 157.0f/255.0f);
+    materialRGBs[1] = pRenderer->CreateMaterialHandle(&translucentMaterial);
     
     // TranslucentB
     wcscpy_s(translucentMaterial.name, L"translucentB");
     translucentMaterial.albedo = Vector3(0.0f, 0.0, 1.0f);
-    IRenderMaterial *pTranslucentBMaterial = pRenderer->CreateMaterialHandle(&translucentMaterial);
+    materialRGBs[2] = pRenderer->CreateMaterialHandle(&translucentMaterial);
     
     int offset = 0;
     for (int i = 0; i < 5; i++)
@@ -65,20 +66,8 @@ void BasicScene::Load()
             IGameModel  *pBoxModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_BOX);
             IGameObject *pBox = pGame->CreateGameObject();
             pBox->SetModel(pBoxModel);
-            if (offset % 3 == 0)
-            {
-                pBox->SetMaterials(&pTranslucentRMaterial, 1);
-            }
-            else if (offset % 3 == 1)
-            {
-                pBox->SetMaterials(&pTranslucentGMaterial, 1);
-            }
-            else
-            {
-                pBox->SetMaterials(&pTranslucentBMaterial, 1);
-            }
-
-            pBox->SetPosition(i * 2, 4.0f + (i - j) * 2, j * 2);
+            pBox->SetMaterials(&materialRGBs[offset % 3], 1);
+            pBox->SetPosition(i * 2, 3.0f + (i - j) * 2, j * 2);
             offset++;
         }
     }

@@ -377,8 +377,6 @@ void D3D12Renderer::BeginRender()
     }
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
-
-    m_pDebugLine->DrawLine(Vector3(-10.0f, 2.0f, 0.0f), Vector3(10.0f, 2.0f, 0.0f), {255, 0, 0, 255}); // Red
 }
 
 void D3D12Renderer::EndRender()

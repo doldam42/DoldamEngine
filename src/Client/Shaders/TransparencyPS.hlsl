@@ -96,6 +96,11 @@ float3 GetNormal(PSInput input, bool useNormalMap)
     float3 directLighting = 0;
     [unroll] for (int i = 0; i < MAX_LIGHTS; i++)
     {
+        if (lights[i].type == LIGHT_OFF)
+        {
+            continue;
+        }
+
         float3 L = lights[i].position - input.posWorld;
         float3 r = normalize(reflect(eyeWorld - input.posWorld, normalWorld));
         float3 centerToRay = dot(L, r) * r - L;
@@ -108,16 +113,13 @@ float3 GetNormal(PSInput input, bool useNormalMap)
         lightVec /= lightDist;
 
         float3 radiance = LightRadiance(lights[i], representativePoint, input.posWorld, normalWorld);
-
         directLighting += Shade(albedo, radiance, metallic, roughness, normalWorld, pixelToEye, lightVec, opacity);
     }
 
     float4 result = float4(ambientLighting + directLighting + emission, opacity);
-
+    
+    //float4 result = float4(albedo, opacity);
     result = clamp(result, 0.0, 1.0);
-
-    /* float4 result = float4(albedo, opacity);
-     result = clamp(result, 0.0, 1.0);*/
 
     float surfaceDepth = input.posView.z;
 

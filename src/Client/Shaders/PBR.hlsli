@@ -68,7 +68,7 @@ float SchlickGGX(float NdotI, float NdotO, float roughness)
 }
 
 float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, float3 normalWorld)
-{
+{   
     // Directional light
     float3 lightVec = light.type & LIGHT_DIRECTIONAL ? -light.direction
                                                      : representativePoint - posWorld; //: light.position - posWorld;
@@ -83,7 +83,7 @@ float3 LightRadiance(Light light, float3 representativePoint, float3 posWorld, f
     float att = saturate((light.fallOffEnd - lightDist) / (light.fallOffEnd - light.fallOffStart));
 
     float3 radiance = light.radiance * spotFator * att;
-
+    
     return radiance;
 }
 
