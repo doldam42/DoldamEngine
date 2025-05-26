@@ -1,4 +1,6 @@
 # D3D12 게임 엔진 제작 프로젝트 
+## OIT(Order-Independent-Transparency) 데모
+https://github.com/user-attachments/assets/3cb78179-6540-4e4a-89d4-5aa8dfedf2f2
 ## 충돌 처리 및 점프 데모
 https://github.com/user-attachments/assets/5b2ef421-ca79-4e69-ab40-13b3eb5fb45f
 ## 레이 캐스팅 데모
