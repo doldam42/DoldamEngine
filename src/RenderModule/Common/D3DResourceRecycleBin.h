@@ -13,17 +13,17 @@ struct D3DRESOURCE_ALLOC_DESC
     ID3D12Resource *pResource;
     ULONGLONG       RegisteredTick;
     SORT_LINK       Link;
-    UINT           size;
+    UINT            size;
     int             frameLifeCount;
 };
 
 class D3DResourceRecycleBin
 {
-    ID3D12Device5* m_pD3DDevice = nullptr;
+    ID3D12Device5   *m_pD3DDevice = nullptr;
     D3DRESOURCE_LINK m_pResourceLink[16] = {};
 
-    SORT_LINK* m_pPendingResourceLinkHead = nullptr;
-    SORT_LINK* m_pPendingResourceLinkTail = nullptr;
+    SORT_LINK *m_pPendingResourceLinkHead = nullptr;
+    SORT_LINK *m_pPendingResourceLinkTail = nullptr;
 
     D3D12_HEAP_TYPE       m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
     D3D12_RESOURCE_FLAGS  m_ResourceFlags = D3D12_RESOURCE_FLAG_NONE;
@@ -35,8 +35,8 @@ class D3DResourceRecycleBin
     D3DRESOURCE_LINK *FindLink(UINT size);
 
     UINT UpdatePendingResource(ULONGLONG curTick);
-    void  FreeAllExpiredD3DResource(ULONGLONG curTick);
-    void  Cleanup();
+    void FreeAllExpiredD3DResource(ULONGLONG curTick);
+    void Cleanup();
 
   public:
     void            Initialize(ID3D12Device5 *pD3DDevice, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_FLAGS ResourceFlags,

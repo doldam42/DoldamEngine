@@ -192,24 +192,9 @@ lb_exit:
         pSwapChain1 = nullptr;
         m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
     }
-
+    
     m_pResourceManager = new D3D12ResourceManager;
-    m_pResourceManager->Initialize(m_pD3DDevice, MAX_DESCRIPTOR_COUNT);
-
-    m_pTextureManager = new TextureManager;
-    m_pTextureManager->Initialize(this, 1024 / 16, 1024);
-
-    m_pMaterialManager = new MaterialManager;
-    m_pMaterialManager->Initialize(this, sizeof(MaterialConstants), 1024);
-
-    m_pFontManager = new FontManager;
-    m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
-
-    m_pPostProcessor = new PostProcessor;
-    m_pPostProcessor->Initialize(this);
-
-    m_pDebugLine = new DebugLine;
-    m_pDebugLine->Initialize(this, 1024);
+    m_pResourceManager->Initialize(this, m_pCommandQueue, MAX_DESCRIPTOR_COUNT);
 
     CreateDescriptorTables();
 
@@ -260,6 +245,21 @@ lb_exit:
         m_ppFrameBuffer[i] = new FrameBuffer;
         m_ppFrameBuffer[i]->Initialize(MAX_DRAW_COUNT_PER_FRAME * 1024);
     }
+
+    m_pTextureManager = new TextureManager;
+    m_pTextureManager->Initialize(this, 1024 / 16, 1024);
+
+    m_pMaterialManager = new MaterialManager;
+    m_pMaterialManager->Initialize(this, sizeof(MaterialConstants), 1024);
+
+    m_pFontManager = new FontManager;
+    m_pFontManager->Initialize(this, m_pCommandQueue, 1024, 256, bEnableDebugLayer);
+
+    m_pPostProcessor = new PostProcessor;
+    m_pPostProcessor->Initialize(this);
+
+    m_pDebugLine = new DebugLine;
+    m_pDebugLine->Initialize(this, 1024);
 
     m_pRaytracingManager = new RaytracingManager;
 
@@ -557,6 +557,8 @@ void D3D12Renderer::Present()
 
         m_ppFrameBuffer[i]->Reset();
     }
+
+    m_pResourceManager->UpdateManagedResource();
 
     m_curContextIndex = nextContextIndex;
 }

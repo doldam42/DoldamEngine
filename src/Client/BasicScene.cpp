@@ -45,7 +45,8 @@ void BasicScene::Load()
     IRenderMaterial *materialRGBs[3] = {nullptr};
      // TranslucentR
     wcscpy_s(translucentMaterial.name, L"translucentR");
-    translucentMaterial.albedo = Vector3(242.0f/255.0f, 132.0f/255.0f, 130.0f/255.0f);
+    translucentMaterial.albedo = Vector3(1.0, 0.0f, 0.0f);
+    //translucentMaterial.albedo = Vector3(242.0f/255.0f, 132.0f/255.0f, 130.0f/255.0f);
     materialRGBs[0] = pRenderer->CreateMaterialHandle(&translucentMaterial);
 
     // TranslucentG

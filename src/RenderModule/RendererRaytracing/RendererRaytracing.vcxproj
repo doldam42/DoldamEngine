@@ -193,6 +193,7 @@
     <ClInclude Include="..\Common\ConstantBufferPool.h" />
     <ClInclude Include="..\Common\ConstantBuffers.h" />
     <ClInclude Include="..\Common\D3D12ResourceManager.h" />
+    <ClInclude Include="..\Common\D3DResourceRecycleBin.h" />
     <ClInclude Include="..\Common\DescriptorAllocator.h" />
     <ClInclude Include="..\Common\DescriptorPool.h" />
     <ClInclude Include="..\Common\FontManager.h" />
@@ -205,7 +206,6 @@
     <ClInclude Include="..\Common\SingleDescriptorAllocator.h" />
     <ClInclude Include="..\Common\TextureManager.h" />
     <ClInclude Include="D3D12Renderer.h" />
-    <ClInclude Include="D3DResourceRecycleBin.h" />
     <ClInclude Include="D3DUtil.h" />
     <ClInclude Include="DebugLine.h" />
     <ClInclude Include="MemoryMappedFile.h">
@@ -286,6 +286,7 @@
     <ClCompile Include="..\Common\D3D12ResourceManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\Common\D3DResourceRecycleBin.cpp" />
     <ClCompile Include="..\Common\DescriptorAllocator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
@@ -313,7 +314,6 @@
     </ClCompile>
     <ClCompile Include="..\Common\TextureManager.cpp" />
     <ClCompile Include="D3D12Renderer.cpp" />
-    <ClCompile Include="D3DResourceRecycleBin.cpp" />
     <ClCompile Include="D3DUtil.cpp" />
     <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="dllmain.cpp" />

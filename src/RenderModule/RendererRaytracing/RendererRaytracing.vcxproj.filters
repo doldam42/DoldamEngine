@@ -182,7 +182,9 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="DebugLine.h" />
-    <ClInclude Include="D3DResourceRecycleBin.h" />
+    <ClInclude Include="..\Common\D3DResourceRecycleBin.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DUtil.cpp">
@@ -296,7 +298,9 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="DebugLine.cpp" />
-    <ClCompile Include="D3DResourceRecycleBin.cpp" />
+    <ClCompile Include="..\Common\D3DResourceRecycleBin.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

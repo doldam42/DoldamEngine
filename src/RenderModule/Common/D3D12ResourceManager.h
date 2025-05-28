@@ -6,51 +6,44 @@ enum TEXTURE_FILE_FORMAT
     TEXTURE_FILE_FORMAT_M
 };
 
+class D3DResourceRecycleBin;
 class DescriptorAllocator;
+class D3D12Renderer;
 class D3D12ResourceManager
 {
     static const UINT DESCRIPTOR_COUNT_PER_RTV = 32;
     static const UINT DESCRIPTOR_COUNT_PER_DSV = 32;
-    static const UINT DESCRIPTOR_POOL_SIZE = 6;
+    static const UINT DESCRIPTOR_POOL_SIZE = 16;
     static const UINT RTV_DESCRIPTOR_POOL_SIZE = 4;
 
-    ID3D12Device              *m_pD3DDevice = nullptr;
-    ID3D12CommandQueue        *m_pCommandQueue = nullptr;
-    ID3D12CommandAllocator    *m_pCommandAllocator = nullptr;
-    ID3D12GraphicsCommandList *m_pCommandList = nullptr;
-
-    HANDLE       m_hFenceEvent = nullptr;
-    ID3D12Fence *m_pFence = nullptr;
-    UINT64       m_ui64FenceValue = 0;
-
+    D3D12Renderer *m_pRenderer = nullptr;
+    ID3D12Device5 *m_pD3DDevice = nullptr;
+    ID3D12CommandQueue  *m_pCommandQueue = nullptr;
     DescriptorAllocator *m_pDescriptorAllocators[DESCRIPTOR_POOL_SIZE] = {nullptr};
-    DescriptorAllocator *m_pRTVDescriptorAllocators[RTV_DESCRIPTOR_POOL_SIZE] = {nullptr};
-    DescriptorAllocator *m_pDSVDescriptorAllocator = nullptr;
+    DescriptorAllocator *m_pRTVDescriptorAllocators[DESCRIPTOR_POOL_SIZE] = {nullptr};
+    DescriptorAllocator *m_pDSVDescriptorAllocators[DESCRIPTOR_POOL_SIZE] = {nullptr};
+
+    D3DResourceRecycleBin *m_pResourceBinUpload = nullptr;
+    D3DResourceRecycleBin *m_pResourceBinDefault = nullptr;
 
     UINT m_maxDescriptorCount = 0;
     UINT m_descriptorSize = 0;
 
-    void CreateFence();
-    void CleanupFence();
-    void CreateCommandList();
-    void CleanupCommandList();
-
-    UINT64 Fence();
-    void   WaitForFenceValue();
-
     void Cleanup();
 
+    DescriptorAllocator *FindAllocator(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE type);
+
   public:
-    BOOL Initialize(ID3D12Device5 *pDevice, UINT maxDescriptorCount);
+    BOOL Initialize(D3D12Renderer *pRenderer, ID3D12CommandQueue* pCmdQueue, UINT maxDescriptorCount);
 
     // descriptor 개수에 맞는 리소스 반환
     BOOL AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors);
     BOOL AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors = 1);
-    BOOL AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
+    BOOL AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors = 1);
 
     void DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor);
-    void DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
-    void DeallocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor);
+    void DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor);
+    void DeallocDSVDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor);
 
     // Resource Manage
     HRESULT CreateVertexBuffer(ID3D12Resource **ppOutBuffer, D3D12_VERTEX_BUFFER_VIEW *pOutVertexBufferView,
@@ -72,8 +65,9 @@ class D3D12ResourceManager
     BOOL CreateTexture(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format,
                        D3D12_RESOURCE_FLAGS flags);
 
-    UINT GetDescriptorSize() const { return m_descriptorSize; }
+    void UpdateManagedResource();
 
+    UINT GetDescriptorSize() const { return m_descriptorSize; }
 
     D3D12ResourceManager() = default;
     ~D3D12ResourceManager();

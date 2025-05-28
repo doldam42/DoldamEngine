@@ -3,63 +3,47 @@
 #include <d3d12.h>
 #include <d3dx12.h>
 
-#include <DirectXTex/DirectXTex.h>
 #include <DDSTextureLoader/DDSTextureLoader12.h>
+#include <DirectXTex/DirectXTex.h>
 #include <WICTextureLoader/WICTextureLoader12.h>
 
+#ifdef RENDERER_RAYTRACING
+#include "../RendererRaytracing/D3D12Renderer.h"
+#elif defined(RENDERER_D3D12)
+#include "../RendererD3D12/D3D12Renderer.h"
+#endif
+
+#include "CommandListPool.h"
+
+#include "D3DResourceRecycleBin.h"
 #include "DescriptorAllocator.h"
 
 #include "D3D12ResourceManager.h"
 
 using namespace DirectX;
-BOOL D3D12ResourceManager::Initialize(ID3D12Device5 *pDevice, UINT maxDescriptorCount)
+BOOL D3D12ResourceManager::Initialize(D3D12Renderer *pRenderer, ID3D12CommandQueue *pCmdQueue, UINT maxDescriptorCount)
 {
     BOOL result = FALSE;
 
-    m_pD3DDevice = pDevice;
+    m_pRenderer = pRenderer;
+    m_pD3DDevice = pRenderer->GetD3DDevice();
+    m_pCommandQueue = pCmdQueue;
 
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    if (FAILED(m_pD3DDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pCommandQueue))))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-    CreateCommandList();
+    m_pResourceBinDefault = new D3DResourceRecycleBin;
+    m_pResourceBinDefault->Initialize(m_pD3DDevice, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_NONE,
+                                      D3D12_RESOURCE_STATE_COMMON, L"Common Resource");
 
-    CreateFence();
+    m_pResourceBinUpload = new D3DResourceRecycleBin;
+    m_pResourceBinUpload->Initialize(m_pD3DDevice, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE,
+                                     D3D12_RESOURCE_STATE_GENERIC_READ, L"Upload Buffer");
 
-    m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    m_descriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_maxDescriptorCount = maxDescriptorCount;
-
-    // Descriptor Pool Initialize
-    m_pDescriptorAllocators[0] = new DescriptorAllocator;
-    m_pDescriptorAllocators[0]->Initialize(pDevice, m_maxDescriptorCount, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_pDescriptorAllocators[1] = new DescriptorAllocator;
-    m_pDescriptorAllocators[1]->Initialize(pDevice, m_maxDescriptorCount, 4, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_pDescriptorAllocators[2] = new DescriptorAllocator;
-    m_pDescriptorAllocators[2]->Initialize(pDevice, m_maxDescriptorCount, 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_pDescriptorAllocators[3] = new DescriptorAllocator;
-    m_pDescriptorAllocators[3]->Initialize(pDevice, m_maxDescriptorCount, 16, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_pDescriptorAllocators[4] = new DescriptorAllocator;
-    m_pDescriptorAllocators[4]->Initialize(pDevice, m_maxDescriptorCount, 32, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_pDescriptorAllocators[5] = new DescriptorAllocator;
-    m_pDescriptorAllocators[5]->Initialize(pDevice, m_maxDescriptorCount, 64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    m_pRTVDescriptorAllocators[0] = new DescriptorAllocator;
-    m_pRTVDescriptorAllocators[0]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_pRTVDescriptorAllocators[1] = new DescriptorAllocator;
-    m_pRTVDescriptorAllocators[1]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 4, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_pRTVDescriptorAllocators[2] = new DescriptorAllocator;
-    m_pRTVDescriptorAllocators[2]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 8, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_pRTVDescriptorAllocators[3] = new DescriptorAllocator;
-    m_pRTVDescriptorAllocators[3]->Initialize(pDevice, DESCRIPTOR_COUNT_PER_RTV, 16, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    m_pDSVDescriptorAllocator = new DescriptorAllocator;
-    m_pDSVDescriptorAllocator->Initialize(pDevice, DESCRIPTOR_COUNT_PER_DSV, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     result = TRUE;
 lb_return:
@@ -69,93 +53,57 @@ lb_return:
 BOOL D3D12ResourceManager::AllocDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors)
 {
     assert(numDescriptors > 0);
-    if (numDescriptors == 1)
-        return m_pDescriptorAllocators[0]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 4)
-        return m_pDescriptorAllocators[1]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 8)
-        return m_pDescriptorAllocators[2]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 16)
-        return m_pDescriptorAllocators[3]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 32)
-        return m_pDescriptorAllocators[4]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 64)
-        return m_pDescriptorAllocators[5]->Alloc(pOutDescriptor);
-    return FALSE;
+    DescriptorAllocator *pAllocator = FindAllocator(numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    if (!pAllocator)
+    {
+        return FALSE;
+    }
+    return pAllocator->Alloc(pOutDescriptor);
 }
 
 BOOL D3D12ResourceManager::AllocRTVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors)
 {
     assert(numDescriptors > 0);
-    if (numDescriptors == 1)
-        return m_pRTVDescriptorAllocators[0]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 4)
-        return m_pRTVDescriptorAllocators[1]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 8)
-        return m_pRTVDescriptorAllocators[2]->Alloc(pOutDescriptor);
-    if (numDescriptors <= 16)
-        return m_pRTVDescriptorAllocators[3]->Alloc(pOutDescriptor);
-#ifdef _DEBUG
-    __debugbreak();
-#endif
-    return FALSE;
+    DescriptorAllocator *pAllocator = FindAllocator(numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    if (!pAllocator)
+    {
+        return FALSE;
+    }
+    return pAllocator->Alloc(pOutDescriptor);
 }
 
-BOOL D3D12ResourceManager::AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
+BOOL D3D12ResourceManager::AllocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor, UINT numDescriptors)
 {
-    return m_pDSVDescriptorAllocator->Alloc(pOutDescriptor);
+    assert(numDescriptors > 0);
+    DescriptorAllocator *pAllocator = FindAllocator(numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    if (!pAllocator)
+    {
+        return FALSE;
+    }
+    return pAllocator->Alloc(pOutDescriptor);
 }
 
 void D3D12ResourceManager::DeallocDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor)
 {
-    switch (pDescriptor->descriptorCount)
-    {
-    case 1:
-        m_pDescriptorAllocators[0]->DeAlloc(pDescriptor);
-        break;
-    case 4:
-        m_pDescriptorAllocators[1]->DeAlloc(pDescriptor);
-        break;
-    case 8:
-        m_pDescriptorAllocators[2]->DeAlloc(pDescriptor);
-        break;
-    case 16:
-        m_pDescriptorAllocators[3]->DeAlloc(pDescriptor);
-        break;
-    case 32:
-        m_pDescriptorAllocators[4]->DeAlloc(pDescriptor);
-        break;
-    case 64:
-        m_pDescriptorAllocators[5]->DeAlloc(pDescriptor);
-    default:
-        __debugbreak();
-        break;
-    }
+    DescriptorAllocator *pAllocator =
+        FindAllocator(pDescriptor->descriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DASSERT(pAllocator);
+    pAllocator->DeAlloc(pDescriptor);
 }
 void D3D12ResourceManager::DeallocRTVDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor)
 {
-    switch (pDescriptor->descriptorCount)
-    {
-    case 1:
-        m_pRTVDescriptorAllocators[0]->DeAlloc(pDescriptor);
-        break;
-    case 4:
-        m_pRTVDescriptorAllocators[1]->DeAlloc(pDescriptor);
-        break;
-    case 8:
-        m_pRTVDescriptorAllocators[2]->DeAlloc(pDescriptor);
-        break;
-    case 16:
-        m_pRTVDescriptorAllocators[3]->DeAlloc(pDescriptor);
-        break;
-    default:
-        __debugbreak();
-        break;
-    }
+    DescriptorAllocator *pAllocator = FindAllocator(pDescriptor->descriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    DASSERT(pAllocator);
+    pAllocator->DeAlloc(pDescriptor);
 }
-void D3D12ResourceManager::DeallocDSVDescriptorTable(DESCRIPTOR_HANDLE *pOutDescriptor)
+void D3D12ResourceManager::DeallocDSVDescriptorTable(DESCRIPTOR_HANDLE *pDescriptor)
 {
-    m_pDSVDescriptorAllocator->DeAlloc(pOutDescriptor);
+    DescriptorAllocator *pAllocator = FindAllocator(pDescriptor->descriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    DASSERT(pAllocator);
+    pAllocator->DeAlloc(pDescriptor);
 }
 HRESULT
 D3D12ResourceManager::CreateVertexBuffer(ID3D12Resource **ppOutBuffer, D3D12_VERTEX_BUFFER_VIEW *pOutVertexBufferView,
@@ -168,34 +116,14 @@ D3D12ResourceManager::CreateVertexBuffer(ID3D12Resource **ppOutBuffer, D3D12_VER
     ID3D12Resource          *pUploadBuffer = nullptr;
     UINT                     VertexBufferSize = sizePerVertex * numVertex;
 
-    // create vertexbuffer for rendering
-    hr = m_pD3DDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                                               &CD3DX12_RESOURCE_DESC::Buffer(VertexBufferSize),
-                                               D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pVertexBuffer));
+    pVertexBuffer = m_pResourceBinDefault->Alloc(VertexBufferSize);
 
-    if (FAILED(hr))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
     if (pInitData)
     {
-        if (FAILED(m_pCommandAllocator->Reset()))
-            __debugbreak();
+        CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+        ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
-        if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-            __debugbreak();
-
-        hr = m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(VertexBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-            IID_PPV_ARGS(&pUploadBuffer));
-
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
+        pUploadBuffer = m_pResourceBinUpload->Alloc(VertexBufferSize);
 
         // Copy the triangle data to the vertex buffer.
         UINT8        *pVertexDataBegin = nullptr;
@@ -210,21 +138,15 @@ D3D12ResourceManager::CreateVertexBuffer(ID3D12Resource **ppOutBuffer, D3D12_VER
         memcpy(pVertexDataBegin, pInitData, VertexBufferSize);
         pUploadBuffer->Unmap(0, nullptr);
 
-        m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pVertexBuffer,
-                                                                                 D3D12_RESOURCE_STATE_COMMON,
-                                                                                 D3D12_RESOURCE_STATE_COPY_DEST));
-        m_pCommandList->CopyBufferRegion(pVertexBuffer, 0, pUploadBuffer, 0, VertexBufferSize);
-        m_pCommandList->ResourceBarrier(
+        pCommandList->ResourceBarrier(1,
+                                      &CD3DX12_RESOURCE_BARRIER::Transition(pVertexBuffer, D3D12_RESOURCE_STATE_COMMON,
+                                                                            D3D12_RESOURCE_STATE_COPY_DEST));
+        pCommandList->CopyBufferRegion(pVertexBuffer, 0, pUploadBuffer, 0, VertexBufferSize);
+        pCommandList->ResourceBarrier(
             1, &CD3DX12_RESOURCE_BARRIER::Transition(pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
                                                      D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
-        m_pCommandList->Close();
-
-        ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-        m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-        Fence();
-        WaitForFenceValue();
+        pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
     // Initialize the vertex buffer view.
@@ -240,7 +162,7 @@ D3D12ResourceManager::CreateVertexBuffer(ID3D12Resource **ppOutBuffer, D3D12_VER
 lb_return:
     if (pUploadBuffer)
     {
-        pUploadBuffer->Release();
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
         pUploadBuffer = nullptr;
     }
     return hr;
@@ -258,33 +180,14 @@ HRESULT D3D12ResourceManager::CreateIndexBuffer(ID3D12Resource         **ppOutBu
     UINT                    indexBufferSize = sizeof(UINT) * numIndices;
 
     // create vertexbuffer for rendering
-    hr = m_pD3DDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                                               &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
-                                               D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pIndexBuffer));
-
-    if (FAILED(hr))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
+    pIndexBuffer = m_pResourceBinDefault->Alloc(indexBufferSize);
+    
     if (pInitData)
     {
-        if (FAILED(m_pCommandAllocator->Reset()))
-            __debugbreak();
+        CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+        ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
-        if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-            __debugbreak();
-
-        hr = m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-            IID_PPV_ARGS(&pUploadBuffer));
-
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
+        pUploadBuffer = m_pResourceBinUpload->Alloc(indexBufferSize);
 
         // Copy the index data to the index buffer.
         UINT8        *pIndexDataBegin = nullptr;
@@ -299,21 +202,14 @@ HRESULT D3D12ResourceManager::CreateIndexBuffer(ID3D12Resource         **ppOutBu
         memcpy(pIndexDataBegin, pInitData, indexBufferSize);
         pUploadBuffer->Unmap(0, nullptr);
 
-        m_pCommandList->ResourceBarrier(1,
+        pCommandList->ResourceBarrier(1,
                                         &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer, D3D12_RESOURCE_STATE_COMMON,
                                                                               D3D12_RESOURCE_STATE_COPY_DEST));
-        m_pCommandList->CopyBufferRegion(pIndexBuffer, 0, pUploadBuffer, 0, indexBufferSize);
-        m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer,
+        pCommandList->CopyBufferRegion(pIndexBuffer, 0, pUploadBuffer, 0, indexBufferSize);
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer,
                                                                                  D3D12_RESOURCE_STATE_COPY_DEST,
                                                                                  D3D12_RESOURCE_STATE_INDEX_BUFFER));
-
-        m_pCommandList->Close();
-
-        ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-        m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-        Fence();
-        WaitForFenceValue();
+        pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
     // Initialize the vertex buffer view.
@@ -330,7 +226,7 @@ lb_return:
 
     if (pUploadBuffer)
     {
-        pUploadBuffer->Release();
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
         pUploadBuffer = nullptr;
     }
     return hr;
@@ -346,33 +242,14 @@ HRESULT D3D12ResourceManager::CreateConstantBuffer(ID3D12Resource **ppOutBuffer,
     UINT            constantBufferSize = sizePerCB;
 
     // create vertexbuffer for rendering
-    hr = m_pD3DDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                                               &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
-                                               D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pConstantBuffer));
+    pConstantBuffer = m_pResourceBinDefault->Alloc(constantBufferSize);
 
-    if (FAILED(hr))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
     if (pInitData)
     {
-        if (FAILED(m_pCommandAllocator->Reset()))
-            __debugbreak();
+        CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+        ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
-        if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-            __debugbreak();
-
-        hr = m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-            IID_PPV_ARGS(&pUploadBuffer));
-
-        if (FAILED(hr))
-        {
-            __debugbreak();
-            goto lb_return;
-        }
+        pUploadBuffer = m_pResourceBinUpload->Alloc(constantBufferSize);
 
         // Copy the index data to the index buffer.
         UINT8        *pConstantDataBegin = nullptr;
@@ -387,32 +264,22 @@ HRESULT D3D12ResourceManager::CreateConstantBuffer(ID3D12Resource **ppOutBuffer,
         memcpy(pConstantDataBegin, pInitData, constantBufferSize);
         pUploadBuffer->Unmap(0, nullptr);
 
-        m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pConstantBuffer,
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pConstantBuffer,
                                                                                  D3D12_RESOURCE_STATE_COMMON,
                                                                                  D3D12_RESOURCE_STATE_COPY_DEST));
-        m_pCommandList->CopyBufferRegion(pConstantBuffer, 0, pUploadBuffer, 0, constantBufferSize);
-        m_pCommandList->ResourceBarrier(
+        pCommandList->CopyBufferRegion(pConstantBuffer, 0, pUploadBuffer, 0, constantBufferSize);
+        pCommandList->ResourceBarrier(
             1, &CD3DX12_RESOURCE_BARRIER::Transition(pConstantBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
                                                      D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-        m_pCommandList->Close();
-
-        ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-        m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-        Fence();
-        WaitForFenceValue();
+        pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
     *ppOutBuffer = pConstantBuffer;
 
 lb_return:
-
-    pConstantBuffer->SetName(L"Mesh Constant Buffer");
-
     if (pUploadBuffer)
     {
-        pUploadBuffer->Release();
+        m_pResourceBinDefault->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
         pUploadBuffer = nullptr;
     }
     return hr;
@@ -432,18 +299,14 @@ void D3D12ResourceManager::UpdateTextureForWrite(ID3D12Resource *pDestTexResourc
 
     m_pD3DDevice->GetCopyableFootprints(&Desc, 0, Desc.MipLevels, 0, Footprint, Rows, RowSize, &TotalBytes);
 
-    if (FAILED(m_pCommandAllocator->Reset()))
-        __debugbreak();
+    CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
-    if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-        __debugbreak();
-
-    m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
                                                                              D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                                                                              D3D12_RESOURCE_STATE_COPY_DEST));
     for (DWORD i = 0; i < Desc.MipLevels; i++)
     {
-
         D3D12_TEXTURE_COPY_LOCATION destLocation = {};
         destLocation.PlacedFootprint = Footprint[i];
         destLocation.pResource = pDestTexResource;
@@ -455,18 +318,12 @@ void D3D12ResourceManager::UpdateTextureForWrite(ID3D12Resource *pDestTexResourc
         srcLocation.pResource = pSrcTexResource;
         srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 
-        m_pCommandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
+        pCommandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
     }
-    m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
                                                                              D3D12_RESOURCE_STATE_COPY_DEST,
                                                                              D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
-    m_pCommandList->Close();
-
-    ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-    m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    Fence();
-    WaitForFenceValue();
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
 
 HRESULT D3D12ResourceManager::CreateTextureFromMemory(ID3D12Resource **ppOutResource, UINT width, UINT height,
@@ -508,13 +365,7 @@ HRESULT D3D12ResourceManager::CreateTextureFromMemory(ID3D12Resource **ppOutReso
 
         UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexResource, 0, 1);
 
-        if (FAILED(m_pD3DDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-                IID_PPV_ARGS(&pUploadBuffer))))
-        {
-            __debugbreak();
-        }
+        pUploadBuffer = m_pResourceBinUpload->Alloc(uploadBufferSize);
 
         HRESULT hr = pUploadBuffer->Map(0, &writeRange, reinterpret_cast<void **>(&pMappedPtr));
         if (FAILED(hr))
@@ -533,8 +384,7 @@ HRESULT D3D12ResourceManager::CreateTextureFromMemory(ID3D12Resource **ppOutReso
 
         UpdateTextureForWrite(pTexResource, pUploadBuffer);
 
-        pUploadBuffer->Release();
-        pUploadBuffer = nullptr;
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
     }
 
     pTexResource->SetName(L"Texture");
@@ -564,44 +414,27 @@ BOOL D3D12ResourceManager::CreateTextureFromDDS(ID3D12Resource **ppOutResource, 
 
         goto lb_return;
     }
+
     textureDesc = pTexResource->GetDesc();
     UINT   subresoucesize = (UINT)subresourceData.size();
     UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexResource, 0, subresoucesize);
 
-    // Create the GPU upload buffer.
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-            IID_PPV_ARGS(&pUploadBuffer))))
-    {
-        __debugbreak();
-    }
+    pUploadBuffer = m_pResourceBinUpload->Alloc(uploadBufferSize);
 
-    if (FAILED(m_pCommandAllocator->Reset()))
-        __debugbreak();
-
-    if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-        __debugbreak();
-
-    m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
+    CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
                                                                              D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                                                                              D3D12_RESOURCE_STATE_COPY_DEST));
-    UpdateSubresources(m_pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData[0]);
-    m_pCommandList->ResourceBarrier(1,
+    UpdateSubresources(pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData[0]);
+    pCommandList->ResourceBarrier(1,
                                     &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
-
-    m_pCommandList->Close();
-
-    ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-    m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    Fence();
-    WaitForFenceValue();
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     if (pUploadBuffer)
     {
-        pUploadBuffer->Release();
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
         pUploadBuffer = nullptr;
     }
     *ppOutResource = pTexResource;
@@ -630,41 +463,22 @@ BOOL D3D12ResourceManager::CreateTextureFromWIC(ID3D12Resource **ppOutResource, 
     textureDesc = pTexResource->GetDesc();
     UINT   subresoucesize = 1; // WIC는 subresource 개수가 1개
     UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexResource, 0, subresoucesize);
+    pUploadBuffer = m_pResourceBinUpload->Alloc(uploadBufferSize);
 
-    // Create the GPU upload buffer.
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-            IID_PPV_ARGS(&pUploadBuffer))))
-    {
-        __debugbreak();
-    }
-
-    if (FAILED(m_pCommandAllocator->Reset()))
-        __debugbreak();
-
-    if (FAILED(m_pCommandList->Reset(m_pCommandAllocator, nullptr)))
-        __debugbreak();
-
-    m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
+    CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
                                                                              D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                                                                              D3D12_RESOURCE_STATE_COPY_DEST));
-    UpdateSubresources(m_pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData);
-    m_pCommandList->ResourceBarrier(1,
+    UpdateSubresources(pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData);
+    pCommandList->ResourceBarrier(1,
                                     &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
-
-    m_pCommandList->Close();
-
-    ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
-    m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    Fence();
-    WaitForFenceValue();
-
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+    
     if (pUploadBuffer)
     {
-        pUploadBuffer->Release();
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
         pUploadBuffer = nullptr;
     }
     *ppOutResource = pTexResource;
@@ -742,102 +556,19 @@ BOOL D3D12ResourceManager::CreateTexture(ID3D12Resource **ppOutResource, UINT wi
 
 D3D12ResourceManager::~D3D12ResourceManager() { Cleanup(); }
 
-void D3D12ResourceManager::CreateFence()
-{
-    // Create synchronization objects and wait until assets have been uploaded to
-    // the GPU.
-    if (FAILED(m_pD3DDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence))))
-    {
-        __debugbreak();
-    }
-
-    m_ui64FenceValue = 0;
-
-    // Create an event handle to use for frame synchronization.
-    m_hFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-}
-
-void D3D12ResourceManager::CleanupFence()
-{
-    if (m_hFenceEvent)
-    {
-        CloseHandle(m_hFenceEvent);
-        m_hFenceEvent = nullptr;
-    }
-    if (m_pFence)
-    {
-        m_pFence->Release();
-        m_pFence = nullptr;
-    }
-}
-
-void D3D12ResourceManager::CreateCommandList()
-{
-    if (FAILED(
-            m_pD3DDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCommandAllocator))))
-    {
-        __debugbreak();
-    }
-
-    // Create the command list.
-    if (FAILED(m_pD3DDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCommandAllocator, nullptr,
-                                               IID_PPV_ARGS(&m_pCommandList))))
-    {
-        __debugbreak();
-    }
-
-    // Command lists are created in the recording state, but there is nothing
-    // to record yet. The main loop expects it to be closed, so close it now.
-    m_pCommandList->Close();
-}
-
-void D3D12ResourceManager::CleanupCommandList()
-{
-    if (m_pCommandList)
-    {
-        m_pCommandList->Release();
-        m_pCommandList = nullptr;
-    }
-    if (m_pCommandAllocator)
-    {
-        m_pCommandAllocator->Release();
-        m_pCommandAllocator = nullptr;
-    }
-}
-
-UINT64 D3D12ResourceManager::Fence()
-{
-    m_ui64FenceValue++;
-    m_pCommandQueue->Signal(m_pFence, m_ui64FenceValue);
-    return m_ui64FenceValue;
-}
-
-void D3D12ResourceManager::WaitForFenceValue()
-{
-    const UINT64 ExpectedFenceValue = m_ui64FenceValue;
-
-    // Wait until the previous frame is finished.
-    if (m_pFence->GetCompletedValue() < ExpectedFenceValue)
-    {
-        m_pFence->SetEventOnCompletion(ExpectedFenceValue, m_hFenceEvent);
-        WaitForSingleObject(m_hFenceEvent, INFINITE);
-    }
-}
-
 void D3D12ResourceManager::Cleanup()
 {
-    WaitForFenceValue();
-
-    if (m_pCommandQueue)
+    if (m_pResourceBinDefault)
     {
-        m_pCommandQueue->Release();
-        m_pCommandQueue = nullptr;
+        delete m_pResourceBinDefault;
+        m_pResourceBinDefault = nullptr;
     }
-
-    CleanupCommandList();
-
-    CleanupFence();
-
+    if (m_pResourceBinUpload)
+    {
+        delete m_pResourceBinUpload;
+        m_pResourceBinUpload = nullptr;
+    }
+    
     // Pool
     for (UINT i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
     {
@@ -847,7 +578,7 @@ void D3D12ResourceManager::Cleanup()
             m_pDescriptorAllocators[i] = nullptr;
         }
     }
-    for (UINT i = 0; i < RTV_DESCRIPTOR_POOL_SIZE; i++)
+    for (UINT i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
     {
         if (m_pRTVDescriptorAllocators[i])
         {
@@ -855,9 +586,71 @@ void D3D12ResourceManager::Cleanup()
             m_pRTVDescriptorAllocators[i] = nullptr;
         }
     }
-    if (m_pDSVDescriptorAllocator)
+    for (UINT i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
     {
-        delete m_pDSVDescriptorAllocator;
-        m_pDSVDescriptorAllocator = nullptr;
+        if (m_pDSVDescriptorAllocators[i])
+        {
+            delete m_pDSVDescriptorAllocators[i];
+            m_pDSVDescriptorAllocators[i] = nullptr;
+        }
     }
+}
+
+DescriptorAllocator *D3D12ResourceManager::FindAllocator(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+    DescriptorAllocator **ppDescriptorAllocators = nullptr;
+
+    UINT descriptorCount;
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+        ppDescriptorAllocators = m_pDescriptorAllocators;
+        descriptorCount = m_maxDescriptorCount;
+        break;
+    case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+        ppDescriptorAllocators = m_pRTVDescriptorAllocators;
+        descriptorCount = DESCRIPTOR_COUNT_PER_RTV;
+        break;
+    case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+        ppDescriptorAllocators = m_pDSVDescriptorAllocators;
+        descriptorCount = DESCRIPTOR_COUNT_PER_DSV;
+        break;
+    default:
+        __debugbreak();
+        break;
+    }
+
+    DescriptorAllocator *pSelectedAllocator = nullptr;
+    UINT                 maxSize = 1;
+    UINT                 i = 0;
+    for (i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
+    {
+        if (size <= maxSize)
+        {
+            pSelectedAllocator = ppDescriptorAllocators[i];
+            break;
+        }
+        maxSize *= 2;
+    }
+
+    if (i == DESCRIPTOR_POOL_SIZE)
+    {
+        return nullptr;
+    }
+
+    if (!pSelectedAllocator)
+    {
+        pSelectedAllocator = new DescriptorAllocator;
+        pSelectedAllocator->Initialize(m_pD3DDevice, descriptorCount, maxSize, type);
+        ppDescriptorAllocators[i] = pSelectedAllocator;
+    }
+
+    return pSelectedAllocator;
+}
+
+void D3D12ResourceManager::UpdateManagedResource()
+{
+    ULONGLONG CurTick = GetTickCount64();
+    m_pResourceBinDefault->Update(CurTick);
+    m_pResourceBinUpload->Update(CurTick);
 }

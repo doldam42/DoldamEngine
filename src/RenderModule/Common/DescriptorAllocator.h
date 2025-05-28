@@ -1,6 +1,7 @@
 #pragma once
 
-#include "RenderThread.h"
+#include "RendererTypedef.h"
+
 class DescriptorAllocator {
   ID3D12Device5 *m_pD3DDevice = nullptr;
   UINT          *m_pIndexTable = nullptr;

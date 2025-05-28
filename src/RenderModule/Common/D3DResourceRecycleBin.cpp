@@ -7,7 +7,7 @@ D3DRESOURCE_LINK *D3DResourceRecycleBin::FindLink(UINT size)
 	UINT maxBufferCount = (UINT)_countof(m_pResourceLink); 
 	D3DRESOURCE_LINK *pSelectedLink = nullptr;
 
-	for (DWORD i = 0; i < maxBufferCount; i++)
+	for (UINT i = 0; i < maxBufferCount; i++)
     {
         D3DRESOURCE_LINK *pLink = m_pResourceLink + i;
         if (size <= pLink->size)
@@ -24,7 +24,7 @@ UINT D3DResourceRecycleBin::UpdatePendingResource(ULONGLONG curTick)
     //
     // 대기 프레임 수 만큼 경과한 리소스들을 대기 링크에서 빼내서  사이즈별 할당 링크로 이동
     //
-    DWORD resourceCount = 0; // 대기링크에 남아있는 리소스 개수
+    UINT resourceCount = 0; // 대기링크에 남아있는 리소스 개수
 
     SORT_LINK *pCur = m_pPendingResourceLinkHead;
     SORT_LINK *pNext = nullptr;
@@ -63,8 +63,8 @@ void D3DResourceRecycleBin::FreeAllExpiredD3DResource(ULONGLONG curTick)
 {
     const ULONGLONG FREE_EXPIRED_D3DRESOURCE_TICK = 1000 * 60; // 일단 등록후 1분 경과하면 제거
 
-    DWORD maxBufferCount = (DWORD)_countof(m_pResourceLink);
-    for (DWORD i = 0; i < maxBufferCount; i++)
+    UINT maxBufferCount = (UINT)_countof(m_pResourceLink);
+    for (UINT i = 0; i < maxBufferCount; i++)
     {
         D3DRESOURCE_LINK *pLink = m_pResourceLink + i;
         SORT_LINK        *pCur = pLink->pHead;
@@ -99,14 +99,14 @@ void D3DResourceRecycleBin::Cleanup()
     while (1)
     {
         // 대기 링크에 존재하는 리소스들을 모두 사이즈별 링크로 이동
-        DWORD dwPendingResourceCount = UpdatePendingResource(CurTick);
+        UINT dwPendingResourceCount = UpdatePendingResource(CurTick);
         if (!dwPendingResourceCount)
             break;
     }
 
     // 사이즈별 링크에 들어있는 리소스들을 모두 해제
-    DWORD dwMaxBufferCount = (DWORD)_countof(m_pResourceLink);
-    for (DWORD i = 0; i < dwMaxBufferCount; i++)
+    UINT dwMaxBufferCount = (UINT)_countof(m_pResourceLink);
+    for (UINT i = 0; i < dwMaxBufferCount; i++)
     {
         D3DRESOURCE_LINK *pLink = m_pResourceLink + i;
         while (pLink->pHead)
@@ -127,9 +127,9 @@ void D3DResourceRecycleBin::Initialize(ID3D12Device5 *pD3DDevice, D3D12_HEAP_TYP
 {
     m_pD3DDevice = pD3DDevice;
 
-    UINT maxBufferCount = (DWORD)_countof(m_pResourceLink);
+    UINT maxBufferCount = (UINT)_countof(m_pResourceLink);
     UINT bufferSize = 65536;
-    for (DWORD i = 0; i < bufferSize; i++)
+    for (UINT i = 0; i < bufferSize; i++)
     {
         m_pResourceLink[i].size = bufferSize;
         bufferSize *= 2;
@@ -162,7 +162,7 @@ ID3D12Resource* D3DResourceRecycleBin::Alloc(UINT Size)
         goto lb_return;
     }
 
-    DASSERT(pLink->size < Size);
+    DASSERT(Size <= pLink->size);
     
     CD3DX12_HEAP_PROPERTIES HeapProp = CD3DX12_HEAP_PROPERTIES(m_HeapType);
     CD3DX12_RESOURCE_DESC   BufferDesc = CD3DX12_RESOURCE_DESC::Buffer(pLink->size, m_ResourceFlags);
@@ -182,7 +182,7 @@ void D3DResourceRecycleBin::Free(ID3D12Resource *pResource, int iFrameLifeCount)
     D3D12_RESOURCE_DESC desc = pResource->GetDesc();
 
     D3DRESOURCE_ALLOC_DESC *pDesc = new D3DRESOURCE_ALLOC_DESC;
-    pDesc->size = (DWORD)desc.Width;
+    pDesc->size = (UINT)desc.Width;
     pDesc->Link.pItem = pDesc;
     pDesc->Link.pNext = nullptr;
     pDesc->Link.pPrev = nullptr;
