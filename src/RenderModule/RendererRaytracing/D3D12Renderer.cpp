@@ -192,7 +192,7 @@ lb_exit:
         pSwapChain1 = nullptr;
         m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
     }
-    
+
     m_pResourceManager = new D3D12ResourceManager;
     m_pResourceManager->Initialize(this, m_pCommandQueue, MAX_DESCRIPTOR_COUNT);
 
@@ -348,13 +348,36 @@ void D3D12Renderer::BeginRender()
 
     // Clear OIT Buffers
     {
+
         const UINT clearValue[] = {0, 0, 0, 0};
 
+        ID3D12Resource *pFragmentList = m_OITFragmentLists[m_curContextIndex].pFragmentList;
+        ID3D12Resource *pFragmentListFirstNodeAddress =
+            m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress;
+        ID3D12Resource *pReadbackBuffer = m_OITFragmentLists[m_curContextIndex].pReadbackBuffer;
+
+        UINT allocatedNodeCount = m_OITFragmentLists[m_curContextIndex].allocatedNodeCount;
+        WCHAR debugStr[64] = {L'\0'};
+        swprintf_s(debugStr, 64, L"Allocated Node Count: %d\n", allocatedNodeCount);
+        OutputDebugStringW(debugStr);
+
+        CD3DX12_RESOURCE_BARRIER readbackBarriers[] = {
+            CD3DX12_RESOURCE_BARRIER::Transition(pFragmentList, D3D12_RESOURCE_STATE_COMMON,
+                                                 D3D12_RESOURCE_STATE_COPY_SOURCE),
+            CD3DX12_RESOURCE_BARRIER::Transition(pReadbackBuffer, D3D12_RESOURCE_STATE_COMMON,
+                                                 D3D12_RESOURCE_STATE_COPY_DEST)};
+        pCommandList->ResourceBarrier(_countof(readbackBarriers), readbackBarriers);
+
+        pCommandList->CopyBufferRegion(pReadbackBuffer, 0, pFragmentList,
+                                       m_maxFragmentListNodeCount * sizeof(FragmentListNode), sizeof(UINT));
+
         CD3DX12_RESOURCE_BARRIER barriers[] = {
-            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentList,
-                                                 D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST),
-            CD3DX12_RESOURCE_BARRIER::Transition(m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
-                                                 D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)};
+            CD3DX12_RESOURCE_BARRIER::Transition(pFragmentList, D3D12_RESOURCE_STATE_COPY_SOURCE,
+                                                 D3D12_RESOURCE_STATE_COPY_DEST),
+            CD3DX12_RESOURCE_BARRIER::Transition(pFragmentListFirstNodeAddress, D3D12_RESOURCE_STATE_COMMON,
+                                                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
+            CD3DX12_RESOURCE_BARRIER::Transition(pReadbackBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
+                                                 D3D12_RESOURCE_STATE_COMMON)};
         pCommandList->ResourceBarrier(_countof(barriers), barriers);
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(
@@ -363,17 +386,15 @@ void D3D12Renderer::BeginRender()
 
         ID3D12DescriptorHeap *heaps[] = {m_ppDescriptorPool[m_curContextIndex][0]->GetDescriptorHeap()};
         pCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
-        pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle,
-                                                   m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress,
-                                                   clearValue, 0, nullptr);
+        pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle, pFragmentListFirstNodeAddress, clearValue, 0,
+                                                   nullptr);
 
-        pCommandList->CopyBufferRegion(m_OITFragmentLists[m_curContextIndex].pFragmentList,
-                                       m_maxFragmentListNodeCount * sizeof(FragmentListNode),
+        pCommandList->CopyBufferRegion(pFragmentList, m_maxFragmentListNodeCount * sizeof(FragmentListNode),
                                        m_pUAVCounterClearResource, 0, sizeof(UINT));
 
-        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                             m_OITFragmentLists[m_curContextIndex].pFragmentList,
-                                             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pFragmentList,
+                                                                               D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                               D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
     }
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
@@ -398,8 +419,8 @@ void D3D12Renderer::EndRender()
     D3D12_CPU_DESCRIPTOR_HANDLE   rtvs[] = {rtvHandle, rtvHandle.Offset(m_rtvDescriptorSize),
                                             rtvHandle.Offset(m_rtvDescriptorSize)};
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_depthStencilDescriptorTables[m_uiFrameIndex].cpuHandle);
-    m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, &dsvHandle, &m_Viewport, &m_ScissorRect,
-                                _countof(rtvs), DRAW_PASS_TYPE_DEFERRED);
+    m_ppRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, rtvs, &dsvHandle, &m_Viewport,
+                                &m_ScissorRect, _countof(rtvs), DRAW_PASS_TYPE_DEFERRED);
 #endif
 
     // DrawLine Debug
@@ -479,9 +500,9 @@ void D3D12Renderer::EndRender()
 
     // Resolve OIT
     {
-        ID3D12DescriptorHeap *pHeaps[] = {GetDescriptorPool(0)->GetDescriptorHeap()}; 
+        ID3D12DescriptorHeap         *pHeaps[] = {GetDescriptorPool(0)->GetDescriptorHeap()};
         CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GetOITDescriptorHandle(0));
-        gpuHandle.Offset(m_srvDescriptorSize, 2);  // | UAV0 | UAV1 | (SRV0) | SRV1 |
+        gpuHandle.Offset(m_srvDescriptorSize, 2); // | UAV0 | UAV1 | (SRV0) | SRV1 |
 
         pCommandList->RSSetViewports(1, &m_Viewport);
         pCommandList->RSSetScissorRects(1, &m_ScissorRect);
@@ -489,7 +510,7 @@ void D3D12Renderer::EndRender()
         pCommandList->SetPipelineState(Graphics::OITResolvePSO);
 
         pCommandList->SetDescriptorHeaps(1, pHeaps);
-        
+
         pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
 
         pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -547,6 +568,14 @@ void D3D12Renderer::Present()
     // prepare next frame
     UINT nextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     WaitForFenceValue(m_pui64LastFenceValue[nextContextIndex]);
+
+    UINT *pSysMem = nullptr;
+    m_OITFragmentLists[nextContextIndex].pReadbackBuffer->Map(0, nullptr, reinterpret_cast<void **>(&pSysMem));
+    if (pSysMem)
+    {
+        m_OITFragmentLists[nextContextIndex].allocatedNodeCount = *pSysMem;
+        m_OITFragmentLists[nextContextIndex].pReadbackBuffer->Unmap(0, nullptr);
+    }
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -712,8 +741,7 @@ void D3D12Renderer::RenderMeshObject(IRenderMesh *pMeshObj, const Matrix *pWorld
 }
 
 void D3D12Renderer::RenderCharacterObject(IRenderMesh *pCharObj, const Matrix *pWorldMat, IRenderMaterial **ppMaterials,
-                                          UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount,
-                                          bool isWired)
+                                          UINT numMaterial, Keyframe **ppKeyframes, UINT frameCount, bool isWired)
 {
 #ifdef USE_DEFERRED_RENDERING
     RENDER_ITEM item = {};
@@ -1465,9 +1493,9 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
     {
         __debugbreak();
     }
-    
+
     UINT *pSysMem = nullptr;
-    m_pUAVCounterClearResource->Map(0, nullptr, reinterpret_cast<void **>(pSysMem));
+    m_pUAVCounterClearResource->Map(0, nullptr, reinterpret_cast<void **>(&pSysMem));
     if (pSysMem)
     {
         UINT clearValue = 0;
@@ -1480,6 +1508,7 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
     {
         ID3D12Resource *pFragmentListNodeFirstAddress = nullptr;
         ID3D12Resource *pFragmentListNode = nullptr;
+        ID3D12Resource *pReadbackBuffer = nullptr;
 
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -1490,9 +1519,9 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
             __debugbreak();
         }
 
-        //UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height);
-        UINT maxFragmentListNodeCount = 4096 * 25 * 16; // 16MB
-        UINT maxFragmentListbufferSizeInByte = maxFragmentListNodeCount * sizeof(FragmentListNode);  // 192MB
+        // UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height);
+        UINT maxFragmentListNodeCount = 4096 * 25 * 16;                                             // 16MB
+        UINT maxFragmentListbufferSizeInByte = maxFragmentListNodeCount * sizeof(FragmentListNode); // 192MB
         if (FAILED(m_pD3DDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Buffer(maxFragmentListbufferSizeInByte + sizeof(UINT),
@@ -1502,6 +1531,14 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
             __debugbreak();
         }
         m_maxFragmentListNodeCount = maxFragmentListNodeCount;
+
+        if (FAILED(m_pD3DDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK), D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(UINT)), D3D12_RESOURCE_STATE_COMMON, nullptr,
+                IID_PPV_ARGS(&pReadbackBuffer))))
+        {
+            __debugbreak();
+        }
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_OITFragmentLists[n].fragmentListDescriptorTable.cpuHandle);
 
@@ -1540,6 +1577,8 @@ void D3D12Renderer::CreateOITFragmentListBuffers()
 
         m_OITFragmentLists[n].pFragmentList = pFragmentListNode;
         m_OITFragmentLists[n].pFragmentListFirstNodeAddress = pFragmentListNodeFirstAddress;
+        m_OITFragmentLists[n].pReadbackBuffer = pReadbackBuffer;
+        m_OITFragmentLists[n].allocatedNodeCount = 0;
     }
 }
 
@@ -1562,6 +1601,11 @@ void D3D12Renderer::CleanupOITFragmentListBuffers()
         {
             m_OITFragmentLists[n].pFragmentListFirstNodeAddress->Release();
             m_OITFragmentLists[n].pFragmentListFirstNodeAddress = nullptr;
+        }
+        if (m_OITFragmentLists[n].pReadbackBuffer)
+        {
+            m_OITFragmentLists[n].pReadbackBuffer->Release();
+            m_OITFragmentLists[n].pReadbackBuffer = nullptr;
         }
     }
 }

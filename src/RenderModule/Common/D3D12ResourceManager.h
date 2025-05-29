@@ -53,6 +53,11 @@ class D3D12ResourceManager
     HRESULT CreateConstantBuffer(ID3D12Resource **ppOutBuffer, UINT64 sizePerCB, const void *pInitData);
     void    UpdateTextureForWrite(ID3D12Resource *pDestTexResource, ID3D12Resource *pSrcTexResource);
 
+    void UpdateTextureWithImage(ID3D12Resource *pDestTexResource, const BYTE *pSrcBits, UINT srcWidth, UINT srcHeight);
+
+    void UpdateBuffer(ID3D12Resource *pDestBuffer, const void *pData, UINT sizeInBytes);
+
+
     HRESULT CreateTextureFromMemory(ID3D12Resource **ppOutResource, UINT width, UINT height, DXGI_FORMAT format,
                                     const BYTE *pInitImage);
 

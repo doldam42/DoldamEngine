@@ -181,7 +181,7 @@ HRESULT D3D12ResourceManager::CreateIndexBuffer(ID3D12Resource         **ppOutBu
 
     // create vertexbuffer for rendering
     pIndexBuffer = m_pResourceBinDefault->Alloc(indexBufferSize);
-    
+
     if (pInitData)
     {
         CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
@@ -203,12 +203,12 @@ HRESULT D3D12ResourceManager::CreateIndexBuffer(ID3D12Resource         **ppOutBu
         pUploadBuffer->Unmap(0, nullptr);
 
         pCommandList->ResourceBarrier(1,
-                                        &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer, D3D12_RESOURCE_STATE_COMMON,
-                                                                              D3D12_RESOURCE_STATE_COPY_DEST));
+                                      &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer, D3D12_RESOURCE_STATE_COMMON,
+                                                                            D3D12_RESOURCE_STATE_COPY_DEST));
         pCommandList->CopyBufferRegion(pIndexBuffer, 0, pUploadBuffer, 0, indexBufferSize);
         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pIndexBuffer,
-                                                                                 D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                                 D3D12_RESOURCE_STATE_INDEX_BUFFER));
+                                                                               D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                               D3D12_RESOURCE_STATE_INDEX_BUFFER));
         pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
@@ -265,8 +265,8 @@ HRESULT D3D12ResourceManager::CreateConstantBuffer(ID3D12Resource **ppOutBuffer,
         pUploadBuffer->Unmap(0, nullptr);
 
         pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pConstantBuffer,
-                                                                                 D3D12_RESOURCE_STATE_COMMON,
-                                                                                 D3D12_RESOURCE_STATE_COPY_DEST));
+                                                                               D3D12_RESOURCE_STATE_COMMON,
+                                                                               D3D12_RESOURCE_STATE_COPY_DEST));
         pCommandList->CopyBufferRegion(pConstantBuffer, 0, pUploadBuffer, 0, constantBufferSize);
         pCommandList->ResourceBarrier(
             1, &CD3DX12_RESOURCE_BARRIER::Transition(pConstantBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
@@ -303,8 +303,8 @@ void D3D12ResourceManager::UpdateTextureForWrite(ID3D12Resource *pDestTexResourc
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
-                                                                             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                                                                             D3D12_RESOURCE_STATE_COPY_DEST));
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                                                                           D3D12_RESOURCE_STATE_COPY_DEST));
     for (DWORD i = 0; i < Desc.MipLevels; i++)
     {
         D3D12_TEXTURE_COPY_LOCATION destLocation = {};
@@ -321,9 +321,89 @@ void D3D12ResourceManager::UpdateTextureForWrite(ID3D12Resource *pDestTexResourc
         pCommandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
     }
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestTexResource,
-                                                                             D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+                                                                           D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
+}
+
+void D3D12ResourceManager::UpdateTextureWithImage(ID3D12Resource *pDestTexResource, const BYTE *pSrcBits, UINT srcWidth,
+                                                  UINT srcHeight)
+{
+    D3D12_RESOURCE_DESC desc = pDestTexResource->GetDesc();
+    if (srcWidth > desc.Width)
+    {
+        __debugbreak();
+    }
+    if (srcHeight > desc.Height)
+    {
+        __debugbreak();
+    }
+
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT Footprint;
+
+    UINT   Rows = 0;
+    UINT64 RowSize = 0;
+    UINT64 TotalBytes = 0;
+
+    m_pD3DDevice->GetCopyableFootprints(&desc, 0, 1, 0, &Footprint, &Rows, &RowSize, &TotalBytes);
+
+    BYTE         *pMappedPtr = nullptr;
+    CD3DX12_RANGE writeRange(0, 0);
+    ID3D12Resource *pUploadBuffer = m_pResourceBinUpload->Alloc(TotalBytes);
+    HRESULT hr = pUploadBuffer->Map(0, &writeRange, reinterpret_cast<void **>(&pMappedPtr));
+    if (FAILED(hr))
+        __debugbreak();
+
+    const BYTE *pSrc = pSrcBits;
+    BYTE       *pDest = pMappedPtr;
+    for (UINT y = 0; y < srcHeight; y++)
+    {
+        memcpy(pDest, pSrc, srcWidth * 4);
+        pSrc += (srcWidth * 4);
+        pDest += Footprint.Footprint.RowPitch;
+    }
+    
+    CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    UpdateTexture(m_pD3DDevice, pCommandList, pDestTexResource, pUploadBuffer);
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+
+    m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
+}
+
+void D3D12ResourceManager::UpdateBuffer(ID3D12Resource *pDestBuffer, const void *pData, UINT sizeInBytes)
+{
+    HRESULT hr = S_OK;
+
+    DASSERT(pData);
+
+    ID3D12Resource *pUploadBuffer = m_pResourceBinUpload->Alloc(sizeInBytes);
+
+    // Copy the index data to the index buffer.
+    UINT8        *pDataBegin = nullptr;
+    CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+
+    hr = pUploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pDataBegin));
+
+    DASSERT(SUCCEEDED(hr));
+
+    memcpy(pDataBegin, pData, sizeInBytes);
+    pUploadBuffer->Unmap(0, nullptr);
+
+    CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
+    ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestBuffer, D3D12_RESOURCE_STATE_COMMON,
+                                                                           D3D12_RESOURCE_STATE_COPY_DEST));
+    pCommandList->CopyBufferRegion(pDestBuffer, 0, pUploadBuffer, 0, sizeInBytes);
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                           D3D12_RESOURCE_STATE_COMMON));
+    pCommandListPool->CloseAndExecute(m_pCommandQueue);
+
+    if (pUploadBuffer)
+    {
+        m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
+        pUploadBuffer = nullptr;
+    }
 }
 
 HRESULT D3D12ResourceManager::CreateTextureFromMemory(ID3D12Resource **ppOutResource, UINT width, UINT height,
@@ -424,12 +504,11 @@ BOOL D3D12ResourceManager::CreateTextureFromDDS(ID3D12Resource **ppOutResource, 
     CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
-                                                                             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                                                                             D3D12_RESOURCE_STATE_COPY_DEST));
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                                                                           D3D12_RESOURCE_STATE_COPY_DEST));
     UpdateSubresources(pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData[0]);
-    pCommandList->ResourceBarrier(1,
-                                    &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                          D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 
     if (pUploadBuffer)
@@ -468,14 +547,13 @@ BOOL D3D12ResourceManager::CreateTextureFromWIC(ID3D12Resource **ppOutResource, 
     CommandListPool            *pCommandListPool = m_pRenderer->GetCommandListPool(0);
     ID3D12GraphicsCommandList4 *pCommandList = pCommandListPool->GetCurrentCommandList();
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource,
-                                                                             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                                                                             D3D12_RESOURCE_STATE_COPY_DEST));
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                                                                           D3D12_RESOURCE_STATE_COPY_DEST));
     UpdateSubresources(pCommandList, pTexResource, pUploadBuffer, 0, 0, subresoucesize, &subresourceData);
-    pCommandList->ResourceBarrier(1,
-                                    &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                          D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+    pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexResource, D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                           D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
-    
+
     if (pUploadBuffer)
     {
         m_pResourceBinUpload->Free(pUploadBuffer, MAX_PENDING_FRAME_COUNT);
@@ -568,7 +646,7 @@ void D3D12ResourceManager::Cleanup()
         delete m_pResourceBinUpload;
         m_pResourceBinUpload = nullptr;
     }
-    
+
     // Pool
     for (UINT i = 0; i < DESCRIPTOR_POOL_SIZE; i++)
     {
@@ -635,6 +713,7 @@ DescriptorAllocator *D3D12ResourceManager::FindAllocator(UINT size, D3D12_DESCRI
 
     if (i == DESCRIPTOR_POOL_SIZE)
     {
+        DASSERT(FALSE);
         return nullptr;
     }
 

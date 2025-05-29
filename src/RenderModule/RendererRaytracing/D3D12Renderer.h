@@ -53,8 +53,11 @@ struct OITFragmentList
 {
     ID3D12Resource *pFragmentListFirstNodeAddress;
     ID3D12Resource *pFragmentList;
+    ID3D12Resource *pReadbackBuffer;
 
     DESCRIPTOR_HANDLE fragmentListDescriptorTable;
+
+    UINT allocatedNodeCount;
 };
 
 struct FragmentListNode
