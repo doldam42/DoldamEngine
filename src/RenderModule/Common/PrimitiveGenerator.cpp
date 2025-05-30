@@ -6,6 +6,8 @@
 #include "../RendererD3D12/D3D12Renderer.h"
 #endif
 
+#include "D3D12ResourceManager.h"
+
 #include "PrimitiveGenerator.h"
 
 using namespace std;
@@ -60,6 +62,49 @@ static void CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertices, 
         v1.tangent = tangent;
         v2.tangent = tangent;
     }
+}
+
+const BASIC_MESH &PrimitiveGenerator::GetQuadMesh()
+{
+    static BASIC_MESH quadMesh;
+
+    if (quadMesh.numIndices == 0) // Not Initialized
+    {
+        ID3D12Device5        *pD3DDeivce = g_pRenderer->GetD3DDevice();
+        D3D12ResourceManager *pResourceManager = g_pRenderer->GetResourceManager();
+
+        UINT srvDescriptorSize = g_pRenderer->GetSRVDescriptorSize();
+
+        // Create the vertex buffer.
+        // Define the geometry for a triangle.
+        SimpleVertex Vertices[] = {
+            {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+            {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+            {{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+            {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        };
+
+        uint32_t Indices[] = {0, 1, 2, 0, 2, 3};
+
+        const UINT VertexBufferSize = sizeof(Vertices);
+
+        if (FAILED(pResourceManager->CreateVertexBuffer(&quadMesh.pVertexBuffer, &quadMesh.VertexBufferView,
+                                                        sizeof(SimpleVertex), (UINT)_countof(Vertices), Vertices)))
+        {
+            __debugbreak();
+            return;
+        }
+        if (FAILED(pResourceManager->CreateIndexBuffer(&quadMesh.pIndexBuffer, &quadMesh.IndexBufferView,
+                                                       (UINT)_countof(Indices), Indices)))
+        {
+            __debugbreak();
+            return;
+        }
+
+        quadMesh.numIndices = (UINT)_countof(Indices);
+    }
+
+    return quadMesh;
 }
 
 IRenderMesh *PrimitiveGenerator::MakeSquare(const float scale)

@@ -185,6 +185,9 @@
     <ClInclude Include="..\Common\D3DResourceRecycleBin.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\OITManager.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DUtil.cpp">
@@ -299,6 +302,9 @@
     </ClCompile>
     <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="..\Common\D3DResourceRecycleBin.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\OITManager.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
