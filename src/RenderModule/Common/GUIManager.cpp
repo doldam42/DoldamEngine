@@ -147,11 +147,12 @@ void GUIManager::BeginRender()
     //ImGui::ShowDemoWindow();
 }
 
-void GUIManager::EndRender(ID3D12GraphicsCommandList *pCommandList)
+void GUIManager::EndRender(ID3D12GraphicsCommandList *pCommandList, D3D12_CPU_DESCRIPTOR_HANDLE renderTarget)
 {
     // Rendering
     ImGui::Render();
 
+    pCommandList->OMSetRenderTargets(1, &renderTarget, FALSE, nullptr);
     pCommandList->SetDescriptorHeaps(1, &m_pDescriptorHeap);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), pCommandList);
 

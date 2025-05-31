@@ -2,21 +2,20 @@
 
 #include "DescriptorAllocator.h"
 
-//
-//struct OITFragmentList
-//{
-//    ID3D12Resource *pFragmentListFirstNodeAddress;
-//    ID3D12Resource *pFragmentList;
-//    DESCRIPTOR_HANDLE fragmentListDescriptorTable;
-//    UINT allocatedNodeCount;
-//};
-//
-//struct FragmentListNode
-//{
-//    UINT  next;
-//    float depth;
-//    UINT  color;
-//};
+struct OITFragmentList
+{
+    ID3D12Resource *pFragmentListFirstNodeAddress;
+    ID3D12Resource *pFragmentList;
+    DESCRIPTOR_HANDLE fragmentListDescriptorTable;
+    UINT allocatedNodeCount;
+};
+
+struct FragmentListNode
+{
+    UINT  next;
+    float depth;
+    UINT  color;
+};
 
 enum OIT_DESCRIPTOR_INDEX
 {
@@ -45,6 +44,7 @@ class OITManager
     UINT m_srvDescriptorSize = 0;
 
     void CreatDescriptorTables();
+    void CreateUAVCounterClearResource();
 
     void CreateBuffers(UINT width, UINT height);
     void CleanupBuffers();

@@ -70,10 +70,7 @@ const BASIC_MESH &PrimitiveGenerator::GetQuadMesh()
 
     if (quadMesh.numIndices == 0) // Not Initialized
     {
-        ID3D12Device5        *pD3DDeivce = g_pRenderer->GetD3DDevice();
         D3D12ResourceManager *pResourceManager = g_pRenderer->GetResourceManager();
-
-        UINT srvDescriptorSize = g_pRenderer->GetSRVDescriptorSize();
 
         // Create the vertex buffer.
         // Define the geometry for a triangle.
@@ -86,19 +83,15 @@ const BASIC_MESH &PrimitiveGenerator::GetQuadMesh()
 
         uint32_t Indices[] = {0, 1, 2, 0, 2, 3};
 
-        const UINT VertexBufferSize = sizeof(Vertices);
-
         if (FAILED(pResourceManager->CreateVertexBuffer(&quadMesh.pVertexBuffer, &quadMesh.VertexBufferView,
                                                         sizeof(SimpleVertex), (UINT)_countof(Vertices), Vertices)))
         {
             __debugbreak();
-            return;
         }
         if (FAILED(pResourceManager->CreateIndexBuffer(&quadMesh.pIndexBuffer, &quadMesh.IndexBufferView,
                                                        (UINT)_countof(Indices), Indices)))
         {
             __debugbreak();
-            return;
         }
 
         quadMesh.numIndices = (UINT)_countof(Indices);

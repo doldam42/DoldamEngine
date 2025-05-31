@@ -26,6 +26,27 @@ void OITManager::CreatDescriptorTables()
     }
 }
 
+void OITManager::CreateUAVCounterClearResource() 
+{
+    if (FAILED(m_pD3DDevice->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(sizeof(UINT), D3D12_RESOURCE_FLAG_NONE), D3D12_RESOURCE_STATE_COPY_SOURCE,
+            nullptr, IID_PPV_ARGS(&m_pUAVCounterClearResource))))
+    {
+        __debugbreak();
+    }
+
+    UINT *pSysMem = nullptr;
+    HRESULT hr = m_pUAVCounterClearResource->Map(0, nullptr, reinterpret_cast<void **>(&pSysMem));
+    if (SUCCEEDED(hr))
+    {
+        UINT clearValue = 0;
+        memcpy(pSysMem, &clearValue, sizeof(UINT));
+        m_pUAVCounterClearResource->Unmap(0, nullptr);
+        pSysMem = nullptr;
+    }
+}
+
 void OITManager::CreateBuffers(UINT width, UINT height)
 {
     for (UINT n = 0; n < MAX_PENDING_COUNT; n++)
@@ -115,6 +136,12 @@ void OITManager::CleanupBuffers()
 
 void OITManager::Cleanup() 
 {
+    if (m_pUAVCounterClearResource)
+    {
+        m_pUAVCounterClearResource->Release();
+        m_pUAVCounterClearResource = nullptr;
+    }
+
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
     for (UINT n = 0; n < MAX_PENDING_COUNT; n++)
     {
@@ -162,6 +189,7 @@ BOOL OITManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCo
 
     CreatDescriptorTables();
     CreateBuffers(width, height);
+    CreateUAVCounterClearResource();
 
     // Create Readback Buffers
     for (UINT n = 0; n < MAX_PENDING_COUNT; n++)
@@ -174,6 +202,8 @@ BOOL OITManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCo
             __debugbreak();
         }
     }
+
+    return TRUE;
 }
 
 void OITManager::BeginRender(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
@@ -220,8 +250,9 @@ void OITManager::BeginRender(UINT threadIndex, ID3D12GraphicsCommandList *pComma
 
     ID3D12DescriptorHeap *heaps[] = {pDescriptorPool->GetDescriptorHeap()};
     pCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
-    pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle, pFragmentListFirstNodeAddress, clearValue, 0,
-                                               nullptr);
+    pCommandList->ClearUnorderedAccessViewUint(
+        gpuHandle, m_OITFragmentLists[m_curContextIndex].fragmentListDescriptorTable.cpuHandle,
+        pFragmentListFirstNodeAddress, clearValue, 0, nullptr);
 
     pCommandList->CopyBufferRegion(pFragmentList, m_maxFragmentListNodeCount * sizeof(FragmentListNode),
                                    m_pUAVCounterClearResource, 0, sizeof(UINT));
@@ -234,6 +265,15 @@ void OITManager::BeginRender(UINT threadIndex, ID3D12GraphicsCommandList *pComma
 void OITManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_VIEWPORT *pViewport,
                             D3D12_RECT *pScissorRect, D3D12_CPU_DESCRIPTOR_HANDLE renderTarget)
 {
+    ID3D12Resource *pFragmentList = m_OITFragmentLists[m_curContextIndex].pFragmentList;
+    ID3D12Resource *pFragmentListFirstNodeAddress = m_OITFragmentLists[m_curContextIndex].pFragmentListFirstNodeAddress;
+    CD3DX12_RESOURCE_BARRIER barriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pFragmentList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                                             D3D12_RESOURCE_STATE_COMMON),
+        CD3DX12_RESOURCE_BARRIER::Transition(pFragmentListFirstNodeAddress, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                                             D3D12_RESOURCE_STATE_COMMON)};
+    pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
     DescriptorPool *pDescriptorPool = m_pRenderer->GetDescriptorPool(threadIndex);
     
     // | OIT_DESCRIPTOR_INDEX_FIRST_NODE_ADDRESS_SRV | OIT_DESCRIPTOR_INDEX_FRAGMENT_LIST_NODE_SRV |
@@ -244,7 +284,7 @@ void OITManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pComman
     CD3DX12_CPU_DESCRIPTOR_HANDLE srcHandle(m_OITFragmentLists[m_curContextIndex].fragmentListDescriptorTable.cpuHandle,
                                             m_srvDescriptorSize, 2);
 
-    m_pD3DDevice->CopyDescriptorsSimple(OIT_DESCRIPTOR_COUNT, cpuHandle, srcHandle,
+    m_pD3DDevice->CopyDescriptorsSimple(2, cpuHandle, srcHandle,
                                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     ID3D12DescriptorHeap *pHeaps[] = {pDescriptorPool->GetDescriptorHeap()};
@@ -259,7 +299,7 @@ void OITManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pComman
 
     pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+    
     const BASIC_MESH &quadMesh = PrimitiveGenerator::GetQuadMesh();
     pCommandList->IASetVertexBuffers(0, 1, &quadMesh.VertexBufferView);
     pCommandList->IASetIndexBuffer(&quadMesh.IndexBufferView);

@@ -44,7 +44,7 @@ class GUIManager : public IRenderGUI
     ULONG __stdcall AddRef(void) override;
     ULONG __stdcall Release(void) override;
     void BeginRender();
-    void EndRender(ID3D12GraphicsCommandList *pCommandList);
+    void EndRender(ID3D12GraphicsCommandList *pCommandList, D3D12_CPU_DESCRIPTOR_HANDLE renderTarget);
 
     GUIManager() = default;
     ~GUIManager();
