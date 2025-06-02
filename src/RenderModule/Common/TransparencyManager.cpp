@@ -11,6 +11,7 @@
 #include "DescriptorAllocator.h"
 #include "DescriptorPool.h"
 #include "D3D12ResourceManager.h"
+#include "D3DResourceRecycleBin.h"
 
 #include "TransparencyManager.h"
 
@@ -57,14 +58,15 @@ void TransparencyManager::CreateBuffers(UINT width, UINT height)
     }
 
     UINT maxFragmentListbufferSizeInByte = m_maxFragmentListNodeCount * sizeof(FragmentListNode); // 192MB
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
+    pFragmentListNode = m_pFragmentListRecycleBin->Alloc(maxFragmentListbufferSizeInByte);
+    /*if (FAILED(m_pD3DDevice->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(maxFragmentListbufferSizeInByte + sizeof(UINT),
                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
             D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNode))))
     {
         __debugbreak();
-    }
+    }*/
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_descriptorTable.cpuHandle);
 
@@ -110,7 +112,7 @@ void TransparencyManager::CleanupBuffers()
 { 
     if (m_pFragmentList)
     {   
-        m_pFragmentList->Release();
+        m_pFragmentListRecycleBin->Free(m_pFragmentList, MAX_PENDING_FRAME_COUNT);
         m_pFragmentList = nullptr;
     }
     if (m_pFragmentListFirstNodeAddress)
@@ -196,6 +198,12 @@ void TransparencyManager::Cleanup()
     }
 
     CleanupBuffers();
+
+    if (m_pFragmentListRecycleBin)
+    {
+        delete m_pFragmentListRecycleBin;
+        m_pFragmentListRecycleBin = nullptr;
+    }
 }
 
 void TransparencyManager::OnUpdateWindowSize(UINT width, UINT height) 
@@ -227,6 +235,11 @@ BOOL TransparencyManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentL
 
     m_maxFragmentListNodeCount = maxFragmentListNodeCount;
     m_srvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    m_pFragmentListRecycleBin = new D3DResourceRecycleBin;
+    m_pFragmentListRecycleBin->Initialize(m_pD3DDevice, D3D12_HEAP_TYPE_DEFAULT,
+                                          D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+                                          D3D12_RESOURCE_STATE_COMMON, L"FragmentList");
 
     CreatDescriptorTable();
     CreateBuffers(width, height);
@@ -295,6 +308,9 @@ void TransparencyManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList
 
 void TransparencyManager::EndRender()
 {
+    ULONGLONG CurTick = GetTickCount64();
+    m_pFragmentListRecycleBin->Update(CurTick);
+
     // prepare next frame
     UINT nextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
 

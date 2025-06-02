@@ -12,10 +12,13 @@ enum OIT_DESCRIPTOR_INDEX
 };
 
 class D3D12Renderer;
+class D3DResourceRecycleBin;
 class TransparencyManager
 {
     D3D12Renderer *m_pRenderer = nullptr;
     ID3D12Device5 *m_pD3DDevice = nullptr;
+
+    D3DResourceRecycleBin *m_pFragmentListRecycleBin = nullptr;
 
     ID3D12Resource *m_pUAVCounterClearResource = nullptr;
     ID3D12Resource *m_pReadbackBuffers[MAX_PENDING_FRAME_COUNT] = {nullptr};
