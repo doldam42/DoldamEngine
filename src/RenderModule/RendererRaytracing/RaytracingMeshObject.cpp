@@ -17,6 +17,8 @@
 
 #include "RaytracingManager.h"
 
+#include "TransparencyManager.h"
+
 #include "RaytracingMeshObject.h"
 
 // 레이트레이싱 SRV 디스크립터 구조
@@ -180,7 +182,7 @@ void RaytracingMeshObject::DrawWithMaterial(UINT threadIndex, ID3D12GraphicsComm
 
     if (passType == DRAW_PASS_TYPE_TRANSPARENCY)
     {
-        pCommandList->SetGraphicsRootDescriptorTable(3, m_pRenderer->GetOITDescriptorHandle(threadIndex));
+        m_pRenderer->GetOITManager()->SetRootDescriptorTable(threadIndex, pCommandList);
     }
 
     for (UINT i = 0; i < m_faceGroupCount; i++)

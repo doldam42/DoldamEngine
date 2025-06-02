@@ -179,7 +179,7 @@
     <ClInclude Include="..\Common\D3DResourceRecycleBin.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\OITManager.h">
+    <ClInclude Include="..\Common\TransparencyManager.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -298,7 +298,7 @@
     <ClCompile Include="..\Common\D3DResourceRecycleBin.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\OITManager.cpp">
+    <ClCompile Include="..\Common\TransparencyManager.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

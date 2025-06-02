@@ -22,6 +22,7 @@
 
 #include "DebugLine.h"
 
+#include "TransparencyManager.h"
 #include "PostProcessor.h"
 
 #include "GUIManager.h"
@@ -261,6 +262,9 @@ lb_exit:
     m_pDebugLine = new DebugLine;
     m_pDebugLine->Initialize(this, 1024);
 
+    m_pOITManager = new TransparencyManager;
+    m_pOITManager->Initialize(this, 4096 * 25 * 16, backBufferWidth, backBufferHeight);
+
     m_pRaytracingManager = new RaytracingManager;
 
     CommandListPool            *pCommandListPool = GetCommandListPool(0);
@@ -346,50 +350,7 @@ void D3D12Renderer::BeginRender()
     D3D12_CPU_DESCRIPTOR_HANDLE backBufferRTV = GetRTVHandle(RENDER_TARGET_TYPE_BACK);
     pCommandList->ClearRenderTargetView(backBufferRTV, m_clearColor, 0, nullptr);
 
-    // Clear OIT Buffers
-    {
-
-        const UINT      clearValue[] = {0, 0, 0, 0};
-        ID3D12Resource *pReadbackBuffer = m_pReadbackBuffers[m_curContextIndex];
-
-        WCHAR debugStr[64] = {L'\0'};
-        swprintf_s(debugStr, 64, L"Allocated Node Count: %d\n", m_allocatedNodeCount);
-        OutputDebugStringW(debugStr);
-
-        CD3DX12_RESOURCE_BARRIER readbackBarriers[] = {
-            CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentList, D3D12_RESOURCE_STATE_COMMON,
-                                                 D3D12_RESOURCE_STATE_COPY_SOURCE),
-            CD3DX12_RESOURCE_BARRIER::Transition(pReadbackBuffer, D3D12_RESOURCE_STATE_COMMON,
-                                                 D3D12_RESOURCE_STATE_COPY_DEST)};
-        pCommandList->ResourceBarrier(_countof(readbackBarriers), readbackBarriers);
-
-        pCommandList->CopyBufferRegion(pReadbackBuffer, 0, m_pFragmentList,
-                                       m_maxFragmentListNodeCount * sizeof(FragmentListNode), sizeof(UINT));
-
-        CD3DX12_RESOURCE_BARRIER barriers[] = {
-            CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentList, D3D12_RESOURCE_STATE_COPY_SOURCE,
-                                                 D3D12_RESOURCE_STATE_COPY_DEST),
-            CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentListFirstNodeAddress, D3D12_RESOURCE_STATE_COMMON,
-                                                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
-            CD3DX12_RESOURCE_BARRIER::Transition(pReadbackBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
-                                                 D3D12_RESOURCE_STATE_COMMON)};
-        pCommandList->ResourceBarrier(_countof(barriers), barriers);
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_fragmentListDescriptorTable.cpuHandle);
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_OITFragmentListDescriptorHandleGPU[0]);
-
-        ID3D12DescriptorHeap *heaps[] = {m_ppDescriptorPool[m_curContextIndex][0]->GetDescriptorHeap()};
-        pCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
-        pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle, m_pFragmentListFirstNodeAddress, clearValue, 0,
-                                                   nullptr);
-
-        pCommandList->CopyBufferRegion(m_pFragmentList, m_maxFragmentListNodeCount * sizeof(FragmentListNode),
-                                       m_pUAVCounterClearResource, 0, sizeof(UINT));
-
-        pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentList,
-                                                                               D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                               D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-    }
+    m_pOITManager->BeginRender(0, pCommandList);
 
     pCommandListPool->CloseAndExecute(m_pCommandQueue);
 }
@@ -431,17 +392,6 @@ void D3D12Renderer::EndRender()
     {
         m_ppTranslucentRenderQueue[0]->Process(0, pCommandListPool, m_pCommandQueue, 400, nullptr, &dsvHandle,
                                                &m_Viewport, &m_ScissorRect, 0, DRAW_PASS_TYPE_TRANSPARENCY);
-
-        pCommandList = pCommandListPool->GetCurrentCommandList();
-
-        CD3DX12_RESOURCE_BARRIER barriers[] = {
-            CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                                                 D3D12_RESOURCE_STATE_COMMON),
-            CD3DX12_RESOURCE_BARRIER::Transition(m_pFragmentListFirstNodeAddress, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                                                 D3D12_RESOURCE_STATE_COMMON)};
-        pCommandList->ResourceBarrier(_countof(barriers), barriers);
-
-        pCommandListPool->CloseAndExecute(m_pCommandQueue);
     }
 
     pCommandList = pCommandListPool->GetCurrentCommandList();
@@ -490,27 +440,7 @@ void D3D12Renderer::EndRender()
         m_pPostProcessor->Draw(0, pCommandList, &m_Viewport, &m_ScissorRect, srvHandle, backBufferRTV);
     }
 
-    pCommandList->OMSetRenderTargets(1, &backBufferRTV, FALSE, nullptr);
-
-    // Resolve OIT
-    {
-        ID3D12DescriptorHeap         *pHeaps[] = {GetDescriptorPool(0)->GetDescriptorHeap()};
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GetOITDescriptorHandle(0));
-        gpuHandle.Offset(m_srvDescriptorSize, 2); // | UAV0 | UAV1 | (SRV0) | SRV1 |
-
-        pCommandList->RSSetViewports(1, &m_Viewport);
-        pCommandList->RSSetScissorRects(1, &m_ScissorRect);
-        pCommandList->SetGraphicsRootSignature(Graphics::OITResolveRS);
-        pCommandList->SetPipelineState(Graphics::OITResolvePSO);
-
-        pCommandList->SetDescriptorHeaps(1, pHeaps);
-
-        pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-
-        pCommandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        pCommandList->IASetVertexBuffers(0, 1, &m_fullScreenQuadVertexBufferView);
-        pCommandList->DrawInstanced(6, 1, 0, 0);
-    }
+    m_pOITManager->ResolveOIT(0, pCommandList, &m_Viewport, &m_ScissorRect, backBufferRTV);
 
     m_pGUIManager->EndRender(pCommandList, backBufferRTV);
 
@@ -562,14 +492,7 @@ void D3D12Renderer::Present()
     UINT nextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
     WaitForFenceValue(m_pui64LastFenceValue[nextContextIndex]);
 
-    // Readback Buffer Update
-    UINT *pSysMem = nullptr;
-    m_pReadbackBuffers[m_curContextIndex]->Map(0, nullptr, reinterpret_cast<void **>(&pSysMem));
-    if (pSysMem)
-    {
-        m_allocatedNodeCount = *pSysMem;
-        m_pReadbackBuffers[m_curContextIndex]->Unmap(0, nullptr);
-    }
+    m_pOITManager->EndRender();
 
     for (UINT i = 0; i < m_renderThreadCount; i++)
     {
@@ -950,12 +873,6 @@ void D3D12Renderer::UpdateGlobal()
                                             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         m_globalGpuDescriptorHandle[i] = gpuHandle;
-
-        pDescriptorPool->Alloc(&cpuHandle, &gpuHandle, 4);
-        m_pD3DDevice->CopyDescriptorsSimple(4, cpuHandle, m_fragmentListDescriptorTable.cpuHandle,
-                                            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_OITFragmentListDescriptorHandleGPU[i] = gpuHandle;
-        m_OITFragmentListDescriptorHandleCPU[i] = cpuHandle;
     }
 }
 
@@ -1363,6 +1280,12 @@ void D3D12Renderer::CreateDefaultResources()
 
 void D3D12Renderer::CleanupDefaultResources()
 {
+    if (m_pFullScreenQuadVertexBuffer)
+    {
+        m_pFullScreenQuadVertexBuffer->Release();
+        m_pFullScreenQuadVertexBuffer = nullptr;
+    }
+
     if (m_pDefaultTexHandle)
     {
         DeleteTexture(m_pDefaultTexHandle);
@@ -1435,9 +1358,6 @@ BOOL D3D12Renderer::CreateDescriptorTables()
                                                  DEFERRED_RENDER_TARGET_COUNT + 1); // Render Target + Depth
     }
 
-    // OIT FragmentList용 디스크립터 테이블
-    m_pResourceManager->AllocDescriptorTable(&m_fragmentListDescriptorTable, 4);
-
     // Descriptor Size 저장
     m_rtvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_srvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1464,8 +1384,6 @@ void D3D12Renderer::CleanupDescriptorTables()
         // DEPTH STENCIL
         m_pResourceManager->DeallocDSVDescriptorTable(&m_depthStencilDescriptorTables[i]);
     }
-    // OIT FragmentList
-    m_pResourceManager->DeallocDescriptorTable(&m_fragmentListDescriptorTable);
 }
 
 UINT64 D3D12Renderer::Fence()
@@ -1483,136 +1401,6 @@ void D3D12Renderer::WaitForFenceValue(UINT64 ExpectedFenceValue)
     {
         m_pFence->SetEventOnCompletion(ExpectedFenceValue, m_hFenceEvent);
         WaitForSingleObject(m_hFenceEvent, INFINITE);
-    }
-}
-
-// OIT FRAGMENT LIST TABLE
-// |  fragmentListNodeFirstAddressUAV | fragmentListUAV |  fragmentListNodeFirstAddressSRV | fragmentListSRV |
-void D3D12Renderer::CreateOITFragmentListBuffers()
-{
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(sizeof(UINT), D3D12_RESOURCE_FLAG_NONE), D3D12_RESOURCE_STATE_COPY_SOURCE,
-            nullptr, IID_PPV_ARGS(&m_pUAVCounterClearResource))))
-    {
-        __debugbreak();
-    }
-
-    UINT *pSysMem = nullptr;
-    m_pUAVCounterClearResource->Map(0, nullptr, reinterpret_cast<void **>(&pSysMem));
-    if (pSysMem)
-    {
-        UINT clearValue = 0;
-        memcpy(pSysMem, &clearValue, sizeof(UINT));
-        m_pUAVCounterClearResource->Unmap(0, nullptr);
-        pSysMem = nullptr;
-    }
-
-    ID3D12Resource *pFragmentListNodeFirstAddress = nullptr;
-    ID3D12Resource *pFragmentListNode = nullptr;
-
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_UINT, m_Viewport.Width, m_Viewport.Height, 1, 1, 1, 0,
-                                          D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
-            D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNodeFirstAddress))))
-    {
-        __debugbreak();
-    }
-
-    // UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height);
-    UINT maxFragmentListNodeCount = 4096 * 25 * 16;                                             // 16MB
-    UINT maxFragmentListbufferSizeInByte = maxFragmentListNodeCount * sizeof(FragmentListNode); // 192MB
-    if (FAILED(m_pD3DDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(maxFragmentListbufferSizeInByte + sizeof(UINT),
-                                           D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
-            D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pFragmentListNode))))
-    {
-        __debugbreak();
-    }
-    m_maxFragmentListNodeCount = maxFragmentListNodeCount;
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_fragmentListDescriptorTable.cpuHandle);
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    uavDesc.Format = DXGI_FORMAT_R32_UINT;
-    uavDesc.Texture2D.MipSlice = 0;
-    uavDesc.Texture2D.PlaneSlice = 0;
-    m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNodeFirstAddress, nullptr, &uavDesc, cpuHandle);
-    cpuHandle.Offset(m_srvDescriptorSize);
-
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-    uavDesc.Buffer.CounterOffsetInBytes = maxFragmentListbufferSizeInByte;
-    uavDesc.Buffer.FirstElement = 0;
-    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-    uavDesc.Buffer.NumElements = maxFragmentListNodeCount;
-    uavDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
-
-    m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNode, pFragmentListNode, &uavDesc, cpuHandle);
-    cpuHandle.Offset(m_srvDescriptorSize);
-
-    m_pD3DDevice->CreateShaderResourceView(pFragmentListNodeFirstAddress, nullptr, cpuHandle);
-    cpuHandle.Offset(m_srvDescriptorSize);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-    srvDesc.Buffer.FirstElement = 0;
-    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-    srvDesc.Buffer.NumElements = maxFragmentListNodeCount;
-    srvDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    m_pD3DDevice->CreateShaderResourceView(pFragmentListNode, &srvDesc, cpuHandle);
-    cpuHandle.Offset(m_srvDescriptorSize);
-
-    m_pFragmentList = pFragmentListNode;
-    m_pFragmentListFirstNodeAddress = pFragmentListNodeFirstAddress;
-
-    for (UINT i = 0; i < MAX_PENDING_FRAME_COUNT; i++)
-    {
-        ID3D12Resource *pReadbackBuffer = nullptr;
-        if (FAILED(m_pD3DDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK), D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(sizeof(UINT)), D3D12_RESOURCE_STATE_COMMON, nullptr,
-                IID_PPV_ARGS(&pReadbackBuffer))))
-        {
-            __debugbreak();
-        }
-        m_pReadbackBuffers[i] = pReadbackBuffer;
-    }
-
-    m_allocatedNodeCount = 0;
-}
-
-void D3D12Renderer::CleanupOITFragmentListBuffers()
-{
-    if (m_pUAVCounterClearResource)
-    {
-        m_pUAVCounterClearResource->Release();
-        m_pUAVCounterClearResource = nullptr;
-    }
-
-    if (m_pFragmentList)
-    {
-        m_pFragmentList->Release();
-        m_pFragmentList = nullptr;
-    }
-    if (m_pFragmentListFirstNodeAddress)
-    {
-        m_pFragmentListFirstNodeAddress->Release();
-        m_pFragmentListFirstNodeAddress = nullptr;
-    }
-
-    for (UINT n = 0; n < MAX_PENDING_FRAME_COUNT; n++)
-    {
-        if (m_pReadbackBuffers[n])
-        {
-            m_pReadbackBuffers[n]->Release();
-            m_pReadbackBuffers[n] = nullptr;
-        }
     }
 }
 
@@ -1852,15 +1640,11 @@ void D3D12Renderer::CreateBuffers()
     }
 
     CreateDeferredBuffers();
-
-    CreateOITFragmentListBuffers();
 }
 
 void D3D12Renderer::CleanupBuffers()
 {
     CleanupDeferredBuffers();
-
-    CleanupOITFragmentListBuffers();
 
     // Cleanup Render Targets
     for (UINT i = 0; i < SWAP_CHAIN_FRAME_COUNT; i++)
@@ -1906,12 +1690,6 @@ void D3D12Renderer::Cleanup()
 #ifdef USE_DEFERRED_RENDERING
     CleanupRenderThreadPool();
 #endif
-
-    if (m_pFullScreenQuadVertexBuffer)
-    {
-        m_pFullScreenQuadVertexBuffer->Release();
-        m_pFullScreenQuadVertexBuffer = nullptr;
-    }
 
     if (m_pDebugLine)
     {
@@ -1998,6 +1776,12 @@ void D3D12Renderer::Cleanup()
     CleanupFence();
     CleanupDescriptorTables();
     CleanupBuffers();
+    
+    if (m_pOITManager)
+    {
+        delete m_pOITManager;
+        m_pOITManager = nullptr;
+    }
 
     if (m_pPostProcessor)
     {

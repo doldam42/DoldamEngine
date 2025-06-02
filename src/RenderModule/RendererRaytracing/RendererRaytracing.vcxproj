@@ -197,7 +197,7 @@
     <ClInclude Include="..\Common\DescriptorAllocator.h" />
     <ClInclude Include="..\Common\DescriptorPool.h" />
     <ClInclude Include="..\Common\FontManager.h" />
-    <ClInclude Include="..\Common\OITManager.h" />
+    <ClInclude Include="..\Common\TransparencyManager.h" />
     <ClInclude Include="..\Common\PrimitiveGenerator.h" />
     <ClInclude Include="..\Common\GUIManager.h" />
     <ClInclude Include="..\Common\MaterialManager.h" />
@@ -296,7 +296,7 @@
     <ClCompile Include="..\Common\FontManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\Common\OITManager.cpp" />
+    <ClCompile Include="..\Common\TransparencyManager.cpp" />
     <ClCompile Include="..\Common\PrimitiveGenerator.cpp" />
     <ClCompile Include="..\Common\GUIManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

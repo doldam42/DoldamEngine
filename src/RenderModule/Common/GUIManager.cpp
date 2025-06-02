@@ -10,7 +10,6 @@
 #include "SingleDescriptorAllocator.h"
 
 #include "GUIManager.h"
-#include "OITManager.h"
 
 static GUIManager *g_pGUIManager = nullptr;
 

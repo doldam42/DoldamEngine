@@ -29,6 +29,7 @@ class SingleDescriptorAllocator;
 class DebugLine;
 
 class PostProcessor;
+class TransparencyManager;
 
 struct MATERIAL_HANDLE;
 struct TEXTURE_HANDLE;
@@ -71,6 +72,7 @@ class D3D12Renderer : public IRenderer
     TextureManager       *m_pTextureManager = nullptr;
     MaterialManager      *m_pMaterialManager = nullptr;
     FontManager          *m_pFontManager = nullptr;
+    TransparencyManager *m_pOITManager = nullptr;
 
     DebugLine *m_pDebugLine = nullptr;
 
@@ -140,21 +142,6 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
 
-    // OIT Fragment List
-    ID3D12Resource *m_pFragmentListFirstNodeAddress = nullptr;
-    ID3D12Resource *m_pFragmentList = nullptr;
-    ID3D12Resource *m_pReadbackBuffers[MAX_PENDING_FRAME_COUNT] = {nullptr};
-
-    DESCRIPTOR_HANDLE m_fragmentListDescriptorTable = {};
-
-    UINT m_allocatedNodeCount = 0;
-
-    D3D12_GPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleGPU[MAX_RENDER_THREAD_COUNT];
-    D3D12_CPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleCPU[MAX_RENDER_THREAD_COUNT];
-    UINT                        m_maxFragmentListNodeCount = 0;
-
-    ID3D12Resource *m_pUAVCounterClearResource = nullptr;
-
     // Global
     Matrix  m_camViewRow;
     Matrix  m_camProjRow;
@@ -193,9 +180,6 @@ class D3D12Renderer : public IRenderer
 
     UINT64 Fence();
     void   WaitForFenceValue(UINT64 ExpectedFenceValue);
-
-    void CreateOITFragmentListBuffers();
-    void CleanupOITFragmentListBuffers();
 
     void CreateBuffers();
     void CleanupBuffers();
@@ -315,11 +299,6 @@ class D3D12Renderer : public IRenderer
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGlobalDescriptorHandle(UINT threadIndex);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE GetOITDescriptorHandle(UINT threadIndex)
-    {
-        return m_OITFragmentListDescriptorHandleGPU[threadIndex];
-    }
-
     DescriptorPool *GetDescriptorPool(UINT threadIndex) const
     {
         return m_ppDescriptorPool[m_curContextIndex][threadIndex];
@@ -329,6 +308,8 @@ class D3D12Renderer : public IRenderer
     {
         return m_ppCommandListPool[m_curContextIndex][threadIndex];
     }
+
+    TransparencyManager *GetOITManager() const { return m_pOITManager; }
 
     const D3D12_VERTEX_BUFFER_VIEW &GetFullScreenQuadVertexBufferView() const
     {

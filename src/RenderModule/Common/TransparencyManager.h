@@ -12,7 +12,7 @@ enum OIT_DESCRIPTOR_INDEX
 };
 
 class D3D12Renderer;
-class OITManager
+class TransparencyManager
 {
     D3D12Renderer *m_pRenderer = nullptr;
     ID3D12Device5 *m_pD3DDevice = nullptr;
@@ -52,4 +52,7 @@ class OITManager
     void ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_VIEWPORT *pViewport,
                     D3D12_RECT *pScissorRect, D3D12_CPU_DESCRIPTOR_HANDLE renderTarget);
     void EndRender();
+
+    TransparencyManager() = default;
+    ~TransparencyManager();
 };

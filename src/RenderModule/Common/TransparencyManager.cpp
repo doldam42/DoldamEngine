@@ -12,18 +12,16 @@
 #include "DescriptorPool.h"
 #include "D3D12ResourceManager.h"
 
-#include "PrimitiveGenerator.h"
+#include "TransparencyManager.h"
 
-#include "OITManager.h"
-
-void OITManager::CreatDescriptorTable() 
+void TransparencyManager::CreatDescriptorTable() 
 { 
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
 
     pResourceManager->AllocDescriptorTable(&m_descriptorTable, OIT_DESCRIPTOR_COUNT);
 }
 
-void OITManager::CreateUAVCounterClearResource() 
+void TransparencyManager::CreateUAVCounterClearResource() 
 {
     if (FAILED(m_pD3DDevice->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
@@ -44,7 +42,7 @@ void OITManager::CreateUAVCounterClearResource()
     }
 }
 
-void OITManager::CreateBuffers(UINT width, UINT height)
+void TransparencyManager::CreateBuffers(UINT width, UINT height)
 {
     ID3D12Resource *pFragmentListNodeFirstAddress = nullptr;
     ID3D12Resource *pFragmentListNode = nullptr;
@@ -58,9 +56,7 @@ void OITManager::CreateBuffers(UINT width, UINT height)
         __debugbreak();
     }
 
-    // UINT maxFragmentListNodeCount = (UINT)(m_Viewport.Width * m_Viewport.Height);
-    UINT maxFragmentListNodeCount = 4096 * 25 * 16;                                             // 16MB
-    UINT maxFragmentListbufferSizeInByte = maxFragmentListNodeCount * sizeof(FragmentListNode); // 192MB
+    UINT maxFragmentListbufferSizeInByte = m_maxFragmentListNodeCount * sizeof(FragmentListNode); // 192MB
     if (FAILED(m_pD3DDevice->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(maxFragmentListbufferSizeInByte + sizeof(UINT),
@@ -69,7 +65,6 @@ void OITManager::CreateBuffers(UINT width, UINT height)
     {
         __debugbreak();
     }
-    m_maxFragmentListNodeCount = maxFragmentListNodeCount;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_descriptorTable.cpuHandle);
 
@@ -86,7 +81,7 @@ void OITManager::CreateBuffers(UINT width, UINT height)
     uavDesc.Buffer.CounterOffsetInBytes = maxFragmentListbufferSizeInByte;
     uavDesc.Buffer.FirstElement = 0;
     uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-    uavDesc.Buffer.NumElements = maxFragmentListNodeCount;
+    uavDesc.Buffer.NumElements = m_maxFragmentListNodeCount;
     uavDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
 
     m_pD3DDevice->CreateUnorderedAccessView(pFragmentListNode, pFragmentListNode, &uavDesc, cpuHandle);
@@ -100,7 +95,7 @@ void OITManager::CreateBuffers(UINT width, UINT height)
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.Buffer.FirstElement = 0;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-    srvDesc.Buffer.NumElements = maxFragmentListNodeCount;
+    srvDesc.Buffer.NumElements = m_maxFragmentListNodeCount;
     srvDesc.Buffer.StructureByteStride = sizeof(FragmentListNode);
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     m_pD3DDevice->CreateShaderResourceView(pFragmentListNode, &srvDesc, cpuHandle);
@@ -111,7 +106,7 @@ void OITManager::CreateBuffers(UINT width, UINT height)
     m_allocatedNodeCount = 0;
 }
 
-void OITManager::CleanupBuffers()
+void TransparencyManager::CleanupBuffers()
 { 
     if (m_pFragmentList)
     {   
@@ -125,7 +120,7 @@ void OITManager::CleanupBuffers()
     }
 }
 
-void OITManager::CopyUAVCounterForRead(ID3D12GraphicsCommandList *pCommandList)
+void TransparencyManager::CopyUAVCounterForRead(ID3D12GraphicsCommandList *pCommandList)
 {
     ID3D12Resource *pReadbackBuffer = m_pReadbackBuffers[m_curContextIndex];
 
@@ -147,7 +142,7 @@ void OITManager::CopyUAVCounterForRead(ID3D12GraphicsCommandList *pCommandList)
     pCommandList->ResourceBarrier(_countof(barriers), barriers);
 }
 
-void OITManager::ClearOITResources(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
+void TransparencyManager::ClearOITResources(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
 {
     // Clear FragmentList & FragmentListFirstNodeAddress
     CD3DX12_RESOURCE_BARRIER barriers[] = {
@@ -180,7 +175,7 @@ void OITManager::ClearOITResources(UINT threadIndex, ID3D12GraphicsCommandList *
                                                                         D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 }
 
-void OITManager::Cleanup() 
+void TransparencyManager::Cleanup() 
 {
     if (m_pUAVCounterClearResource)
     {
@@ -189,7 +184,6 @@ void OITManager::Cleanup()
     }
 
     D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
-    
     pResourceManager->DeallocDescriptorTable(&m_descriptorTable);
 
     for (UINT n = 0; n < MAX_PENDING_FRAME_COUNT; n++)
@@ -204,7 +198,7 @@ void OITManager::Cleanup()
     CleanupBuffers();
 }
 
-void OITManager::OnUpdateWindowSize(UINT width, UINT height) 
+void TransparencyManager::OnUpdateWindowSize(UINT width, UINT height) 
 { 
     m_pRenderer->WaitForGPU();
 
@@ -212,7 +206,7 @@ void OITManager::OnUpdateWindowSize(UINT width, UINT height)
     CreateBuffers(width, height);
 }
 
-void OITManager::SetRootDescriptorTable(UINT ThreadIndex, ID3D12GraphicsCommandList *pCommandList) 
+void TransparencyManager::SetRootDescriptorTable(UINT ThreadIndex, ID3D12GraphicsCommandList *pCommandList) 
 {
     DescriptorPool* pDescriptorPool = m_pRenderer->GetDescriptorPool(ThreadIndex);
     
@@ -226,11 +220,12 @@ void OITManager::SetRootDescriptorTable(UINT ThreadIndex, ID3D12GraphicsCommandL
     pCommandList->SetGraphicsRootDescriptorTable(3, gpuHandle);
 }
 
-BOOL OITManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCount, UINT width, UINT height)
+BOOL TransparencyManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCount, UINT width, UINT height)
 {
     m_pRenderer = pRenderer;
     m_pD3DDevice = pRenderer->GetD3DDevice();
 
+    m_maxFragmentListNodeCount = maxFragmentListNodeCount;
     m_srvDescriptorSize = m_pD3DDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     CreatDescriptorTable();
@@ -257,14 +252,14 @@ BOOL OITManager::Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCo
 // swprintf_s(debugStr, 64, L"Allocated Node Count: %d\n", allocatedNodeCount);
 // OutputDebugStringW(debugStr);
 
-void OITManager::BeginRender(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
+void TransparencyManager::BeginRender(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList)
 {
     CopyUAVCounterForRead(pCommandList);
 
     ClearOITResources(threadIndex, pCommandList);
 }
 
-void OITManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_VIEWPORT *pViewport,
+void TransparencyManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pCommandList, D3D12_VIEWPORT *pViewport,
                             D3D12_RECT *pScissorRect, D3D12_CPU_DESCRIPTOR_HANDLE renderTarget)
 {
     CD3DX12_RESOURCE_BARRIER barriers[] = {
@@ -298,7 +293,7 @@ void OITManager::ResolveOIT(UINT threadIndex, ID3D12GraphicsCommandList *pComman
     pCommandList->DrawInstanced(6, 1, 0, 0);
 }
 
-void OITManager::EndRender()
+void TransparencyManager::EndRender()
 {
     // prepare next frame
     UINT nextContextIndex = (m_curContextIndex + 1) % MAX_PENDING_FRAME_COUNT;
@@ -313,3 +308,5 @@ void OITManager::EndRender()
 
     m_curContextIndex = nextContextIndex;
 }
+
+TransparencyManager::~TransparencyManager() { Cleanup(); }
