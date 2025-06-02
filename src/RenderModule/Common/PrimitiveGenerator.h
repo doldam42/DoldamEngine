@@ -5,22 +5,9 @@
 
 #include "../MathModule/MathHeaders.h"
 
-struct BASIC_MESH
-{
-    ID3D12Resource *pVertexBuffer = nullptr;
-    ID3D12Resource *pIndexBuffer = nullptr;
-
-    D3D12_INDEX_BUFFER_VIEW  IndexBufferView = {};
-    D3D12_VERTEX_BUFFER_VIEW VertexBufferView = {};
-
-    UINT numIndices = 0;
-};
-
 class PrimitiveGenerator
 {
   public:
-    static const BASIC_MESH &GetQuadMesh();
-
     static IRenderMesh *MakeSquare(const float scale = 1.0f);
     static IRenderMesh *MakeSquareGrid(const int numSlices, const int numStacks, const float scale = 1.0f);
     static IRenderMesh *MakeBox(const float scale = 1.0f);

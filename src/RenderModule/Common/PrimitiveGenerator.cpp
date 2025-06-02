@@ -64,42 +64,6 @@ static void CalcVerticeTangent(SkinnedVertex *pInOutVertices, UINT numVertices, 
     }
 }
 
-const BASIC_MESH &PrimitiveGenerator::GetQuadMesh()
-{
-    static BASIC_MESH quadMesh;
-
-    if (quadMesh.numIndices == 0) // Not Initialized
-    {
-        D3D12ResourceManager *pResourceManager = g_pRenderer->GetResourceManager();
-
-        // Create the vertex buffer.
-        // Define the geometry for a triangle.
-        SimpleVertex Vertices[] = {
-            {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-            {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-            {{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-            {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-        };
-
-        uint32_t Indices[] = {0, 1, 2, 0, 2, 3};
-
-        if (FAILED(pResourceManager->CreateVertexBuffer(&quadMesh.pVertexBuffer, &quadMesh.VertexBufferView,
-                                                        sizeof(SimpleVertex), (UINT)_countof(Vertices), Vertices)))
-        {
-            __debugbreak();
-        }
-        if (FAILED(pResourceManager->CreateIndexBuffer(&quadMesh.pIndexBuffer, &quadMesh.IndexBufferView,
-                                                       (UINT)_countof(Indices), Indices)))
-        {
-            __debugbreak();
-        }
-
-        quadMesh.numIndices = (UINT)_countof(Indices);
-    }
-
-    return quadMesh;
-}
-
 IRenderMesh *PrimitiveGenerator::MakeSquare(const float scale)
 {
     Vector3 positions[] = {Vector3(-1.0f, -1.0f, 0.0f) * scale, Vector3(1.0f, -1.0f, 0.0f) * scale,

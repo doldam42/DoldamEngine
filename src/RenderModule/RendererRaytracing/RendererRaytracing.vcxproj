@@ -232,7 +232,6 @@
     <ClInclude Include="RaytracingMeshObject.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="RendererTypedef.h" />
     <ClInclude Include="RenderQueue.h" />
     <ClInclude Include="ShaderTable.h" />
     <ClInclude Include="SpriteObject.h" />

@@ -8,9 +8,6 @@
     <Filter Include="D3DUtil">
       <UniqueIdentifier>{7ff8e894-362b-4330-8600-4ad361d8d407}</UniqueIdentifier>
     </Filter>
-    <Filter Include="typedef">
-      <UniqueIdentifier>{863a41f3-517d-4dc2-80fe-ac139d429692}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MeshObject">
       <UniqueIdentifier>{415b124d-2a9d-4058-b295-b8e219e1e394}</UniqueIdentifier>
     </Filter>
@@ -57,9 +54,6 @@
   <ItemGroup>
     <ClInclude Include="D3DUtil.h">
       <Filter>D3DUtil</Filter>
-    </ClInclude>
-    <ClInclude Include="RendererTypedef.h">
-      <Filter>typedef</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsCommon.h">
       <Filter>Graphics</Filter>

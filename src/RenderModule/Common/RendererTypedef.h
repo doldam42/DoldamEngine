@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../Common/RendererInterface.h"
 #include <d3d12.h>
 #include <dwrite_3.h>
-#include "../Common/RendererInterface.h"
 
 enum LIGHT_FLAGS : UINT
 {
@@ -14,6 +14,11 @@ enum LIGHT_FLAGS : UINT
 };
 
 constexpr const UINT MAX_LIGHTS = 3;
+
+constexpr const UINT MAX_RENDER_THREAD_COUNT = 8;
+constexpr const UINT  SWAP_CHAIN_FRAME_COUNT = 3;
+constexpr const UINT  MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
+constexpr const float STRENGTH_IBL = 0.2f;
 
 enum SAMPLER_TYPE : UINT
 {
@@ -104,6 +109,13 @@ struct DECOMP_PROJ
     float m33;
     float m43;
     float Reserved0;
+};
+
+struct FragmentListNode
+{
+    UINT  next;
+    float depth;
+    UINT  color;
 };
 
 constexpr const wchar_t *DEFAULT_LOCALE_NAME = L"ko-kr";

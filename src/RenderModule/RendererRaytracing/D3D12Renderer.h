@@ -9,10 +9,6 @@
 
 #include "RendererTypedef.h"
 
-const UINT  SWAP_CHAIN_FRAME_COUNT = 3;
-const UINT  MAX_PENDING_FRAME_COUNT = SWAP_CHAIN_FRAME_COUNT - 1;
-const float STRENGTH_IBL = 0.2f;
-
 struct CB_CONTAINER;
 struct RENDER_THREAD_DESC;
 
@@ -49,24 +45,6 @@ enum GLOBAL_DESCRIPTOR_INDEX
     GLOBAL_DESCRIPTOR_INDEX_COUNT
 };
 
-struct OITFragmentList
-{
-    ID3D12Resource *pFragmentListFirstNodeAddress;
-    ID3D12Resource *pFragmentList;
-    ID3D12Resource *pReadbackBuffer;
-
-    DESCRIPTOR_HANDLE fragmentListDescriptorTable;
-
-    UINT allocatedNodeCount;
-};
-
-struct FragmentListNode
-{
-    UINT  next;
-    float depth;
-    UINT  color;
-};
-
 class D3D12Renderer : public IRenderer
 {
     enum DSV_DESCRIPTOR_INDEX
@@ -77,8 +55,6 @@ class D3D12Renderer : public IRenderer
 
     static const UINT MAX_DRAW_COUNT_PER_FRAME = 4096;
     static const UINT MAX_DESCRIPTOR_COUNT = 4096;
-
-    static const UINT MAX_RENDER_THREAD_COUNT = 8;
 
     static const UINT DEFERRED_RENDER_TARGET_COUNT = 3;
 
@@ -135,6 +111,9 @@ class D3D12Renderer : public IRenderer
     D3D12_RECT         m_ScissorRect = {};
     float              m_DPI = 96.0f;
 
+    ID3D12Resource *m_pFullScreenQuadVertexBuffer = nullptr;
+    D3D12_VERTEX_BUFFER_VIEW m_fullScreenQuadVertexBufferView = {};
+
     ID3D12Resource *m_pRaytracingOutputBuffers[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
     ID3D12Resource *m_pIntermediateRenderTargets[SWAP_CHAIN_FRAME_COUNT] = {nullptr};
@@ -161,7 +140,15 @@ class D3D12Renderer : public IRenderer
     DESCRIPTOR_HANDLE m_renderableTextureRTVTables[SWAP_CHAIN_FRAME_COUNT];
     DESCRIPTOR_HANDLE m_renderableTextureSRVTables[SWAP_CHAIN_FRAME_COUNT];
 
-    OITFragmentList             m_OITFragmentLists[SWAP_CHAIN_FRAME_COUNT] = {};
+    // OIT Fragment List
+    ID3D12Resource *m_pFragmentListFirstNodeAddress = nullptr;
+    ID3D12Resource *m_pFragmentList = nullptr;
+    ID3D12Resource *m_pReadbackBuffers[MAX_PENDING_FRAME_COUNT] = {nullptr};
+
+    DESCRIPTOR_HANDLE m_fragmentListDescriptorTable = {};
+
+    UINT m_allocatedNodeCount = 0;
+
     D3D12_GPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleGPU[MAX_RENDER_THREAD_COUNT];
     D3D12_CPU_DESCRIPTOR_HANDLE m_OITFragmentListDescriptorHandleCPU[MAX_RENDER_THREAD_COUNT];
     UINT                        m_maxFragmentListNodeCount = 0;
@@ -341,6 +328,11 @@ class D3D12Renderer : public IRenderer
     CommandListPool *GetCommandListPool(UINT threadIndex) const
     {
         return m_ppCommandListPool[m_curContextIndex][threadIndex];
+    }
+
+    const D3D12_VERTEX_BUFFER_VIEW &GetFullScreenQuadVertexBufferView() const
+    {
+        return m_fullScreenQuadVertexBufferView;
     }
 
     UINT GetCurrentThreadIndex()

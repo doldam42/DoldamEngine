@@ -13,67 +13,11 @@
 
 #include "PostProcessor.h"
 
-BOOL PostProcessor::InitMesh()
-{
-    BOOL result = FALSE;
-
-    ID3D12Device5        *pD3DDeivce = m_pRenderer->GetD3DDevice();
-    D3D12ResourceManager *pResourceManager = m_pRenderer->GetResourceManager();
-
-    UINT srvDescriptorSize = m_pRenderer->GetSRVDescriptorSize();
-
-    // Create the vertex buffer.
-    // Define the geometry for a triangle.
-    SimpleVertex Vertices[] = {
-        {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-    };
-
-    uint32_t Indices[] = {0, 1, 2, 0, 2, 3};
-
-    const UINT VertexBufferSize = sizeof(Vertices);
-
-    if (FAILED(pResourceManager->CreateVertexBuffer(&m_pVertexBuffer, &m_vertexBufferView, sizeof(SimpleVertex),
-                                                    (UINT)_countof(Vertices), Vertices)))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-    if (FAILED(
-            pResourceManager->CreateIndexBuffer(&m_pIndexBuffer, &m_indexBufferView, (UINT)_countof(Indices), Indices)))
-    {
-        __debugbreak();
-        goto lb_return;
-    }
-    result = TRUE;
-
-lb_return:
-    return result;
-}
-
-void PostProcessor::Cleanup() 
-{ 
-    if (m_pVertexBuffer)
-    {
-        m_pVertexBuffer->Release();
-        m_pVertexBuffer = nullptr;
-    }
-    if (m_pIndexBuffer)
-    {
-        m_pIndexBuffer->Release();
-        m_pIndexBuffer = nullptr;
-    }
-}
-
 BOOL PostProcessor::Initialize(D3D12Renderer *pRenderer)
 {
     BOOL result = FALSE;
 
     m_pRenderer = pRenderer;
-
-    InitMesh();
 
     return TRUE;
 }
@@ -103,9 +47,8 @@ void PostProcessor::Draw(UINT threadIndex, ID3D12GraphicsCommandList *pCommandLi
     pCommandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
 
     pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    pCommandList->IASetIndexBuffer(&m_indexBufferView);
-    pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    pCommandList->IASetVertexBuffers(0, 1, &m_pRenderer->GetFullScreenQuadVertexBufferView());
+    pCommandList->DrawInstanced(6, 1, 0, 0);
 }
 
-PostProcessor::~PostProcessor() { Cleanup(); }
+PostProcessor::~PostProcessor() { }
