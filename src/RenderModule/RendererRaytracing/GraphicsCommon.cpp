@@ -822,6 +822,7 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
     psoDesc.SampleDesc.Count = 1;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
     for (UINT itemType = 0; itemType < RENDER_ITEM_TYPE_COUNT; itemType++)
     {
@@ -844,7 +845,6 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
                 psoDesc.RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
                 psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-
                 break;
             default:
                 psoDesc.NumRenderTargets = 1;
@@ -864,16 +864,9 @@ void Graphics::InitPipelineStates(ID3D12Device5 *pD3DDevice)
 
             for (UINT fillMode = 0; fillMode < FILL_MODE_COUNT; fillMode++)
             {
-                if (fillMode == FILL_MODE_SOLID)
-                {
-                    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-                }
-                else if (fillMode == FILL_MODE_WIRED)
-                {
-                    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-                    psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-                }
-
+                psoDesc.RasterizerState.FillMode =
+                    (fillMode == FILL_MODE_SOLID) ? D3D12_FILL_MODE_SOLID : D3D12_FILL_MODE_WIREFRAME;
+                
                 hr =
                     pD3DDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&PSO[itemType][passType][fillMode]));
                 if (FAILED(hr))

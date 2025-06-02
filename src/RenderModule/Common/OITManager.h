@@ -1,22 +1,14 @@
 #pragma once
 
 #include "DescriptorAllocator.h"
-
-struct OITFragmentList
-{
-    ID3D12Resource *pFragmentListFirstNodeAddress;
-    ID3D12Resource *pFragmentList;
-    DESCRIPTOR_HANDLE fragmentListDescriptorTable;
-    UINT allocatedNodeCount;
-};
-
-struct FragmentListNode
-{
-    UINT  next;
-    float depth;
-    UINT  color;
-};
-
+//
+//struct FragmentListNode
+//{
+//    UINT  next;
+//    float depth;
+//    UINT  color;
+//};
+//
 enum OIT_DESCRIPTOR_INDEX
 {
     OIT_DESCRIPTOR_INDEX_FIRST_NODE_ADDRESS_UAV = 0,
@@ -29,7 +21,7 @@ enum OIT_DESCRIPTOR_INDEX
 class D3D12Renderer;
 class OITManager
 {
-    static const UINT MAX_PENDING_COUNT = 3;
+    static const UINT MAX_PENDING_COUNT = 2;
 
     D3D12Renderer *m_pRenderer = nullptr;
     ID3D12Device5 *m_pD3DDevice = nullptr;
@@ -37,9 +29,13 @@ class OITManager
     ID3D12Resource *m_pUAVCounterClearResource = nullptr;
     ID3D12Resource *m_pReadbackBuffers[MAX_PENDING_COUNT] = {nullptr};
 
-    OITFragmentList m_OITFragmentLists[MAX_PENDING_COUNT] = {};
+    ID3D12Resource *m_pFragmentListFirstNodeAddress = nullptr;
+    ID3D12Resource *m_pFragmentList = nullptr;
+
+    DESCRIPTOR_HANDLE m_descriptorTable = {};
 
     UINT m_maxFragmentListNodeCount = 0;
+    UINT m_allocatedNodeCount = 0;
     UINT m_curContextIndex = 0;
     UINT m_srvDescriptorSize = 0;
 
@@ -49,10 +45,12 @@ class OITManager
     void CreateBuffers(UINT width, UINT height);
     void CleanupBuffers();
 
+    void CopyUAVCounterForRead(ID3D12GraphicsCommandList *pCommandList);
+
     void Cleanup();
 
   public:
-    BOOL Initialize(D3D12Renderer* pRenderer, UINT maxFragmentListNodeCount, UINT width, UINT height);
+    BOOL Initialize(D3D12Renderer *pRenderer, UINT maxFragmentListNodeCount, UINT width, UINT height);
 
     void OnUpdateWindowSize(UINT width, UINT height);
 

@@ -519,7 +519,7 @@ void D3D12Renderer::EndRender()
         pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
     }
 
-    m_pGUIManager->EndRender(pCommandList);
+    m_pGUIManager->EndRender(pCommandList, backBufferRTV);
 
     pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex],
                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
