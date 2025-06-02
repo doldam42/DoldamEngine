@@ -263,7 +263,8 @@ lb_exit:
     m_pDebugLine->Initialize(this, 1024);
 
     m_pOITManager = new TransparencyManager;
-    m_pOITManager->Initialize(this, 4096 * 25 * 16, backBufferWidth, backBufferHeight);
+    //m_pOITManager->Initialize(this, 4096 * 25 * 16, backBufferWidth, backBufferHeight);
+    m_pOITManager->Initialize(this, 4096 * 25, backBufferWidth, backBufferHeight);
 
     m_pRaytracingManager = new RaytracingManager;
 

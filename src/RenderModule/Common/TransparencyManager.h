@@ -26,6 +26,8 @@ class TransparencyManager
     ID3D12Resource *m_pFragmentListFirstNodeAddress = nullptr;
     ID3D12Resource *m_pFragmentList = nullptr;
 
+    ID3D12Resource *m_pConstantBuffer = nullptr;
+
     DESCRIPTOR_HANDLE m_descriptorTable = {};
 
     UINT m_maxFragmentListNodeCount = 0;

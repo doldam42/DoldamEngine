@@ -539,7 +539,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     rangesPerBasicObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 
     // Ranges Per Skinned Object
-    // |  TR Matrix(b1)   |  Bone Matrix |
+    // |  TR Matrix(b1)   |  Bone Matrix(b2) |
     CD3DX12_DESCRIPTOR_RANGE1 rangesPerSkinnedObj[1] = {};
     rangesPerSkinnedObj[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 2, 1);
 
@@ -695,17 +695,18 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Init Transparent Basic Root Signature
     {
         // | Ranges Per Global            |
-        // | Ranges Per Basic Object      |
+        // | Ranges Per Basic Object      | 
         // | Ranges Per Material          |
         // | Ranges Per OIT Fragment List UAV |
-        CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+        CD3DX12_ROOT_PARAMETER1 rootParameters[5] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1].InitAsDescriptorTable(_countof(rangesPerBasicObj), &rangesPerBasicObj[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
+        rootParameters[3].InitAsConstants(1, 6, 0);
+        rootParameters[4].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -717,18 +718,20 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
 
     // Init transparent Skinned Root Signature
     {
-        // | Ranges Per Global          |
-        // | Ranges Per Skinned Object  |
-        // | Ranges Per Material        |
+        // | Ranges Per Global           |
+        // | Ranges Per Skinned Object   |
+        // | Ranges Per Material         |
+        // | Ranges Per OIT Constant(b6) |
         // | Ranges Per OIT Fragment List UAV |
-        CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+        CD3DX12_ROOT_PARAMETER1 rootParameters[5] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), &rangesPerGlobal[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1].InitAsDescriptorTable(_countof(rangesPerSkinnedObj), &rangesPerSkinnedObj[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[2].InitAsDescriptorTable(_countof(rangesPerMaterial), &rangesPerMaterial[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[3].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
+        rootParameters[3].InitAsConstants(1, 6, 0);
+        rootParameters[4].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -742,11 +745,13 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Init transparent Sprite Root Signature
     {
         // | Ranges Per Sprite            |
+        // | Ranges Per OIT Constant(b6)  |
         // | Ranges Per OIT Fragment List |
-        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+        CD3DX12_ROOT_PARAMETER1 rootParameters[3] = {};
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerSprite), rangesPerSprite,
                                                 D3D12_SHADER_VISIBILITY_ALL);
-        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
+        rootParameters[1].InitAsConstants(1, 6, 0);
+        rootParameters[2].InitAsDescriptorTable(_countof(rangesPerFragmentListUAV), &rangesPerFragmentListUAV[0],
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -764,7 +769,7 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
         // |   DiffuseTex   | NormalTex | ElementsTex | DepthTex |
         CD3DX12_DESCRIPTOR_RANGE1 ranges[1] = {};
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0); // t0~t3
-
+        
         CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
 
         rootParameters[0].InitAsDescriptorTable(_countof(rangesPerGlobal), rangesPerGlobal,
@@ -781,10 +786,11 @@ void Graphics::InitRootSignature(ID3D12Device5 *pD3DDevice)
     // Init OIT Resolve Root Signature
     {
         // Root Paramaters
-        // | ranges per OIT FragmentList SRV|
-        CD3DX12_ROOT_PARAMETER1 rootParameters[1] = {};
-
-        rootParameters[0].InitAsDescriptorTable(_countof(rangesPerFragmentListSRV), rangesPerFragmentListSRV,
+        // | Ranges Per OIT Constant           |
+        // | ranges per OIT FragmentList (SRV) |
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2] = {};
+        rootParameters[0].InitAsConstants(1, 6, 0);
+        rootParameters[1].InitAsDescriptorTable(_countof(rangesPerFragmentListSRV), rangesPerFragmentListSRV,
                                                 D3D12_SHADER_VISIBILITY_ALL);
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
