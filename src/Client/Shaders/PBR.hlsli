@@ -144,18 +144,25 @@ in float roughness,
 in float3 N,
 in float3 V,
 in float3 L,
-in bool opacity)
+in float opacity)
 {
+    float NdotL = dot(N, L);
+    if (opacity < 1.0 && NdotL < 0.0)
+    {
+        NdotL = -NdotL;
+        L = -L;
+    }
+    
     const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
     const float3 halfway = normalize(V + L);
  
     float3 directLighting = 0;
-   
+    
     roughness = max(0.1, roughness);
     float3 F0 = lerp(Fdielectric, albedo, metallic);
     float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
-    float NdotI = max(0.0, dot(N, L));
-    if (NdotI > 0)
+    
+    if (NdotL > 0)
     {
         float NdotH = max(0.0, dot(N, halfway));
         float NdotO = max(0.0, dot(N, V));
@@ -164,16 +171,15 @@ in bool opacity)
         float3 diffuseBRDF = kd * albedo;
 
         float D = NdfGGX(NdotH, roughness);
-        float3 G = SchlickGGX(NdotI, NdotO, roughness);
-        float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO);
-    
-        directLighting = (diffuseBRDF + specularBRDF) * radiance * NdotI;
+        float3 G = SchlickGGX(NdotL, NdotO, roughness);
+        float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotL * NdotO);
+        
+        directLighting = (diffuseBRDF + specularBRDF) * radiance * NdotL;
     }
     
-    if (opacity > 0.001)
+    if (opacity < 1.0)
     {
-        //directLighting += (1 - F) * BeerLambertTransmittance(opacity) * albedo;
-        directLighting += (1 - F) * exp(1 - opacity) * albedo;
+        directLighting += (1 - F) * BeerLambertTransmittance(opacity) * albedo;
     }
     
     return directLighting;
