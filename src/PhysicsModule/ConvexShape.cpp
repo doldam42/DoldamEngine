@@ -1,5 +1,29 @@
 #include "pch.h"
-#include "ConvexCollider.h"
+#include "ConvexShape.h"
+
+BOOL ConvexShape::RayTest(const Ray &ray, const Vector3 &pos, const Quaternion &orient, Vector3 *pOutNormal,
+                          float *tHit)
+{
+    for (const tri_t& tri : Triangles)
+    {
+        Vector3 a = Vector3::Transform(Points[tri.a], orient) + pos;
+        Vector3 b = Vector3::Transform(Points[tri.b], orient) + pos;
+        Vector3 c = Vector3::Transform(Points[tri.c], orient) + pos;
+
+        float t0;
+        if (RayTriangle(ray.position, ray.direction, a, b, c, &t0))
+        {
+            Vector3 l1 = b - a;
+            Vector3 l2 = c - a;
+            *pOutNormal = l1.Cross(l2);
+            pOutNormal->Normalize();
+            *tHit = t0;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 
 /*
 ================================
@@ -549,36 +573,35 @@ void BuildConvexHull(const std::vector<Vector3> &verts, std::vector<Vector3> &hu
     ExpandConvexHull(hullPts, hullTris, verts);
 }
 
-ConvexCollider::ConvexCollider(const Vector3 *points, const int numPoints) 
+ConvexShape::ConvexShape(const Vector3 *points, const int numPoints)
 {
     std::vector<Vector3> hullPoints;
     std::vector<tri_t>   hullTriangles;
     hullPoints.reserve(numPoints);
     hullTriangles.reserve(numPoints);
-    
+
     // Expand into a convex hull
     BuildConvexHull(std::vector<Vector3>(points, points + numPoints), hullPoints, hullTriangles);
 
     // Expand the bounds
-    m_bounds.Clear();
-    m_bounds.Expand(hullPoints.data(), hullPoints.size());
+    AABB.Clear();
+    AABB.Expand(hullPoints.data(), hullPoints.size());
 
-    //m_centerOfMass = CalculateCenterOfMass(hullPoints, hullTriangles);
+    // m_centerOfMass = CalculateCenterOfMass(hullPoints, hullTriangles);
 
-    //m_inertiaTensor = CalculateInertiaTensor(hullPoints, hullTriangles, m_centerOfMass);
+    // m_inertiaTensor = CalculateInertiaTensor(hullPoints, hullTriangles, m_centerOfMass);
 
-    m_points = std::move(hullPoints);
-    m_triangles = std::move(hullTriangles);
+    Points = std::move(hullPoints);
+    Triangles = std::move(hullTriangles);
 }
 
-Vector3 ConvexCollider::Support(const Vector3 dir, const Vector3 pos, const Quaternion orient, const float bias) const
+Vector3 ConvexShape::Support(const Vector3& dir, const Vector3& pos, const Quaternion& orient, const float bias) const
 {
-    Matrix  m = Matrix::CreateFromQuaternion(orient);
-    Vector3 maxPt = Vector3::Transform(m_points[0], m) + pos;
+    Vector3 maxPt = Vector3::Transform(Points[0], orient) + pos;
     float   maxDist = maxPt.Dot(dir);
-    for (size_t i = 1; i < m_points.size(); ++i)
+    for (size_t i = 1; i < Points.size(); ++i)
     {
-        Vector3 pt = Vector3::Transform(m_points[i], m) + pos;
+        Vector3 pt = Vector3::Transform(Points[i], orient) + pos;
         float   dist = pt.Dot(dir);
         if (dist > maxDist)
         {

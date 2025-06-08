@@ -5,6 +5,8 @@
 #include "ColliderBase.h"
 #include "Shape.h"
 
+#include "GJK.h"
+
 #include "PhysicsManager.h"
 
 PhysicsManager *g_pPhysics = nullptr;
@@ -142,6 +144,34 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             pOutContact->normal.Normalize();
             return TRUE;
         }
+    }
+    else
+    {
+        Contact     contact;
+        Vector3     ptOnA, ptOnB;
+        const float bias = 0.001f;
+        if (GJK_DoesIntersect(pA, pB, bias, &ptOnA, &ptOnB))
+        {
+            Vector3 normal = ptOnB - ptOnA;
+            normal.Normalize();
+
+            ptOnA -= normal * bias;
+            ptOnB += normal * bias;
+
+            contact.normal = normal;
+            contact.contactPointAWorldSpace = ptOnA;
+            contact.contactPointBWorldSpace = ptOnB;
+
+            *pOutContact = contact;
+            return TRUE;
+        }
+
+        // there was no collision, but we still want the contact data, so get it
+        GJK_ClosestPoints(pA, pB, &ptOnA, &ptOnB);
+        contact.contactPointAWorldSpace = ptOnA;
+        contact.contactPointBWorldSpace = ptOnB;
+
+        *pOutContact = contact;
     }
 
     return FALSE;

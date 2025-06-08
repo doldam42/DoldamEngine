@@ -2,31 +2,32 @@
 
 #include "../Common/PhysicsInterface.h"
 
-interface IShape
+struct Shape
 {
-    virtual SHAPE_TYPE GetType() const = 0;
+    Bounds AABB;
 
-    virtual Bounds GetBounds() const = 0;
-    virtual Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const = 0;
+    Bounds GetBounds() const { return AABB; }
+    Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const
+    {
+        Bounds b;
+        AABB.Transform(&b, pos, orient);
+        return b;
+    }
+
+    virtual SHAPE_TYPE GetType() const = 0;
 
     virtual BOOL RayTest(const Ray &ray, const Vector3 &pos, const Quaternion &orient, Vector3 *pOutNormal,
                          float *tHit) = 0;
+
+    virtual Vector3 Support(const Vector3& dir, const Vector3& pos, const Quaternion& orient, const float bias) const = 0;
+    //virtual float   FastestLinearSpeed(const Vector3& angularVelocity, const Vector3& dir) const = 0;
 };
 
-struct SphereShape : public IShape
+struct SphereShape : public Shape
 {
     float Radius;
 
     SHAPE_TYPE GetType() const override { return SHAPE_TYPE_SPHERE; }
-
-    Bounds GetBounds() const override { return Bounds(Vector3(-Radius), Vector3(Radius)); }
-
-    Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const override
-    {
-        Vector3 mins = pos - Vector3(Radius);
-        Vector3 maxs = pos + Vector3(Radius);
-        return Bounds(mins, maxs);
-    }
 
     BOOL RayTest(const Ray &ray, const Vector3 &pos, const Quaternion &orient, Vector3 *pOutNormal,
                  float *tHit) override
@@ -42,10 +43,15 @@ struct SphereShape : public IShape
         return FALSE;
     }
 
-    SphereShape(float radius) : Radius(radius) {}
+    Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient, const float bias) const override
+    {
+        return pos + dir * (Radius + bias);
+    }
+
+    SphereShape(float radius) : Radius(radius) { AABB = Bounds(Vector3(-radius), Vector3(radius)); }
 };
 
-struct BoxShape : public IShape
+struct BoxShape : public Shape
 {
     static constexpr UINT CORNER_COUNT = 8;
 
@@ -53,20 +59,9 @@ struct BoxShape : public IShape
 
     SHAPE_TYPE GetType() const override { return SHAPE_TYPE_BOX; }
 
-    Bounds GetBounds() const override { return Bounds(-HalfExtent, HalfExtent); }
-
-    Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const override
-    {
-        Vector3 mins = pos - HalfExtent;
-        Vector3 maxs = pos + HalfExtent;
-        return Bounds(mins, maxs);
-    }
-
     void GetCorners(const Vector3 &pos, const Quaternion &orient, Vector3 pOutCorners[8]) const
     {
-        Bounds b(-HalfExtent, HalfExtent);
-
-        b.GetCorners(pOutCorners);
+        AABB.GetCorners(pOutCorners);
         for (int i = 0; i < CORNER_COUNT; i++)
         {
             pOutCorners[i] = Vector3::Transform(pOutCorners[i], orient) + pos;
@@ -87,29 +82,40 @@ struct BoxShape : public IShape
         return FALSE;
     }
 
-    BoxShape(const Vector3 &halfExtent) : HalfExtent(halfExtent) {}
+    Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient, const float bias) const override
+    {
+        Vector3 corners[8];
+        GetCorners(pos, orient, corners);
+
+        Vector3 maxPt = Vector3::Transform(corners[0], orient) + pos;
+        float   maxDist = maxPt.Dot(dir);
+        for (size_t i = 1; i < 8; ++i)
+        {
+            Vector3 pt = Vector3::Transform(corners[i], orient) + pos;
+            float   dist = pt.Dot(dir);
+            if (dist > maxDist)
+            {
+                maxDist = dist;
+                maxPt = pt;
+            }
+        }
+
+        Vector3 norm = dir;
+        norm.Normalize();
+        norm *= bias;
+
+        return maxPt + norm;
+    }
+
+    BoxShape(const Vector3 &halfExtent) : HalfExtent(halfExtent) { AABB = Bounds(-halfExtent, halfExtent); }
 };
 
-struct EllipsoidShape : public IShape
+struct EllipsoidShape : public Shape
 {
     float MajorRadius; // Y axis
     float MinorRadius; // X-Z axis
 
     SHAPE_TYPE GetType() const override { return SHAPE_TYPE_ELLIPSOID; }
-
-    Bounds GetBounds() const override
-    {
-        Vector3 extent = Vector3(MinorRadius, MajorRadius, MinorRadius);
-        return Bounds(-extent, extent);
-    }
-
-    Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const override
-    {
-        Vector3 extent = Vector3(MinorRadius, MajorRadius, MinorRadius);
-        Vector3 mins = pos - extent;
-        Vector3 maxs = pos + extent;
-        return Bounds(mins, maxs);
-    }
 
     BOOL RayTest(const Ray &ray, const Vector3 &pos, const Quaternion &orient, Vector3 *pOutNormal,
                  float *tHit) override
@@ -126,5 +132,27 @@ struct EllipsoidShape : public IShape
         return FALSE;
     }
 
-    EllipsoidShape(float majorRadius, float minorRadius) : MajorRadius(majorRadius), MinorRadius(minorRadius) {}
+    Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient, const float bias) const override
+    {
+        const float scale = MinorRadius / MajorRadius;
+        const float invScale = 1.0f / scale;
+
+        Vector3 d = dir;
+        Vector3 p = pos;
+
+        d.y *= scale;
+        p.y *= scale;
+
+        Vector3 ret = p + d * (MinorRadius + bias);
+
+        ret.y *= invScale;
+
+        return ret;
+    }
+
+    EllipsoidShape(float majorRadius, float minorRadius) : MajorRadius(majorRadius), MinorRadius(minorRadius)
+    {
+        Vector3 extent = Vector3(MinorRadius, MajorRadius, MinorRadius);
+        AABB = Bounds(-extent, extent);
+    }
 };

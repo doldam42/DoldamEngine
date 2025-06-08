@@ -7,7 +7,7 @@ struct Collider : public ICollider
 {
     IGameObject *pObj = nullptr;
     RigidBody   *pBody = nullptr;
-    IShape      *pShape = nullptr;
+    Shape      *pShape = nullptr;
 
     UINT ID = 0;
     BOOL IsActive = TRUE;
