@@ -28,7 +28,6 @@ float3 SpecularIBL(float3 albedo, float3 normalWorld, float3 pixelToEye, float m
         brdfTex.SampleLevel(linearClampSampler, float2(dot(normalWorld, pixelToEye), 1.0 - roughness), 0.0f).rg;
     float3 specularIrradiance =
         specularIBLTex.SampleLevel(linearWrapSampler, reflect(-pixelToEye, normalWorld), 2 + roughness * 5.0f).rgb;
-    const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
     float3 F0 = lerp(Fdielectric, albedo, metallic);
 
     return (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
@@ -146,27 +145,28 @@ in float3 V,
 in float3 L,
 in float opacity)
 {
-    float NdotL = dot(N, L);
-    if (opacity < 1.0 && NdotL < 0.0)
-    {
-        NdotL = -NdotL;
-        L = -L;
-    }
-    
-    const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
     const float3 halfway = normalize(V + L);
+    float NdotL, NdotH, NdotO;
+    if (opacity < 1.0)
+    {
+        NdotL = abs(dot(N, L));
+        NdotH = abs(dot(N, halfway));
+        NdotO = abs(dot(N, V));
+    }
+    else
+    {
+        NdotL = max(0.0, dot(N, L));
+        NdotH = max(0.0, dot(N, halfway));
+        NdotO = max(0.0, dot(N, V));
+    }
  
     float3 directLighting = 0;
     
     roughness = max(0.1, roughness);
     float3 F0 = lerp(Fdielectric, albedo, metallic);
-    float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
-    
     if (NdotL > 0)
     {
-        float NdotH = max(0.0, dot(N, halfway));
-        float NdotO = max(0.0, dot(N, V));
-        
+        float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, V)));
         float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
         float3 diffuseBRDF = kd * albedo;
 
@@ -179,6 +179,7 @@ in float opacity)
     
     if (opacity < 1.0)
     {
+        float3 F = SchlickFresnel(F0, NdotO);
         directLighting += (1 - F) * BeerLambertTransmittance(opacity) * albedo;
     }
     

@@ -19,6 +19,15 @@ enum COLLIDER_TYPE
     COLLIDER_TYPE_CONVEX,
 };
 
+enum SHAPE_TYPE
+{
+    SHAPE_TYPE_SPHERE = 0,
+    SHAPE_TYPE_BOX,
+    SHAPE_TYPE_CAPSULE,
+    SHAPE_TYPE_ELLIPSOID,
+    SHAPE_TYPE_CONVEX,
+};
+
 enum COLLIDER_LAYER
 {
     COLLIDER_LAYER_DEFAULT = 0,
@@ -60,7 +69,6 @@ interface ICollider
     virtual IGameObject *GetGameObject() = 0;
 };
 
-
 interface IRigidBody
 {
     virtual void    Update(IGameObject * pObj) = 0;
@@ -92,7 +100,7 @@ interface IPhysicsManager : public IUnknown
 
     virtual ICollider *CreateSphereCollider(IGameObject * pObj, const float radius) = 0;
     virtual ICollider *CreateBoxCollider(IGameObject* pObj, const Vector3 &halfExtents) = 0;
-    virtual ICollider *CreateEllpsoidCollider(IGameObject * pObj, const float majorRadius,
+    virtual ICollider *CreateEllipsoidCollider(IGameObject * pObj, const float majorRadius,
                                               const float minorRadius) = 0; // Major Axis: Y
     //virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
     //virtual ICollider *CreateConvexCollider(const Vector3 *points, const int numPoints) = 0;

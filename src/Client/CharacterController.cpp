@@ -35,7 +35,7 @@ BOOL CharacterController::Initialize(const Vector3 &startPosition, float height,
     IPhysicsManager *pPhysics = g_pClient->GetPhysics();
 
     IGameObject *pObj = pGame->CreateGameObject();
-    ICollider   *pCollider = pPhysics->CreateEllpsoidCollider(pObj, height, radius);
+    ICollider   *pCollider = pPhysics->CreateEllipsoidCollider(pObj, height, radius);
 
     pObj->SetCollider(pCollider);
     pObj->SetPosition(startPosition.x, startPosition.y + 0.001f + height / 2, startPosition.z);

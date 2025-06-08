@@ -236,7 +236,7 @@ BOOL Client::Initialize(HWND hWnd)
 
 void Client::LoadResources() {}
 
-void Client::LoadScene() { SceneRegistry::GetInstance().ChangeScene("BasicScene"); }
+void Client::LoadScene() { SceneRegistry::GetInstance().ChangeScene("CollideTestScene"); }
 
 void Client::Process()
 {

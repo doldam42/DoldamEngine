@@ -13,6 +13,9 @@
     <Filter Include="RigidBody">
       <UniqueIdentifier>{d6953789-af3e-48bc-819b-88c73067fba1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shape">
+      <UniqueIdentifier>{d740ea4c-465f-488c-9f38-969759490cbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -39,6 +42,13 @@
       <Filter>Collider</Filter>
     </ClInclude>
     <ClInclude Include="Contact.h" />
+    <ClInclude Include="ConvexCollider.h">
+      <Filter>Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="GJK.h" />
+    <ClInclude Include="Shape.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -62,6 +72,12 @@
       <Filter>Collider</Filter>
     </ClCompile>
     <ClCompile Include="Contact.cpp" />
-    <ClCompile Include="ColliderBase.cpp" />
+    <ClCompile Include="ConvexCollider.cpp">
+      <Filter>Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderBase.cpp">
+      <Filter>Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="GJK.cpp" />
   </ItemGroup>
 </Project>

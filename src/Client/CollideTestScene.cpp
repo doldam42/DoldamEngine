@@ -69,7 +69,7 @@ void CollideTestScene::Load()
 
                 IGameModel *pModel = pGame->GetPrimitiveModel(PRIMITIVE_MODEL_TYPE_SPHERE);
                 pObj->SetModel(pModel);
-                ICollider *pCollider = pPhysics->CreateEllpsoidCollider(pObj, 1.5f, 1.0f);
+                ICollider *pCollider = pPhysics->CreateEllipsoidCollider(pObj, 1.5f, 1.0f);
                 pObj->SetCollider(pCollider);
                 pObj->SetScale(1.0f, 1.5f, 1.0f);
             }
@@ -110,45 +110,45 @@ void CollideTestScene::Load()
 
 void CollideTestScene::Update(float dt)
 {
-    //const float boundary = 10.0f;
+    const float boundary = 10.0f;
 
-    //static float offset = 0.0f;
-    //static float speed = 5.0f;
+    static float offset = 0.0f;
+    static float speed = 5.0f;
 
-    //float deltaPos = speed * dt;
-    //for (int col = 0; col < 5; col++)
-    //{
-    //    for (int row = 0; row < 5; row++)
-    //    {
-    //        int          idx = col * 5 + row;
-    //        IGameObject *pObj = m_pSpheres[idx];
-    //        if (row % 2) // odd
-    //        {
-    //            pObj->AddPosition(Vector3(deltaPos, 0.0f, 0.0f));
-    //        }
-    //        else
-    //        {
-    //            pObj->AddPosition(Vector3(0.0f, 0.0f, deltaPos));
-    //        }
+    float deltaPos = speed * dt;
+    for (int col = 0; col < 5; col++)
+    {
+        for (int row = 0; row < 5; row++)
+        {
+            int          idx = col * 5 + row;
+            IGameObject *pObj = m_pSpheres[idx];
+            if (row % 2) // odd
+            {
+                pObj->AddPosition(Vector3(deltaPos, 0.0f, 0.0f));
+            }
+            else
+            {
+                pObj->AddPosition(Vector3(0.0f, 0.0f, deltaPos));
+            }
 
-    //        if (pObj->GetCollider()->IsCollisionEnter())
-    //        {
-    //            pObj->GetMaterialAt(0)->UpdateEmissive(Vector3(1.0f));
-    //        }
-    //        if (pObj->GetCollider()->IsCollisionExit())
-    //        {
-    //            pObj->GetMaterialAt(0)->UpdateEmissive(Vector3(0.0f));
-    //        }
-    //    }
-    //}
+            if (pObj->GetCollider()->IsCollisionEnter())
+            {
+                pObj->GetMaterialAt(0)->UpdateEmissive(Vector3(1.0f));
+            }
+            if (pObj->GetCollider()->IsCollisionExit())
+            {
+                pObj->GetMaterialAt(0)->UpdateEmissive(Vector3(0.0f));
+            }
+        }
+    }
 
-    //offset += deltaPos;
+    offset += deltaPos;
 
-    //if (abs(offset) > boundary)
-    //{
-    //    speed = -speed;
-    //    offset = (offset > 0) ? boundary : -boundary;
-    //}
+    if (abs(offset) > boundary)
+    {
+        speed = -speed;
+        offset = (offset > 0) ? boundary : -boundary;
+    }
 }
 
 void CollideTestScene::UnLoad() {}

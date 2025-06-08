@@ -6,10 +6,12 @@
 
 UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxColliders)
 {
-    if (!ppOutColliders || maxColliders == 0)
-        return 0;
-
     const ColliderData &data = g_pPhysics->GetColliderData(ID);
+
+    DASSERT(ppOutColliders);
+    DASSERT(maxColliders > 0);
+    DASSERT(maxColliders > data.PairCount);
+
     for (int i = 0; i < data.PairCount; i++)
     {
         UINT pairIndex = data.PairIndices[i];
@@ -23,18 +25,19 @@ UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxCollide
 
 UINT Collider::QueryCollisionData(CollisionData **ppOutData, UINT maxCollision)
 {
+    const ColliderData &data = g_pPhysics->GetColliderData(ID);
+
     DASSERT(ppOutData);
     DASSERT(maxCollision > 0);
-    DASSERT(maxCollision < 8);
+    DASSERT(maxCollision > data.PairCount);
 
-    const ColliderData &data = g_pPhysics->GetColliderData(ID);
     for (int i = 0; i < data.PairCount; i++)
     {
         UINT pairIndex = data.PairIndices[i];
         UINT contactIndex = data.ContactIndices[i];
 
         ICollider *other = g_pPhysics->GetCollider(pairIndex);
-        Contact contact = g_pPhysics->GetContact(contactIndex);
+        const Contact& contact = g_pPhysics->GetContact(contactIndex);
 
         ppOutData[i]->pOther = other;
         ppOutData[i]->point = (contact.pA == this) ? contact.contactPointBWorldSpace : contact.contactPointAWorldSpace;

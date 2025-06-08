@@ -42,7 +42,7 @@ class PhysicsManager : public IPhysicsManager
 
     ICollider *CreateSphereCollider(IGameObject* pObj, const float radius) override;
     ICollider *CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents) override;
-    ICollider *CreateEllpsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius) override;
+    ICollider *CreateEllipsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius) override;
     void       DeleteCollider(ICollider *pDel) override;
 
     BOOL Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider) override;

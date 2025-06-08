@@ -1,10 +1,9 @@
 #include "pch.h"
 
-#include "BoxCollider.h"
 #include "BroadPhase.h"
+
 #include "ColliderBase.h"
-#include "EllipsoidCollider.h"
-#include "SphereCollider.h"
+#include "Shape.h"
 
 #include "PhysicsManager.h"
 
@@ -29,27 +28,29 @@ ULONG __stdcall PhysicsManager::Release(void)
 
 BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
 {
-    COLLIDER_TYPE typeA = pA->GetType();
-    COLLIDER_TYPE typeB = pB->GetType();
-
-    Vector3 posA = pA->Position;
-    Vector3 posB = pB->Position;
+    SHAPE_TYPE typeA = pA->pShape->GetType();
+    SHAPE_TYPE typeB = pB->pShape->GetType();
 
     // 정렬해서 중복 제거
     if (typeA > typeB)
     {
         std::swap(typeA, typeB);
         std::swap(pA, pB);
-        std::swap(posA, posB);
     }
+
+    const Vector3 &posA = pA->Position;
+    const Vector3 &posB = pB->Position;
+
+    const Quaternion &rotA = pA->Rotation;
+    const Quaternion &rotB = pB->Rotation;
 
     Vector3 contactPointA;
     Vector3 contactPointB;
-    if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_SPHERE)
+    if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_SPHERE)
     {
-        const SphereCollider *pSphereB = (const SphereCollider *)pB;
-        const SphereCollider *pSphereA = (const SphereCollider *)pA;
-
+        const SphereShape *pSphereA = (const SphereShape *)pA->pShape;
+        const SphereShape *pSphereB = (const SphereShape *)pB->pShape;
+       
         if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
         {
             pOutContact->pA = pA;
@@ -62,12 +63,11 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_BOX)
+    else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_BOX)
     {
-        const SphereCollider *pSphere = (const SphereCollider *)pA;
-        const BoxCollider    *pBox = (const BoxCollider *)pB;
-        if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, pBox->Rotation, posB, &contactPointA,
-                            &contactPointB))
+        const SphereShape *pSphere = (const SphereShape *)pA->pShape;
+        const BoxShape    *pBox = (const BoxShape *)pB->pShape;
+        if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, rotB, posB, &contactPointA, &contactPointB))
         {
             pOutContact->pA = pA;
             pOutContact->pB = pB;
@@ -78,10 +78,10 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == COLLIDER_TYPE_SPHERE && typeB == COLLIDER_TYPE_ELLIPSOID)
+    else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_ELLIPSOID)
     {
-        const SphereCollider    *pSphere = (const SphereCollider *)pA;
-        const EllipsoidCollider *pEllipse = (const EllipsoidCollider *)pB;
+        const SphereShape    *pSphere = (const SphereShape *)pA->pShape;
+        const EllipsoidShape *pEllipse = (const EllipsoidShape *)pB->pShape;
         if (EllipseEllipseStatic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
                                  posB, &contactPointA, &contactPointB))
         {
@@ -94,13 +94,13 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_BOX)
+    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_BOX)
     {
-        const BoxCollider *pBoxA = (const BoxCollider *)pA;
-        const BoxCollider *pBoxB = (const BoxCollider *)pB;
+        const BoxShape *pBoxA = (const BoxShape *)pA->pShape;
+        const BoxShape *pBoxB = (const BoxShape *)pB->pShape;
 
-        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pBoxA->Rotation, pBoxB->Rotation, pBoxA->Position,
-                         pBoxB->Position, &contactPointA, &contactPointB))
+        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pA->Rotation, pB->Rotation, posA, posB, &contactPointA,
+                         &contactPointB))
         {
             pOutContact->pA = pA;
             pOutContact->pB = pB;
@@ -111,12 +111,12 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == COLLIDER_TYPE_BOX && typeB == COLLIDER_TYPE_ELLIPSOID)
+    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
     {
-        const BoxCollider       *pBox = (const BoxCollider *)pA;
-        const EllipsoidCollider *pEllipse = (const EllipsoidCollider *)pB;
-        if (BoxEllipseStatic(pBox->HalfExtent, pBox->Rotation, pBox->Position, pEllipse->MajorRadius,
-                             pEllipse->MinorRadius, pEllipse->Position, &contactPointA, &contactPointB))
+        const BoxShape       *pBox = (const BoxShape *)pA->pShape;
+        const EllipsoidShape *pEllipse = (const EllipsoidShape *)pB->pShape;
+        if (BoxEllipseStatic(pBox->HalfExtent, rotA, posA, pEllipse->MajorRadius, pEllipse->MinorRadius, posB,
+                             &contactPointA, &contactPointB))
         {
             pOutContact->pA = pA;
             pOutContact->pB = pB;
@@ -127,13 +127,12 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == COLLIDER_TYPE_ELLIPSOID && typeB == COLLIDER_TYPE_ELLIPSOID)
+    else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
     {
-        const EllipsoidCollider *pEllipseA = (const EllipsoidCollider *)pA;
-        const EllipsoidCollider *pEllipseB = (const EllipsoidCollider *)pB;
+        const EllipsoidShape *pEllipseA = (const EllipsoidShape *)pA;
+        const EllipsoidShape *pEllipseB = (const EllipsoidShape *)pB;
         if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
-                                 pEllipseB->MinorRadius, pEllipseA->Position, pEllipseB->Position, &contactPointA,
-                                 &contactPointB))
+                                 pEllipseB->MinorRadius, posA, posB, &contactPointA, &contactPointB))
         {
             pOutContact->pA = pA;
             pOutContact->pB = pB;
@@ -160,36 +159,45 @@ BOOL PhysicsManager::Initialize()
 
 ICollider *PhysicsManager::CreateSphereCollider(IGameObject *pObj, const float radius)
 {
-    SphereCollider *pNew = new SphereCollider(radius);
+    Collider *pNew = new Collider;
+    
     m_pColliders[m_colliderCount] = pNew;
-    pNew->ID = m_colliderCount;
-    pNew->pObj = pObj;
+
+    pNew->pShape = new SphereShape(radius);
     pNew->Position = pObj->GetPosition();
     pNew->Rotation = pObj->GetRotation();
+    pNew->pObj = pObj;
+    pNew->ID = m_colliderCount;
     m_colliderCount++;
     return pNew;
 }
 
 ICollider *PhysicsManager::CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents)
 {
-    BoxCollider *pNew = new BoxCollider(halfExtents);
+    Collider *pNew = new Collider;
+
     m_pColliders[m_colliderCount] = pNew;
-    pNew->ID = m_colliderCount;
-    pNew->pObj = pObj;
+
+    pNew->pShape = new BoxShape(halfExtents);
     pNew->Position = pObj->GetPosition();
     pNew->Rotation = pObj->GetRotation();
+    pNew->pObj = pObj;
+    pNew->ID = m_colliderCount;
     m_colliderCount++;
     return pNew;
 }
 
-ICollider *PhysicsManager::CreateEllpsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius)
+ICollider *PhysicsManager::CreateEllipsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius)
 {
-    EllipsoidCollider *pNew = new EllipsoidCollider(majorRadius, minorRadius);
+    Collider *pNew = new Collider;
+
     m_pColliders[m_colliderCount] = pNew;
-    pNew->ID = m_colliderCount;
-    pNew->pObj = pObj;
+
+    pNew->pShape = new EllipsoidShape(majorRadius, minorRadius);
     pNew->Position = pObj->GetPosition();
     pNew->Rotation = pObj->GetRotation();
+    pNew->pObj = pObj;
+    pNew->ID = m_colliderCount;
     m_colliderCount++;
     return pNew;
 }
@@ -215,7 +223,7 @@ BOOL PhysicsManager::Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, I
         Collider *pCollider = m_pColliders[i];
         Vector3   n;
         float     t;
-        if (pCollider->RayTest(ray.position, ray.direction, &n, & t) && t < tMin)
+        if (pCollider->RayTest(ray, &n, &t) && t < tMin)
         {
             normal = n;
             tMin = t;
