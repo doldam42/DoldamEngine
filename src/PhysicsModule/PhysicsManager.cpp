@@ -113,7 +113,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
+    /*else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
     {
         const BoxShape       *pBox = (const BoxShape *)pA->pShape;
         const EllipsoidShape *pEllipse = (const EllipsoidShape *)pB->pShape;
@@ -128,7 +128,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             pOutContact->normal.Normalize();
             return TRUE;
         }
-    }
+    }*/
     else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
     {
         const EllipsoidShape *pEllipseA = (const EllipsoidShape *)pA;

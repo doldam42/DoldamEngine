@@ -85,11 +85,11 @@ struct BoxShape : public Shape
     Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient, const float bias) const override
     {
         Vector3 corners[8];
-        GetCorners(pos, orient, corners);
-
+        AABB.GetCorners(corners);
+        
         Vector3 maxPt = Vector3::Transform(corners[0], orient) + pos;
         float   maxDist = maxPt.Dot(dir);
-        for (size_t i = 1; i < 8; ++i)
+        for (size_t i = 1; i < _countof(corners); ++i)
         {
             Vector3 pt = Vector3::Transform(corners[i], orient) + pos;
             float   dist = pt.Dot(dir);
@@ -138,16 +138,25 @@ struct EllipsoidShape : public Shape
         const float invScale = 1.0f / scale;
 
         Vector3 d = dir;
-        Vector3 p = pos;
+        d.Normalize();
 
         d.y *= scale;
-        p.y *= scale;
+        d *= (MinorRadius * bias);
+        d.y *= invScale;
 
-        Vector3 ret = p + d * (MinorRadius + bias);
+        return pos + d;
 
-        ret.y *= invScale;
+        /*Vector3 d = dir;
+        d.Normalize();
 
-        return ret;
+        float minorSquared = MinorRadius * MinorRadius;
+        float majorSquared = MajorRadius * MajorRadius;
+        
+        Vector3 scaled(minorSquared * d.x, majorSquared * d.y, minorSquared * d.z);
+
+        float denom = sqrtf(minorSquared * d.x * d.x + majorSquared * d.y * d.y + minorSquared * d.z * d.z);
+
+        return pos + (scaled / denom);*/
     }
 
     EllipsoidShape(float majorRadius, float minorRadius) : MajorRadius(majorRadius), MinorRadius(minorRadius)
