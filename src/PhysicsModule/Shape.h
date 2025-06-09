@@ -85,13 +85,13 @@ struct BoxShape : public Shape
     Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient, const float bias) const override
     {
         Vector3 corners[8];
-        AABB.GetCorners(corners);
-        
-        Vector3 maxPt = Vector3::Transform(corners[0], orient) + pos;
+        GetCorners(pos, orient, corners);
+
+        Vector3 maxPt = corners[0];
         float   maxDist = maxPt.Dot(dir);
         for (size_t i = 1; i < _countof(corners); ++i)
         {
-            Vector3 pt = Vector3::Transform(corners[i], orient) + pos;
+            Vector3 pt = corners[i];
             float   dist = pt.Dot(dir);
             if (dist > maxDist)
             {
@@ -110,6 +110,10 @@ struct BoxShape : public Shape
     BoxShape(const Vector3 &halfExtent) : HalfExtent(halfExtent) { AABB = Bounds(-halfExtent, halfExtent); }
 };
 
+/*
+* 타원체. 장축(Y Axis)과 단축(X-Z Axis)으로 구성됨.
+* 회전X, 축 고정
+*/
 struct EllipsoidShape : public Shape
 {
     float MajorRadius; // Y axis
@@ -138,10 +142,9 @@ struct EllipsoidShape : public Shape
         const float invScale = 1.0f / scale;
 
         Vector3 d = dir;
-        d.Normalize();
-
+        
         d.y *= scale;
-        d *= (MinorRadius * bias);
+        d *= MinorRadius + bias;
         d.y *= invScale;
 
         return pos + d;
