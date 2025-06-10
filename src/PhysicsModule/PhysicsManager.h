@@ -7,7 +7,7 @@ struct Collider;
 
 constexpr UINT MAX_PAIR_PER_COLLIDER = 7;
 
-struct ColliderData
+struct CollideData
 {
     UINT PairCount = 0;
     UINT PairIndices[MAX_PAIR_PER_COLLIDER] = {0};
@@ -31,7 +31,7 @@ class PhysicsManager : public IPhysicsManager
     Contact       m_contacts[MAX_COLLISION_COUNT];
     UINT          m_contactCount = 0;
 
-    ColliderData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
+    CollideData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
 
     ULONG m_refCount = 1;
 
@@ -43,7 +43,13 @@ class PhysicsManager : public IPhysicsManager
     ICollider *CreateSphereCollider(IGameObject* pObj, const float radius) override;
     ICollider *CreateBoxCollider(IGameObject *pObj, const Vector3 &halfExtents) override;
     ICollider *CreateEllipsoidCollider(IGameObject *pObj, const float majorRadius, const float minorRadius) override;
+    ICollider *CreateConvexCollider(IGameObject *pObj, const Vector3 *points, const int numPoints) override;
     void       DeleteCollider(ICollider *pDel) override;
+
+    IRigidBody *CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity,
+                                float friction, BOOL useGravity = TRUE) override;
+    void        DeleteRigidBody(IRigidBody *pDel) override;
+
 
     BOOL Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider) override;
 
@@ -51,8 +57,8 @@ class PhysicsManager : public IPhysicsManager
     BOOL CollisionTestAll(float dt) override;
     void EndCollision() override;
 
-    const ColliderData &GetColliderData(UINT colliderID) const { return m_colliderData[colliderID]; }
-    ICollider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
+    const CollideData &GetCollideData(UINT colliderID) const { return m_colliderData[colliderID]; }
+    Collider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
     const Contact &GetContact(UINT contactIdx) const { return m_contacts[contactIdx]; } 
 
     HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

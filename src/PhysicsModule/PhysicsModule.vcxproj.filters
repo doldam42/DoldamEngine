@@ -25,7 +25,7 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="ColliderBase.h">
+    <ClInclude Include="Collider.h">
       <Filter>Collider</Filter>
     </ClInclude>
     <ClInclude Include="BroadPhase.h" />
@@ -54,7 +54,7 @@
       <Filter>RigidBody</Filter>
     </ClCompile>
     <ClCompile Include="Contact.cpp" />
-    <ClCompile Include="ColliderBase.cpp">
+    <ClCompile Include="Collider.cpp">
       <Filter>Collider</Filter>
     </ClCompile>
     <ClCompile Include="GJK.cpp" />

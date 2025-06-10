@@ -20,13 +20,20 @@ struct Collider : public ICollider
     Vector3    GetPosition() override { return Position; }
     Quaternion GetRotation() override { return Rotation; }
 
+    // TODO 
+    Vector3 GetCenter() { return Position; }
+
     void SetPosition(const Vector3 &pos) override { Position = pos; }
     void SetRotation(const Quaternion &q) override { Rotation = q; }
     void SetActive(BOOL isActive) override { IsActive = isActive; }
 
+    void AddPosition(const Vector3 &deltaPos) override { Position += deltaPos; }
+
     BOOL IsCollisionEnter() override { return (!IsPrevCollide && IsCollide); }
     BOOL IsCollisionStay() override { return (IsPrevCollide && IsCollide); }
     BOOL IsCollisionExit() override { return (IsPrevCollide && !IsCollide); }
+
+    Matrix InertiaTensor() const { return pShape->InertiaTensor; }
 
     Bounds GetBounds() const override { return pShape->GetWorldBounds(Position, Rotation); }
 

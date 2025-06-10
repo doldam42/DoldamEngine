@@ -5,6 +5,7 @@
 struct Shape
 {
     Bounds AABB;
+    Matrix InertiaTensor;
 
     Bounds GetBounds() const { return AABB; }
     Bounds GetWorldBounds(const Vector3 &pos, const Quaternion &orient) const
@@ -19,8 +20,9 @@ struct Shape
     virtual BOOL RayTest(const Ray &ray, const Vector3 &pos, const Quaternion &orient, Vector3 *pOutNormal,
                          float *tHit) = 0;
 
-    virtual Vector3 Support(const Vector3& dir, const Vector3& pos, const Quaternion& orient, const float bias) const = 0;
-    //virtual float   FastestLinearSpeed(const Vector3& angularVelocity, const Vector3& dir) const = 0;
+    virtual Vector3 Support(const Vector3 &dir, const Vector3 &pos, const Quaternion &orient,
+                            const float bias) const = 0;
+    // virtual float   FastestLinearSpeed(const Vector3& angularVelocity, const Vector3& dir) const = 0;
 };
 
 struct SphereShape : public Shape
@@ -48,7 +50,17 @@ struct SphereShape : public Shape
         return pos + dir * (Radius + bias);
     }
 
-    SphereShape(float radius) : Radius(radius) { AABB = Bounds(Vector3(-radius), Vector3(radius)); }
+    SphereShape(float radius) : Radius(radius)
+    {
+        AABB = Bounds(Vector3(-radius), Vector3(radius));
+        
+        constexpr float oneDiv5 = 1.0f / 5.0f;
+
+        InertiaTensor = Matrix::Identity;
+        InertiaTensor._11 = 2.0f * radius * radius * oneDiv5;
+        InertiaTensor._22 = 2.0f * radius * radius * oneDiv5;
+        InertiaTensor._33 = 2.0f * radius * radius * oneDiv5;
+    }
 };
 
 struct BoxShape : public Shape
@@ -107,13 +119,42 @@ struct BoxShape : public Shape
         return maxPt + norm;
     }
 
-    BoxShape(const Vector3 &halfExtent) : HalfExtent(halfExtent) { AABB = Bounds(-halfExtent, halfExtent); }
+    BoxShape(const Vector3 &halfExtent) : HalfExtent(halfExtent) 
+    { 
+        AABB = Bounds(-halfExtent, halfExtent); 
+
+        // Init Tensor
+        constexpr float OneDiv12 = 1 / 12.0f;
+        // Inertia tensor for box centered around zero
+        const float     dx = AABB.WidthX();
+        const float     dy = AABB.WidthY();
+        const float     dz = AABB.WidthZ();
+
+        Matrix tensor;
+        tensor._11 = (dy * dy + dz * dz) * OneDiv12;
+        tensor._22 = (dx * dx + dz * dz) * OneDiv12;
+        tensor._33 = (dx * dx + dy * dy) * OneDiv12;
+
+        // Now We need to use the parallel axis theorem to get the inertia tensor for a box
+        // that is not centered around the origin
+
+        Vector3 cm = AABB.Center();
+
+        const Vector3 R = -cm;
+        const float   R2 = R.LengthSquared();
+
+        Matrix patTensor(R2 - R.x * R.x, R.x * R.y, R.x * R.z, 0.0f, R.y * R.x, R2 - R.y * R.y, R.y * R.z, 0.0f,
+                         R.z * R.x, R.z * R.y, R2 - R.z * R.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+        tensor += patTensor;
+        InertiaTensor = tensor;
+    }
 };
 
 /*
-* 타원체. 장축(Y Axis)과 단축(X-Z Axis)으로 구성됨.
-* 회전X, 축 고정
-*/
+  타원체. 장축(Y Axis)과 단축(X-Z Axis)으로 구성됨. 
+  회전X, 축 고정
+ */
 struct EllipsoidShape : public Shape
 {
     float MajorRadius; // Y axis
@@ -142,7 +183,7 @@ struct EllipsoidShape : public Shape
         const float invScale = 1.0f / scale;
 
         Vector3 d = dir;
-        
+
         d.y *= scale;
         d *= MinorRadius + bias;
         d.y *= invScale;
@@ -154,7 +195,7 @@ struct EllipsoidShape : public Shape
 
         float minorSquared = MinorRadius * MinorRadius;
         float majorSquared = MajorRadius * MajorRadius;
-        
+
         Vector3 scaled(minorSquared * d.x, majorSquared * d.y, minorSquared * d.z);
 
         float denom = sqrtf(minorSquared * d.x * d.x + majorSquared * d.y * d.y + minorSquared * d.z * d.z);

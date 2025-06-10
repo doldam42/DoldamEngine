@@ -158,7 +158,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BroadPhase.h" />
-    <ClInclude Include="ColliderBase.h" />
+    <ClInclude Include="Collider.h" />
     <ClInclude Include="Contact.h" />
     <ClInclude Include="ConvexShape.h" />
     <ClInclude Include="framework.h" />
@@ -170,7 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BroadPhase.cpp" />
-    <ClCompile Include="ColliderBase.cpp" />
+    <ClCompile Include="Collider.cpp" />
     <ClCompile Include="Contact.cpp" />
     <ClCompile Include="ConvexShape.cpp" />
     <ClCompile Include="dllmain.cpp" />

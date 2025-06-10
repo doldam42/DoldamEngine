@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ColliderBase.h"
+#include "Collider.h"
 
 bool GJK_DoesIntersect(const Collider* pA, const Collider* pB);
 bool GJK_DoesIntersect(const Collider *pA, const Collider *pB, const float bias, Vector3 *ptOnA, Vector3 *ptOnB);

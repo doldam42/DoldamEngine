@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ColliderBase.h"
-
+struct Collider;
 struct CollisionPair
 {
     int a;

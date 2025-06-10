@@ -2,8 +2,11 @@
 
 #include "BroadPhase.h"
 
-#include "ColliderBase.h"
 #include "Shape.h"
+#include "ConvexShape.h"
+
+#include "Collider.h"
+#include "RigidBody.h"
 
 #include "GJK.h"
 
@@ -113,7 +116,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             return TRUE;
         }
     }
-    /*else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
+    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
     {
         const BoxShape       *pBox = (const BoxShape *)pA->pShape;
         const EllipsoidShape *pEllipse = (const EllipsoidShape *)pB->pShape;
@@ -128,7 +131,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             pOutContact->normal.Normalize();
             return TRUE;
         }
-    }*/
+    }
     else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
     {
         const EllipsoidShape *pEllipseA = (const EllipsoidShape *)pA;
@@ -232,6 +235,21 @@ ICollider *PhysicsManager::CreateEllipsoidCollider(IGameObject *pObj, const floa
     return pNew;
 }
 
+ICollider *PhysicsManager::CreateConvexCollider(IGameObject *pObj, const Vector3 *points, const int numPoints)
+{
+    Collider *pNew = new Collider;
+    
+    m_pColliders[m_colliderCount] = pNew;
+
+    pNew->pShape = new ConvexShape(points, numPoints);
+    pNew->Position = pObj->GetPosition();
+    pNew->Rotation = pObj->GetRotation();
+    pNew->pObj = pObj;
+    pNew->ID = m_colliderCount;
+    m_colliderCount++;
+    return pNew;
+}
+
 void PhysicsManager::DeleteCollider(ICollider *pDel)
 {
     Collider *pCol = (Collider *)pDel;
@@ -241,6 +259,21 @@ void PhysicsManager::DeleteCollider(ICollider *pDel)
     m_colliderCount--;
     m_pColliders[idx]->ID = idx;
     delete pDel;
+}
+
+IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 &pos, float mass, float elasticity,
+                                            float friction, BOOL useGravity)
+{
+    RigidBody *pNew = new RigidBody;
+    pNew->Initialize((Collider *)pCollider, mass, elasticity, friction, useGravity);
+
+    return pNew;
+}
+
+void PhysicsManager::DeleteRigidBody(IRigidBody *pDel) 
+{ 
+    RigidBody *pBody = (RigidBody *)pDel; 
+    delete pBody;
 }
 
 BOOL PhysicsManager::Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, ICollider **pCollider)
@@ -290,7 +323,7 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         m_colliderData[i].PairCount = 0;
     }
 
-    ZeroMemory(m_collisionPairs, sizeof(CollisionPair) * MAX_COLLISION_CANDIDATE_COUNT);
+    ZeroMemory(m_collisionPairs, sizeof(m_collisionPairs));
     UINT numCandidate = m_pBroadPhase->QueryCollisionPairs(m_collisionPairs, MAX_COLLISION_CANDIDATE_COUNT);
     for (UINT i = 0; i < numCandidate; i++)
     {
@@ -302,8 +335,11 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         Contact contact;
         if (pA->IsActive && pB->IsActive && Intersect(pA, pB, &contact))
         {
-            ColliderData &dataA = m_colliderData[pA->ID];
-            ColliderData &dataB = m_colliderData[pB->ID];
+            CollideData &dataA = m_colliderData[pA->ID];
+            CollideData &dataB = m_colliderData[pB->ID];
+
+            DASSERT(dataA.PairCount < MAX_PAIR_PER_COLLIDER);
+            DASSERT(dataB.PairCount < MAX_PAIR_PER_COLLIDER);
             if (dataA.PairCount < MAX_PAIR_PER_COLLIDER)
             {
                 dataA.PairIndices[dataA.PairCount] = pB->ID;

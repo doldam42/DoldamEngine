@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "ColliderBase.h"
+#include "Collider.h"
 #include "RigidBody.h"
 
 #include "BroadPhase.h"

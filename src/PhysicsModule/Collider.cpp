@@ -2,11 +2,11 @@
 
 #include "PhysicsManager.h"
 
-#include "ColliderBase.h"
+#include "Collider.h"
 
 UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxColliders)
 {
-    const ColliderData &data = g_pPhysics->GetColliderData(ID);
+    const CollideData &data = g_pPhysics->GetCollideData(ID);
 
     DASSERT(ppOutColliders);
     DASSERT(maxColliders > 0);
@@ -25,7 +25,7 @@ UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxCollide
 
 UINT Collider::QueryCollisionData(CollisionData **ppOutData, UINT maxCollision)
 {
-    const ColliderData &data = g_pPhysics->GetColliderData(ID);
+    const CollideData &data = g_pPhysics->GetCollideData(ID);
 
     DASSERT(ppOutData);
     DASSERT(maxCollision > 0);

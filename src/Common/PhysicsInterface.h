@@ -10,15 +10,6 @@
 
 #include "../MathModule/MathHeaders.h"
 
-enum COLLIDER_TYPE
-{
-    COLLIDER_TYPE_SPHERE = 0,
-    COLLIDER_TYPE_BOX,
-    COLLIDER_TYPE_CAPSULE,
-    COLLIDER_TYPE_ELLIPSOID,
-    COLLIDER_TYPE_CONVEX,
-};
-
 enum SHAPE_TYPE
 {
     SHAPE_TYPE_SPHERE = 0,
@@ -55,6 +46,8 @@ interface ICollider
     virtual void SetPosition(const Vector3 &pos) = 0;
     virtual void SetRotation(const Quaternion &q) = 0;
     virtual void SetActive(BOOL isActive) = 0;
+
+    virtual void AddPosition(const Vector3 &deltaPos) = 0;
 
     virtual BOOL IsCollisionEnter() = 0;
     virtual BOOL IsCollisionStay() = 0;
@@ -103,22 +96,22 @@ interface IPhysicsManager : public IUnknown
     virtual ICollider *CreateEllipsoidCollider(IGameObject * pObj, const float majorRadius,
                                               const float minorRadius) = 0; // Major Axis: Y
     //virtual ICollider *CreateCapsuleCollider(const float radius, const float height) = 0;
-    //virtual ICollider *CreateConvexCollider(const Vector3 *points, const int numPoints) = 0;
+    virtual ICollider *CreateConvexCollider(IGameObject * pObj, const Vector3 *points, const int numPoints) = 0;
     virtual void       DeleteCollider(ICollider * pDel) = 0;
 
     virtual void       BeginCollision(float dt) = 0;
     virtual BOOL       CollisionTestAll(float dt) = 0;
     virtual void       EndCollision() = 0;
 
-    //virtual IRigidBody     *CreateRigidBody(ICollider * pCollider, const Vector3& pos, float mass, float elasticity,
-    //                                        float friction, BOOL useGravity = TRUE) = 0;
-    
+    virtual IRigidBody     *CreateRigidBody(ICollider * pCollider, const Vector3& pos, float mass, float elasticity,
+                                            float friction, BOOL useGravity = TRUE) = 0;
+    virtual void        DeleteRigidBody(IRigidBody * pDel) = 0;
+
     //virtual IHeightFieldTerrainCollider *CreateHeightFieldTerrain(const BYTE *pImage, const UINT imgWidth,
     //                                                      const UINT imgHeight, const Vector3 &scale,
     //                                                      const float minHeight, const float maxHeight) = 0;
 
-    //virtual void DeleteRigidBody(IRigidBody * pDel) = 0;
-
+    
     //virtual void BuildScene() = 0;
 
     virtual BOOL Raycast(const Ray &ray, Vector3* pOutNormal, float *tHit, ICollider** pCollider) = 0;
