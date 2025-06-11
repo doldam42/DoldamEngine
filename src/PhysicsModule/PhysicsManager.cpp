@@ -180,6 +180,74 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
     return FALSE;
 }
 
+void PhysicsManager::ApplyGravityImpulseAll(float dt) 
+{
+    SORT_LINK *pCur = m_pRigidBodyLinkHead;
+    while (pCur)
+    {
+        RigidBody *pBody = (RigidBody *)pCur->pItem;
+        pBody->ApplyGravityImpulse(dt);
+        pCur = pCur->pNext;
+    }
+}
+
+int CompareContacts(const void *p1, const void *p2)
+{
+    Contact a = *(Contact *)p1;
+    Contact b = *(Contact *)p2;
+
+    if (a.timeOfImpact < b.timeOfImpact)
+    {
+        return -1;
+    }
+
+    if (a.timeOfImpact == b.timeOfImpact)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+void PhysicsManager::ResolveContactsAll(float dt) 
+{ 
+    if (m_contactCount > 1)
+    {
+        qsort(m_contacts, m_contactCount, sizeof(Contact), CompareContacts);
+    }
+
+    float accumulatedTime = 0.0f;
+    for (UINT i = 0; i < m_contactCount; i++)
+    {
+        Contact &contact = m_contacts[i];
+        const float dt_sec = contact.timeOfImpact - accumulatedTime;
+
+        // position Update
+        SORT_LINK *pCur = m_pRigidBodyLinkHead;
+        while (pCur)
+        {
+            RigidBody *pBody = (RigidBody *)pCur->pItem;
+            pBody->Update(dt_sec);
+            pCur = pCur->pNext;
+        }
+        ResolveContact(contact);
+        accumulatedTime += dt_sec;
+    }
+
+    // Update the positions for the rest of this frame's time
+    const float timeRemaining = dt - accumulatedTime;
+    if (timeRemaining > 0.0f)
+    {
+        SORT_LINK *pCur = m_pRigidBodyLinkHead;
+        while (pCur)
+        {
+            RigidBody *pBody = (RigidBody *)pCur->pItem;
+            pBody->Update(timeRemaining);
+            pCur = pCur->pNext;
+        }
+    }
+}
+
 BOOL PhysicsManager::Initialize()
 {
     m_pBroadPhase = new BroadPhase;
@@ -267,12 +335,17 @@ IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 
     RigidBody *pNew = new RigidBody;
     pNew->Initialize((Collider *)pCollider, mass, elasticity, friction, useGravity);
 
+    LinkToLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pNew->m_linkInPhysics);
+
     return pNew;
 }
 
 void PhysicsManager::DeleteRigidBody(IRigidBody *pDel) 
 { 
     RigidBody *pBody = (RigidBody *)pDel; 
+
+    UnLinkFromLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pBody->m_linkInPhysics);
+
     delete pBody;
 }
 
@@ -306,6 +379,8 @@ BOOL PhysicsManager::Raycast(const Ray &ray, Vector3 *pOutNormal, float *tHit, I
 
 void PhysicsManager::BeginCollision(float dt)
 {
+    ApplyGravityImpulseAll(dt);
+
     for (int i = 0; i < m_colliderCount; i++)
     {
         Collider *pCollider = m_pColliders[i];
@@ -323,7 +398,6 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         m_colliderData[i].PairCount = 0;
     }
 
-    ZeroMemory(m_collisionPairs, sizeof(m_collisionPairs));
     UINT numCandidate = m_pBroadPhase->QueryCollisionPairs(m_collisionPairs, MAX_COLLISION_CANDIDATE_COUNT);
     for (UINT i = 0; i < numCandidate; i++)
     {
@@ -335,24 +409,19 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
         Contact contact;
         if (pA->IsActive && pB->IsActive && Intersect(pA, pB, &contact))
         {
-            CollideData &dataA = m_colliderData[pA->ID];
-            CollideData &dataB = m_colliderData[pB->ID];
+            ColliderData &dataA = m_colliderData[pA->ID];
+            ColliderData &dataB = m_colliderData[pB->ID];
 
-            DASSERT(dataA.PairCount < MAX_PAIR_PER_COLLIDER);
-            DASSERT(dataB.PairCount < MAX_PAIR_PER_COLLIDER);
-            if (dataA.PairCount < MAX_PAIR_PER_COLLIDER)
-            {
-                dataA.PairIndices[dataA.PairCount] = pB->ID;
-                dataA.ContactIndices[dataA.PairCount] = m_contactCount;
-                dataA.PairCount++;
-            }
-            if (dataB.PairCount < MAX_PAIR_PER_COLLIDER)
-            {
-                dataB.PairIndices[dataB.PairCount] = pA->ID;
-                dataB.ContactIndices[dataB.PairCount] = m_contactCount;
-                dataB.PairCount++;
-            }
+            DASSERT(dataA.PairCount < MAX_PAIR_PER_COLLIDER && dataB.PairCount < MAX_PAIR_PER_COLLIDER);
 
+            dataA.PairIndices[dataA.PairCount] = pB->ID;
+            dataA.ContactIndices[dataA.PairCount] = m_contactCount;
+            dataA.PairCount++;
+
+            dataB.PairIndices[dataB.PairCount] = pA->ID;
+            dataB.ContactIndices[dataB.PairCount] = m_contactCount;
+            dataB.PairCount++;
+            
             m_contacts[m_contactCount++] = contact;
             pA->IsCollide = TRUE;
             pB->IsCollide = TRUE;
@@ -361,5 +430,6 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
 
     return m_contactCount > 0;
 }
+
 
 void PhysicsManager::EndCollision() { m_contactCount = 0; }

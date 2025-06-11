@@ -6,7 +6,7 @@
 
 UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxColliders)
 {
-    const CollideData &data = g_pPhysics->GetCollideData(ID);
+    const ColliderData &data = g_pPhysics->GetColliderData(ID);
 
     DASSERT(ppOutColliders);
     DASSERT(maxColliders > 0);
@@ -25,7 +25,7 @@ UINT Collider::GetCollidingColliders(ICollider **ppOutColliders, UINT maxCollide
 
 UINT Collider::QueryCollisionData(CollisionData **ppOutData, UINT maxCollision)
 {
-    const CollideData &data = g_pPhysics->GetCollideData(ID);
+    const ColliderData &data = g_pPhysics->GetColliderData(ID);
 
     DASSERT(ppOutData);
     DASSERT(maxCollision > 0);

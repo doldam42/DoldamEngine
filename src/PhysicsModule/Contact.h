@@ -13,3 +13,5 @@ struct Contact
     Collider *pA = nullptr;
     Collider *pB = nullptr;
 };
+
+void ResolveContact(const Contact &contact);

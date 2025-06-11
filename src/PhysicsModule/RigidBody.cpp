@@ -16,6 +16,22 @@ void RigidBody::Initialize(Collider *pCollider, float mass, float elasticity, fl
 
     m_useGravity = useGravity;
     m_isKinematic = isKinematic;
+
+    m_linkInPhysics.pItem = this;
+    m_linkInPhysics.pPrev = nullptr;
+    m_linkInPhysics.pNext = nullptr;
+}
+
+void RigidBody::ApplyGravityImpulse(float dt) 
+{
+    if (!m_useGravity || m_invMass == 0 || m_onGround)
+        return;
+
+    const Vector3 gravity(0.0f, -9.8f, 0.0f);
+    const float   mass = 1.0f / m_invMass;
+    const Vector3 impulseGravity = gravity * mass * dt;
+    
+    ApplyImpulseLinear(impulseGravity);
 }
 
 Matrix RigidBody::GetInverseInertiaTensorWorldSpace() const
@@ -75,6 +91,22 @@ void RigidBody::Update(float dt)
     m_pCollider->SetPosition(newPos);
 }
 
+void RigidBody::ApplyImpulse(const Vector3& impulsePoint, const Vector3& impulse)
+{
+    if (m_invMass == 0.0f)
+        return;
+
+    ApplyImpulseLinear(impulse);
+
+    if (m_freezeRotation)
+        return;
+
+    Vector3 position = GetCenterOfMassWorldSpace();
+    Vector3 r = impulsePoint - position;
+    Vector3 dL = r.Cross(impulse);
+    ApplyImpulseAngular(dL);
+}
+
 void RigidBody::ApplyImpulseLinear(const Vector3 &impulse) 
 {
     if (m_invMass == 0)
@@ -85,7 +117,7 @@ void RigidBody::ApplyImpulseLinear(const Vector3 &impulse)
 
 void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
 {
-    if (m_invMass == 0.0f)
+    if (m_invMass == 0.0f || m_freezeRotation)
         return;
 
     // L = I w = r x p
@@ -99,6 +131,23 @@ void RigidBody::ApplyImpulseAngular(const Vector3 &impulse)
         m_angularVelocity.Normalize();
         m_angularVelocity *= maxAngularSpeed;
     }
+}
+
+Matrix RigidBody::GetInverseInertiaTensorWorldSpace() const
+{
+    Matrix inertiaTensor = m_pCollider->InertiaTensor();
+    Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
+    Matrix orient = Matrix::CreateFromQuaternion(m_pCollider->GetRotation());
+    invInertiaTensor = orient * invInertiaTensor * orient.Transpose();
+    invInertiaTensor.m[3][3] = 1.0f;
+    return invInertiaTensor;
+}
+
+Matrix RigidBody::GetInverseInertiaTensorLocalSpace() const
+{
+    Matrix inertiaTensor = m_pCollider->InertiaTensor();
+    Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
+    return invInertiaTensor;
 }
 
 void RigidBody::Reset() 

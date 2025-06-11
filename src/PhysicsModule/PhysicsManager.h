@@ -7,7 +7,7 @@ struct Collider;
 
 constexpr UINT MAX_PAIR_PER_COLLIDER = 7;
 
-struct CollideData
+struct ColliderData
 {
     UINT PairCount = 0;
     UINT PairIndices[MAX_PAIR_PER_COLLIDER] = {0};
@@ -27,15 +27,22 @@ class PhysicsManager : public IPhysicsManager
     Collider *m_pColliders[MAX_BODY_COUNT] = {nullptr};
     UINT      m_colliderCount = 0;
 
+    // RigidBodies
+    SORT_LINK *m_pRigidBodyLinkHead = nullptr;
+    SORT_LINK *m_pRigidBodyLinkTail = nullptr;
+
     CollisionPair m_collisionPairs[MAX_COLLISION_CANDIDATE_COUNT];
     Contact       m_contacts[MAX_COLLISION_COUNT];
     UINT          m_contactCount = 0;
 
-    CollideData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
+    ColliderData m_colliderData[MAX_BODY_COUNT] = {};  // 콜라이더 별 충돌 데이터
 
     ULONG m_refCount = 1;
 
     BOOL Intersect(Collider *pA, Collider *pB, Contact* pOutContact);
+
+    void ApplyGravityImpulseAll(float dt);
+    void ResolveContactsAll(float dt);
 
   public:
     BOOL Initialize() override;
@@ -55,9 +62,10 @@ class PhysicsManager : public IPhysicsManager
 
     void BeginCollision(float dt) override;
     BOOL CollisionTestAll(float dt) override;
+
     void EndCollision() override;
 
-    const CollideData &GetCollideData(UINT colliderID) const { return m_colliderData[colliderID]; }
+    const ColliderData &GetColliderData(UINT colliderID) const { return m_colliderData[colliderID]; }
     Collider *GetCollider(UINT colliderID) const { return m_pColliders[colliderID]; }
     const Contact &GetContact(UINT contactIdx) const { return m_contacts[contactIdx]; } 
 
