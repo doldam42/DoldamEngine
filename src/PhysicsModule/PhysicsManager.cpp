@@ -58,14 +58,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
 
         if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_BOX)
@@ -74,13 +67,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
         const BoxShape    *pBox = (const BoxShape *)pB->pShape;
         if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, rotB, posB, &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_ELLIPSOID)
@@ -90,13 +77,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
         if (EllipseEllipseStatic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
                                  posB, &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_BOX)
@@ -107,13 +88,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
         if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, pA->Rotation, pB->Rotation, posA, posB, &contactPointA,
                          &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
@@ -123,13 +98,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
         if (BoxEllipseStatic(pBox->HalfExtent, rotA, posA, pEllipse->MajorRadius, pEllipse->MinorRadius, posB,
                              &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
@@ -139,13 +108,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
         if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
                                  pEllipseB->MinorRadius, posA, posB, &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else
@@ -158,15 +121,10 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
             Vector3 normal = ptOnB - ptOnA;
             normal.Normalize();
 
-            ptOnA -= normal * bias;
-            ptOnB += normal * bias;
+            contactPointA = ptOnA - normal * bias;
+            contactPointB = ptOnB + normal * bias;
 
-            contact.normal = normal;
-            contact.contactPointAWorldSpace = ptOnA;
-            contact.contactPointBWorldSpace = ptOnB;
-
-            *pOutContact = contact;
-            return TRUE;
+            goto lb_success;
         }
 
         // there was no collision, but we still want the contact data, so get it
@@ -178,6 +136,15 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
     }
 
     return FALSE;
+
+lb_success:
+    pOutContact->pA = pA;
+    pOutContact->pB = pB;
+    pOutContact->contactPointAWorldSpace = contactPointA;
+    pOutContact->contactPointBWorldSpace = contactPointB;
+    pOutContact->normal = contactPointA - contactPointB;
+    pOutContact->normal.Normalize();
+    return TRUE;
 }
 
 BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact)
