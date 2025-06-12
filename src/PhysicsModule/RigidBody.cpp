@@ -34,16 +34,6 @@ void RigidBody::ApplyGravityImpulse(float dt)
     ApplyImpulseLinear(impulseGravity);
 }
 
-Matrix RigidBody::GetInverseInertiaTensorWorldSpace() const
-{
-    Matrix inertiaTensor = m_pCollider->InertiaTensor();
-    Matrix invInertiaTensor = inertiaTensor.Invert() * m_invMass;
-    Matrix orient = Matrix::CreateFromQuaternion(m_pCollider->Rotation);
-    invInertiaTensor = orient * invInertiaTensor * orient.Transpose();
-    invInertiaTensor.m[3][3] = 1.0f;
-    return invInertiaTensor;
-}
-
 Vector3 RigidBody::GetCenterOfMassWorldSpace() const { return m_pCollider->GetPosition(); }
 
 void RigidBody::Update(IGameObject *pObj) 

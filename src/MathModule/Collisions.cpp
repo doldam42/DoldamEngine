@@ -376,7 +376,7 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
     dir.Normalize();
 
     Vector3 n;
-    float hitt0, hitt1;
+    float   hitt0, hitt1;
     if (RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &n, &hitt0, &hitt1) &&
         hitt0 < 0.0f)
     {
@@ -396,10 +396,12 @@ BOOL EllipseEllipseStatic(float majorRadiusA, float majorRadiusB, float minorRad
 }
 
 BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRadiusA, float minorRadiusB, Vector3 posA,
-                           Vector3 posB, Vector3 velocity, const float dt, Vector3 *pOutNormal, float *pOutToi)
+                           Vector3 posB, const Vector3 &velA, const Vector3 &velB, const float dt, Vector3 *pOutNormal,
+                           float *pOutToi)
 {
-    const float scale = minorRadiusA / majorRadiusA;
-    const float invScale = 1.0f / scale;
+    const float   scale = minorRadiusA / majorRadiusA;
+    const float   invScale = 1.0f / scale;
+    const Vector3 velocity = velA - velB;
 
     Vector3 dir = velocity;
     dir.Normalize();
@@ -411,7 +413,7 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
     posB.y *= scale;
 
     Vector3 n;
-    float t0, t1;
+    float   t0, t1;
     if (!RayEllipse(posA, dir, posB, majorRadiusB + minorRadiusA, minorRadiusB + minorRadiusA, &n, &t0, &t1) ||
         t1 < 0.0f)
     {
@@ -439,9 +441,9 @@ BOOL EllipseEllipseDynamic(float majorRadiusA, float majorRadiusB, float minorRa
         return FALSE;
     }
 
-   /* const float majorRS = majorRadiusB * majorRadiusB;
-    const float minorRS = minorRadiusB * minorRadiusB;
-    Vector3     n = (collisionPoint - posB) / Vector3(minorRS, majorRS, minorRS);*/
+    /* const float majorRS = majorRadiusB * majorRadiusB;
+     const float minorRS = minorRadiusB * minorRadiusB;
+     Vector3     n = (collisionPoint - posB) / Vector3(minorRS, majorRS, minorRS);*/
 
     n.y *= invScale;
     n.Normalize();
@@ -539,6 +541,70 @@ bool OverlapOnAxis(const Vector3 &extentA, const Vector3 &extentB, const Vector3
     return false;
 }
 
+// A, B의 projection이 축에서 겹치는지 검사
+bool OverlapOnAxis(const Vector3 &extentA, const Vector3 &extentB, const Vector3 &posA, const Vector3 &posB,
+                   const Vector3 &relVel, Vector3 axis, Vector3 a_axes[3], Vector3 b_axes[3], float *pOutPenetration,
+                   float *pOutTOI)
+{
+    if (axis.LengthSquared() < 1e-3f)
+        return true; // 축이 0이면 skip
+    axis.Normalize();
+
+    // 중심간 거리의 투영
+    Vector3 distance = posB - posA;
+    float   projectedDistance = fabsf(distance.Dot(axis));
+
+    // A와 B의 반지름 합
+
+    float rA = ProjectBox(extentA, a_axes, axis);
+    float rB = ProjectBox(extentB, b_axes, axis);
+
+    float centerA = axis.Dot(posA);
+    float centerB = axis.Dot(posB);
+
+    float minA = centerA - rA;
+    float maxA = centerA + rA;
+    float minB = centerB - rB;
+    float maxB = centerB + rB;
+
+    float velProj = relVel.Dot(axis);
+
+    if (fabsf(velProj) < 1e-3f)
+    {
+        // separated and no movement on this axis
+        if (maxA < minB || maxB < minA)
+        {
+            return false;
+        }
+        // no time restriction on this axis
+        float overlap = min(maxA, maxB) - max(minA, minB);
+        if (projectedDistance <= (rA + rB))
+        {
+            *pOutPenetration = overlap;
+            *pOutTOI = 0.0f;
+            return true;
+        }
+        return false;
+    }
+
+    float tFirst = 0.0f;
+    float tLast = 1.0f;
+    float tEnter = (minB - maxA) / velProj;
+    float tExit = (minB - minA) / velProj;
+    if (tEnter > tExit)
+        std::swap(tEnter, tExit);
+
+    tFirst = max(tFirst, tEnter);
+    tLast = min(tLast, tExit);
+
+    if (tFirst > tLast)
+        return false;
+
+    *pOutPenetration = min(maxA, maxB) - max(minA, minB);
+    *pOutTOI = tFirst;
+    return true;
+}
+
 void GetAxes(const Quaternion &q, Vector3 axes[3])
 {
     Matrix m = Matrix::CreateFromQuaternion(q);
@@ -600,6 +666,73 @@ BOOL BoxBoxStatic(const Vector3 &extentA, const Vector3 &extentB, const Quaterni
     *pOutContactPointA = projectedA;
     *pOutContactPointB = projectedB;
 
+    return TRUE;
+}
+
+BOOL BoxBoxDynamic(const Vector3 &halfExtentA, const Vector3 &halfExtentB, const Quaternion &rotA,
+                   const Quaternion &rotB, const Vector3 &posA, const Vector3 &posB, const Vector3 &velA,
+                   const Vector3 &velB, Vector3 *pOutContactPointA, Vector3 *pOutContactPointB, float *pOutToi)
+{
+    const Vector3 relativeVelocity = velA - velB;
+
+    Vector3 cornersA[8];
+    Vector3 cornersB[8];
+
+    Vector3 axesA[3], axesB[3];
+    GetAxes(rotA, axesA);
+    GetAxes(rotB, axesB);
+
+    float tFirst = 0.0f;
+    float tLast = 1.0f;
+
+    Vector3 axesToTest[15];
+    int     axisCount = 0;
+
+    // 3 + 3 기본 축
+    for (int i = 0; i < 3; ++i)
+    {
+        axesToTest[axisCount++] = axesA[i];
+        axesToTest[axisCount++] = axesB[i];
+    }
+
+    // 9개의 교차 축
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            axesToTest[axisCount++] = axesA[i].Cross(axesB[j]);
+
+    float   minPenetration = FLT_MAX;
+    float   TOI = FLT_MAX;
+    Vector3 bestAxis;
+    for (int i = 0; i < axisCount; ++i)
+    {
+        const Vector3 &axis = axesToTest[i];
+
+        float overlap, toi;
+        if (!OverlapOnAxis(halfExtentA, halfExtentB, posA, posB, relativeVelocity, axis, axesA, axesB, &overlap, &toi))
+        {
+            return FALSE; // 분리축 발견
+        }
+
+        if (overlap < minPenetration)
+        {
+            minPenetration = overlap;
+            TOI = toi;
+            bestAxis = axesToTest[i];
+        }
+    }
+
+    bestAxis.Normalize();
+    Vector3 centerDiff = posB - posA;
+    Vector3 normal = (centerDiff.Dot(bestAxis) < 0) ? -bestAxis : bestAxis;
+
+    // Contact Point 근사 계산 (중심 투영 기반)
+    Vector3 projectedA = posA + normal * ProjectBox(halfExtentA, axesA, normal);
+    Vector3 projectedB = posB - normal * ProjectBox(halfExtentB, axesB, normal);
+
+    *pOutContactPointA = projectedA;
+    *pOutContactPointB = projectedB;
+    *pOutToi = TOI;
+    
     return TRUE;
 }
 

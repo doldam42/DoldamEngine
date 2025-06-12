@@ -2,8 +2,8 @@
 
 #include "BroadPhase.h"
 
-#include "Shape.h"
 #include "ConvexShape.h"
+#include "Shape.h"
 
 #include "Collider.h"
 #include "RigidBody.h"
@@ -55,7 +55,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
     {
         const SphereShape *pSphereA = (const SphereShape *)pA->pShape;
         const SphereShape *pSphereB = (const SphereShape *)pB->pShape;
-       
+
         if (SphereSphereStatic(pSphereA->Radius, pSphereB->Radius, posA, posB, &contactPointA, &contactPointB))
         {
             pOutContact->pA = pA;
@@ -180,7 +180,219 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
     return FALSE;
 }
 
-void PhysicsManager::ApplyGravityImpulseAll(float dt) 
+BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact)
+{
+    if (!pA || !pB)
+        return FALSE;
+
+    pOutContact->timeOfImpact = 0.0f;
+
+    Collider *pColliderA = pA->GetCollider();
+    Collider *pColliderB = pB->GetCollider();
+
+    SHAPE_TYPE typeA = pColliderA->pShape->GetType();
+    SHAPE_TYPE typeB = pColliderB->pShape->GetType();
+
+    // 정렬해서 중복 제거
+    if (typeA > typeB)
+    {
+        std::swap(typeA, typeB);
+        std::swap(pA, pB);
+        std::swap(pColliderA, pColliderB);
+    }
+
+    const Vector3 &posA = pColliderA->Position;
+    const Vector3 &posB = pColliderB->Position;
+
+    const Quaternion &rotA = pColliderA->Rotation;
+    const Quaternion &rotB = pColliderB->Rotation;
+
+    const Vector3 velA = pA->GetVelocity();
+    const Vector3 velB = pB->GetVelocity();
+
+    float   timeOfImpact;
+    Vector3 contactPointA;
+    Vector3 contactPointB;
+
+    if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_SPHERE)
+    {
+        const SphereShape *pSphereA = (const SphereShape *)pColliderA->pShape;
+        const SphereShape *pSphereB = (const SphereShape *)pColliderB->pShape;
+
+        if (SphereSphereDynamic(pSphereA->Radius, pSphereB->Radius, posA, posB, velA, velB, dt, &contactPointA,
+                                &contactPointB, &timeOfImpact))
+        {
+            goto lb_success;
+        }
+    }
+    else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_BOX)
+    {
+        const SphereShape *pSphere = (const SphereShape *)pColliderA->pShape;
+        const BoxShape    *pBox = (const BoxShape *)pColliderB->pShape;
+        
+        if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, rotB, posB, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_ELLIPSOID)
+    {
+        const SphereShape    *pSphere = (const SphereShape *)pColliderA->pShape;
+        const EllipsoidShape *pEllipse = (const EllipsoidShape *)pColliderB->pShape;
+        if (EllipseEllipseDynamic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
+            posB, velA, velB, dt, &normal, &timeOfImpact))
+        {
+            goto lb_success;
+        }
+    }
+    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_BOX)
+    {
+        const BoxShape *pBoxA = (const BoxShape *)pColliderA->pShape;
+        const BoxShape *pBoxB = (const BoxShape *)pColliderB->pShape;
+
+        if (BoxBoxDynamic(pBoxA->HalfExtent, pBoxB->HalfExtent, rotA, rotB, posA, posB, velA, velB, &contactPointA,
+            &contactPointB, &timeOfImpact))
+        {
+            pOutContact->pA = pColliderA;
+            pOutContact->pB = pColliderB;
+
+            pA->Update(timeOfImpact);
+            pB->Update(timeOfImpact);
+
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+
+            // Convert world space contacts to local space
+            /*pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
+            pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);*/
+
+            pOutContact->normal = posA - posB;
+            pOutContact->timeOfImpact = timeOfImpact;
+
+            // Unwind time step
+            pA->Update(-timeOfImpact);
+            pB->Update(-timeOfImpact);
+
+            //// Calculate the separation distance
+            // Vector3 ab = posB - posA;
+            // float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
+
+            // pOutContact->separationDistance = r;
+
+            return TRUE;
+        }
+
+        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, rotA, rotB, posA, posB, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
+    {
+        const BoxShape       *pBox = (const BoxShape *)pColliderA->pShape;
+        const EllipsoidShape *pEllipse = (const EllipsoidShape *)pColliderB->pShape;
+        if (BoxEllipseStatic(pBox->HalfExtent, rotA, posA, pEllipse->MajorRadius, pEllipse->MinorRadius, posB,
+                             &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
+    {
+        const EllipsoidShape *pEllipseA = (const EllipsoidShape *)pColliderA;
+        const EllipsoidShape *pEllipseB = (const EllipsoidShape *)pColliderB;
+        if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
+                                 pEllipseB->MinorRadius, posA, posB, &contactPointA, &contactPointB))
+        {
+            pOutContact->pA = pA;
+            pOutContact->pB = pB;
+            pOutContact->contactPointAWorldSpace = contactPointA;
+            pOutContact->contactPointBWorldSpace = contactPointB;
+            pOutContact->normal = contactPointA - contactPointB;
+            pOutContact->normal.Normalize();
+            return TRUE;
+        }
+    }
+    else
+    {
+        Contact     contact;
+        Vector3     ptOnA, ptOnB;
+        const float bias = 0.001f;
+        if (GJK_DoesIntersect(pColliderA, pColliderB, bias, &ptOnA, &ptOnB))
+        {
+            Vector3 normal = ptOnB - ptOnA;
+            normal.Normalize();
+
+            ptOnA -= normal * bias;
+            ptOnB += normal * bias;
+
+            contact.normal = normal;
+            contact.contactPointAWorldSpace = ptOnA;
+            contact.contactPointBWorldSpace = ptOnB;
+
+            *pOutContact = contact;
+            return TRUE;
+        }
+
+        // there was no collision, but we still want the contact data, so get it
+        GJK_ClosestPoints(pColliderA, pColliderB, &ptOnA, &ptOnB);
+        contact.contactPointAWorldSpace = ptOnA;
+        contact.contactPointBWorldSpace = ptOnB;
+
+        *pOutContact = contact;
+    }
+
+    return FALSE;
+
+lb_success:
+    pOutContact->pA = pColliderA;
+    pOutContact->pB = pColliderB;
+
+    pA->Update(timeOfImpact);
+    pB->Update(timeOfImpact);
+
+    pOutContact->contactPointAWorldSpace = contactPointA;
+    pOutContact->contactPointBWorldSpace = contactPointB;
+
+    // Convert world space contacts to local space
+    /*pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
+    pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);*/
+
+    pOutContact->normal = posA - posB;
+    pOutContact->timeOfImpact = timeOfImpact;
+
+    // Unwind time step
+    pA->Update(-timeOfImpact);
+    pB->Update(-timeOfImpact);
+
+    //// Calculate the separation distance
+    // Vector3 ab = posB - posA;
+    // float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
+
+    // pOutContact->separationDistance = r;
+
+    return TRUE;
+}
+
+void PhysicsManager::ApplyGravityImpulseAll(float dt)
 {
     SORT_LINK *pCur = m_pRigidBodyLinkHead;
     while (pCur)
@@ -209,8 +421,8 @@ int CompareContacts(const void *p1, const void *p2)
     return 1;
 }
 
-void PhysicsManager::ResolveContactsAll(float dt) 
-{ 
+void PhysicsManager::ResolveContactsAll(float dt)
+{
     if (m_contactCount > 1)
     {
         qsort(m_contacts, m_contactCount, sizeof(Contact), CompareContacts);
@@ -219,7 +431,7 @@ void PhysicsManager::ResolveContactsAll(float dt)
     float accumulatedTime = 0.0f;
     for (UINT i = 0; i < m_contactCount; i++)
     {
-        Contact &contact = m_contacts[i];
+        Contact    &contact = m_contacts[i];
         const float dt_sec = contact.timeOfImpact - accumulatedTime;
 
         // position Update
@@ -261,7 +473,7 @@ BOOL PhysicsManager::Initialize()
 ICollider *PhysicsManager::CreateSphereCollider(IGameObject *pObj, const float radius)
 {
     Collider *pNew = new Collider;
-    
+
     m_pColliders[m_colliderCount] = pNew;
 
     pNew->pShape = new SphereShape(radius);
@@ -306,7 +518,7 @@ ICollider *PhysicsManager::CreateEllipsoidCollider(IGameObject *pObj, const floa
 ICollider *PhysicsManager::CreateConvexCollider(IGameObject *pObj, const Vector3 *points, const int numPoints)
 {
     Collider *pNew = new Collider;
-    
+
     m_pColliders[m_colliderCount] = pNew;
 
     pNew->pShape = new ConvexShape(points, numPoints);
@@ -340,9 +552,9 @@ IRigidBody *PhysicsManager::CreateRigidBody(ICollider *pCollider, const Vector3 
     return pNew;
 }
 
-void PhysicsManager::DeleteRigidBody(IRigidBody *pDel) 
-{ 
-    RigidBody *pBody = (RigidBody *)pDel; 
+void PhysicsManager::DeleteRigidBody(IRigidBody *pDel)
+{
+    RigidBody *pBody = (RigidBody *)pDel;
 
     UnLinkFromLinkedList(&m_pRigidBodyLinkHead, &m_pRigidBodyLinkTail, &pBody->m_linkInPhysics);
 
@@ -421,7 +633,7 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
             dataB.PairIndices[dataB.PairCount] = pA->ID;
             dataB.ContactIndices[dataB.PairCount] = m_contactCount;
             dataB.PairCount++;
-            
+
             m_contacts[m_contactCount++] = contact;
             pA->IsCollide = TRUE;
             pB->IsCollide = TRUE;
@@ -430,6 +642,5 @@ BOOL PhysicsManager::CollisionTestAll(float dt)
 
     return m_contactCount > 0;
 }
-
 
 void PhysicsManager::EndCollision() { m_contactCount = 0; }

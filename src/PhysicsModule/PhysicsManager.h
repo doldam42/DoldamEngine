@@ -40,7 +40,7 @@ class PhysicsManager : public IPhysicsManager
     ULONG m_refCount = 1;
 
     BOOL Intersect(Collider *pA, Collider *pB, Contact* pOutContact);
-
+    BOOL Intersect(RigidBody *pA, RigidBody *pB, const float dt, Contact *pOutContact);
     void ApplyGravityImpulseAll(float dt);
     void ResolveContactsAll(float dt);
 

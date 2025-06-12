@@ -42,6 +42,8 @@ class RigidBody : public IRigidBody
     const Vector3& GetLinearVelocity() const { return m_linearVelocity; }
     const Vector3& GetAngularVelocity() const { return m_angularVelocity; }
 
+    Collider *GetCollider() const { return m_pCollider; }
+
     Vector3 GetCenterOfMassWorldSpace() const;
 
     Matrix GetInverseInertiaTensorWorldSpace() const;
