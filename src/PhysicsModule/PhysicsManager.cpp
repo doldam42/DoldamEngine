@@ -51,6 +51,7 @@ BOOL PhysicsManager::Intersect(Collider *pA, Collider *pB, Contact *pOutContact)
 
     Vector3 contactPointA;
     Vector3 contactPointB;
+
     if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_SPHERE)
     {
         const SphereShape *pSphereA = (const SphereShape *)pA->pShape;
@@ -192,24 +193,9 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
             goto lb_success;
         }
     }
-    else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_BOX)
-    {
-        const SphereShape *pSphere = (const SphereShape *)pColliderA->pShape;
-        const BoxShape    *pBox = (const BoxShape *)pColliderB->pShape;
-        
-        if (SphereBoxStatic(pSphere->Radius, posA, pBox->HalfExtent, rotB, posB, &contactPointA, &contactPointB))
-        {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
-        }
-    }
     else if (typeA == SHAPE_TYPE_SPHERE && typeB == SHAPE_TYPE_ELLIPSOID)
     {
+        Vector3               normal;
         const SphereShape    *pSphere = (const SphereShape *)pColliderA->pShape;
         const EllipsoidShape *pEllipse = (const EllipsoidShape *)pColliderB->pShape;
         if (EllipseEllipseDynamic(pSphere->Radius, pEllipse->MajorRadius, pSphere->Radius, pEllipse->MinorRadius, posA,
@@ -226,76 +212,17 @@ BOOL PhysicsManager::Intersect(RigidBody *pA, RigidBody *pB, const float dt, Con
         if (BoxBoxDynamic(pBoxA->HalfExtent, pBoxB->HalfExtent, rotA, rotB, posA, posB, velA, velB, &contactPointA,
             &contactPointB, &timeOfImpact))
         {
-            pOutContact->pA = pColliderA;
-            pOutContact->pB = pColliderB;
-
-            pA->Update(timeOfImpact);
-            pB->Update(timeOfImpact);
-
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-
-            // Convert world space contacts to local space
-            /*pOutContact->contactPointALocalSpace = pA->WorldSpaceToLocalSpace(contactPointAWorldSpace);
-            pOutContact->contactPointBLocalSpace = pB->WorldSpaceToLocalSpace(contactPointBWorldSpace);*/
-
-            pOutContact->normal = posA - posB;
-            pOutContact->timeOfImpact = timeOfImpact;
-
-            // Unwind time step
-            pA->Update(-timeOfImpact);
-            pB->Update(-timeOfImpact);
-
-            //// Calculate the separation distance
-            // Vector3 ab = posB - posA;
-            // float   r = ab.Length() - (pSphereA->Radius + pSphereB->Radius);
-
-            // pOutContact->separationDistance = r;
-
-            return TRUE;
-        }
-
-        if (BoxBoxStatic(pBoxA->HalfExtent, pBoxB->HalfExtent, rotA, rotB, posA, posB, &contactPointA, &contactPointB))
-        {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
-        }
-    }
-    else if (typeA == SHAPE_TYPE_BOX && typeB == SHAPE_TYPE_ELLIPSOID)
-    {
-        const BoxShape       *pBox = (const BoxShape *)pColliderA->pShape;
-        const EllipsoidShape *pEllipse = (const EllipsoidShape *)pColliderB->pShape;
-        if (BoxEllipseStatic(pBox->HalfExtent, rotA, posA, pEllipse->MajorRadius, pEllipse->MinorRadius, posB,
-                             &contactPointA, &contactPointB))
-        {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else if (typeA == SHAPE_TYPE_ELLIPSOID && typeB == SHAPE_TYPE_ELLIPSOID)
     {
         const EllipsoidShape *pEllipseA = (const EllipsoidShape *)pColliderA;
         const EllipsoidShape *pEllipseB = (const EllipsoidShape *)pColliderB;
-        if (EllipseEllipseStatic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
-                                 pEllipseB->MinorRadius, posA, posB, &contactPointA, &contactPointB))
+        if (EllipseEllipseDynamic(pEllipseA->MajorRadius, pEllipseB->MajorRadius, pEllipseA->MinorRadius,
+                                 pEllipseB->MinorRadius, posA, posB, velA, velB, dt, &contactPointA, &contactPointB))
         {
-            pOutContact->pA = pA;
-            pOutContact->pB = pB;
-            pOutContact->contactPointAWorldSpace = contactPointA;
-            pOutContact->contactPointBWorldSpace = contactPointB;
-            pOutContact->normal = contactPointA - contactPointB;
-            pOutContact->normal.Normalize();
-            return TRUE;
+            goto lb_success;
         }
     }
     else
